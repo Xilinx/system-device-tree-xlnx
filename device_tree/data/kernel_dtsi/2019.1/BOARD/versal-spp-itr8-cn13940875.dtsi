@@ -1,3 +1,5 @@
+#include "include/dt-bindings/gpio/gpio.h"
+
 / {
 	compatible = "xlnx,versal-spp-itr8-cn13940875", "xlnx,versal-spp-itr8", "xlnx,versal";
 	#address-cells = <2>;
@@ -173,8 +175,8 @@
 			interrupt-parent = <&gic>;
 			interrupts = <0 14 4>;
 			reg = <0x0 0xff020000 0x0 0x1000>;
-			scl-gpios = <&gpio 14 0>;
-			sda-gpios = <&gpio 15 0>;
+			scl-gpios = <&gpio 14 GPIO_ACTIVE_HIGH>;
+			sda-gpios = <&gpio 15 GPIO_ACTIVE_HIGH>;
 			#address-cells = <1>;
 			#size-cells = <0>;
 			clocks = <&clk25>;
@@ -191,8 +193,8 @@
 			interrupt-parent = <&gic>;
 			interrupts = <0 15 4>;
 			reg = <0x0 0xff030000 0x0 0x1000>;
-			scl-gpios = <&gpio 16 0>;
-			sda-gpios = <&gpio 17 0>;
+			scl-gpios = <&gpio 16 GPIO_ACTIVE_HIGH>;
+			sda-gpios = <&gpio 17 GPIO_ACTIVE_HIGH>;
 			#address-cells = <1>;
 			#size-cells = <0>;
 			clocks = <&clk25>;
