@@ -116,6 +116,7 @@
 			/* iommus = <&smmu 0x210>; */
 			xlnx,bus-width = <64>;
 			clocks = <&clk100 &clk100>;
+			/* dma-coherent; */
 		};
 
 		lpd_dma_chan2: dma@ffa90000 {
@@ -129,6 +130,7 @@
 			/* iommus = <&smmu 0x212>; */
 			xlnx,bus-width = <64>;
 			clocks = <&clk100 &clk100>;
+			/* dma-coherent; */
 		};
 
 		lpd_dma_chan3: dma@ffaa0000 {
@@ -142,6 +144,7 @@
 			/* iommus = <&smmu 0x214>; */
 			xlnx,bus-width = <64>;
 			clocks = <&clk100 &clk100>;
+			/* dma-coherent; */
 		};
 
 		can0: can@ff060000 {
@@ -229,6 +232,7 @@
 			/* iommus = <&smmu 0x216>; */
 			xlnx,bus-width = <64>;
 			clocks = <&clk100 &clk100>;
+			/* dma-coherent; */
 		};
 
 		lpd_dma_chan5: dma@ffac0000 {
@@ -242,6 +246,7 @@
 			/* iommus = <&smmu 0x218>; */
 			xlnx,bus-width = <64>;
 			clocks = <&clk100 &clk100>;
+			/* dma-coherent; */
 		};
 
 		lpd_dma_chan6: dma@ffad0000 {
@@ -255,6 +260,7 @@
 			/* iommus = <&smmu 0x21a>; */
 			xlnx,bus-width = <64>;
 			clocks = <&clk100 &clk100>;
+			/* dma-coherent; */
 		};
 
 		lpd_dma_chan7: dma@ffae0000 {
@@ -268,6 +274,7 @@
 			/* iommus = <&smmu 0x21c>; */
 			xlnx,bus-width = <64>;
 			clocks = <&clk100 &clk100>;
+			/* dma-coherent; */
 		};
 
 		lpd_dma_chan8: dma@ffaf0000 {
@@ -281,6 +288,7 @@
 			/* iommus = <&smmu 0x21e>; */
 			xlnx,bus-width = <64>;
 			clocks = <&clk100 &clk100>;
+			/* dma-coherent; */
 		};
 
 		ethernet0: ethernet@ff0c0000 {
@@ -295,6 +303,7 @@
 			#size-cells = <0x0>;
 			#stream-id-cells = <1>;
 			/* iommus = <&smmu 0x234>; */
+			/* dma-coherent; */
 
 			phy-handle = <&phy0>;
 			phy-mode = "rgmii-id";
@@ -305,7 +314,7 @@
 				ti,rx-internal-delay = <0xb>;
 				ti,tx-internal-delay = <0xa>;
 				ti,fifo-depth = <0x1>;
-				ti,rxctrl-strap-worka;
+				ti,dp83867-rxctrl-strap-quirk;
 			};
 		};
 
@@ -321,7 +330,7 @@
 			#size-cells = <0x0>;
 			#stream-id-cells = <1>;
 			/* iommus = <&smmu 0x235>; */
-
+			/* dma-coherent; */
 			phy-handle = <&phy1>;
 			phy-mode = "rgmii-id";
 
@@ -331,7 +340,7 @@
 				ti,rx-internal-delay = <0xb>;
 				ti,tx-internal-delay = <0xa>;
 				ti,fifo-depth = <0x1>;
-				ti,rxctrl-strap-worka;
+				ti,dp83867-rxctrl-strap-quirk;
 			};
 		};
 
@@ -376,6 +385,7 @@
 			#size-cells = <0>;
 			#stream-id-cells = <1>;
 			/* iommus = <&smmu 0x244>; */
+			/* dma-coherent; */
 			clocks = <&clk125 &clk125>;
 			is-dual = <1>;
 			spi-rx-bus-width = <4>;
@@ -525,6 +535,28 @@
 			};
 		};
 
+		cci@fd000000 {
+			status = "okay";
+			compatible = "arm,cci-500";
+			reg = <0x0 0xfd000000 0x0 0x10000>;
+			ranges = <0x0 0x0 0xfd000000 0xa0000>;
+			#address-cells = <0x1>;
+			#size-cells = <0x1>;
+			pmu@10000 {
+				compatible = "arm,cci-500-pmu,r0";
+				reg = <0x10000 0x90000>;
+				interrupt-parent = <&gic>;
+				interrupts = <0 106 4>,
+					     <0 106 4>,
+					     <0 106 4>,
+					     <0 106 4>,
+					     <0 106 4>,
+					     <0 106 4>,
+					     <0 106 4>,
+					     <0 106 4>,
+					     <0 106 4>;
+			};
+		};
 
 		sdhci0: sdhci@f1040000 {
 			compatible = "xlnx,versal-8.9a", "arasan,sdhci-8.9a";
@@ -538,6 +570,7 @@
 			xlnx,mio_bank = <0>;
 			#stream-id-cells = <1>;
 			/* iommus = <&smmu 0x242>; */
+			/* dma-coherent; */
 		};
 
 		sdhci1: sdhci@f1050000 {
@@ -552,6 +585,7 @@
 			xlnx,mio_bank = <0>;
 			#stream-id-cells = <1>;
 			/* iommus = <&smmu 0x243>; */
+			/* dma-coherent; */
 		};
 
 		usb0: usb0@ff9d0000 {
@@ -569,13 +603,15 @@
 				status = "okay";
 				reg = <0x0 0xfe200000 0x0 0x10000>;
 				interrupt-parent = <&gic>;
-				interrupts = <0x0 0x16 0x4>, <0x0 0x45 0x4>;
+				interrupt-names = "dwc_usb3", "otg";
+				interrupts = <0x0 0x16 0x4>, <0x0 0x1A 0x4>;
 				#stream-id-cells = <1>;
 				/* iommus = <&smmu 0x230>; */
 				dr_mode = "host";
 				maximum-speed = "high-speed";
 				snps,dis_u2_susphy_quirk;
 				snps,dis_u3_susphy_quirk;
+				/* dma-coherent; */
 			};
 		};
 	};
