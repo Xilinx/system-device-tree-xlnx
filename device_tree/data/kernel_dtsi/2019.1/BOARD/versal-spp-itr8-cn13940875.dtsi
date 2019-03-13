@@ -155,7 +155,7 @@
 			reg = <0x0 0xff060000 0x0 0x6000>;
 			interrupts = <0 20 4>;
 			interrupt-parent = <&gic>;
-			tx-fifo-depth = <0x20>;
+			tx-mailbox-count = <0x20>;
 			rx-fifo-depth = <0x40>;
 		};
 
@@ -167,7 +167,7 @@
 			reg = <0x0 0xff070000 0x0 0x6000>;
 			interrupts = <0 21 4>;
 			interrupt-parent = <&gic>;
-			tx-fifo-depth = <0x20>;
+			tx-mailbox-count = <0x20>;
 			rx-fifo-depth = <0x40>;
 		};
 
