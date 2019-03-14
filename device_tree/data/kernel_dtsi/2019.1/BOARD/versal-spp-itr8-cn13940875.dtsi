@@ -29,6 +29,74 @@
 		method = "smc";
 	};
 
+	ref_clk: ref_clk {
+		u-boot,dm-pre-reloc;
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <33333000>;
+	};
+
+	alt_ref_clk: alt_ref_clk {
+		u-boot,dm-pre-reloc;
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <33333000>;
+	};
+
+	pl_alt_ref_clk: pl_alt_ref_clk {
+		u-boot,dm-pre-reloc;
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <33333000>;
+	};
+
+	firmware {
+		versal_firmware: versal-firmware {
+			compatible = "xlnx,versal-firmware-wip";
+			method = "smc";
+			#power-domain-cells = <0x1>;
+			u-boot,dm-pre-reloc;
+
+			versal_clk: clock-controller {
+				u-boot,dm-pre-reloc;
+				#clock-cells = <1>;
+				compatible = "xlnx,versal-clk";
+				clocks = <&ref_clk>, <&alt_ref_clk>, <&pl_alt_ref_clk>;
+				clock-names = "ref_clk", "alt_ref_clk", "pl_alt_ref_clk";
+			};
+
+			zynqmp_power: zynqmp-power {
+				compatible = "xlnx,zynqmp-power";
+				interrupt-parent = <&gic>;
+				interrupts = <0 30 4>;
+				mboxes = <&ipi_mailbox_pmu1 0>,
+					 <&ipi_mailbox_pmu1 1>;
+				mbox-names = "tx", "rx";
+			};
+		};
+	};
+
+	zynqmp_ipi {
+		compatible = "xlnx,zynqmp-ipi-mailbox";
+		interrupt-parent = <&gic>;
+		interrupts = <0 30 4>;
+		xlnx,ipi-id = <2>;
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		ipi_mailbox_pmu1: mailbox@ff3f0440 {
+			reg = <0 0xff3f0440 0 0x20>,
+			      <0 0xff3f0460 0 0x20>,
+			      <0 0xff3f0280 0 0x20>,
+			      <0 0xff3f02a0 0 0x20>;
+			reg-names = "local_request_region", "local_response_region",
+				    "remote_request_region", "remote_response_region";
+			#mbox-cells = <1>;
+			xlnx,ipi-id = <1>;
+		};
+	};
+
 	clk2: clk2 {
 		compatible = "fixed-clock";
 		#clock-cells = <0x0>;
@@ -103,6 +171,7 @@
 			clock-names = "uart_clk", "apb_clk";
 			clocks = <&clk25 &clk25>;
 			current-speed = <115200>;
+			power-domains = <&versal_firmware 0x18224021>;
 		};
 
 		lpd_dma_chan1: dma@ffa80000 {
@@ -157,6 +226,7 @@
 			interrupt-parent = <&gic>;
 			tx-mailbox-count = <0x20>;
 			rx-fifo-depth = <0x40>;
+			power-domains = <&versal_firmware 0x1822401f>;
 		};
 
 		can1: can@ff070000 {
@@ -169,6 +239,7 @@
 			interrupt-parent = <&gic>;
 			tx-mailbox-count = <0x20>;
 			rx-fifo-depth = <0x40>;
+			power-domains = <&versal_firmware 0x18224020>;
 		};
 
 		i2c0: i2c@ff020000 {
@@ -183,6 +254,7 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			clocks = <&clk25>;
+			power-domains = <&versal_firmware 0x1822401d>;
 			eeprom1: eeprom@53 {
 				reg = <0x53>;
 				compatible = "at,24c08";
@@ -201,6 +273,7 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			clocks = <&clk25>;
+			power-domains = <&versal_firmware 0x1822401e>;
 			eeprom2: eeprom@55 {
 				compatible = "atmel,24c128";
 				reg = <0x55>;
@@ -218,6 +291,7 @@
 			reg = <0x0 0xff0b0000 0x0 0x1000>;
 			gpio-controller;
 			clocks = <&clk25>;
+			power-domains = <&versal_firmware 0x18224023>;
 		};
 
 
@@ -307,6 +381,7 @@
 
 			phy-handle = <&phy0>;
 			phy-mode = "rgmii-id";
+			power-domains = <&versal_firmware 0x18224019>;
 
 			phy0: phy@0 {
 				reg = <0x0>;
@@ -333,6 +408,7 @@
 			/* dma-coherent; */
 			phy-handle = <&phy1>;
 			phy-mode = "rgmii-id";
+			power-domains = <&versal_firmware 0x1822401a>;
 
 			phy1: phy@1 {
 				reg = <0x1>;
@@ -390,6 +466,7 @@
 			is-dual = <1>;
 			spi-rx-bus-width = <4>;
 			spi-tx-bus-width = <4>;
+			power-domains = <&versal_firmware 0x1822402b>;
 
 			flash@0 {
 				compatible = "n25q512a", "micron,m25p80";
@@ -486,6 +563,7 @@
 			clocks = <&clk125 &clk125>;
 			num-cs = <1>;
 			pinctrl-names = "default";
+			power-domains = <&versal_firmware 0x1822401b>;
 
 			flash@0 {
 				compatible = "m25p80";
@@ -516,6 +594,7 @@
 			#size-cells = <0>;
 			clocks = <&clk125 &clk125>;
 			num-cs = <3>;
+			power-domains = <&versal_firmware 0x1822401c>;
 
 			flash@0 {
 				compatible = "m25p80";
@@ -569,6 +648,7 @@
 			xlnx,device_id = <0>;
 			xlnx,mio_bank = <0>;
 			#stream-id-cells = <1>;
+			power-domains = <&versal_firmware 0x1822402e>;
 			/* iommus = <&smmu 0x242>; */
 			/* dma-coherent; */
 		};
@@ -584,6 +664,7 @@
 			xlnx,device_id = <1>;
 			xlnx,mio_bank = <0>;
 			#stream-id-cells = <1>;
+			power-domains = <&versal_firmware 0x1822402f>;
 			/* iommus = <&smmu 0x243>; */
 			/* dma-coherent; */
 		};
@@ -597,6 +678,7 @@
 			ranges;
 			clock-names = "bus_clk", "ref_clk";
 			clocks = <&clk125 &clk125>;
+			power-domains = <&versal_firmware 0x18224018>;
 
 			dwc3@fe200000 {
 				compatible = "snps,dwc3";
