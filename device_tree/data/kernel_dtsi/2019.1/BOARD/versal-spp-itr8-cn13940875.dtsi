@@ -462,7 +462,7 @@
 			#stream-id-cells = <1>;
 			/* iommus = <&smmu 0x244>; */
 			/* dma-coherent; */
-			clocks = <&clk125 &clk125>;
+			clocks = <&clk25 &clk25>;
 			is-dual = <1>;
 			spi-rx-bus-width = <4>;
 			spi-tx-bus-width = <4>;
@@ -473,7 +473,7 @@
 				reg = <0x0>;
 				spi-tx-bus-width = <1>;
 				spi-rx-bus-width = <4>;
-				spi-max-frequency = <108000000>;
+				spi-max-frequency = <25000000>;
 
 				partitions {
 					compatible = "fixed-partitions";
@@ -560,14 +560,14 @@
 			clock-names = "ref_clk", "pclk";
 			#address-cells = <1>;
 			#size-cells = <0>;
-			clocks = <&clk125 &clk125>;
+			clocks = <&clk25 &clk25>;
 			num-cs = <1>;
 			pinctrl-names = "default";
 			power-domains = <&versal_firmware 0x1822401b>;
 
 			flash@0 {
 				compatible = "m25p80";
-				spi-max-frequency = <50000000>;
+				spi-max-frequency = <25000000>;
 				reg = <0x0>;
 
 				partitions {
@@ -592,13 +592,13 @@
 			clock-names = "ref_clk", "pclk";
 			#address-cells = <1>;
 			#size-cells = <0>;
-			clocks = <&clk125 &clk125>;
+			clocks = <&clk25 &clk25>;
 			num-cs = <3>;
 			power-domains = <&versal_firmware 0x1822401c>;
 
 			flash@0 {
 				compatible = "m25p80";
-				spi-max-frequency = <50000000>;
+				spi-max-frequency = <25000000>;
 				reg = <0x0>;
 
 				partitions {
