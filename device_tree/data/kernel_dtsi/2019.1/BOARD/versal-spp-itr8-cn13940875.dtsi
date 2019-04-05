@@ -186,6 +186,7 @@
 			xlnx,bus-width = <64>;
 			clocks = <&clk100 &clk100>;
 			/* dma-coherent; */
+			power-domains = <&versal_firmware 0x18224035>;
 		};
 
 		lpd_dma_chan2: dma@ffa90000 {
@@ -200,6 +201,7 @@
 			xlnx,bus-width = <64>;
 			clocks = <&clk100 &clk100>;
 			/* dma-coherent; */
+			power-domains = <&versal_firmware 0x18224036>;
 		};
 
 		lpd_dma_chan3: dma@ffaa0000 {
@@ -214,6 +216,7 @@
 			xlnx,bus-width = <64>;
 			clocks = <&clk100 &clk100>;
 			/* dma-coherent; */
+			power-domains = <&versal_firmware 0x18224037>;
 		};
 
 		can0: can@ff060000 {
@@ -290,7 +293,7 @@
 			#interrupt-cells = <2>;
 			reg = <0x0 0xff0b0000 0x0 0x1000>;
 			gpio-controller;
-			clocks = <&clk25>;
+			clocks = <&versal_clk 82>;
 			power-domains = <&versal_firmware 0x18224023>;
 		};
 
@@ -307,6 +310,7 @@
 			xlnx,bus-width = <64>;
 			clocks = <&clk100 &clk100>;
 			/* dma-coherent; */
+			power-domains = <&versal_firmware 0x18224038>;
 		};
 
 		lpd_dma_chan5: dma@ffac0000 {
@@ -321,6 +325,7 @@
 			xlnx,bus-width = <64>;
 			clocks = <&clk100 &clk100>;
 			/* dma-coherent; */
+			power-domains = <&versal_firmware 0x18224039>;
 		};
 
 		lpd_dma_chan6: dma@ffad0000 {
@@ -335,6 +340,7 @@
 			xlnx,bus-width = <64>;
 			clocks = <&clk100 &clk100>;
 			/* dma-coherent; */
+			power-domains = <&versal_firmware 0x1822403a>;
 		};
 
 		lpd_dma_chan7: dma@ffae0000 {
@@ -349,6 +355,7 @@
 			xlnx,bus-width = <64>;
 			clocks = <&clk100 &clk100>;
 			/* dma-coherent; */
+			power-domains = <&versal_firmware 0x1822403b>;
 		};
 
 		lpd_dma_chan8: dma@ffaf0000 {
@@ -363,6 +370,7 @@
 			xlnx,bus-width = <64>;
 			clocks = <&clk100 &clk100>;
 			/* dma-coherent; */
+			power-domains = <&versal_firmware 0x1822403c>;
 		};
 
 		ethernet0: ethernet@ff0c0000 {
@@ -447,6 +455,7 @@
 			interrupts = <0 142 4>, <0 143 4>;
 			interrupt-names = "alarm", "sec";
 			calibration = <0x8000>;
+			power-domains = <&versal_firmware 0x18224034>;
 		};
 
 		qspi: spi@f1030000 {
