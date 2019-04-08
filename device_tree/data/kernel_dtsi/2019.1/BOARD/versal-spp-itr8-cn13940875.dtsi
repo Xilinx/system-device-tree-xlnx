@@ -707,6 +707,13 @@
 				/* dma-coherent; */
 			};
 		};
+
+		watchdog: watchdog@fd4d0000 {
+			compatible = "xlnx,versal-wwdt-1.0";
+			reg = <0x0 0xfd4d0000 0x0 0x10000>;
+			status = "okay";
+			clocks = <&clk25>;
+		};
 	};
 
 	aliases {
