@@ -423,29 +423,29 @@ marwell m88e1512 - SGMII */
 };
 
 &usb0 {
-        status = "okay";
-        xlnx,usb-polarity = <0x0>;
-        xlnx,usb-reset-mode = <0x0>;
+	status = "okay";
+	xlnx,usb-polarity = <0>;
+	xlnx,usb-reset-mode = <0>;
 };
 
 &dwc3_0 {
-        status = "okay";
+	status = "okay";
 	dr_mode = "host";
 	/* dr_mode = "peripheral"; */
 	maximum-speed = "high-speed";
 };
 
 &usb1 {
-        status = "disabled"; /* not at mem board */
-        xlnx,usb-polarity = <0x0>;
-        xlnx,usb-reset-mode = <0x0>;
+	status = "disabled"; /* not at mem board */
+	xlnx,usb-polarity = <0x0>;
+	xlnx,usb-reset-mode = <0x0>;
 };
 
 &dwc3_1 {
-        /delete-property/ phy-names ;
-        /delete-property/ phys ;
-        maximum-speed = "high-speed";
-        snps,dis_u2_susphy_quirk ;
-        snps,dis_u3_susphy_quirk ;
-        status = "disabled";
+	/delete-property/ phy-names ;
+	/delete-property/ phys ;
+	maximum-speed = "high-speed";
+	snps,dis_u2_susphy_quirk ;
+	snps,dis_u3_susphy_quirk ;
+	status = "disabled";
 };

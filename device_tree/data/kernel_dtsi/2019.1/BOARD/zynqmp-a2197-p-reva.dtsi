@@ -49,7 +49,7 @@ usb - type C - pl
 	non-removable;
 	disable-wp;
 	bus-width = <8>;
-	xlnx,mio_bank = <0>; /* FIXME tap delay */
+	xlnx,mio_bank = <0>;
 };
 
 &uart0 { /* uart0 MIO38-39 */
@@ -63,7 +63,7 @@ usb - type C - pl
 };
 
 &sdhci1 { /* sd1 MIO45-51 cd in place */
-	status = "disable";
+	status = "okay";
 	no-1-8-v;
 	disable-wp;
 	xlnx,mio_bank = <1>;
@@ -143,7 +143,7 @@ marwell m88e1512 - SGMII */
 		#address-cells = <1>;
 		#size-cells = <0>;
 		reg = <0x74>;
-		/* FIXME reset connected to SYSCTRL_IIC_MUX0_RESET */
+		/* reset-gpios = <&gpio SYSCTLR_IIC_MUX0_RESET_B GPIO_ACTIVE_HIGH>; */
 		i2c@0 { /* PMBUS1 */
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -389,20 +389,20 @@ marwell m88e1512 - SGMII */
 		#address-cells = <1>;
 		#size-cells = <0>;
 		reg = <0x74>;
-		/* FIXME reset connected to SYSCTRL_IIC_MUX1_RESET */
+		/* reset-gpios = <&gpio SYSCTLR_IIC_MUX1_RESET_B GPIO_ACTIVE_HIGH>; */
 		dc_i2c: i2c@0 { /* DC_I2C */
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <0>;
 			/* Use for storing information about SC board */
-			eeprom: eeprom@54 { /* u34 - m24128 16kB FIXME addr */
-				compatible = "atmel,24c08";
+			eeprom: eeprom@54 { /* u34 - m24128 16kB */
+				compatible = "st,24c128", "atmel,24c128";
 				reg = <0x54>;
 			};
 			si570_ref_clk: clock-generator@5d { /* u32 */
 				#clock-cells = <0>;
 				compatible = "silabs,si570";
-				reg = <0x5d>; /* FIXME addr */
+				reg = <0x5d>; /* 570JAC000900DG */
 				temperature-stability = <50>;
 				factory-fout = <156250000>; /* FIXME every chip can be different */
 				clock-frequency = <33333333>;
@@ -467,10 +467,10 @@ marwell m88e1512 - SGMII */
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <3>;
-			si570_ddr_dimm1: clock-generator@5d { /* u2 */
+			si570_ddr_dimm1: clock-generator@60 { /* u2 */
 				#clock-cells = <0>;
 				compatible = "silabs,si570";
-				reg = <0x5d>;
+				reg = <0x60>;	/* 570BAB000299DG */
 				temperature-stability = <50>;
 				factory-fout = <156250000>; /* FIXME every chip can be different - 10MHZ_TO_810MHZ */
 				clock-frequency = <33333333>;
@@ -482,10 +482,10 @@ marwell m88e1512 - SGMII */
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <4>;
-			si570_ddr_dimm2: clock-generator@5d { /* u3 */
+			si570_ddr_dimm2: clock-generator@60 { /* u3 */
 				#clock-cells = <0>;
 				compatible = "silabs,si570";
-				reg = <0x5d>;
+				reg = <0x60>;	/* 570BAB000299DG */
 				temperature-stability = <50>;
 				factory-fout = <156250000>; /* FIXME every chip can be different - 10MHZ_TO_810MHZ */
 				clock-frequency = <33333333>;
@@ -497,10 +497,10 @@ marwell m88e1512 - SGMII */
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <5>;
-			si570_lpddr4: clock-generator@5d { /* u4 */
+			si570_lpddr4: clock-generator@60 { /* u4 */
 				#clock-cells = <0>;
 				compatible = "silabs,si570";
-				reg = <0x5d>; /* FIXME addr */
+				reg = <0x60>;	/* 570BAB000299DG */
 				temperature-stability = <50>;
 				factory-fout = <156250000>; /* FIXME every chip can be different - 10MHZ_TO_810MHZ */
 				clock-frequency = <33333333>;
@@ -514,7 +514,7 @@ marwell m88e1512 - SGMII */
 			si570_hsdp: clock-generator@5d { /* u5 */
 				#clock-cells = <0>;
 				compatible = "silabs,si570";
-				reg = <0x5d>; /* FIXME addr */
+				reg = <0x5d>;	/* 570JAC000900DG */
 				temperature-stability = <50>;
 				factory-fout = <156250000>; /* FIXME every chip can be different - 10MHZ_TO_810MHZ */
 				clock-frequency = <33333333>;
@@ -542,29 +542,31 @@ marwell m88e1512 - SGMII */
 };
 
 &usb0 {
-        status = "okay";
-        xlnx,usb-polarity = <0x0>;
-        xlnx,usb-reset-mode = <0x0>;
+	status = "okay";
+	xlnx,usb-polarity = <0>;
+	xlnx,usb-reset-mode = <0>;
 };
 
 &dwc3_0 {
-        status = "okay";
-	dr_mode = "host";
-	/* dr_mode = "peripheral"; */
-	maximum-speed = "high-speed";
+	status = "okay";
+	dr_mode = "peripheral";
+	snps,dis_u2_susphy_quirk;
+	snps,dis_u3_susphy_quirk;
+	maximum-speed = "super-speed";
 };
 
 &usb1 {
-        status = "disabled"; /* not at mem board */
-        xlnx,usb-polarity = <0x0>;
-        xlnx,usb-reset-mode = <0x0>;
+	status = "okay";
+	xlnx,usb-polarity = <0>;
+	xlnx,usb-reset-mode = <0>;
 };
 
 &dwc3_1 {
-        /delete-property/ phy-names ;
-        /delete-property/ phys ;
-        maximum-speed = "high-speed";
-        snps,dis_u2_susphy_quirk ;
-        snps,dis_u3_susphy_quirk ;
-       status = "disabled";
+	/delete-property/ phy-names ;
+	/delete-property/ phys ;
+	dr_mode = "host";
+	maximum-speed = "high-speed";
+	snps,dis_u2_susphy_quirk ;
+	snps,dis_u3_susphy_quirk ;
+	status = "okay";
 };
