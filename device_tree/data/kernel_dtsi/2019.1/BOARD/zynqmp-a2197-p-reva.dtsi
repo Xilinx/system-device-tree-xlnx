@@ -22,21 +22,6 @@
 FIXME no idea what they do VCCO_500_RBIAS, VCCO_501_RBIAS, VCCO_502_RBIAS
 SYSCTLR_GPIO0 - 5 - conneced to versal */
 /* cpu thermal for MAX6643 fan control  */
-	leds {
-		compatible = "gpio-leds";
-		dc38_led {
-			label = "ds38-green"; /* sc AB11 500_RBIAS_LED */
-			gpios = <&gpio 23 GPIO_ACTIVE_HIGH>; /* FIXME */
-		};
-		dc37_led {
-			label = "ds37-green"; /* sc AD10 501_RBIAS_LED */
-			gpios = <&gpio 23 GPIO_ACTIVE_HIGH>; /* FIXME */
-		};
-		dc36_led {
-			label = "ds36-green"; /* sc AD11 502_RBIAS_LED */
-			gpios = <&gpio 23 GPIO_ACTIVE_HIGH>; /* FIXME */
-		};
-	};
 };
 /*
 usb - type C - pl
@@ -81,14 +66,11 @@ marwell m88e1512 - SGMII */
 	status = "okay";
 	phy-handle = <&phy0>;
 	phy-mode = "sgmii"; /* DTG generates this properly  1512 */
-	phy-reset-gpios = <&gpio 142 GPIO_ACTIVE_LOW>;
+	is-internal-pcspma;
+	/* phy-reset-gpios = <&gpio 142 GPIO_ACTIVE_LOW>; */
 	phy0: phy@0 {
 		reg = <0>;
-/*		xlnx,phy-type = <PHY_TYPE_SGMII>; */
 	};
-/*	phy-names = "...";
-	phys = <&lane0 PHY_TYPE_SGMII ... >
-	Note: lane0 sgmii/lane1 usb3 */
 };
 
 &gpio {
@@ -568,5 +550,17 @@ marwell m88e1512 - SGMII */
 	maximum-speed = "high-speed";
 	snps,dis_u2_susphy_quirk ;
 	snps,dis_u3_susphy_quirk ;
+	status = "okay";
+};
+
+&xilinx_ams {
+	status = "okay";
+};
+
+&ams_ps {
+	status = "okay";
+};
+
+&ams_pl {
 	status = "okay";
 };

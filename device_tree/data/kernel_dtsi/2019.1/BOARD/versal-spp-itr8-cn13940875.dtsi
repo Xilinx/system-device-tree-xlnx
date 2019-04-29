@@ -373,7 +373,7 @@
 			power-domains = <&versal_firmware 0x1822403c>;
 		};
 
-		ethernet0: ethernet@ff0c0000 {
+		gem0: ethernet@ff0c0000 {
 			compatible = "cdns,zynqmp-gem";
 			status = "okay";
 			interrupt-parent = <&gic>;
@@ -401,7 +401,7 @@
 			};
 		};
 
-		ethernet1: ethernet@ff0d0000 {
+		gem1: ethernet@ff0d0000 {
 			compatible = "cdns,zynqmp-gem";
 			status = "okay";
 			interrupt-parent = <&gic>;
@@ -718,8 +718,8 @@
 
 	aliases {
 		serial0 = &serial0;
-		ethernet0 = &ethernet0;
-		ethernet1 = &ethernet1;
+		ethernet0 = &gem0;
+		ethernet1 = &gem1;
 		spi0 = &qspi;
 		spi1 = &ospi;
 		spi2 = &spi0;
