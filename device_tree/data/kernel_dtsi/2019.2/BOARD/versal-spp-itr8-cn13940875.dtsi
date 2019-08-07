@@ -187,6 +187,51 @@
 			compatible = "fixed-partitions";
 			#address-cells = <1>;
 			#size-cells = <1>;
+			partition@0 {
+				label = "qspi-fsbl-uboot-boot.bin";
+				reg = <0x0 0x6400000>;
+			};
+			partition@6400000 {
+				label = "qspi-linux";
+				reg = <0x6400000 0x500000>;
+			};
+			partition@6900000 {
+				label = "qspi-device-tree";
+				reg = <0x6900000 0x20000>;
+			};
+			partition@6920000 {
+				label = "qspi-rootfs";
+				reg = <0x6920000 0x5E0000>;
+			};
+			partition@7f40000 {
+				label = "qspi-bootenv";
+				reg = <0x7f40000 0x40000>;
+			};
+		};
+	};
+};
+
+&ospi {
+	status = "disabled";
+	clocks = <&clk125 &clk125>;
+	bus-num = <2>;
+	num-cs = <1>;
+	cdns,fifo-depth = <508>;
+	cdns,fifo-width = <4>;
+	cdns,is-dma = <1>;
+	cdns,is-stig-pgm = <1>;
+	cdns,trigger-address = <0x00000000>;
+	flash@0 {
+		compatible = "n25q512a", "micron,m25p80", "spi-flash";
+		reg = <0x0>;
+		spi-tx-bus-width = <1>;
+		spi-rx-bus-width = <8>;
+		spi-max-frequency = <108000000>;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
 
 			partition@0 {
 				label = "qspi-fsbl-uboot";
@@ -206,4 +251,60 @@
 			};
 		};
 	};
+};
+
+&spi0 {
+	status = "okay";
+	clocks = <&clk125 &clk125>;
+	num-cs = <1>;
+
+	flash@0 {
+		compatible = "m25p80", "spi-flash";
+		spi-max-frequency = <50000000>;
+		reg = <0x0>;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "spi0-flash0";
+				reg = <0x0 0x100000>;
+			};
+		};
+	};
+};
+
+&spi1 {
+	status = "okay";
+	clocks = <&clk125 &clk125>;
+	num-cs = <3>;
+
+	flash@0 {
+		compatible = "m25p80", "spi-flash";
+		spi-max-frequency = <50000000>;
+		reg = <0x0>;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "spi1-flash0";
+				reg = <0x0 0x84000>;
+			};
+		};
+	};
+};
+
+&i2c0 {
+	status = "okay";
+	clocks = <&clk100 &clk100>;
+};
+
+&i2c1 {
+	status = "okay";
+	clocks = <&clk100 &clk100>;
 };
