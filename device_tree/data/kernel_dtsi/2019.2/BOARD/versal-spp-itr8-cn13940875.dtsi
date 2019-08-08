@@ -156,14 +156,12 @@
 &sdhci0 {
 	status = "okay";
 	clocks = <&clk25 &clk25>;
-	no-1-8-v;
 	xlnx,mio_bank = <0>;
 };
 
 &sdhci1 {
 	status = "okay";
 	clocks = <&clk25 &clk25>;
-	no-1-8-v;
 	xlnx,mio_bank = <0>;
 };
 
