@@ -12,7 +12,7 @@
 
 / {
 	model = "Versal System Controller on a2197 Eval board RevA"; /* vck190 */
-	compatible = "xlnx,zynqmp-a2197-e-revA", "xlnx,zynqmp-a2197-revA",
+	compatible = "xlnx,zynqmp-e-a2197-00-revA", "xlnx,zynqmp-a2197-revA",
 		     "xlnx,zynqmp-a2197", "xlnx,zynqmp";
 
 	chosen {
@@ -281,10 +281,10 @@
 			si570_user1_clk: clock-generator@5d { /* u205 */
 				#clock-cells = <0>;
 				compatible = "silabs,si570";
-				reg = <0x5d>; /* FIXME check address */
+				reg = <0x5f>; /* FIXME check address */
 				temperature-stability = <50>;
-				factory-fout = <33333333>; /* FIXME check default value */
-				clock-frequency = <33333333>;
+				factory-fout = <100000000>;
+				clock-frequency = <100000000>;
 				clock-output-names = "si570_user1";
 			};
 
