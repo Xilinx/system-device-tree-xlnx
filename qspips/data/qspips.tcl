@@ -52,6 +52,10 @@ proc generate {drv_handle} {
 			dtg_warning "Unsupported bus_width:$bus_width"
 		}
 	}
+        set_drv_conf_prop $drv_handle C_QSPI_BUS_WIDTH xlnx,bus-width int
+        set_drv_conf_prop $drv_handle C_QSPI_MODE xlnx,connection-mode int
+        set_drv_conf_prop $drv_handle C_QSPI_CLK_FREQ_HZ xlnx,clock-freq int
+
     # these are board level information
     # set primary_flash [hsi::utils::add_new_child_node $drv_handle "primary_flash"]
     # hsi::utils::add_new_property $primary_flash "dts.device_type" string "ps7-qspi"

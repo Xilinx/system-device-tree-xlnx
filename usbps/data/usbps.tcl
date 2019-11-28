@@ -27,13 +27,13 @@ proc generate {drv_handle} {
         set_drv_prop $drv_handle phy_type ulpi string
     } else {
 	set mainline_ker [get_property CONFIG.mainline_kernel [get_os]]
-	if {[string match -nocase $proctype "psv_cortexa72"]} {
+	if {[string match -nocase $proctype "psv_cortexa72"] || [string match -nocase $proctype "psv_cortexr5"] || [string match -nocase $proctype "psv_pmc"]} {
 		#TODO:Remove this once the versal dts is fully updated.
 		return
 	}
 	if {[string match -nocase $mainline_ker "none"]} {
              set index [string index $drv_handle end]
-             set rt_node [add_or_get_dt_node -n usb -l usb$index -d $default_dts -auto_ref_parent]
+             set rt_node [add_or_get_dt_node -n usb -l psu_usb_$index -d $default_dts -auto_ref_parent]
              hsi::utils::add_new_dts_param "${rt_node}" "status" "okay" string
         }
     }

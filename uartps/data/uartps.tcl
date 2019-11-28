@@ -57,4 +57,5 @@ proc generate {drv_handle} {
     if {$has_modem == 0} {
          hsi::utils::add_new_property $drv_handle "cts-override" boolean ""
     }
+    set_drv_conf_prop $drv_handle C_UART_CLK_FREQ_HZ xlnx,clock-freq int
 }
