@@ -187,7 +187,7 @@ proc gen_sata_laneinfo {} {
 	lset freq 0 $i
 	lset freq 1 $j
 	set dts_file [get_property CONFIG.pcw_dts [get_os]]
-	set sata_node [add_or_get_dt_node -n &sata -d $dts_file]
+	set sata_node [add_or_get_dt_node -n &psu_sata -d $dts_file]
 	set hsi_version [get_hsi_version]
 	set ver [split $hsi_version "."]
 	set version [lindex $ver 0]
@@ -479,7 +479,12 @@ proc generate {lib_handle} {
     gen_board_info
     gen_include_headers
     set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
-    if {[string match -nocase $proctype "psu_cortexa53"] || [string match -nocase $proctype "psv_cortexa72"]} {
+    if {[string match -nocase $proctype "psu_cortexa53"] || \
+	[string match -nocase $proctype "psv_cortexa72"] || \
+	[string match -nocase $proctype "psu_pmu"] || \
+	[string match -nocase $proctype "psv_pmc"] || \
+	[string match -nocase $proctype "psv_cortexr5"] || \
+	[string match -nocase $proctype "psu_cortexr5"]} {
 	set mainline_ker [get_property CONFIG.mainline_kernel [get_os]]
 	if {[string match -nocase $mainline_ker "none"]} {
 		gen_sata_laneinfo
@@ -524,12 +529,17 @@ proc update_chosen {os_handle} {
     } else {
 	set bootargs "earlycon"
     }
-    if {[string match -nocase $proctype "psv_cortexa72"]} {
-	#as the early params are defined in board dts files
-	return
-    }
-    if {[string match -nocase $proctype "psu_cortexa53"]} {
-           append bootargs " clk_ignore_unused"
+    if {[string match -nocase $proctype "psu_cortexa53"] || \
+	[string match -nocase $proctype "psv_cortexa72"] || \
+	[string match -nocase $proctype "psu_pmu"] || \
+	[string match -nocase $proctype "psv_pmc"]} {
+		if {[string match -nocase $proctype "psv_cortexa72"]} {
+			#as the early params are defined in board dts files
+			return
+		}
+		if {[string match -nocase $proctype "psu_cortexa53"]} {
+	           append bootargs " clk_ignore_unused"
+		}
     }
     hsi::utils::add_new_dts_param "${chosen_node}" "bootargs" "$bootargs" string
     set consoleip [get_property CONFIG.console_device $os_handle]
@@ -611,9 +621,11 @@ proc update_alias {os_handle} {
 	set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
 	if {[string match -nocase $proctype "ps7_cortexa9"]} {
 		set pos [lsearch $all_drivers "ps7_qspi*"]
-	} elseif {[string match -nocase $proctype "psu_cortexa53"]} {
+	} elseif {[string match -nocase $proctype "psu_cortexa53"] || \
+		[string match -nocase $proctype "psu_pmu"]} {
 		set pos [lsearch $all_drivers "psu_qspi*"]
-	} elseif {[string match -nocase $proctype "psv_cortexa72"]} {
+	} elseif {[string match -nocase $proctype "psv_cortexa72"] || \
+		  [string match -nocase $proctype "psv_pmc"]} {
 		set pos [lsearch $all_drivers "psv_pmc_qspi*"]
 	} else {
 		set pos [lsearch $all_drivers "psu_qspi*"]
@@ -677,7 +689,6 @@ proc update_alias {os_handle} {
                         continue
                   }
             }
-
         set tmp [list_property $drv_handle CONFIG.dtg.alias]
         if {[string_is_empty $tmp]} {
             continue
