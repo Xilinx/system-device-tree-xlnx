@@ -124,6 +124,8 @@ proc generate {drv_handle} {
     } else {
                 generate_clk_nodes $drv_handle $axiethernetfound $tx_chan $rx_chan
     }
+    set_drv_conf_prop $drv_handle C_M_AXI_MM2S_DATA_WIDTH xlnx,mm2s-data-width hexint
+    set_drv_conf_prop $drv_handle C_M_AXI_S2MM_DATA_WIDTH xlnx,s2mm-data-width hexint
 }
 
 proc add_dma_channel {drv_handle parent_node xdma addr mode devid} {
