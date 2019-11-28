@@ -48,4 +48,7 @@ proc generate {drv_handle} {
     }
     set_property CONFIG.xlnx,kind-of-intr $kind_of_intr $drv_handle
     set_drv_conf_prop $drv_handle C_NUM_INTR_INPUTS "xlnx,num-intr-inputs"
+    set_drv_conf_prop $drv_handle C_HAS_FAST "xlnx,is-fast"
+    set_drv_conf_prop $drv_handle C_IVAR_RESET_VALUE "xlnx,ivar-rst-val"
+    set_drv_conf_prop $drv_handle C_ADDR_WIDTH "xlnx,addr-width"
 }
