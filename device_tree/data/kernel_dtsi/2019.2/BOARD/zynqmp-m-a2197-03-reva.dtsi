@@ -40,7 +40,7 @@
 	};
 };
 
-&qspi {
+&psu_qspi_0 {
 	status = "okay";
 	is-dual = <1>;
 	flash@0 {
@@ -54,7 +54,7 @@
 	};
 };
 
-&sdhci0 { /* emmc MIO 13-23 - with some settings  16GB */
+&psu_sd_0 { /* emmc MIO 13-23 - with some settings  16GB */
 	status = "okay";
 	non-removable;
 	disable-wp;
@@ -62,24 +62,24 @@
 	xlnx,mio_bank = <0>; /* FIXME tap delay */
 };
 
-&uart0 { /* uart0 MIO38-39 */
+&psu_uart_0 { /* uart0 MIO38-39 */
 	status = "okay";
 	u-boot,dm-pre-reloc;
 };
 
-&uart1 { /* uart1 MIO40-41 */
+&psu_uart_1 { /* uart1 MIO40-41 */
 	status = "okay";
 	u-boot,dm-pre-reloc;
 };
 
-&sdhci1 { /* sd1 MIO45-51 cd in place */
+&psu_sd_1 { /* sd1 MIO45-51 cd in place */
 	status = "disable";
 	no-1-8-v;
 	disable-wp;
 	xlnx,mio_bank = <1>;
 };
 
-&gem0 {
+&psu_ethernet_0 {
 	status = "okay";
 	phy-handle = <&phy0>;
 	phy-mode = "sgmii"; /* DTG generates this properly  1512 */
@@ -93,7 +93,7 @@
 	Note: lane0 sgmii/lane1 usb3 */
 };
 
-&gpio {
+&psu_gpio_0 {
 	status = "okay";
 	gpio-line-names = "SCLK_OUT", "MISO_MO1", "MO2", "MO3", "MOSI_MIO0", /* 0 - 4 */
 		  "N_SS_OUT", "", "SYS_CTRL0", "SYS_CTRL1", "SYS_CTRL2", /* 5 - 9 */
@@ -133,7 +133,7 @@
 		  "", "", "", ""; /* 170 - 174 */
 };
 
-&i2c0 { /* MIO 34-35 - can't stay here */
+&psu_i2c_0 { /* MIO 34-35 - can't stay here */
 	status = "okay";
 	clock-frequency = <400000>;
 	i2c-mux@74 { /* u46 */
@@ -287,7 +287,7 @@
 /* TODO sysctrl via J239 */
 /* TODO samtec J212G/H via J242 */
 /* TODO teensy via U30 PCA9543A bus 1 */
-&i2c1 { /* i2c1 MIO 36-37 */
+&psu_i2c_1 { /* i2c1 MIO 36-37 */
 	status = "okay";
 	clock-frequency = <400000>;
 
@@ -435,7 +435,7 @@
 	};
 };
 
-&usb0 {
+&psu_usb_0 {
 	status = "okay";
 	xlnx,usb-polarity = <0>;
 	xlnx,usb-reset-mode = <0>;
@@ -448,7 +448,7 @@
 	maximum-speed = "high-speed";
 };
 
-&usb1 {
+&psu_usb_1 {
 	status = "disabled"; /* not at mem board */
 	xlnx,usb-polarity = <0>;
 	xlnx,usb-reset-mode = <0>;

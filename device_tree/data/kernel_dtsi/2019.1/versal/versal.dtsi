@@ -19,15 +19,14 @@
 		compatible = "simple-bus";
 		#address-cells = <0x2>;
 		#size-cells = <0x2>;
-		ranges;
+                ranges;
 
-		 serial0: serial@ff000000 {
-                        compatible = "arm,pl011", "arm,sbsa-uart";
-                        interrupt-parent = <&gic>;
-                        interrupts = <0 18 4>;
-                        reg = <0x0 0xff000000 0x0 0x1000>;
-                        current-speed = <115200>;
-                };
-
+		serial0: serial@ff000000 {
+			compatible = "arm,pl011", "arm,sbsa-uart";
+			interrupt-parent = <&gic>;
+			interrupts = <0 18 4>;
+			reg = <0x0 0xff000000 0x0 0x1000>;
+			current-speed = <115200>;
+		};
 	};
 };

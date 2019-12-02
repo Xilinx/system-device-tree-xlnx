@@ -57,6 +57,27 @@
 			cpu-idle-states = <&CPU_SLEEP_0>;
 		};
 
+		cpu4: cpu@4 {
+			compatible = "pmu-microblaze";
+			device_type = "cpu";
+			reg = <0x4>;
+			operating-points-v2 = <&cpu_opp_table>;
+		};
+
+		cpu5: cpu@5 {
+			compatible = "arm,cortex-r5";
+			device_type = "cpu";
+			reg = <0x5>;
+			operating-points-v2 = <&cpu_opp_table>;
+		};
+
+		cpu6: cpu@6 {
+			compatible = "arm,cortex-r5";
+			device_type = "cpu";
+			reg = <0x6>;
+			operating-points-v2 = <&cpu_opp_table>;
+		};
+
 		idle-states {
 			entry-method = "psci";
 
@@ -94,6 +115,11 @@
 			opp-microvolt = <1000000>;
 			clock-latency-ns = <500000>;
 		};
+		opp04 {
+			opp-hz = /bits/ 64 <180000000>;
+			opp-microvolt = <1000000>;
+			clock-latency-ns = <500000>;
+		};
 	};
 
 	dcc: dcc {
@@ -102,24 +128,292 @@
 		u-boot,dm-pre-reloc;
 	};
 
-	zynqmp_ipi {
+	psu_ipi_0: ipi@ff300000 {
+		status = "disabled";
 		compatible = "xlnx,zynqmp-ipi-mailbox";
 		interrupt-parent = <&gic>;
-		interrupts = <0 35 4>;
+		reg = <0x0 0xff300000 0x0 0x20>;
+		xlnx,ipi-bitmask = <0x1>;
+		xlnx,ipi-id = <2>;
+		#address-cells = <2>;
+		#size-cells = <2>;
+		xlnx,ipi-target-count = <7>;
+		ranges;
+		psu_ipi0_0: mailbox@0 {
+			xlnx,ipi-id = <2>;
+			xlnx,ipi-bitmask = <0x1>;
+		};
+		psu_ipi0_1: mailbox@1 {
+			xlnx,ipi-id = <0>;
+			xlnx,ipi-bitmask = <0x100>;
+		};
+		psu_ipi0_2: mailbox@2 {
+			xlnx,ipi-id = <1>;
+			xlnx,ipi-bitmask = <0x200>;
+		};
+		psu_ipi0_3: mailbox@3 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x10000>;
+		};
+		psu_ipi0_4: mailbox@4 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x20000>;
+		};
+		psu_ipi0_5: mailbox@5 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x40000>;
+		};
+		psu_ipi0_6: mailbox@6 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x80000>;
+		};
+	};
+
+	psu_ipi_1: ipi@ff310000 {
+		status = "disabled";
+		compatible = "xlnx,zynqmp-ipi-mailbox";
+		interrupt-parent = <&gic>;
+		reg = <0x0 0xff310000 0x0 0x20>;
+		xlnx,ipi-bitmask = <0x100>;
 		xlnx,ipi-id = <0>;
 		#address-cells = <2>;
 		#size-cells = <2>;
+		xlnx,ipi-target-count = <7>;
+		ranges;
+		psu_ipi1_0: mailbox@0 {
+			xlnx,ipi-id = <2>;
+			xlnx,ipi-bitmask = <0x1>;
+		};
+		psu_ipi1_1: mailbox@1 {
+			xlnx,ipi-id = <0>;
+			xlnx,ipi-bitmask = <0x100>;
+		};
+		psu_ipi1_2: mailbox@2 {
+			xlnx,ipi-id = <1>;
+			xlnx,ipi-bitmask = <0x200>;
+		};
+		psu_ipi1_3: mailbox@3 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x10000>;
+		};
+		psu_ipi1_4: mailbox@4 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x20000>;
+		};
+		psu_ipi1_5: mailbox@5 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x40000>;
+		};
+		psu_ipi1_6: mailbox@6 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x80000>;
+		};
+	};
+	psu_ipi_2: ipi@ff320000 {
+		status = "disabled";
+		compatible = "xlnx,zynqmp-ipi-mailbox";
+		interrupt-parent = <&gic>;
+		reg = <0x0 0xff320000 0x0 0x20>;
+		xlnx,ipi-bitmask = <0x200>;
+		xlnx,ipi-id = <1>;
+		#address-cells = <2>;
+		#size-cells = <2>;
+		xlnx,ipi-target-count = <7>;
+		ranges;
+		psu_ipi2_0: mailbox@0 {
+			xlnx,ipi-id = <2>;
+			xlnx,ipi-bitmask = <0x1>;
+		};
+		psu_ipi2_1: mailbox@1 {
+			xlnx,ipi-id = <0>;
+			xlnx,ipi-bitmask = <0x100>;
+		};
+		psu_ipi2_2: mailbox@2 {
+			xlnx,ipi-id = <1>;
+			xlnx,ipi-bitmask = <0x200>;
+		};
+		psu_ipi2_3: mailbox@3 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x10000>;
+		};
+		psu_ipi2_4: mailbox@4 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x20000>;
+		};
+		psu_ipi2_5: mailbox@5 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x40000>;
+		};
+		psu_ipi2_6: mailbox@6 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x80000>;
+		};
+	};
+
+	psu_ipi_3: ipi@ff330000 {
+		status = "disabled";
+		compatible = "xlnx,zynqmp-ipi-mailbox";
+		interrupt-parent = <&gic>;
+		reg = <0x0 0xff330000 0x0 0x20>;
+		xlnx,ipi-bitmask = <0x10000>;
+		xlnx,ipi-id = <7>;
+		#address-cells = <2>;
+		#size-cells = <2>;
+		xlnx,ipi-target-count = <7>;
+		ranges;
+		psu_ipi3_0: mailbox@0 {
+			xlnx,ipi-id = <2>;
+			xlnx,ipi-bitmask = <0x1>;
+		};
+		psu_ipi3_1: mailbox@1 {
+			xlnx,ipi-id = <0>;
+			xlnx,ipi-bitmask = <0x100>;
+		};
+		psu_ipi3_2: mailbox@2 {
+			xlnx,ipi-id = <1>;
+			xlnx,ipi-bitmask = <0x200>;
+		};
+		psu_ipi3_3: mailbox@3 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x10000>;
+		};
+		psu_ipi3_4: mailbox@4 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x20000>;
+		};
+		psu_ipi3_5: mailbox@5 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x40000>;
+		};
+		psu_ipi3_6: mailbox@6 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x80000>;
+		};
+	};
+
+	psu_ipi_4: ipi@ff331000 {
+		status = "disabled";
+		compatible = "xlnx,zynqmp-ipi-mailbox";
+		interrupt-parent = <&gic>;
+		reg = <0x0 0xff331000 0x0 0x20>;
+		xlnx,ipi-bitmask = <0x20000U>;
+		xlnx,ipi-id = <7>;
+		#address-cells = <2>;
+		#size-cells = <2>;
+		xlnx,ipi-target-count = <7>;
 		ranges;
 
-		ipi_mailbox_pmu1: mailbox@ff990400 {
-			reg = <0x0 0xff9905c0 0x0 0x20>,
-			      <0x0 0xff9905e0 0x0 0x20>,
-			      <0x0 0xff990e80 0x0 0x20>,
-			      <0x0 0xff990ea0 0x0 0x20>;
-			reg-names = "local_request_region", "local_response_region",
-				    "remote_request_region", "remote_response_region";
-			#mbox-cells = <1>;
-			xlnx,ipi-id = <4>;
+		psu_ipi4_0: mailbox@0 {
+			xlnx,ipi-id = <2>;
+			xlnx,ipi-bitmask = <0x1>;
+		};
+		psu_ipi4_1: mailbox@1 {
+			xlnx,ipi-id = <0>;
+			xlnx,ipi-bitmask = <0x100>;
+		};
+		psu_ipi4_2: mailbox@2 {
+			xlnx,ipi-id = <1>;
+			xlnx,ipi-bitmask = <0x200>;
+		};
+		psu_ipi4_3: mailbox@3 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x10000>;
+		};
+		psu_ipi4_4: mailbox@4 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x20000>;
+		};
+		psu_ipi4_5: mailbox@5 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x40000>;
+		};
+		psu_ipi4_6: mailbox@6 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x80000>;
+		};
+	};
+
+	psu_ipi_5: ipi@ff332000 {
+		compatible = "xlnx,zynqmp-ipi-mailbox";
+		status = "disabled";
+		interrupt-parent = <&gic>;
+		reg = <0x0 0xff332000 0x0 0x20>;
+		xlnx,ipi-bitmask = <0x40000>;
+		xlnx,ipi-id = <7>;
+		#address-cells = <2>;
+		#size-cells = <2>;
+		xlnx,ipi-target-count = <7>;
+		ranges;
+
+		psu_ipi5_0: mailbox@0 {
+			xlnx,ipi-id = <2>;
+			xlnx,ipi-bitmask = <0x1>;
+		};
+		psu_ipi5_1: mailbox@1 {
+			xlnx,ipi-id = <0>;
+			xlnx,ipi-bitmask = <0x100>;
+		};
+		psu_ipi5_2: mailbox@2 {
+			xlnx,ipi-id = <1>;
+			xlnx,ipi-bitmask = <0x200>;
+		};
+		psu_ipi5_3: mailbox@3 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x10000>;
+		};
+		psu_ipi5_4: mailbox@4 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x20000>;
+		};
+		psu_ipi5_5: mailbox@5 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x40000>;
+		};
+		psu_ipi5_6: mailbox@6 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x80000>;
+		};
+	};
+
+	psu_ipi_6: ipi@ff333000 {
+		status = "disabled";
+		compatible = "xlnx,zynqmp-ipi-mailbox";
+		interrupt-parent = <&gic>;
+		reg = <0x0 0xff333000 0x0 0x20>;
+		xlnx,ipi-bitmask = <0x80000>;
+		xlnx,ipi-id = <7>;
+		#address-cells = <2>;
+		#size-cells = <2>;
+		xlnx,ipi-target-count = <7>;
+		ranges;
+
+		psu_ipi6_0: mailbox@0 {
+			xlnx,ipi-id = <2>;
+			xlnx,ipi-bitmask = <0x1>;
+		};
+		psu_ipi6_1: mailbox@1 {
+			xlnx,ipi-id = <0>;
+			xlnx,ipi-bitmask = <0x100>;
+		};
+		psu_ipi6_2: mailbox@2 {
+			xlnx,ipi-id = <1>;
+			xlnx,ipi-bitmask = <0x200>;
+		};
+		psu_ipi6_3: mailbox@3 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x10000>;
+		};
+		psu_ipi6_4: mailbox@4 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x20000>;
+		};
+		psu_ipi6_5: mailbox@5 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x40000>;
+		};
+		psu_ipi6_6: mailbox@6 {
+			xlnx,ipi-id = <7>;
+			xlnx,ipi-bitmask = <0x80000>;
 		};
 	};
 
@@ -148,8 +442,6 @@
 				compatible = "xlnx,zynqmp-power";
 				interrupt-parent = <&gic>;
 				interrupts = <0 35 4>;
-				mboxes = <&ipi_mailbox_pmu1 0>,
-					 <&ipi_mailbox_pmu1 1>;
 				mbox-names = "tx", "rx";
 			};
 
@@ -301,7 +593,7 @@
 		#size-cells = <2>;
 		ranges;
 
-		can0: can@ff060000 {
+		psu_can_0: can@ff060000 {
 			compatible = "xlnx,zynq-can-1.0";
 			status = "disabled";
 			clock-names = "can_clk", "pclk";
@@ -313,7 +605,7 @@
 			power-domains = <&zynqmp_firmware 47>;
 		};
 
-		can1: can@ff070000 {
+		psu_can_1: can@ff070000 {
 			compatible = "xlnx,zynq-can-1.0";
 			status = "disabled";
 			clock-names = "can_clk", "pclk";
@@ -343,9 +635,18 @@
 					     <0 123 4>;
 			};
 		};
+		/* CSU DMA */
+
+		psu_csudma_0: dma@ffc80000 {
+		       status = "disabled";
+                       compatible = "xlnx,zynqmp-csudma-1.0";
+                       interrupt-parent = <&gic>;
+                       interrupts = <0 86 4>;
+                       reg = <0x0 0xffc80000 0x0 0x40000>;
+                };
 
 		/* GDMA */
-		fpd_dma_chan1: dma@fd500000 {
+		psu_gdma_0: dma@fd500000 {
 			status = "disabled";
 			compatible = "xlnx,zynqmp-dma-1.0";
 			reg = <0x0 0xfd500000 0x0 0x1000>;
@@ -358,7 +659,7 @@
 			power-domains = <&zynqmp_firmware 42>;
 		};
 
-		fpd_dma_chan2: dma@fd510000 {
+		psu_gdma_1: dma@fd510000 {
 			status = "disabled";
 			compatible = "xlnx,zynqmp-dma-1.0";
 			reg = <0x0 0xfd510000 0x0 0x1000>;
@@ -371,7 +672,7 @@
 			power-domains = <&zynqmp_firmware 42>;
 		};
 
-		fpd_dma_chan3: dma@fd520000 {
+		psu_gdma_2: dma@fd520000 {
 			status = "disabled";
 			compatible = "xlnx,zynqmp-dma-1.0";
 			reg = <0x0 0xfd520000 0x0 0x1000>;
@@ -384,7 +685,7 @@
 			power-domains = <&zynqmp_firmware 42>;
 		};
 
-		fpd_dma_chan4: dma@fd530000 {
+		psu_gdma_3: dma@fd530000 {
 			status = "disabled";
 			compatible = "xlnx,zynqmp-dma-1.0";
 			reg = <0x0 0xfd530000 0x0 0x1000>;
@@ -397,7 +698,7 @@
 			power-domains = <&zynqmp_firmware 42>;
 		};
 
-		fpd_dma_chan5: dma@fd540000 {
+		psu_gdma_4: dma@fd540000 {
 			status = "disabled";
 			compatible = "xlnx,zynqmp-dma-1.0";
 			reg = <0x0 0xfd540000 0x0 0x1000>;
@@ -410,7 +711,7 @@
 			power-domains = <&zynqmp_firmware 42>;
 		};
 
-		fpd_dma_chan6: dma@fd550000 {
+		psu_gdma_5: dma@fd550000 {
 			status = "disabled";
 			compatible = "xlnx,zynqmp-dma-1.0";
 			reg = <0x0 0xfd550000 0x0 0x1000>;
@@ -423,7 +724,7 @@
 			power-domains = <&zynqmp_firmware 42>;
 		};
 
-		fpd_dma_chan7: dma@fd560000 {
+		psu_gdma_6: dma@fd560000 {
 			status = "disabled";
 			compatible = "xlnx,zynqmp-dma-1.0";
 			reg = <0x0 0xfd560000 0x0 0x1000>;
@@ -436,7 +737,7 @@
 			power-domains = <&zynqmp_firmware 42>;
 		};
 
-		fpd_dma_chan8: dma@fd570000 {
+		psu_gdma_7: dma@fd570000 {
 			status = "disabled";
 			compatible = "xlnx,zynqmp-dma-1.0";
 			reg = <0x0 0xfd570000 0x0 0x1000>;
@@ -464,7 +765,7 @@
 		 * These dma channels, Users should ensure that these dma
 		 * Channels are allowed for non secure access.
 		 */
-		lpd_dma_chan1: dma@ffa80000 {
+		psu_adma_0: dma@ffa80000 {
 			status = "disabled";
 			compatible = "xlnx,zynqmp-dma-1.0";
 			reg = <0x0 0xffa80000 0x0 0x1000>;
@@ -477,7 +778,7 @@
 			power-domains = <&zynqmp_firmware 43>;
 		};
 
-		lpd_dma_chan2: dma@ffa90000 {
+		psu_adma_1: dma@ffa90000 {
 			status = "disabled";
 			compatible = "xlnx,zynqmp-dma-1.0";
 			reg = <0x0 0xffa90000 0x0 0x1000>;
@@ -490,7 +791,7 @@
 			power-domains = <&zynqmp_firmware 43>;
 		};
 
-		lpd_dma_chan3: dma@ffaa0000 {
+		psu_adma_2: dma@ffaa0000 {
 			status = "disabled";
 			compatible = "xlnx,zynqmp-dma-1.0";
 			reg = <0x0 0xffaa0000 0x0 0x1000>;
@@ -503,7 +804,7 @@
 			power-domains = <&zynqmp_firmware 43>;
 		};
 
-		lpd_dma_chan4: dma@ffab0000 {
+		psu_adma_3: dma@ffab0000 {
 			status = "disabled";
 			compatible = "xlnx,zynqmp-dma-1.0";
 			reg = <0x0 0xffab0000 0x0 0x1000>;
@@ -516,7 +817,7 @@
 			power-domains = <&zynqmp_firmware 43>;
 		};
 
-		lpd_dma_chan5: dma@ffac0000 {
+		psu_adma_4: dma@ffac0000 {
 			status = "disabled";
 			compatible = "xlnx,zynqmp-dma-1.0";
 			reg = <0x0 0xffac0000 0x0 0x1000>;
@@ -529,7 +830,7 @@
 			power-domains = <&zynqmp_firmware 43>;
 		};
 
-		lpd_dma_chan6: dma@ffad0000 {
+		psu_adma_5: dma@ffad0000 {
 			status = "disabled";
 			compatible = "xlnx,zynqmp-dma-1.0";
 			reg = <0x0 0xffad0000 0x0 0x1000>;
@@ -542,7 +843,7 @@
 			power-domains = <&zynqmp_firmware 43>;
 		};
 
-		lpd_dma_chan7: dma@ffae0000 {
+		psu_adma_6: dma@ffae0000 {
 			status = "disabled";
 			compatible = "xlnx,zynqmp-dma-1.0";
 			reg = <0x0 0xffae0000 0x0 0x1000>;
@@ -555,7 +856,7 @@
 			power-domains = <&zynqmp_firmware 43>;
 		};
 
-		lpd_dma_chan8: dma@ffaf0000 {
+		psu_adma_7: dma@ffaf0000 {
 			status = "disabled";
 			compatible = "xlnx,zynqmp-dma-1.0";
 			reg = <0x0 0xffaf0000 0x0 0x1000>;
@@ -568,14 +869,15 @@
 			power-domains = <&zynqmp_firmware 43>;
 		};
 
-		mc: memory-controller@fd070000 {
+		psu_ddrc_0: memory-controller@fd070000 {
 			compatible = "xlnx,zynqmp-ddrc-2.40a";
 			reg = <0x0 0xfd070000 0x0 0x30000>;
 			interrupt-parent = <&gic>;
 			interrupts = <0 112 4>;
+			status = "disabled";
 		};
 
-		nand0: nand@ff100000 {
+		psu_nand_0: nand@ff100000 {
 			compatible = "arasan,nfc-v3p10";
 			status = "disabled";
 			reg = <0x0 0xff100000 0x0 0x1000>;
@@ -589,7 +891,7 @@
 			power-domains = <&zynqmp_firmware 44>;
 		};
 
-		gem0: ethernet@ff0b0000 {
+		psu_ethernet_0: ethernet@ff0b0000 {
 			compatible = "cdns,zynqmp-gem", "cdns,gem";
 			status = "disabled";
 			interrupt-parent = <&gic>;
@@ -603,7 +905,7 @@
 			power-domains = <&zynqmp_firmware 29>;
 		};
 
-		gem1: ethernet@ff0c0000 {
+		psu_ethernet_1: ethernet@ff0c0000 {
 			compatible = "cdns,zynqmp-gem", "cdns,gem";
 			status = "disabled";
 			interrupt-parent = <&gic>;
@@ -617,7 +919,7 @@
 			power-domains = <&zynqmp_firmware 30>;
 		};
 
-		gem2: ethernet@ff0d0000 {
+		psu_ethernet_2: ethernet@ff0d0000 {
 			compatible = "cdns,zynqmp-gem", "cdns,gem";
 			status = "disabled";
 			interrupt-parent = <&gic>;
@@ -631,7 +933,7 @@
 			power-domains = <&zynqmp_firmware 31>;
 		};
 
-		gem3: ethernet@ff0e0000 {
+		psu_ethernet_3: ethernet@ff0e0000 {
 			compatible = "cdns,zynqmp-gem", "cdns,gem";
 			status = "disabled";
 			interrupt-parent = <&gic>;
@@ -645,7 +947,7 @@
 			power-domains = <&zynqmp_firmware 32>;
 		};
 
-		gpio: gpio@ff0a0000 {
+		psu_gpio_0: gpio@ff0a0000 {
 			compatible = "xlnx,zynqmp-gpio-1.0";
 			status = "disabled";
 			#gpio-cells = <0x2>;
@@ -658,7 +960,7 @@
 			power-domains = <&zynqmp_firmware 46>;
 		};
 
-		i2c0: i2c@ff020000 {
+		psu_i2c_0: i2c@ff020000 {
 			compatible = "cdns,i2c-r1p14", "cdns,i2c-r1p10";
 			status = "disabled";
 			interrupt-parent = <&gic>;
@@ -669,7 +971,7 @@
 			power-domains = <&zynqmp_firmware 37>;
 		};
 
-		i2c1: i2c@ff030000 {
+		psu_i2c_1: i2c@ff030000 {
 			compatible = "cdns,i2c-r1p14", "cdns,i2c-r1p10";
 			status = "disabled";
 			interrupt-parent = <&gic>;
@@ -796,7 +1098,7 @@
 			};
 		};
 
-		qspi: spi@ff0f0000 {
+		psu_qspi_0: spi@ff0f0000 {
 			u-boot,dm-pre-reloc;
 			compatible = "xlnx,zynqmp-qspi-1.0";
 			status = "disabled";
@@ -855,7 +1157,7 @@
 			};
 		};
 
-		sata: ahci@fd0c0000 {
+		psu_sata: ahci@fd0c0000 {
 			compatible = "ceva,ahci-1v84";
 			status = "disabled";
 			reg = <0x0 0xfd0c0000 0x0 0x2000>;
@@ -867,7 +1169,7 @@
 				 <&smmu 0x4c2>, <&smmu 0x4c3>;*/
 		};
 
-		sdhci0: mmc@ff160000 {
+		psu_sd_0: mmc@ff160000 {
 			u-boot,dm-pre-reloc;
 			compatible = "xlnx,zynqmp-8.9a", "arasan,sdhci-8.9a";
 			status = "disabled";
@@ -880,10 +1182,10 @@
 			iommus = <&smmu 0x870>;
 			power-domains = <&zynqmp_firmware 39>;
 			nvmem-cells = <&soc_revision>;
-			nvmem-cell-names = "soc_revision";
+			nvmeim-cell-names = "soc_revision";
 		};
 
-		sdhci1: mmc@ff170000 {
+		psu_sd_1: mmc@ff170000 {
 			u-boot,dm-pre-reloc;
 			compatible = "xlnx,zynqmp-8.9a", "arasan,sdhci-8.9a";
 			status = "disabled";
@@ -896,10 +1198,10 @@
 			iommus = <&smmu 0x871>;
 			power-domains = <&zynqmp_firmware 40>;
 			nvmem-cells = <&soc_revision>;
-			nvmem-cell-names = "soc_revision";
+			nvmeim-cell-names = "soc_revision";
 		};
 
-		spi0: spi@ff040000 {
+		psu_spi_0: spi@ff040000 {
 			compatible = "cdns,spi-r1p6";
 			status = "disabled";
 			interrupt-parent = <&gic>;
@@ -911,7 +1213,7 @@
 			power-domains = <&zynqmp_firmware 35>;
 		};
 
-		spi1: spi@ff050000 {
+		psu_spi_1: spi@ff050000 {
 			compatible = "cdns,spi-r1p6";
 			status = "disabled";
 			interrupt-parent = <&gic>;
@@ -923,7 +1225,7 @@
 			power-domains = <&zynqmp_firmware 36>;
 		};
 
-		ttc0: timer@ff110000 {
+		psu_ttc_0: ttc@ff110000 {
 			compatible = "cdns,ttc";
 			status = "disabled";
 			interrupt-parent = <&gic>;
@@ -933,7 +1235,7 @@
 			power-domains = <&zynqmp_firmware 24>;
 		};
 
-		ttc1: timer@ff120000 {
+		psu_ttc_1: ttc@ff120000 {
 			compatible = "cdns,ttc";
 			status = "disabled";
 			interrupt-parent = <&gic>;
@@ -943,7 +1245,7 @@
 			power-domains = <&zynqmp_firmware 25>;
 		};
 
-		ttc2: timer@ff130000 {
+		psu_ttc_2: ttc@ff130000 {
 			compatible = "cdns,ttc";
 			status = "disabled";
 			interrupt-parent = <&gic>;
@@ -953,7 +1255,7 @@
 			power-domains = <&zynqmp_firmware 26>;
 		};
 
-		ttc3: timer@ff140000 {
+		psu_ttc_3: ttc@ff140000 {
 			compatible = "cdns,ttc";
 			status = "disabled";
 			interrupt-parent = <&gic>;
@@ -963,7 +1265,7 @@
 			power-domains = <&zynqmp_firmware 27>;
 		};
 
-		uart0: serial@ff000000 {
+		psu_uart_0: serial@ff000000 {
 			u-boot,dm-pre-reloc;
 			compatible = "cdns,uart-r1p12", "xlnx,xuartps";
 			status = "disabled";
@@ -974,7 +1276,7 @@
 			power-domains = <&zynqmp_firmware 33>;
 		};
 
-		uart1: serial@ff010000 {
+		psu_uart_1: serial@ff010000 {
 			u-boot,dm-pre-reloc;
 			compatible = "cdns,uart-r1p12", "xlnx,xuartps";
 			status = "disabled";
@@ -985,7 +1287,7 @@
 			power-domains = <&zynqmp_firmware 34>;
 		};
 
-		usb0: usb0@ff9d0000 {
+		psu_usb_0: usb0@ff9d0000 {
 			#address-cells = <2>;
 			#size-cells = <2>;
 			status = "disabled";
@@ -1015,7 +1317,7 @@
 			};
 		};
 
-		usb1: usb1@ff9e0000 {
+		psu_usb_1: usb1@ff9e0000 {
 			#address-cells = <2>;
 			#size-cells = <2>;
 			status = "disabled";
@@ -1044,7 +1346,18 @@
 			};
 		};
 
-		watchdog0: watchdog@fd4d0000 {
+		psu_csuwdt_0: watchdog@ffcb0000 {
+			compatible = "cdns,wdt-r1p2";
+			status = "disabled";
+			interrupt-parent = <&gic>;
+			interrupts = <0 53 1>;
+			reg = <0x0 0xffcb0000 0x0 0x1000>;
+			timeout-sec = <60>;
+			reset-on-timeout;
+			xlnx,clock-freq = <99990005>;
+		};
+
+		psu_wdt_0: watchdog@fd4d0000 {
 			compatible = "cdns,wdt-r1p2";
 			status = "disabled";
 			interrupt-parent = <&gic>;
@@ -1054,7 +1367,7 @@
 			reset-on-timeout;
 		};
 
-		lpd_watchdog: watchdog@ff150000 {
+		psu_wdt_1: watchdog@ff150000 {
 			compatible = "cdns,wdt-r1p2";
 			status = "disabled";
 			interrupt-parent = <&gic>;
@@ -1089,7 +1402,7 @@
 			};
 		};
 
-		xlnx_dpdma: dma@fd4c0000 {
+		psu_dpdma: dma@fd4c0000 {
 			compatible = "xlnx,dpdma";
 			status = "disabled";
 			reg = <0x0 0xfd4c0000 0x0 0x1000>;
@@ -1119,7 +1432,7 @@
 			};
 		};
 
-		zynqmp_dpsub: zynqmp-display@fd4a0000 {
+		psu_dp: zynqmp-display@fd4a0000 {
 			compatible = "xlnx,zynqmp-dpsub-1.7";
 			status = "disabled";
 			reg = <0x0 0xfd4a0000 0x0 0x1000>,
@@ -1134,14 +1447,14 @@
 
 			vid-layer {
 				dma-names = "vid0", "vid1", "vid2";
-				dmas = <&xlnx_dpdma 0>,
-				       <&xlnx_dpdma 1>,
-				       <&xlnx_dpdma 2>;
+				dmas = <&psu_dpdma 0>,
+				       <&psu_dpdma 1>,
+				       <&psu_dpdma 2>;
 			};
 
 			gfx-layer {
 				dma-names = "gfx0";
-				dmas = <&xlnx_dpdma 3>;
+				dmas = <&psu_dpdma 3>;
 			};
 
 			/* dummy node to to indicate there's no child i2c device */
@@ -1155,13 +1468,13 @@
 
 			zynqmp_dp_snd_pcm0: zynqmp_dp_snd_pcm0 {
 				compatible = "xlnx,dp-snd-pcm";
-				dmas = <&xlnx_dpdma 4>;
+				dmas = <&psu_dpdma 4>;
 				dma-names = "tx";
 			};
 
 			zynqmp_dp_snd_pcm1: zynqmp_dp_snd_pcm1 {
 				compatible = "xlnx,dp-snd-pcm";
-				dmas = <&xlnx_dpdma 5>;
+				dmas = <&psu_dpdma 5>;
 				dma-names = "tx";
 			};
 

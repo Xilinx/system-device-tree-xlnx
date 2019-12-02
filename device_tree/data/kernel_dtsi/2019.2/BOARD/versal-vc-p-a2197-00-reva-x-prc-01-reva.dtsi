@@ -19,27 +19,27 @@
         };
 
 	aliases {
-		serial0 = &serial0;
-		ethernet0 = &gem0;
-		ethernet1 = &gem1;
-		i2c0 = &i2c1;
-		mmc0 = &sdhci1;
-		spi0 = &qspi;
-		usb0 = &usb0;
-		rtc0 = &rtc;
+		serial0 = &psv_sbsauart_0;
+		ethernet0 = &psv_ethernet_0;
+		ethernet1 = &psv_ethernet_1;
+		i2c0 = &psv_i2c_1;
+		mmc0 = &psv_pmc_sd_1;
+		spi0 = &psv_pmc_qspi_0;
+		usb0 = &psv_usb_xhci_0;
+		rtc0 = &psv_pmc_rtc_0;
 	};
 
 };
 
-&rtc {
+&psv_pmc_rtc_0 {
 	status = "okay";
 };
 
-&gpio0 {
+&psv_gpio_0 {
 	status = "okay";
 };
 
-&gpio1 {
+&psv_gpio_1 {
 	status = "okay";
 };
 
@@ -47,11 +47,11 @@
         status = "okay";
 };
 
-&watchdog {
+&psv_wwdt_0 {
 	status = "okay";
 };
 
-&qspi {
+&psv_pmc_qspi_0 {
         status = "okay"; /* u93 and u92 */
 	num-cs = <0x1>;
 	is-dual = <0x1>;
@@ -83,22 +83,22 @@
 			reg = <0x6920000 0x5E0000>;
 		};
 		partition@7f40000 {
-			label = "qspi-bootenv";
-			reg = <0x7f40000 0x40000>;
-		};
+                       label = "qspi-bootenv";
+                       reg = <0x7f40000 0x40000>;
+                };
 	};
 };
 
-&sdhci1 { /* U104 */
+&psv_pmc_sd_1 { /* U104 */
 	status = "okay";
 	xlnx,mio_bank = <1>;
 };
 
-&serial0 {
+&psv_sbsauart_0 {
         status = "okay";
 };
 
-&gem0 {
+&psv_ethernet_0 {
 	status = "okay";
 	phy-handle = <&phy1>; /* u128 */
 	phy-mode = "rgmii-id";
@@ -118,13 +118,13 @@
 	};
 };
 
-&gem1 {
+&psv_ethernet_1 {
 	status = "okay";
 	phy-handle = <&phy2>; /* u134 */
 	phy-mode = "rgmii-id";
 };
 
-&i2c1 {
+&psv_i2c_1 {
 	status = "okay";
 	clock-frequency = <400000>;
 	eeprom_versal: eeprom@51 { /* U116 */
@@ -135,7 +135,7 @@
 	/* FIXME - U117 and U118 */
 };
 
-&usb0 {
+&psv_usb_xhci_0 {
 	status = "okay";
 	xlnx,usb-polarity = <0x0>;
 	xlnx,usb-reset-mode = <0x0>;

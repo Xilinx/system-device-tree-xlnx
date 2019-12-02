@@ -17,22 +17,22 @@
 	};
 
 	aliases {
-		serial0 = &serial0;
-		ethernet0 = &gem0;
-		ethernet1 = &gem1;
-		i2c0 = &i2c0;
-		i2c1 = &i2c1;
-		mmc0 = &sdhci1;
-		spi0 = &qspi;
-		usb0 = &usb0;
-		rtc0 = &rtc;
+		serial0 = &psv_sbsauart_0;
+		ethernet0 = &psv_ethernet_0;
+		ethernet1 = &psv_ethernet_1;
+		i2c0 = &psv_i2c_0;
+		i2c1 = &psv_i2c_1;
+		mmc0 = &psv_pmc_sd_1;
+		spi0 = &psv_pmc_qspi_0;
+		usb0 = &psv_usb_xhci_0;
+		rtc0 = &psv_pmc_rtc_0;
 	};
 };
 
 /* PMC_MIO 0 -12 - configuration header QSPI/OSPI/EMMC */
 /* FIXME PMC_MIO37 ZU4_TRIGGER/PMC_MIO37/38 PCIE */
 
-&can1 { /* MIO40-41 */
+&psv_canfd_1 { /* MIO40-41 */
 	status = "okay";
 };
 
@@ -40,32 +40,33 @@
 	status = "okay";
 };
 
-&rtc {
+&psv_pmc_rtc_0 {
 	status = "okay";
 };
 
-&gpio0 {
+&psv_gpio_0 {
 	status = "okay";
 };
 
-&gpio1 {
+&psv_gpio_1 {
 	status = "okay";
 };
 
-&watchdog {
+&psv_wwdt_0 {
 	status = "okay";
 };
 
-&sdhci1 { /* PMC_MIO26-36/51 */
+&psv_pmc_sd_1 { /* PMC_MIO26-36/51 */
+	status = "okay";
 	xlnx,mio_bank = <1>;
 	no-1-8-v;
 };
 
-&serial0 { /* PMC_MIO42/43 */
+&psv_sbsauart_0 { /* PMC_MIO42/43 */
 	status = "okay";
 };
 
-&gem0 { /* PMC_MIO_48, LPD_MIO0-11/24/25 */
+&psv_ethernet_0 { /* PMC_MIO_48, LPD_MIO0-11/24/25 */
 	status = "okay";
 	phy-handle = <&phy1>; /* u128 */
 	phy-mode = "rgmii-id";
@@ -85,23 +86,23 @@
 	};
 };
 
-&gem1 { /* PMC_MIO_49, LPD_MIO12-23 */
+&psv_ethernet_1 { /* PMC_MIO_49, LPD_MIO12-23 */
 	status = "okay";
 	phy-handle = <&phy2>; /* u134 */
 	phy-mode = "rgmii-id";
 };
 
-&i2c0 { /* PMC_MIO46/47 */
+&psv_i2c_0 { /* PMC_MIO46/47 */
 	status = "okay";
 	clock-frequency = <400000>;
 };
 
-&i2c1 { /* PMC_MIO44/45 */
+&psv_i2c_1 { /* PMC_MIO44/45 */
 	status = "okay";
 	clock-frequency = <400000>;
 };
 
-&usb0 { /* PMC_MIO13_500 - PMC_MIO25 USB 2.0 */
+&psv_usb_xhci_0 { /* PMC_MIO13_500 - PMC_MIO25 USB 2.0 */
 	status = "okay";
 	xlnx,usb-polarity = <0x0>;
 	xlnx,usb-reset-mode = <0x0>;

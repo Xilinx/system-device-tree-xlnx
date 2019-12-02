@@ -14,7 +14,7 @@
 	compatible = "xlnx,zynqmp-zcu1275-revB", "xlnx,zynqmp-zcu1275", "xlnx,zynqmp";
 };
 
-&qspi {
+&psu_qspi_0 {
 	flash@0 {
 		compatible = "m25p80", "jedec,spi-nor"; /* 32MB */
 		#address-cells = <1>;
@@ -42,7 +42,7 @@
 	};
 };
 
-&sdhci1 {
+&psu_sd_1 {
 	/*
 	* 1.0 revision has level shifter and this property should be
 	* removed for supporting UHS mode
@@ -50,7 +50,7 @@
 	no-1-8-v;
 };
 
-&gem1 {
+&psu_ethernet_1 {
 	psu_ethernet_1_mdio: mdio {
 		phy1: ethernet-phy@1 {
 			device_type = "ethernet-phy";

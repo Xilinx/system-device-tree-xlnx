@@ -19,9 +19,9 @@
 	};
 
 	aliases {
-		serial0 = &serial0;
-		serial1 = &serial1;
-		spi0 = &ospi;
+		serial0 = &psv_sbsaurt_0;
+		serial1 = &psv_sbsaurt_1;
+		spi0 = &psv_pmc_ospi_0;
 	};
 };
 
@@ -29,23 +29,23 @@
 	status = "okay";
 };
 
-&gpio0 {
+&psv_gpio_0 {
 	status = "okay";
 };
 
-&gpio1 {
+&psv_gpio_1 {
 	status = "okay";
 };
 
-&serial0 {
+&psv_sbsaurt_0 {
 	status = "okay";
 };
 
-&serial1 {
+&psv_sbsaurt_1 {
 	status = "disabled"; /* communication with MSP432 */
 };
 
-&ospi {
+&psv_pmc_ospi_0 {
 	status = "okay";
 	bus-num = <2>;
 	num-cs = <1>;

@@ -102,7 +102,7 @@
 	status = "okay";
 };
 
-&gem3 {
+&psu_ethernet_3 {
 	status = "okay";
 	phy-handle = <&phy0>;
 	phy-mode = "rgmii-id";
@@ -115,7 +115,7 @@
 	};
 };
 
-&gpio {
+&psu_gpio_0 {
 	status = "okay";
 	gpio-line-names = "QSPI_LWR_CLK", "QSPI_LWR_DQ1", "QSPI_LWR_DQ2", "QSPI_LWR_DQ3", "QSPI_LWR_DQ0", /* 0 - 4 */
 		  "QSPI_LWR_CS_B", "", "QSPI_UPR_CS_B", "QSPI_UPR_DQ0", "QSPI_UPR_DQ1", /* 5 - 9 */
@@ -155,7 +155,7 @@
 		  "", "", "", ""; /* 170 - 174 */
 };
 
-&i2c0 {
+&psu_i2c_0 {
 	status = "okay";
 	clock-frequency = <400000>;
 	pinctrl-names = "default", "gpio";
@@ -323,7 +323,7 @@
 	/* u38 MPS430 */
 };
 
-&i2c1 {
+&psu_i2c_1 {
 	status = "okay";
 	clock-frequency = <400000>;
 	pinctrl-names = "default", "gpio";
@@ -537,7 +537,7 @@
 	};
 };
 
-&qspi {
+&psu_qspi_0 {
 	status = "okay";
 	is-dual = <1>;
 	flash@0 {
@@ -551,7 +551,7 @@
 	};
 };
 
-&sata {
+&psu_sata {
 	status = "okay";
 	/* SATA OOB timing settings */
 	ceva,p0-cominit-params = /bits/ 8 <0x18 0x40 0x18 0x28>;
@@ -567,7 +567,7 @@
 };
 
 /* SD1 with level shifter */
-&sdhci1 {
+&psu_sd_1 {
 	status = "okay";
 	disable-wp;
 	xlnx,mio_bank = <1>;

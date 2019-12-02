@@ -19,15 +19,15 @@
 	};
 
 	aliases {
-		serial0 = &serial0;
-		serial1 = &serial1;
-		ethernet1 = &gem1;
-		i2c0 = &i2c0;
-		i2c1 = &i2c1;
-		mmc0 = &sdhci1;
-		spi0 = &ospi;
-		spi1 = &spi0;
-		usb0 = &usb0;
+		serial0 = &psv_sbsauart_0;
+		serial1 = &psv_sbsauart_1;
+		ethernet1 = &psv_ethernet_1;
+		i2c0 = &psv_i2c_0;
+		i2c1 = &psv_i2c_1;
+		mmc0 = &psv_pmc_sd_1;
+		spi0 = &psv_pmc_ospi_0;
+		spi1 = &psv_spi_0;
+		usb0 = &psv_usb_xhci_0;
 	};
 };
 
@@ -35,7 +35,7 @@
 	status = "okay";
 };
 
-&gem1 {
+&psv_ethernet_1 {
 	status = "okay";
 	phy-handle = <&phy1>; /* u175 */
 	phy-mode = "rgmii-id"; /* RTL8211DN */
@@ -44,15 +44,15 @@
 	};
 };
 
-&gpio0 {
+&psv_gpio_0 {
 	status = "okay";
 };
 
-&gpio1 {
+&psv_gpio_1 {
 	status = "okay";
 };
 
-&i2c0 {
+&psv_i2c_0 {
 	status = "okay";
 	clock-frequency = <400000>;
 	eeprom_versal: eeprom@51 { /* U153 */
@@ -61,7 +61,7 @@
 	};
 };
 
-&i2c1 {
+&psv_i2c_1 {
 	status = "okay";
 	clock-frequency = <400000>;
 	eeprom: eeprom@51 { /* U155 */
@@ -70,7 +70,7 @@
 	};
 };
 
-&qspi {
+&psv_pmc_qspi_0 {
 	status = "disabled"; /* u93 and u92 and u161 and u160 */
 	num-cs = <1>;
 	is-dual = <1>;
@@ -88,26 +88,26 @@
 };
 
 /* Mutually exclusive with qspi */
-&ospi {
+&psv_pmc_ospi_0 {
 	status = "okay"; /* U163/U97 MT35XU02G */
 };
 
-&sdhci1 { /* J3 MIO26, MIO29 - MIO33 */
+&psv_pmc_sd_1 { /* J3 MIO26, MIO29 - MIO33 */
 	status = "okay";
 	disable-wp;
 	xlnx,mio_bank = <1>; /* FIXME */
 	no-1-8-v;
 };
 
-&serial0 { /* MIO35 - MIO37 */
+&psv_sbsauart_0 { /* MIO35 - MIO37 */
 	status = "okay";
 };
 
-&serial1 { /* MIO4 - MIO7 RS232 */
+&psv_sbsauart_1 { /* MIO4 - MIO7 RS232 */
 	status = "okay";
 };
 
-&spi0 {
+&psv_spi_0 {
 	status = "okay";
 	num-cs = <1>;
 
@@ -125,7 +125,7 @@
 	};
 };
 
-&usb0 {
+&psv_usb_xhci_0 {
 	status = "okay";
 	xlnx,usb-polarity = <0x0>;
 	xlnx,usb-reset-mode = <0x0>;

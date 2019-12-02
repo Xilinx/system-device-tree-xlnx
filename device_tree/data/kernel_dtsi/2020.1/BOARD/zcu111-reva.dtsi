@@ -99,7 +99,7 @@
 	};
 };
 
-&gem3 {
+&psu_ethernet_3 {
 	phy-handle = <&phy0>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_gem3_default>;
@@ -112,12 +112,12 @@
 	};
 };
 
-&gpio {
+&psu_gpio_0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_gpio_default>;
 };
 
-&i2c0 {
+&psu_i2c_0 {
 	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&pinctrl_i2c0_default>;
 	pinctrl-1 = <&pinctrl_i2c0_gpio>;
@@ -298,7 +298,7 @@
 	};
 };
 
-&i2c1 {
+&psu_i2c_1 {
 	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&pinctrl_i2c1_default>;
 	pinctrl-1 = <&pinctrl_i2c1_gpio>;
@@ -682,7 +682,7 @@
 	};
 };
 
-&qspi {
+&psu_qspi_0 {
 	is-dual = <1>;
 	flash@0 {
 		compatible = "m25p80", "jedec,spi-nor"; /* 32MB */
@@ -711,7 +711,7 @@
 	};
 };
 
-&sata {
+&psu_sata {
 	/* SATA OOB timing settings */
 	ceva,p0-cominit-params = /bits/ 8 <0x18 0x40 0x18 0x28>;
 	ceva,p0-comwake-params = /bits/ 8 <0x06 0x14 0x08 0x0E>;
@@ -726,7 +726,7 @@
 };
 
 /* SD1 with level shifter */
-&sdhci1 {
+&psu_sd_1 {
 	status = "okay";
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_sdhci1_default>;
@@ -738,13 +738,13 @@
 	no-1-8-v;
 };
 
-&uart0 {
+&psu_uart_0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_uart0_default>;
 };
 
 /* ULPI SMSC USB3320 */
-&usb0 {
+&psu_usb_0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_usb0_default>;
 };

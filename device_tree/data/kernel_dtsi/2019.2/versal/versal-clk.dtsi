@@ -97,136 +97,136 @@
 	clocks = <&versal_clk 77>;
 };
 
-&can0 {
+&psv_canfd_0 {
 	clocks = <&can0_clk>, <&versal_clk 82>;
 	power-domains = <&versal_firmware 0x1822401f>;
 };
 
-&can1 {
+&psv_canfd_1 {
 	clocks = <&can1_clk>, <&versal_clk 82>;
 	power-domains = <&versal_firmware 0x18224020>;
 };
 
-&gem0 {
-	clocks = <&versal_clk 82>, <&versal_clk 88>, <&versal_clk 49>, <&versal_clk 48>, <&versal_clk 43>;
-	power-domains = <&versal_firmware 0x18224019>;
+&psv_ethernet_0 {
+        clocks = <&versal_clk 82>, <&versal_clk 88>, <&versal_clk 49>, <&versal_clk 48>, <&versal_clk 43>;
+        power-domains = <&versal_firmware 0x18224019>;
 };
 
-&gem1 {
-	clocks = <&versal_clk 82>, <&versal_clk 89>, <&versal_clk 51>, <&versal_clk 50>, <&versal_clk 43>;
-	power-domains = <&versal_firmware 0x1822401a>;
+&psv_ethernet_1 {
+        clocks = <&versal_clk 82>, <&versal_clk 89>, <&versal_clk 51>, <&versal_clk 50>, <&versal_clk 43>;
+        power-domains = <&versal_firmware 0x1822401a>;
 };
 
-&gpio0 {
+&psv_gpio_0 {
 	clocks = <&versal_clk 82>;
 	power-domains = <&versal_firmware 0x18224023>;
 };
 
-&gpio1 {
+&psv_gpio_1 {
 	clocks = <&versal_clk 61>;
 	power-domains = <&versal_firmware 0x18224023>;
 };
 
-&i2c0 {
+&psv_i2c_0 {
 	clocks = <&versal_clk 98>;
 	power-domains = <&versal_firmware 0x1822401d>;
 };
 
-&i2c1 {
+&psv_i2c_1 {
 	clocks = <&versal_clk 99>;
 	power-domains = <&versal_firmware 0x1822401e>;
 };
 
-&lpd_dma_chan0 {
+&psv_adma_0 {
 	clocks = <&versal_clk 81>, <&versal_clk 82>;
 	power-domains = <&versal_firmware 0x18224035>;
 };
 
-&lpd_dma_chan1 {
+&psv_adma_1 {
 	clocks = <&versal_clk 81>, <&versal_clk 82>;
 	power-domains = <&versal_firmware 0x18224036>;
 };
 
-&lpd_dma_chan2 {
+&psv_adma_2 {
 	clocks = <&versal_clk 81>, <&versal_clk 82>;
 	power-domains = <&versal_firmware 0x18224037>;
 };
 
-&lpd_dma_chan3 {
+&psv_adma_3 {
 	clocks = <&versal_clk 81>, <&versal_clk 82>;
 	power-domains = <&versal_firmware 0x18224038>;
 };
 
-&lpd_dma_chan4 {
+&psv_adma_4 {
 	clocks = <&versal_clk 81>, <&versal_clk 82>;
 	power-domains = <&versal_firmware 0x18224039>;
 };
 
-&lpd_dma_chan5 {
+&psv_adma_5 {
 	clocks = <&versal_clk 81>, <&versal_clk 82>;
 	power-domains = <&versal_firmware 0x1822403a>;
 };
 
-&lpd_dma_chan6 {
+&psv_adma_6 {
 	clocks = <&versal_clk 81>, <&versal_clk 82>;
 	power-domains = <&versal_firmware 0x1822403b>;
 };
 
-&lpd_dma_chan7 {
+&psv_adma_7 {
 	clocks = <&versal_clk 81>, <&versal_clk 82>;
 	power-domains = <&versal_firmware 0x1822403c>;
 };
 
-&qspi {
+&psv_pmc_qspi_0 {
 	clocks = <&versal_clk 57>, <&versal_clk 82>;
 	power-domains = <&versal_firmware 0x1822402b>;
 };
 
-&ospi {
+&psv_pmc_ospi_0 {
 	clocks = <&versal_clk 58>, <&versal_clk 82>;
 	power-domains = <&versal_firmware 0x1822402a>;
 };
 
-&rtc {
+&psv_pmc_rtc_0 {
 	power-domains = <&versal_firmware 0x18224034>;
 };
 
-&serial0 {
+&psv_sbsauart_0 {
 	clocks = <&versal_clk 92>, <&versal_clk 82>;
 	power-domains = <&versal_firmware 0x18224021>;
 };
 
-&serial1 {
+&psv_sbsauart_1 {
 	clocks = <&versal_clk 93>, <&versal_clk 82>;
 	power-domains = <&versal_firmware 0x18224022>;
 };
 
-&sdhci0 {
+&psv_pmc_sd_0 {
 	clocks = <&versal_clk 59>, <&versal_clk 82>;
 	power-domains = <&versal_firmware 0x1822402e>;
 };
 
-&sdhci1 {
+&psv_pmc_sd_1 {
 	clocks = <&versal_clk 60>, <&versal_clk 82>;
 	power-domains = <&versal_firmware 0x1822402f>;
 };
 
-&spi0 {
+&psv_spi_0 {
 	clocks = <&versal_clk 94>, <&versal_clk 82>;
 	power-domains = <&versal_firmware 0x1822401b>;
 };
 
-&spi1 {
+&psv_spi_1 {
 	clocks = <&versal_clk 95>, <&versal_clk 82>;
 	power-domains = <&versal_firmware 0x1822401c>;
 };
 
-&usb0 {
+&psv_usb_xhci_0 {
 	clocks = <&versal_clk 91>, <&versal_clk 104>;
 	power-domains = <&versal_firmware 0x18224018>;
 };
 
-&watchdog {
+&psv_wwdt_0 {
 	clocks = <&versal_clk 82>;
 	power-domains = <&versal_firmware 0x18224029>;
 };

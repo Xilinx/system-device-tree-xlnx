@@ -19,13 +19,13 @@
 	};
 
 	aliases {
-		serial0 = &serial0;
-		ethernet0 = &gem0;
-		i2c0 = &i2c1;
-		mmc0 = &sdhci0;
-		mmc1 = &sdhci1;
-		spi0 = &spi0;
-		usb0 = &usb0;
+		serial0 = &psv_sbsauart_0;
+		ethernet0 = &psv_ethernet_0;
+		i2c0 = &psv_i2c_1;
+		mmc0 = &psv_pmc_sd_0;
+		mmc1 = &psv_pmc_sd_1;
+		spi0 = &psv_spi_0;
+		usb0 = &psv_usb_xhci_0;
 	};
 };
 
@@ -33,11 +33,11 @@
         status = "okay";
 };
 
-&serial0 {
+&psv_sbsauart_0 {
 	status = "okay";
 };
 
-&gem0 {
+&psv_ethernet_0 {
 	status = "okay";
 	phy-handle = <&phy0>; /* u9 */
 	phy-mode = "rgmii-id";
@@ -47,12 +47,12 @@
 };
 
 
-&sdhci0 {
+&psv_pmc_sd_0 {
 	status = "okay";
 	xlnx,mio_bank = <1>;
 };
 
-&sdhci1 { /* U1A */
+&psv_pmc_sd_1 { /* U1A */
 	status = "okay";
 	non-removable;
 	disable-wp;
@@ -60,7 +60,7 @@
 	xlnx,mio_bank = <0>;
 };
 
-&usb0 {
+&psv_usb_xhci_0 {
 	status = "okay";
 	xlnx,usb-polarity = <0>;
 	xlnx,usb-reset-mode = <0>;
@@ -86,7 +86,7 @@
 	/* FIXME - U13 and U15 */
 };
 
-&spi0 {
+&psv_spi_0 {
 	status = "okay";
 	num-cs = <1>;
 
@@ -104,7 +104,7 @@
 	};
 };
 
-&spi1 {
+&psv_spi_1 {
 	status = "okay";
 	num-cs = <3>;	/* FIXME - check SPI1_SS0-2_B */
 

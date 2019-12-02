@@ -16,12 +16,12 @@
 	compatible = "xlnx,zynqmp-zcu104-revA", "xlnx,zynqmp-zcu104", "xlnx,zynqmp";
 };
 
-&can1 {
+&psu_can_1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_can1_default>;
 };
 
-&gem3 {
+&psu_ethernet_3 {
 	phy-handle = <&phy0>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_gem3_default>;
@@ -34,7 +34,7 @@
 	};
 };
 
-&i2c1 {
+&psu_i2c_1 {
 	clock-frequency = <400000>;
 	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&pinctrl_i2c1_default>;
@@ -332,7 +332,7 @@
 	};
 };
 
-&qspi {
+&psu_qspi_0 {
 	status = "okay";
 	flash@0 {
 		compatible = "m25p80", "jedec,spi-nor"; /* n25q512a 128MiB */
@@ -361,7 +361,7 @@
 	};
 };
 
-&sata {
+&psu_sata {
 	/* SATA OOB timing settings */
 	ceva,p0-cominit-params = /bits/ 8 <0x18 0x40 0x18 0x28>;
 	ceva,p0-comwake-params = /bits/ 8 <0x06 0x14 0x08 0x0E>;
@@ -376,25 +376,25 @@
 };
 
 /* SD1 with level shifter */
-&sdhci1 {
+&psu_sd_1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_sdhci1_default>;
 	disable-wp;
 	no-1-8-v;
 };
 
-&uart0 {
+&psu_uart_0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_uart0_default>;
 };
 
-&uart1 {
+&psu_uart_1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_uart1_default>;
 };
 
 /* ULPI SMSC USB3320 */
-&usb0 {
+&psu_usb_0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_usb0_default>;
 };

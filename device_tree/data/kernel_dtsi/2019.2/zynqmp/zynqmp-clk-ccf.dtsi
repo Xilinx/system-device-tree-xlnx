@@ -87,11 +87,11 @@
 	};
 };
 
-&can0 {
+&psu_can_0 {
 	clocks = <&zynqmp_clk 63>, <&zynqmp_clk 31>;
 };
 
-&can1 {
+&psu_can_1 {
 	clocks = <&zynqmp_clk 64>, <&zynqmp_clk 31>;
 };
 
@@ -99,35 +99,35 @@
 	clocks = <&zynqmp_clk 10>;
 };
 
-&fpd_dma_chan1 {
+&psu_gdma_0 {
 	clocks = <&zynqmp_clk 19>, <&zynqmp_clk 31>;
 };
 
-&fpd_dma_chan2 {
+&psu_gdma_1 {
 	clocks = <&zynqmp_clk 19>, <&zynqmp_clk 31>;
 };
 
-&fpd_dma_chan3 {
+&psu_gdma_2 {
 	clocks = <&zynqmp_clk 19>, <&zynqmp_clk 31>;
 };
 
-&fpd_dma_chan4 {
+&psu_gdma_3 {
 	clocks = <&zynqmp_clk 19>, <&zynqmp_clk 31>;
 };
 
-&fpd_dma_chan5 {
+&psu_gdma_4 {
 	clocks = <&zynqmp_clk 19>, <&zynqmp_clk 31>;
 };
 
-&fpd_dma_chan6 {
+&psu_gdma_5 {
 	clocks = <&zynqmp_clk 19>, <&zynqmp_clk 31>;
 };
 
-&fpd_dma_chan7 {
+&psu_gdma_6 {
 	clocks = <&zynqmp_clk 19>, <&zynqmp_clk 31>;
 };
 
-&fpd_dma_chan8 {
+&psu_gdma_7 {
 	clocks = <&zynqmp_clk 19>, <&zynqmp_clk 31>;
 };
 
@@ -135,75 +135,75 @@
 	clocks = <&zynqmp_clk 24>, <&zynqmp_clk 25>, <&zynqmp_clk 26>;
 };
 
-&lpd_dma_chan1 {
+&psu_adma_0 {
 	clocks = <&zynqmp_clk 68>, <&zynqmp_clk 31>;
 };
 
-&lpd_dma_chan2 {
+&psu_adma_1 {
 	clocks = <&zynqmp_clk 68>, <&zynqmp_clk 31>;
 };
 
-&lpd_dma_chan3 {
+&psu_adma_2 {
 	clocks = <&zynqmp_clk 68>, <&zynqmp_clk 31>;
 };
 
-&lpd_dma_chan4 {
+&psu_adma_3 {
 	clocks = <&zynqmp_clk 68>, <&zynqmp_clk 31>;
 };
 
-&lpd_dma_chan5 {
+&psu_adma_4 {
 	clocks = <&zynqmp_clk 68>, <&zynqmp_clk 31>;
 };
 
-&lpd_dma_chan6 {
+&psu_adma_5 {
 	clocks = <&zynqmp_clk 68>, <&zynqmp_clk 31>;
 };
 
-&lpd_dma_chan7 {
+&psu_adma_6 {
 	clocks = <&zynqmp_clk 68>, <&zynqmp_clk 31>;
 };
 
-&lpd_dma_chan8 {
+&psu_adma_7 {
 	clocks = <&zynqmp_clk 68>, <&zynqmp_clk 31>;
 };
 
-&nand0 {
+&psu_nand_0 {
 	clocks = <&zynqmp_clk 60>, <&zynqmp_clk 31>;
 };
 
-&gem0 {
+&psu_ethernet_0 {
 	clocks = <&zynqmp_clk 31>, <&zynqmp_clk 104>, <&zynqmp_clk 45>,
 		 <&zynqmp_clk 49>, <&zynqmp_clk 44>;
 	clock-names = "pclk", "hclk", "tx_clk", "rx_clk", "tsu_clk";
 };
 
-&gem1 {
+&psu_ethernet_1 {
 	clocks = <&zynqmp_clk 31>, <&zynqmp_clk 105>, <&zynqmp_clk 46>,
 		 <&zynqmp_clk 50>, <&zynqmp_clk 44>;
 	clock-names = "pclk", "hclk", "tx_clk", "rx_clk", "tsu_clk";
 };
 
-&gem2 {
+&psu_ethernet_2 {
 	clocks = <&zynqmp_clk 31>, <&zynqmp_clk 106>, <&zynqmp_clk 47>,
 		 <&zynqmp_clk 51>, <&zynqmp_clk 44>;
 	clock-names = "pclk", "hclk", "tx_clk", "rx_clk", "tsu_clk";
 };
 
-&gem3 {
+&psu_ethernet_3 {
 	clocks = <&zynqmp_clk 31>, <&zynqmp_clk 107>, <&zynqmp_clk 48>,
 		 <&zynqmp_clk 52>, <&zynqmp_clk 44>;
 	clock-names = "pclk", "hclk", "tx_clk", "rx_clk", "tsu_clk";
 };
 
-&gpio {
+&psu_gpio_0 {
 	clocks = <&zynqmp_clk 31>;
 };
 
-&i2c0 {
+&psu_i2c_0 {
 	clocks = <&zynqmp_clk 61>;
 };
 
-&i2c1 {
+&psu_i2c_1 {
 	clocks = <&zynqmp_clk 62>;
 };
 
@@ -227,67 +227,67 @@
 	clocks = <&zynqmp_clk 23>;
 };
 
-&qspi {
+&psu_qspi_0 {
 	clocks = <&zynqmp_clk 53>, <&zynqmp_clk 31>;
 };
 
-&sata {
+&psu_sata {
 	clocks = <&zynqmp_clk 22>;
 };
 
-&sdhci0 {
+&psu_sd_0 {
 	clocks = <&zynqmp_clk 54>, <&zynqmp_clk 31>;
 };
 
-&sdhci1 {
+&psu_sd_1 {
 	clocks = <&zynqmp_clk 55>, <&zynqmp_clk 31>;
 };
 
-&spi0 {
+&psu_spi_0 {
 	clocks = <&zynqmp_clk 58>, <&zynqmp_clk 31>;
 };
 
-&spi1 {
+&psu_spi_1 {
 	clocks = <&zynqmp_clk 59>, <&zynqmp_clk 31>;
 };
 
-&ttc0 {
+&psu_ttc_0 {
 	clocks = <&zynqmp_clk 31>;
 };
 
-&ttc1 {
+&psu_ttc_1 {
 	clocks = <&zynqmp_clk 31>;
 };
 
-&ttc2 {
+&psu_ttc_2 {
 	clocks = <&zynqmp_clk 31>;
 };
 
-&ttc3 {
+&psu_ttc_3 {
 	clocks = <&zynqmp_clk 31>;
 };
 
-&uart0 {
+&psu_uart_0 {
 	clocks = <&zynqmp_clk 56>, <&zynqmp_clk 31>;
 };
 
-&uart1 {
+&psu_uart_1 {
 	clocks = <&zynqmp_clk 57>, <&zynqmp_clk 31>;
 };
 
-&usb0 {
+&psu_usb_0 {
 	clocks = <&zynqmp_clk 32>, <&zynqmp_clk 34>;
 };
 
-&usb1 {
+&psu_usb_1 {
 	clocks = <&zynqmp_clk 33>, <&zynqmp_clk 34>;
 };
 
-&watchdog0 {
+&psu_wdt_0 {
 	clocks = <&zynqmp_clk 75>;
 };
 
-&lpd_watchdog {
+&psu_wdt_1 {
 	clocks = <&zynqmp_clk 112>;
 };
 
@@ -295,11 +295,11 @@
 	clocks = <&zynqmp_clk 70>;
 };
 
-&zynqmp_dpsub {
+&psu_dp {
 	clocks = <&dp_aclk>, <&zynqmp_clk 17>, <&zynqmp_clk 16>;
 };
 
-&xlnx_dpdma {
+&psu_dpdma {
 	clocks = <&zynqmp_clk 20>;
 };
 
