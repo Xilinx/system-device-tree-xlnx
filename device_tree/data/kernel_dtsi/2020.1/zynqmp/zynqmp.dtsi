@@ -122,7 +122,6 @@
 		};
 	};
 
-
 	psu_ipi_0: ipi@ff300000 {
                 status = "disabled";
                 compatible = "xlnx,zynqmp-ipi-mailbox";
@@ -621,15 +620,12 @@
 		#size-cells = <2>;
 		ranges;
 
-<<<<<<< HEAD
 		psu_coresight_0: coresight@fe800000 {
 			compatible = "xlnx,coresight-1.0";
 			status = "disabled";
 			reg = <0x0 0xfe800000 0x0 0x10000>;
 		};
 
-=======
->>>>>>> Rename lable name as IP name
 		psu_can_0: can@ff060000 {
 			compatible = "xlnx,zynq-can-1.0";
 			status = "disabled";
