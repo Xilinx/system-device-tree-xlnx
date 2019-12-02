@@ -122,307 +122,308 @@
 		};
 	};
 
+
 	psu_ipi_0: ipi@ff300000 {
-		status = "disabled";
-		compatible = "xlnx,zynqmp-ipi-mailbox";
-		interrupt-parent = <&gic>;
-		interrupts = <0 35 4>;
-		reg = <0x0 0xff300000 0x0 0x20>;
-		xlnx,ipi-bitmask = <0x1>;
-		xlnx,ipi-id = <2>;
-		#address-cells = <2>;
-		#size-cells = <2>;
-		xlnx,ipi-target-count = <7>;
-		u-boot,dm-pre-reloc;
-		ranges;
-		psu_ipi0_0: mailbox@0 {
-			xlnx,ipi-id = <2>;
-			xlnx,ipi-bitmask = <0x1>;
-		};
-		psu_ipi0_1: mailbox@1 {
-			xlnx,ipi-id = <0>;
-			xlnx,ipi-bitmask = <0x100>;
-		};
-		psu_ipi0_2: mailbox@2 {
-			xlnx,ipi-id = <1>;
-			xlnx,ipi-bitmask = <0x200>;
-		};
-		psu_ipi0_3: mailbox@3 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x10000>;
-		};
-		psu_ipi0_4: mailbox@4 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x20000>;
-		};
-		psu_ipi0_5: mailbox@5 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x40000>;
-		};
-		psu_ipi0_6: mailbox@6 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x80000>;
-		};
-	};
+                status = "disabled";
+                compatible = "xlnx,zynqmp-ipi-mailbox";
+                interrupt-parent = <&gic>;
+                interrupts = <0 35 4>;
+                reg = <0x0 0xff300000 0x0 0x20>;
+                xlnx,ipi-bitmask = <0x1>;
+                xlnx,ipi-id = <2>;
+                #address-cells = <2>;
+                #size-cells = <2>;
+                xlnx,ipi-target-count = <7>;
+                u-boot,dm-pre-reloc;
+                ranges;
+                psu_ipi0_0: mailbox@0 {
+                        xlnx,ipi-id = <2>;
+                        xlnx,ipi-bitmask = <0x1>;
+                };
+                psu_ipi0_1: mailbox@1 {
+                        xlnx,ipi-id = <0>;
+                        xlnx,ipi-bitmask = <0x100>;
+                };
+                psu_ipi0_2: mailbox@2 {
+                        xlnx,ipi-id = <1>;
+                        xlnx,ipi-bitmask = <0x200>;
+                };
+                psu_ipi0_3: mailbox@3 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x10000>;
+                };
+                psu_ipi0_4: mailbox@4 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x20000>;
+                };
+                psu_ipi0_5: mailbox@5 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x40000>;
+                };
+                psu_ipi0_6: mailbox@6 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x80000>;
+                };
+        };
 
-	psu_ipi_1: ipi@ff310000 {
-		status = "disabled";
-		compatible = "xlnx,zynqmp-ipi-mailbox";
-		interrupt-parent = <&gic>;
-		interrupts = <0 33 4>;
-		reg = <0x0 0xff310000 0x0 0x20>;
-		xlnx,ipi-bitmask = <0x100>;
-		xlnx,ipi-id = <0>;
-		#address-cells = <2>;
-		#size-cells = <2>;
-		xlnx,ipi-target-count = <7>;
-		u-boot,dm-pre-reloc;
-		ranges;
-		psu_ipi1_0: mailbox@0 {
-			xlnx,ipi-id = <2>;
-			xlnx,ipi-bitmask = <0x1>;
-		};
-		psu_ipi1_1: mailbox@1 {
-			xlnx,ipi-id = <0>;
-			xlnx,ipi-bitmask = <0x100>;
-		};
-		psu_ipi1_2: mailbox@2 {
-			xlnx,ipi-id = <1>;
-			xlnx,ipi-bitmask = <0x200>;
-		};
-		psu_ipi1_3: mailbox@3 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x10000>;
-		};
-		psu_ipi1_4: mailbox@4 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x20000>;
-		};
-		psu_ipi1_5: mailbox@5 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x40000>;
-		};
-		psu_ipi1_6: mailbox@6 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x80000>;
-		};
-	};
-	psu_ipi_2: ipi@ff320000 {
-		status = "disabled";
-		compatible = "xlnx,zynqmp-ipi-mailbox";
-		interrupt-parent = <&gic>;
-		interrupts = <0 34 4>;
-		reg = <0x0 0xff320000 0x0 0x20>;
-		xlnx,ipi-bitmask = <0x200>;
-		xlnx,ipi-id = <1>;
-		#address-cells = <2>;
-		#size-cells = <2>;
-		xlnx,ipi-target-count = <7>;
-		u-boot,dm-pre-reloc;
-		ranges;
-		psu_ipi2_0: mailbox@0 {
-			xlnx,ipi-id = <2>;
-			xlnx,ipi-bitmask = <0x1>;
-		};
-		psu_ipi2_1: mailbox@1 {
-			xlnx,ipi-id = <0>;
-			xlnx,ipi-bitmask = <0x100>;
-		};
-		psu_ipi2_2: mailbox@2 {
-			xlnx,ipi-id = <1>;
-			xlnx,ipi-bitmask = <0x200>;
-		};
-		psu_ipi2_3: mailbox@3 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x10000>;
-		};
-		psu_ipi2_4: mailbox@4 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x20000>;
-		};
-		psu_ipi2_5: mailbox@5 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x40000>;
-		};
-		psu_ipi2_6: mailbox@6 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x80000>;
-		};
-	};
+        psu_ipi_1: ipi@ff310000 {
+                status = "disabled";
+                compatible = "xlnx,zynqmp-ipi-mailbox";
+                interrupt-parent = <&gic>;
+                interrupts = <0 33 4>;
+                reg = <0x0 0xff310000 0x0 0x20>;
+                xlnx,ipi-bitmask = <0x100>;
+                xlnx,ipi-id = <0>;
+                #address-cells = <2>;
+                #size-cells = <2>;
+                xlnx,ipi-target-count = <7>;
+                u-boot,dm-pre-reloc;
+                ranges;
+                psu_ipi1_0: mailbox@0 {
+                        xlnx,ipi-id = <2>;
+                        xlnx,ipi-bitmask = <0x1>;
+                };
+                psu_ipi1_1: mailbox@1 {
+                        xlnx,ipi-id = <0>;
+                        xlnx,ipi-bitmask = <0x100>;
+                };
+                psu_ipi1_2: mailbox@2 {
+                        xlnx,ipi-id = <1>;
+                        xlnx,ipi-bitmask = <0x200>;
+                };
+                psu_ipi1_3: mailbox@3 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x10000>;
+                };
+                psu_ipi1_4: mailbox@4 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x20000>;
+                };
+                psu_ipi1_5: mailbox@5 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x40000>;
+                };
+                psu_ipi1_6: mailbox@6 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x80000>;
+                };
+        };
+        psu_ipi_2: ipi@ff320000 {
+                status = "disabled";
+                compatible = "xlnx,zynqmp-ipi-mailbox";
+                interrupt-parent = <&gic>;
+                interrupts = <0 34 4>;
+                reg = <0x0 0xff320000 0x0 0x20>;
+                xlnx,ipi-bitmask = <0x200>;
+                xlnx,ipi-id = <1>;
+                #address-cells = <2>;
+                #size-cells = <2>;
+                xlnx,ipi-target-count = <7>;
+                u-boot,dm-pre-reloc;
+                ranges;
+                psu_ipi2_0: mailbox@0 {
+                        xlnx,ipi-id = <2>;
+                        xlnx,ipi-bitmask = <0x1>;
+                };
+                psu_ipi2_1: mailbox@1 {
+                        xlnx,ipi-id = <0>;
+                        xlnx,ipi-bitmask = <0x100>;
+                };
+                psu_ipi2_2: mailbox@2 {
+                        xlnx,ipi-id = <1>;
+                        xlnx,ipi-bitmask = <0x200>;
+                };
+                psu_ipi2_3: mailbox@3 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x10000>;
+                };
+                psu_ipi2_4: mailbox@4 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x20000>;
+                };
+                psu_ipi2_5: mailbox@5 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x40000>;
+                };
+                psu_ipi2_6: mailbox@6 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x80000>;
+                };
+        };
 
-	psu_ipi_3: ipi@ff330000 {
-		status = "disabled";
-		compatible = "xlnx,zynqmp-ipi-mailbox";
-		interrupt-parent = <&gic>;
-		interrupts = <0 29 4>;
-		reg = <0x0 0xff330000 0x0 0x20>;
-		xlnx,ipi-bitmask = <0x10000>;
-		xlnx,ipi-id = <7>;
-		#address-cells = <2>;
-		#size-cells = <2>;
-		xlnx,ipi-target-count = <7>;
-		u-boot,dm-pre-reloc;
-		ranges;
-		psu_ipi3_0: mailbox@0 {
-			xlnx,ipi-id = <2>;
-			xlnx,ipi-bitmask = <0x1>;
-		};
-		psu_ipi3_1: mailbox@1 {
-			xlnx,ipi-id = <0>;
-			xlnx,ipi-bitmask = <0x100>;
-		};
-		psu_ipi3_2: mailbox@2 {
-			xlnx,ipi-id = <1>;
-			xlnx,ipi-bitmask = <0x200>;
-		};
-		psu_ipi3_3: mailbox@3 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x10000>;
-		};
-		psu_ipi3_4: mailbox@4 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x20000>;
-		};
-		psu_ipi3_5: mailbox@5 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x40000>;
-		};
-		psu_ipi3_6: mailbox@6 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x80000>;
-		};
-	};
+        psu_ipi_3: ipi@ff330000 {
+                status = "disabled";
+                compatible = "xlnx,zynqmp-ipi-mailbox";
+                interrupt-parent = <&gic>;
+                interrupts = <0 29 4>;
+                reg = <0x0 0xff330000 0x0 0x20>;
+                xlnx,ipi-bitmask = <0x10000>;
+                xlnx,ipi-id = <7>;
+                #address-cells = <2>;
+                #size-cells = <2>;
+                xlnx,ipi-target-count = <7>;
+                u-boot,dm-pre-reloc;
+                ranges;
+                psu_ipi3_0: mailbox@0 {
+                        xlnx,ipi-id = <2>;
+                        xlnx,ipi-bitmask = <0x1>;
+                };
+                psu_ipi3_1: mailbox@1 {
+                        xlnx,ipi-id = <0>;
+                        xlnx,ipi-bitmask = <0x100>;
+                };
+                psu_ipi3_2: mailbox@2 {
+                        xlnx,ipi-id = <1>;
+                        xlnx,ipi-bitmask = <0x200>;
+                };
+                psu_ipi3_3: mailbox@3 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x10000>;
+                };
+                psu_ipi3_4: mailbox@4 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x20000>;
+                };
+                psu_ipi3_5: mailbox@5 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x40000>;
+                };
+                psu_ipi3_6: mailbox@6 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x80000>;
+                };
+        };
 
-	psu_ipi_4: ipi@ff331000 {
-		status = "disabled";
-		compatible = "xlnx,zynqmp-ipi-mailbox";
-		interrupt-parent = <&gic>;
-		interrupts = <0 30 4>;
-		reg = <0x0 0xff331000 0x0 0x20>;
-		xlnx,ipi-bitmask = <0x20000U>;
-		xlnx,ipi-id = <7>;
-		#address-cells = <2>;
-		#size-cells = <2>;
-		xlnx,ipi-target-count = <7>;
-		u-boot,dm-pre-reloc;
-		ranges;
+        psu_ipi_4: ipi@ff331000 {
+                status = "disabled";
+                compatible = "xlnx,zynqmp-ipi-mailbox";
+                interrupt-parent = <&gic>;
+                interrupts = <0 30 4>;
+                reg = <0x0 0xff331000 0x0 0x20>;
+                xlnx,ipi-bitmask = <0x20000U>;
+                xlnx,ipi-id = <7>;
+                #address-cells = <2>;
+                #size-cells = <2>;
+                xlnx,ipi-target-count = <7>;
+                u-boot,dm-pre-reloc;
+                ranges;
 
-		psu_ipi4_0: mailbox@0 {
-			xlnx,ipi-id = <2>;
-			xlnx,ipi-bitmask = <0x1>;
-		};
-		psu_ipi4_1: mailbox@1 {
-			xlnx,ipi-id = <0>;
-			xlnx,ipi-bitmask = <0x100>;
-		};
-		psu_ipi4_2: mailbox@2 {
-			xlnx,ipi-id = <1>;
-			xlnx,ipi-bitmask = <0x200>;
-		};
-		psu_ipi4_3: mailbox@3 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x10000>;
-		};
-		psu_ipi4_4: mailbox@4 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x20000>;
-		};
-		psu_ipi4_5: mailbox@5 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x40000>;
-		};
-		psu_ipi4_6: mailbox@6 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x80000>;
-		};
-	};
+                psu_ipi4_0: mailbox@0 {
+                        xlnx,ipi-id = <2>;
+                        xlnx,ipi-bitmask = <0x1>;
+                };
+                psu_ipi4_1: mailbox@1 {
+                        xlnx,ipi-id = <0>;
+                        xlnx,ipi-bitmask = <0x100>;
+                };
+                psu_ipi4_2: mailbox@2 {
+                        xlnx,ipi-id = <1>;
+                        xlnx,ipi-bitmask = <0x200>;
+                };
+                psu_ipi4_3: mailbox@3 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x10000>;
+                };
+                psu_ipi4_4: mailbox@4 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x20000>;
+                };
+                psu_ipi4_5: mailbox@5 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x40000>;
+                };
+                psu_ipi4_6: mailbox@6 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x80000>;
+                };
+        };
 
-	psu_ipi_5: ipi@ff332000 {
-		compatible = "xlnx,zynqmp-ipi-mailbox";
-		status = "disabled";
-		interrupt-parent = <&gic>;
-		interrupts = <0 31 4>;
-		reg = <0x0 0xff332000 0x0 0x20>;
-		xlnx,ipi-bitmask = <0x40000>;
-		xlnx,ipi-id = <7>;
-		#address-cells = <2>;
-		#size-cells = <2>;
-		xlnx,ipi-target-count = <7>;
-		u-boot,dm-pre-reloc;
-		ranges;
+        psu_ipi_5: ipi@ff332000 {
+                compatible = "xlnx,zynqmp-ipi-mailbox";
+                status = "disabled";
+                interrupt-parent = <&gic>;
+                interrupts = <0 31 4>;
+                reg = <0x0 0xff332000 0x0 0x20>;
+                xlnx,ipi-bitmask = <0x40000>;
+                xlnx,ipi-id = <7>;
+                #address-cells = <2>;
+                #size-cells = <2>;
+                xlnx,ipi-target-count = <7>;
+                u-boot,dm-pre-reloc;
+                ranges;
 
-		psu_ipi5_0: mailbox@0 {
-			xlnx,ipi-id = <2>;
-			xlnx,ipi-bitmask = <0x1>;
-		};
-		psu_ipi5_1: mailbox@1 {
-			xlnx,ipi-id = <0>;
-			xlnx,ipi-bitmask = <0x100>;
-		};
-		psu_ipi5_2: mailbox@2 {
-			xlnx,ipi-id = <1>;
-			xlnx,ipi-bitmask = <0x200>;
-		};
-		psu_ipi5_3: mailbox@3 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x10000>;
-		};
-		psu_ipi5_4: mailbox@4 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x20000>;
-		};
-		psu_ipi5_5: mailbox@5 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x40000>;
-		};
-		psu_ipi5_6: mailbox@6 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x80000>;
-		};
-	};
+                psu_ipi5_0: mailbox@0 {
+                        xlnx,ipi-id = <2>;
+                        xlnx,ipi-bitmask = <0x1>;
+                };
+                psu_ipi5_1: mailbox@1 {
+                        xlnx,ipi-id = <0>;
+                        xlnx,ipi-bitmask = <0x100>;
+                };
+                psu_ipi5_2: mailbox@2 {
+                        xlnx,ipi-id = <1>;
+                        xlnx,ipi-bitmask = <0x200>;
+                };
+                psu_ipi5_3: mailbox@3 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x10000>;
+                };
+                psu_ipi5_4: mailbox@4 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x20000>;
+                };
+                psu_ipi5_5: mailbox@5 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x40000>;
+                };
+                psu_ipi5_6: mailbox@6 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x80000>;
+                };
+        };
 
-	psu_ipi_6: ipi@ff333000 {
-		status = "disabled";
-		compatible = "xlnx,zynqmp-ipi-mailbox";
-		interrupt-parent = <&gic>;
-		interrupts = <0 32 4>;
-		reg = <0x0 0xff333000 0x0 0x20>;
-		xlnx,ipi-bitmask = <0x80000>;
-		xlnx,ipi-id = <7>;
-		#address-cells = <2>;
-		#size-cells = <2>;
-		xlnx,ipi-target-count = <7>;
-		u-boot,dm-pre-reloc;
-		ranges;
-		psu_ipi6_0: mailbox@0 {
-			xlnx,ipi-id = <2>;
-			xlnx,ipi-bitmask = <0x1>;
-		};
-		psu_ipi6_1: mailbox@1 {
-			xlnx,ipi-id = <0>;
-			xlnx,ipi-bitmask = <0x100>;
-		};
-		psu_ipi6_2: mailbox@2 {
-			xlnx,ipi-id = <1>;
-			xlnx,ipi-bitmask = <0x200>;
-		};
-		psu_ipi6_3: mailbox@3 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x10000>;
-		};
-		psu_ipi6_4: mailbox@4 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x20000>;
-		};
-		psu_ipi6_5: mailbox@5 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x40000>;
-		};
-		psu_ipi6_6: mailbox@6 {
-			xlnx,ipi-id = <7>;
-			xlnx,ipi-bitmask = <0x80000>;
-		};
-	};
+        psu_ipi_6: ipi@ff333000 {
+                status = "disabled";
+                compatible = "xlnx,zynqmp-ipi-mailbox";
+                interrupt-parent = <&gic>;
+                interrupts = <0 32 4>;
+                reg = <0x0 0xff333000 0x0 0x20>;
+                xlnx,ipi-bitmask = <0x80000>;
+                xlnx,ipi-id = <7>;
+                #address-cells = <2>;
+                #size-cells = <2>;
+                xlnx,ipi-target-count = <7>;
+                u-boot,dm-pre-reloc;
+                ranges;
+                psu_ipi6_0: mailbox@0 {
+                        xlnx,ipi-id = <2>;
+                        xlnx,ipi-bitmask = <0x1>;
+                };
+                psu_ipi6_1: mailbox@1 {
+                        xlnx,ipi-id = <0>;
+                        xlnx,ipi-bitmask = <0x100>;
+                };
+                psu_ipi6_2: mailbox@2 {
+                        xlnx,ipi-id = <1>;
+                        xlnx,ipi-bitmask = <0x200>;
+                };
+                psu_ipi6_3: mailbox@3 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x10000>;
+                };
+                psu_ipi6_4: mailbox@4 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x20000>;
+                };
+                psu_ipi6_5: mailbox@5 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x40000>;
+                };
+                psu_ipi6_6: mailbox@6 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x80000>;
+                };
+        };
 
 	dcc: dcc {
 		compatible = "arm,dcc";
@@ -620,12 +621,15 @@
 		#size-cells = <2>;
 		ranges;
 
+<<<<<<< HEAD
 		psu_coresight_0: coresight@fe800000 {
 			compatible = "xlnx,coresight-1.0";
 			status = "disabled";
 			reg = <0x0 0xfe800000 0x0 0x10000>;
 		};
 
+=======
+>>>>>>> Rename lable name as IP name
 		psu_can_0: can@ff060000 {
 			compatible = "xlnx,zynq-can-1.0";
 			status = "disabled";
