@@ -3196,6 +3196,7 @@ proc gen_root_node {drv_handle} {
 	set default_dts [set_drv_def_dts $drv_handle]
 	# add compatible
 	set ip_name [get_property IP_NAME [get_cell -hier ${drv_handle}]]
+	set root_node [add_or_get_dt_node -n / -d ${default_dts}]
 	switch $ip_name {
 		"ps7_cortexa9" {
 			create_dt_tree_from_dts_file
@@ -3213,6 +3214,7 @@ proc gen_root_node {drv_handle} {
 			update_system_dts_include [file tail "zynqmp-clk-ccf.dtsi"]
 
 			# no root_node required as zynq-7000.dtsi
+			set board_name [generate_board_compatible $root_node]
 			return 0
 		}
 		"psu_cortexr5" {
@@ -3224,6 +3226,7 @@ proc gen_root_node {drv_handle} {
 			update_system_dts_include [file tail "zynqmp-clk-ccf.dtsi"]
 
 			# no root_node required as zynq-7000.dtsi
+			set board_name [generate_board_compatible $root_node]
 			return 0
 		}
 		"psu_cortexa53" {
@@ -3238,6 +3241,7 @@ proc gen_root_node {drv_handle} {
 			update_system_dts_include [file tail ${dtsi_fname}]
 			update_system_dts_include [file tail "zynqmp-clk-ccf.dtsi"]
 			# no root_node required as zynqmp.dtsi
+			set board_name [generate_board_compatible $root_node]
 			return 0
 		}
 		"psv_cortexa72" {
@@ -3256,6 +3260,7 @@ proc gen_root_node {drv_handle} {
 			} else {
 				update_system_dts_include [file tail "versal-clk.dtsi"]
 			}
+			set board_name [generate_board_compatible $root_node]
 			return 0
 		}
 		"psv_cortexr5" {
@@ -3274,6 +3279,7 @@ proc gen_root_node {drv_handle} {
 			} else {
 				update_system_dts_include [file tail "versal-clk.dtsi"]
 			}
+			set board_name [generate_board_compatible $root_node]
 			return 0
 		}
 		"psv_pmc" {
@@ -3292,6 +3298,7 @@ proc gen_root_node {drv_handle} {
 			} else {
 				update_system_dts_include [file tail "versal-clk.dtsi"]
 			}
+			set board_name [generate_board_compatible $root_node]
 			return 0
 		}
 		"microblaze" {
@@ -3302,7 +3309,7 @@ proc gen_root_node {drv_handle} {
 			return -code error "Unknown arch"
 		}
 	}
-	set root_node [add_or_get_dt_node -n / -d ${default_dts}]
+
 	hsi::utils::add_new_dts_param "${root_node}" "#address-cells" 1 int ""
 	hsi::utils::add_new_dts_param "${root_node}" "#size-cells" 1 int ""
 	hsi::utils::add_new_dts_param "${root_node}" model $model string ""
@@ -4234,4 +4241,15 @@ proc generate_cci_node { drv_handle rt_node} {
 			hsi::utils::add_new_dts_param $rt_node "dma-coherent" "" boolean
 		}
 	}
+}
+
+proc generate_board_compatible { rt_node } {
+	set boardname [common::get_property BOARD [hsi::current_hw_design]]
+	if { [string length $boardname] != 0 } {
+                set fields [split $boardname ":"]
+                lassign $fields prefix board suffix
+                if { [string length $board] != 0 } {
+			hsi::utils::add_new_dts_param "${rt_node}" compatible $board string ""
+                }
+            }
 }
