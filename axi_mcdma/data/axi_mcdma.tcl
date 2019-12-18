@@ -48,7 +48,7 @@ proc generate {drv_handle} {
 
 	set is_xxv [get_connected_ip $drv_handle "M_AXIS_MM2S"]
 	if { $axiethernetfound || $is_xxv == 1} {
-		set compatstring "xlnx,eth-dma"
+		set compatstring "xlnx,eth-mcdma"
 		set_property compatible "$compatstring" $drv_handle
 	}
 	if { $axiethernetfound != 1 && $is_xxv != 1} {
@@ -96,6 +96,8 @@ proc generate {drv_handle} {
 	}
 	incr dma_count
 	hsi::utils::set_os_parameter_value "dma_count" $dma_count
+	set_drv_conf_prop $drv_handle C_M_AXI_MM2S_DATA_WIDTH xlnx,mm2s-data-width hexint
+	set_drv_conf_prop $drv_handle C_M_AXI_S2MM_DATA_WIDTH xlnx,s2mm-data-width hexint
 }
 
 proc get_interrupt_info {drv_handle chan_name} {
