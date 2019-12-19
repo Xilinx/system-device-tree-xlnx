@@ -92,7 +92,7 @@ foreach i [get_sw_cores device_tree] {
         }
 	hsi::utils::add_new_dts_param $node "xlnx,gpo-init" $gpo_init intlist
 
-	set param_list "C_INTC_HAS_FAST C_INTC_BASE_VECTORS C_INTC_ADDR_WIDTH C_INTC_LEVEL_EDGE C_UART_BAUDRATE"
+	set param_list "C_INTC_HAS_FAST C_INTC_ADDR_WIDTH C_INTC_LEVEL_EDGE C_UART_BAUDRATE"
 	foreach param $param_list {
 		ip2drv_prop $drv_handle "CONFIG.$param"
 	}
@@ -101,4 +101,6 @@ foreach i [get_sw_cores device_tree] {
 	set val [hsi::utils::get_ip_param_value $slave "C_INTC_INTR_SIZE"]
 	hsi::utils::add_new_dts_param $node "xlnx,max-intr-size" $val int
 	hsi::utils::add_new_dts_param $node "xlnx,options" 1 int
+	set val [hsi::utils::get_ip_param_value $slave "C_INTC_BASE_VECTORS"]
+	hsi::utils::add_new_dts_param $node "xlnx,intc-base-vectors" $val hex
 }
