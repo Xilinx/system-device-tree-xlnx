@@ -32,6 +32,10 @@ proc generate {drv_handle} {
 	set_drv_conf_prop $drv_handle C_NUM_FSTORES xlnx,num-fstores
 	set_drv_conf_prop $drv_handle C_USE_FSYNC xlnx,flush-fsync
 	set_drv_conf_prop $drv_handle C_ADDR_WIDTH xlnx,addrwidth
+	set_drv_conf_prop $drv_handle C_INCLUDE_DRE xlnx,include-dre
+	set_drv_conf_prop $drv_handle C_M_AXI_MAX_BURST_LEN xlnx,max-burst-len
+	set_drv_conf_prop $drv_handle C_USE_DATAMOVER_LITE xlnx,lite-mode
+	set_drv_conf_prop $drv_handle C_M_AXI_DATA_WIDTH xlnx,datawidth
 
 	set node [gen_peripheral_nodes $drv_handle]
 	if {$node == 0} {
