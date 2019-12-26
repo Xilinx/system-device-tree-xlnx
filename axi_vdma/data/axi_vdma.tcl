@@ -61,6 +61,32 @@ proc generate {drv_handle} {
 	set_drv_conf_prop $drv_handle c_num_fstores xlnx,num-fstores
 	set_drv_conf_prop $drv_handle C_USE_FSYNC xlnx,flush-fsync
 	set_drv_conf_prop $drv_handle c_addr_width xlnx,addrwidth
+	set_drv_conf_prop $drv_handle C_INCLUDE_MM2S xlnx,include-mm2s
+	set_drv_conf_prop $drv_handle C_INCLUDE_MM2S_DRE xlnx,include-mm2s-dre
+	set_drv_conf_prop $drv_handle C_M_AXI_MM2S_DATA_WIDTH xlnx,mm2s-data-width
+	set_drv_conf_prop $drv_handle C_INCLUDE_S2MM xlnx,include-s2mm
+	set_drv_conf_prop $drv_handle C_INCLUDE_S2MM_DRE xlnx,include-s2mm-dre
+	set_drv_conf_prop $drv_handle C_M_AXI_S2MM_DATA_WIDTH xlnx,s2mm-data-width
+	set_drv_conf_prop $drv_handle C_ENABLE_VIDPRMTR_READS xlnx,enable-vidparam-reads
+	set_drv_conf_prop $drv_handle C_FLUSH_ON_FSYNC xlnx,flush-on-fsync
+	set_drv_conf_prop $drv_handle C_MM2S_LINEBUFFER_DEPTH xlnx,mm2s-linebuffer-depth
+	set_drv_conf_prop $drv_handle C_S2MM_LINEBUFFER_DEPTH xlnx,s2mm-linebuffer-depth
+	set_drv_conf_prop $drv_handle C_MM2S_GENLOCK_MODE xlnx,mm2s-genlock-mode
+	set_drv_conf_prop $drv_handle C_S2MM_GENLOCK_MODE xlnx,s2mm-genlock-mode
+	set_drv_conf_prop $drv_handle C_INCLUDE_INTERNAL_GENLOCK xlnx,include-internal-genlock
+	set_drv_conf_prop $drv_handle C_S2MM_SOF_ENABLE xlnx,s2mm-sof-enable
+	set_drv_conf_prop $drv_handle C_M_AXIS_MM2S_TDATA_WIDTH xlnx,mm2s-tdata-width
+	set_drv_conf_prop $drv_handle C_S_AXIS_S2MM_TDATA_WIDTH xlnx,s2mm-tdata-width
+	set_drv_conf_prop $drv_handle c_enable_vert_flip xlnx,enable-vert-flip
+	set_drv_conf_prop $drv_handle C_ENABLE_DEBUG_INFO_1 xlnx,enable-debug-info-1
+	set_drv_conf_prop $drv_handle C_ENABLE_DEBUG_INFO_5 xlnx,enable-debug-info-5
+	set_drv_conf_prop $drv_handle C_ENABLE_DEBUG_INFO_6 xlnx,enable-debug-info-6
+	set_drv_conf_prop $drv_handle C_ENABLE_DEBUG_INFO_7 xlnx,enable-debug-info-7
+	set_drv_conf_prop $drv_handle C_ENABLE_DEBUG_INFO_9 xlnx,enable-debug-info-9
+	set_drv_conf_prop $drv_handle C_ENABLE_DEBUG_INFO_13 xlnx,enable-debug-info-13
+	set_drv_conf_prop $drv_handle C_ENABLE_DEBUG_INFO_14 xlnx,enable-debug-info-14
+	set_drv_conf_prop $drv_handle C_ENABLE_DEBUG_INFO_15 xlnx,enable-debug-info-15
+	set_drv_conf_prop $drv_handle C_ENABLE_DEBUG_ALL xlnx,enable-debug-all
 
 	set baseaddr [get_baseaddr $dma_ip no_prefix]
 	set tx_chan [hsi::utils::get_ip_param_value $dma_ip C_INCLUDE_MM2S]
