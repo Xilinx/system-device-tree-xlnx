@@ -2308,7 +2308,7 @@ proc check_base {reg base size} {
 		"2" {
 			set base_index0 [lindex $reg 0]
 			set size_index0 [lindex $reg 1]
-			if {$base_index0 == $base || $size_index0 == $size} {
+			if {$base_index0 == $base} {
 				return true
 			}
 		}
@@ -2318,9 +2318,7 @@ proc check_base {reg base size} {
 			set base_index1 [lindex $reg 2]
 			set size_index1 [lindex $reg 3]
 			if {$base_index0 == $base || $base_index1 == $base} {
-				if {$size_index0 == $size || $size_index1 == $size} {
 					return true
-				}
 			}
 		}
 		"6" {
@@ -2331,9 +2329,7 @@ proc check_base {reg base size} {
 			set base_index2 [lindex $reg 4]
 			set size_index2 [lindex $reg 5]
 			if {$base_index0 == $base || $base_index1 == $base || $base_index2 == $base} {
-				if {$size_index0 == $size || $size_index1 == $size || $size_index2 == $size} {
 					return true
-				}
 			}
 		}
 		"8" {
@@ -2346,9 +2342,7 @@ proc check_base {reg base size} {
 			set base_index3 [lindex $reg 6]
 			set size_index3 [lindex $reg 7]
 			if {$base_index0 == $base || $base_index1 == $base || $base_index2 == $base || $base_index3 == $base} {
-				if {$size_index0 == $size || $size_index1 == $size || $size_index2 == $size || $size_index3 == $size} {
 					return true
-				}
 			}
 		}
 		"10" {
@@ -2363,9 +2357,7 @@ proc check_base {reg base size} {
 			set base_index4 [lindex $reg 8]
 			set size_index4 [lindex $reg 9]
 			if {$base_index0 == $base || $base_index1 == $base || $base_index2 == $base || $base_index3 == $base || $base_index4 == $base} {
-				if {$size_index0 == $size || $size_index1 == $size || $size_index2 == $size || $size_index3 == $size || $size_index4 == $size} {
 					return true
-				}
 			}
 		}
 		"12" {
@@ -2382,9 +2374,7 @@ proc check_base {reg base size} {
 			set base_index5 [lindex $reg 10]
 			set size_index5 [lindex $reg 11]
 			if {$base_index0 == $base || $base_index1 == $base || $base_index2 == $base || $base_index3 == $base || $base_index4 == $base || $base_index5 == $base} {
-				if {$size_index0 == $size || $size_index1 == $size || $size_index2 == $size || $size_index3 == $size || $size_index4 == $size || $size_index5 == $size} {
 					return true
-				}
 			}
 		}
 		"14" {
@@ -2403,9 +2393,7 @@ proc check_base {reg base size} {
 			set base_index6 [lindex $reg 12]
 			set size_index6 [lindex $reg 13]
 			if {$base_index0 == $base || $base_index1 == $base || $base_index2 == $base || $base_index3 == $base || $base_index4 == $base || $base_index5 == $base || $base_index6 == $base} {
-				if {$size_index0 == $size || $size_index1 == $size || $size_index2 == $size || $size_index3 == $size || $size_index4 == $size || $size_index5 == $size || $size_index6 == $size} {
 					return true
-				}
 			}
 		}
 		"16" {
@@ -2426,9 +2414,7 @@ proc check_base {reg base size} {
 			set base_index7 [lindex $reg 14]
 			set size_index7 [lindex $reg 15]
 			if {$base_index0 == $base || $base_index1 == $base || $base_index2 == $base || $base_index3 == $base || $base_index4 == $base || $base_index5 == $base || $base_index6 == $base || $base_index7 == $base} {
-				if {$size_index0 == $size || $size_index1 == $size || $size_index2 == $size || $size_index3 == $size || $size_index4 == $size || $size_index5 == $size || $size_index6 == $size || $size_index7 == $size} {
 					return true
-				}
 			}
 		}
 	}
