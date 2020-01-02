@@ -126,6 +126,7 @@
 		status = "disabled";
 		compatible = "xlnx,zynqmp-ipi-mailbox";
 		interrupt-parent = <&gic>;
+		interrupts = <0 35 4>;
 		reg = <0x0 0xff300000 0x0 0x20>;
 		xlnx,ipi-bitmask = <0x1>;
 		xlnx,ipi-id = <2>;
@@ -168,6 +169,7 @@
 		status = "disabled";
 		compatible = "xlnx,zynqmp-ipi-mailbox";
 		interrupt-parent = <&gic>;
+		interrupts = <0 33 4>;
 		reg = <0x0 0xff310000 0x0 0x20>;
 		xlnx,ipi-bitmask = <0x100>;
 		xlnx,ipi-id = <0>;
@@ -209,6 +211,7 @@
 		status = "disabled";
 		compatible = "xlnx,zynqmp-ipi-mailbox";
 		interrupt-parent = <&gic>;
+		interrupts = <0 34 4>;
 		reg = <0x0 0xff320000 0x0 0x20>;
 		xlnx,ipi-bitmask = <0x200>;
 		xlnx,ipi-id = <1>;
@@ -251,6 +254,7 @@
 		status = "disabled";
 		compatible = "xlnx,zynqmp-ipi-mailbox";
 		interrupt-parent = <&gic>;
+		interrupts = <0 29 4>;
 		reg = <0x0 0xff330000 0x0 0x20>;
 		xlnx,ipi-bitmask = <0x10000>;
 		xlnx,ipi-id = <7>;
@@ -293,6 +297,7 @@
 		status = "disabled";
 		compatible = "xlnx,zynqmp-ipi-mailbox";
 		interrupt-parent = <&gic>;
+		interrupts = <0 30 4>;
 		reg = <0x0 0xff331000 0x0 0x20>;
 		xlnx,ipi-bitmask = <0x20000U>;
 		xlnx,ipi-id = <7>;
@@ -336,6 +341,7 @@
 		compatible = "xlnx,zynqmp-ipi-mailbox";
 		status = "disabled";
 		interrupt-parent = <&gic>;
+		interrupts = <0 31 4>;
 		reg = <0x0 0xff332000 0x0 0x20>;
 		xlnx,ipi-bitmask = <0x40000>;
 		xlnx,ipi-id = <7>;
@@ -379,6 +385,7 @@
 		status = "disabled";
 		compatible = "xlnx,zynqmp-ipi-mailbox";
 		interrupt-parent = <&gic>;
+		interrupts = <0 32 4>;
 		reg = <0x0 0xff333000 0x0 0x20>;
 		xlnx,ipi-bitmask = <0x80000>;
 		xlnx,ipi-id = <7>;
