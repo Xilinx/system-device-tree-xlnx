@@ -47,7 +47,7 @@ proc generate {drv_handle} {
 		set high [get_property CONFIG.C_HIGHADDR [get_cells -hier $drv_handle]]
 		set size [format 0x%x [expr {${high} - ${base} + 1}]]
 		set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
-		if {[string match -nocase $proctype "psu_cortexa53"]} {
+		if {[string match -nocase $proctype "psu_cortexa53"] || [string match -nocase $proctype "psv_cortexa72"]} {
 			if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 				set temp $base
 				set temp [string trimleft [string trimleft $temp 0] x]
@@ -89,7 +89,7 @@ proc generate {drv_handle} {
 	set high [string tolower [get_property HIGH_VALUE $ip_mem_handle]]
 	set size [format 0x%x [expr {${high} - ${base} + 1}]]
 	set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
-	if {[string match -nocase $proctype "psu_cortexa53"]} {
+	if {[string match -nocase $proctype "psu_cortexa53"] || [string match -nocase $proctype "psv_cortexa72"]} {
 		if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 			set temp $base
 			set temp [string trimleft [string trimleft $temp 0] x]
@@ -116,5 +116,20 @@ proc generate {drv_handle} {
 	} else {
 		set reg "$base $size"
 	}
-	set_drv_prop_if_empty $drv_handle reg $reg intlist
+
+	set master_dts [get_property CONFIG.master_dts [get_os]]
+	set parent_node [add_or_get_dt_node -n / -d ${master_dts}]
+	set addr [get_property CONFIG.C_BASEADDR [get_cells -hier $drv_handle]]
+	regsub -all {^0x} $addr {} addr
+	set memory_node [add_or_get_dt_node -n memory -u $addr -p $parent_node]
+	hsi::utils::add_new_dts_param "${memory_node}" "reg" $reg inthexlist
+	if {[catch {set dev_type [get_property CONFIG.device_type $drv_handle]} msg]} {
+		set dev_type memory
+	}
+	if {[string_is_empty $dev_type]} {set dev_type memory}
+	hsi::utils::add_new_dts_param "${memory_node}" "device_type" $dev_type string
+
+	gen_compatible_property $drv_handle
+	set prop [get_property CONFIG.compatible $drv_handle]
+	hsi::utils::add_new_dts_param "${memory_node}" "compatible" $prop string
 }
