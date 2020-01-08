@@ -1456,7 +1456,7 @@ proc gen_clk_property {drv_handle} {
 
 	set clk_pins [get_pins -of_objects [get_cells -hier $drv_handle] -filter {TYPE==clk&&DIRECTION==I}]
 	set ip [get_property IP_NAME [get_cells -hier $drv_handle]]
-	set ignore_list "lmb_bram_if_cntlr PERIPHERAL axi_noc"
+	set ignore_list "lmb_bram_if_cntlr PERIPHERAL axi_noc axi_bram_ctrl"
 	if {[lsearch $ignore_list $ip] >= 0 } {
 		return 0
         }
@@ -2604,7 +2604,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	}
 	# TODO: more ignore ip list?
 	set ip_type [get_property IP_NAME $ip]
-	set ignore_list "lmb_bram_if_cntlr PERIPHERAL axi_noc"
+	set ignore_list "lmb_bram_if_cntlr PERIPHERAL axi_noc axi_bram_ctrl mig_7series"
 	if {[string match -nocase $ip_type "psu_pcie"]} {
 		set pcie_config [get_property CONFIG.C_PCIE_MODE [get_cells -hier $drv_handle]]
 		if {[string match -nocase $pcie_config "Endpoint Device"]} {
@@ -3525,7 +3525,7 @@ proc add_memory_node {drv_handle} {
 	if {![string match -nocase $main_memory "none"]} {
 		set ddr_ip [get_property IP_NAME [get_cells -hier $main_memory]]
 	}
-	set ddr_list "psu_ddr ps7_ddr axi_emc mig_7series psv_ddr"
+	set ddr_list "psu_ddr ps7_ddr axi_emc mig_7series psv_ddr axi_bram_ctrl lmb_bram_if_cntlr"
 	if {[lsearch -nocase $ddr_list $ddr_ip] >= 0} {
 		set parent_node [add_or_get_dt_node -n / -d ${master_dts}]
 		set unit_addr [get_baseaddr $drv_handle]
