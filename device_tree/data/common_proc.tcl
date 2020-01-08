@@ -3542,6 +3542,13 @@ proc add_memory_node {drv_handle} {
 		hsi::utils::add_new_dts_param "${memory_node}" "device_type" $dev_type string
 
 		set_cur_working_dts $cur_dts
+		set slave [get_cells -hier ${drv_handle}]
+		set vlnv [split [get_property VLNV $slave] ":"]
+		set name [lindex $vlnv 2]
+		set ver [lindex $vlnv 3]
+		set comp_prop "xlnx,${name}-${ver}"
+		regsub -all {_} $comp_prop {-} comp_prop
+		hsi::utils::add_new_dts_param "${memory_node}" "compatible" $comp_prop string
 		return $memory_node
 	}
 }

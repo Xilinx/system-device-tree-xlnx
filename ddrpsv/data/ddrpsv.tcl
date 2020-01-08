@@ -35,6 +35,13 @@ proc generate {drv_handle} {
 	}
 	if {[string_is_empty $dev_type]} {set dev_type memory}
 	hsi::utils::add_new_dts_param "${memory_node}" "device_type" $dev_type string
+	set slave [get_cells -hier ${drv_handle}]
+	set vlnv [split [get_property VLNV $slave] ":"]
+	set name [lindex $vlnv 2]
+	set ver [lindex $vlnv 3]
+	set comp_prop "xlnx,${name}-${ver}"
+	regsub -all {_} $comp_prop {-} comp_prop
+	hsi::utils::add_new_dts_param "${memory_node}" "compatible" $comp_prop string
 	set is_ddr_low_0 0
 	set is_ddr_low_1 0
 	set is_ddr_low_2 0
