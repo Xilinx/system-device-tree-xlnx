@@ -3529,8 +3529,10 @@ proc add_memory_node {drv_handle} {
 	if {[lsearch -nocase $ddr_list $ddr_ip] >= 0} {
 		set parent_node [add_or_get_dt_node -n / -d ${master_dts}]
 		set unit_addr [get_baseaddr $drv_handle]
-		set memory_node [add_or_get_dt_node -n memory -p $parent_node]
 		set reg_value [get_property CONFIG.reg $drv_handle]
+		set addr [lindex $reg_value 1]
+		regsub -all {^0x} $addr {} addr
+		set memory_node [add_or_get_dt_node -n memory -u $addr -p $parent_node]
 		hsi::utils::add_new_dts_param "${memory_node}" "reg" $reg_value inthexlist
 		# maybe hardcoded
 		if {[catch {set dev_type [get_property CONFIG.device_type $drv_handle]} msg]} {
