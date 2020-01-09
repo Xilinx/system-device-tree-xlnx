@@ -609,6 +609,12 @@
 		#size-cells = <2>;
 		ranges;
 
+		psu_coresight_0: coresight@fe800000 {
+			compatible = "xlnx,coresight-1.0";
+			status = "disabled";
+			reg = <0x0 0xfe800000 0x0 0x10000>;
+		};
+
 		psu_can_0: can@ff060000 {
 			compatible = "xlnx,zynq-can-1.0";
 			status = "disabled";

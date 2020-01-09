@@ -164,6 +164,12 @@
 		interrupt-parent = <&gic>;
 		u-boot,dm-pre-reloc;
 
+		psv_coresight_0: coresight@f0800000 {
+			compatible = "xlnx,coresight-1.0";
+			status = "disabled";
+			reg = <0x0 0xf0800000 0x0 0x10000>;
+		};
+
 		psv_canfd_0: can@ff060000 {
 			compatible = "xlnx,canfd-2.0";
 			status = "disabled";
