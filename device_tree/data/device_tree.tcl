@@ -533,10 +533,6 @@ proc update_chosen {os_handle} {
 	[string match -nocase $proctype "psv_cortexa72"] || \
 	[string match -nocase $proctype "psu_pmu"] || \
 	[string match -nocase $proctype "psv_pmc"]} {
-		if {[string match -nocase $proctype "psv_cortexa72"]} {
-			#as the early params are defined in board dts files
-			return
-		}
 		if {[string match -nocase $proctype "psu_cortexa53"]} {
 	           append bootargs " clk_ignore_unused"
 		}
