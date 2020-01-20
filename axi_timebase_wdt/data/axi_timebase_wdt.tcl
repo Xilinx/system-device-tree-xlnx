@@ -32,6 +32,7 @@ proc generate {drv_handle} {
 	}
 	set_drv_conf_prop $drv_handle "C_WDT_ENABLE_ONCE" "xlnx,wdt-enable-once"
 	set_drv_conf_prop $drv_handle "C_WDT_INTERVAL" "xlnx,wdt-interval"
+	set_drv_conf_prop $drv_handle "C_ENABLE_WINDOW_WDT" "xlnx,enable-window-wdt"
 
 }
 
