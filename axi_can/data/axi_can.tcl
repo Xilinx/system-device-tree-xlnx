@@ -31,9 +31,7 @@ proc generate {drv_handle} {
         if {[string compare -nocase "xilinx.com:ip:canfd:1.0" $version] == 0} {
             hsi::utils::add_new_property $drv_handle "compatible" stringlist "xlnx,canfd-1.0"
         } else {
-            set compatible "xlnx,canfd-2.0"
-            set compatible [append compatible " " "xlnx,axi-canfd-2.0"]
-            hsi::utils::add_new_property $drv_handle "compatible" stringlist $compatible
+            hsi::utils::add_new_property $drv_handle "compatible" stringlist "xlnx,axi-canfd-2.0"
         }
         set_drv_conf_prop $drv_handle NUM_OF_TX_BUF tx-mailbox-count hexint
         set_drv_conf_prop $drv_handle NUM_OF_TX_BUF rx-fifo-depth hexint
