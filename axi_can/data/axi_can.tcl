@@ -36,6 +36,7 @@ proc generate {drv_handle} {
         set_drv_conf_prop $drv_handle NUM_OF_TX_BUF tx-mailbox-count hexint
         set_drv_conf_prop $drv_handle NUM_OF_TX_BUF rx-fifo-depth hexint
     } else {
+        set_drv_conf_prop $drv_handle c_can_num_acf can-num-acf hexint
         set_drv_conf_prop $drv_handle c_can_tx_dpth tx-fifo-depth hexint
         set_drv_conf_prop $drv_handle c_can_rx_dpth rx-fifo-depth hexint
     }
