@@ -21,4 +21,5 @@ proc generate {drv_handle} {
 		}
 	}
 
+        set_drv_conf_prop $drv_handle C_OSPI_CLK_FREQ_HZ xlnx,clock-freq int
 }
