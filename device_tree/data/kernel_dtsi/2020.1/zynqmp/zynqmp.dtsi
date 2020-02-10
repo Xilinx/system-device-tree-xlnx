@@ -1014,6 +1014,7 @@
 		perf_monitor_ocm: perf-monitor@ffa00000 {
 			compatible = "xlnx,axi-perf-monitor";
 			reg = <0x0 0xffa00000 0x0 0x10000>;
+			status = "disabled";
 			interrupts = <0 25 4>;
 			interrupt-parent = <&gic>;
 			xlnx,enable-profile = <0>;
@@ -1032,6 +1033,7 @@
 		perf_monitor_ddr: perf-monitor@fd0b0000 {
 			compatible = "xlnx,axi-perf-monitor";
 			reg = <0x0 0xfd0b0000 0x0 0x10000>;
+			status = "disabled";
 			interrupts = <0 123 4>;
 			interrupt-parent = <&gic>;
 			xlnx,enable-profile = <0>;
@@ -1050,6 +1052,7 @@
 		perf_monitor_cci: perf-monitor@fd490000 {
 			compatible = "xlnx,axi-perf-monitor";
 			reg = <0x0 0xfd490000 0x0 0x10000>;
+			status = "disabled";
 			interrupts = <0 123 4>;
 			interrupt-parent = <&gic>;
 			xlnx,enable-profile = <0>;
@@ -1068,6 +1071,7 @@
 		perf_monitor_lpd: perf-monitor@ffa10000 {
 			compatible = "xlnx,axi-perf-monitor";
 			reg = <0x0 0xffa10000 0x0 0x10000>;
+			status = "disabled";
 			interrupts = <0 25 4>;
 			interrupt-parent = <&gic>;
 			xlnx,enable-profile = <0>;
