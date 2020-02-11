@@ -2176,13 +2176,13 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 			} else {
 				if {[string match -nocase $proctype "ps7_cortexa9"] || [string match -nocase $proctype "microblaze"]} {
 					set index [check_base $reg $base $size]
-					if {$index == "true"} {
+					if {$index == "true" && $ip_name != "axi_fifo_mm_s"} {
 						continue
 					}
 				}
 				if {[string match -nocase $proctype "psu_cortexa53"] || [string match -nocase $proctype "psv_cortexa72"] || [string match -nocase $proctype "psv_pmc"]} {
 					set index [check_64_base $reg $base $size]
-					if {$index == "true"} {
+					if {$index == "true" && $ip_name != "axi_fifo_mm_s"} {
 						continue
 					}
 				}
