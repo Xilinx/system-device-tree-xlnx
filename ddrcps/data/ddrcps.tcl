@@ -32,6 +32,10 @@ proc generate {drv_handle} {
         foreach prop_name ${proplist} {
                 ip2drv_prop $drv_handle $prop_name
         }
+	set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
+	if { [string match -nocase $proctype "ps7_cortexa9"] }  {
+		return
+	}
 	set zynq_periph [get_cells -hier -filter {IP_NAME == zynq_ultra_ps_e}]
         set avail_param [list_property [get_cells -hier $zynq_periph]]
         if {[lsearch -nocase $avail_param "CONFIG.PSU__DDRC__DDR4_ADDR_MAPPING"] >= 0} {
