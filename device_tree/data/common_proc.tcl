@@ -3409,6 +3409,10 @@ proc gen_cpu_nodes {drv_handle} {
 			if {[string match -nocase $loop "0"]} {
 				hsi::utils::add_new_dts_param $cpu_node "compatible" $compatiblelist stringlist 
 			}
+			set slave [get_cells -hier ${drv_handle}]
+			set model "pmu-microblaze,[hsi::utils::get_ip_version $slave]"
+			hsi::utils::add_new_dts_param $cpu_node "model" $model stringlist
+
 			set loop 1
 		} elseif {[string match -nocase $processor_type "psv_pmc"]} {
 			set cpu_node [add_or_get_dt_node -n ${dev_type} -l "cpu2" -d ${default_dts} -p /]
