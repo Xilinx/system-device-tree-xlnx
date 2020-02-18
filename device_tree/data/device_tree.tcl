@@ -723,6 +723,9 @@ proc remove_main_memory_node {} {
 	set all_drivers [get_drivers]
 	foreach drv_handle $all_drivers {
 		set ip [get_property IP_NAME [get_cells -hier $drv_handle]]
+		if {[string match -nocase $ip "axi_bram_ctrl"]} {
+			return
+		}
 		if {[string match -nocase $ip "ddr4"]} {
 			set slave [get_cells -hier ${drv_handle}]
 			set ip_mem_handles [hsi::utils::get_ip_mem_ranges $slave]
