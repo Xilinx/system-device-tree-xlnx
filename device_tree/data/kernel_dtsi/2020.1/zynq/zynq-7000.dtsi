@@ -180,6 +180,7 @@
 			interrupt-controller;
 			reg = <0xF8F01000 0x1000>,
 			      <0xF8F00100 0x100>;
+			status = "disabled";
 		};
 
 		L2: cache-controller@f8f02000 {
@@ -372,6 +373,7 @@
 		dmac_s: dmac@f8003000 {
 			compatible = "arm,pl330", "arm,primecell";
 			reg = <0xf8003000 0x1000>;
+			status = "disabled";
 			interrupt-parent = <&intc>;
 			interrupt-names = "abort", "dma0", "dma1", "dma2", "dma3",
 				"dma4", "dma5", "dma6", "dma7";
@@ -392,6 +394,7 @@
 			interrupt-parent = <&intc>;
 			interrupts = <0 8 4>;
 			reg = <0xf8007000 0x100>;
+			status = "disabled";
 			clocks = <&clkc 12>, <&clkc 15>, <&clkc 16>, <&clkc 17>, <&clkc 18>;
 			clock-names = "ref_clk", "fclk0", "fclk1", "fclk2", "fclk3";
 			syscon = <&slcr>;
