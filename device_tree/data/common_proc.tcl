@@ -3344,7 +3344,6 @@ proc gen_cpu_nodes {drv_handle} {
 			# skip node generation for static zynq-7000 dtsi
 			# TODO: this needs to be fixed to allow override
 			cortexa9_opp_gen $drv_handle
-			return 0
 		}
 		"psu_cortexa53" {
 			# skip node generation for static zynqmp dtsi
@@ -3372,7 +3371,7 @@ proc gen_cpu_nodes {drv_handle} {
 
 	set default_dts [set_drv_def_dts $processor]
 	set processor_type [get_property IP_NAME [get_cell -hier ${processor}]]
-	set proc_list "psu_pmu psv_pmc psu_cortexr5 psu_cortexa53 psv_cortexa72 psv_cortexr5" 
+	set proc_list "psu_pmu psv_pmc psu_cortexr5 psu_cortexa53 psv_cortexa72 psv_cortexr5 ps7_cortexa9"
 	if {[lsearch -nocase $proc_list $processor_type] >= 0} {
 	} else {
 		set cpu_root_node [add_or_get_dt_node -n cpus -d ${default_dts} -p /]
@@ -3467,6 +3466,17 @@ proc gen_cpu_nodes {drv_handle} {
 			}
 			if {[string match -nocase $loop "0"]} {
 				hsi::utils::add_new_dts_param $cpu_node "compatible" $compatiblelist stringlist 
+			}
+			set loop 1
+		} elseif {[string match -nocase $processor_type "ps7_cortexa9"]} {
+			set slave [get_cells -hier ${drv_handle}]
+			set name [split [get_property NAME $slave] "_"]
+			set cpu_nr [lindex $name 2]
+			set cpu_node [add_or_get_dt_node -n ${dev_type} -l "cpu${cpu_nr}" -d ${default_dts} -p /]
+			set compatiblelist [lappend compatiblelist "arm,cortex-a9"]
+			set compatiblelist [lappend compatiblelist "arm,cortex-a9-$cpu_nr"]
+			if {[string match -nocase $loop "0"]} {
+				hsi::utils::add_new_dts_param $cpu_node "compatible" $compatiblelist stringlist
 			}
 			set loop 1
 		} else {
