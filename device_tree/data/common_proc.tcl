@@ -1230,6 +1230,11 @@ proc gen_ps7_mapping {} {
 		dict set def_ps_mapping ff333000 label ipi6
 		dict set def_ps_mapping ffcb0000 label watchdog
 		dict set def_ps_mapping fd070000 label memory-controller
+		dict set def_ps_mapping fd1a0000 label crfapb
+		dict set def_ps_mapping ff5e0000 label crlapb
+		dict set def_ps_mapping ffcc0000 label efuse
+		dict set def_ps_mapping ff180000 label iou_slcr
+		dict set def_ps_mapping ff410000 label lpd_slcr
 	} else {
 		dict set def_ps_mapping f8891000 label pmu
 		dict set def_ps_mapping f8007100 label adc
@@ -2129,7 +2134,8 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 
 	if {[string_is_empty $skip_ps_check]} {
 		if {[is_ps_ip $drv_handle]} {
-			return 0
+			set val [get_property CONFIG.reg $drv_handle]
+			#return 0
 		}
 	}
 	set ip_name  [get_property IP_NAME [get_cells -hier $drv_handle]]
@@ -2426,12 +2432,21 @@ proc check_base {reg base size} {
 proc gen_compatible_property {drv_handle} {
 	proc_called_by
 
-	set proc_type [get_sw_proc_prop IP_NAME]
-	if {[is_ps_ip $drv_handle]} {
+	set ip [get_cells -hier $drv_handle]
+        # TODO: check if the base address is correct
+        set unit_addr [get_baseaddr ${ip} no_prefix]
+	set ps7_mapping [gen_ps7_mapping]
+	set tmp [get_ps_node_unit_addr $drv_handle]
+        if {$tmp != -1} {set unit_addr $tmp}
+        if {![catch {set tmp [dict get $ps7_mapping $unit_addr label]} msg] && [is_ps_ip $drv_handle]} {
 			return 0
 	}
 	set reg ""
 	set slave [get_cells -hier ${drv_handle}]
+	set proctype [get_property IP_TYPE $slave]
+	if {[string match -nocase $proctype "processor"]} {
+		return 0
+	}
 	set vlnv [split [get_property VLNV $slave] ":"]
 	set name [lindex $vlnv 2]
 	set ver [lindex $vlnv 3]
@@ -2489,8 +2504,16 @@ proc default_parameters {ip_handle {dont_generate ""}} {
 	set par_handles [get_ip_conf_prop_list $ip_handle "CONFIG.C_.*"]
 	set valid_prop_names {}
 	foreach par $par_handles {
-		regsub -all {CONFIG.} $par {} tmp_par
+		if {[is_ps_ip $ip_handle]} {
+			set tmp_par $par
+		} else {
+			regsub -all {CONFIG.} $par {} tmp_par
+		}
 		# Ignore some parameters that are always handled specially
+		
+		if {[is_ps_ip $ip_handle]} {
+			lappend valid_prop_names $par
+		} else {
 		switch -glob $tmp_par {
 			$dont_generate - \
 			"INSTANCE" - \
@@ -2530,6 +2553,7 @@ proc default_parameters {ip_handle {dont_generate ""}} {
 			}
 		}
 	}
+	}
 	return $valid_prop_names
 }
 
@@ -2567,7 +2591,7 @@ proc ps7_reset_handle {drv_handle reset_pram conf_prop} {
 proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	# Check if the peripheral is in Secure or Non-secure zone
 	if {[check_ip_trustzone_state $drv_handle] == 1} {
-		return
+#		return
 	}
 	set remove_pl [get_property CONFIG.remove_pl [get_os]]
 	if {[is_pl_ip $drv_handle] && $remove_pl} {
@@ -2614,6 +2638,9 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 			lappend ignore_list $ip_type
 		}
 	}
+	if {[regexp "pmc_*" $ip_type" match]} {
+		return 0
+	}
 	if {[lsearch $ignore_list $ip_type] >= 0  \
 		} {
 		return 0
@@ -2625,6 +2652,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 
 	set status_enable_flow 0
 	set status_disabled 0
+	set status_chk 1
 
 	if {[is_ps_ip $drv_handle]} {
 		set tmp [get_ps_node_unit_addr $drv_handle]
@@ -2632,9 +2660,13 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 
 		if {[catch {set tmp [dict get $ps7_mapping $unit_addr label]} msg]} {
 			# CHK: if PS IP that's not in the zynq-7000 dtsi, do not generate it
-			return 0
+		#	puts "$drv_handle $unit_addr $label"
+		#	return 0
+			set status_enable_flow 0
+			set status_chk 0
 		}
-		if {![string_is_empty $tmp]} {
+		
+		if {![string_is_empty $tmp] && [string match -nocase $status_chk "1"]} {
 			set status_enable_flow 1
 		}
 		if {[catch {set tmp [dict get $ps7_mapping $unit_addr status]} msg]} {
@@ -3220,6 +3252,9 @@ proc gen_root_node {drv_handle} {
 			global dtsi_fname
 			update_system_dts_include [file tail ${dtsi_fname}]
 			update_system_dts_include [file tail "zynqmp-clk-ccf.dtsi"]
+        		hsi::utils::add_new_dts_param "${root_node}" model "ZynqMP PMUFW" string ""
+			hsi::utils::add_new_dts_param "${root_node}" "#address-cells" 1 int ""
+			hsi::utils::add_new_dts_param "${root_node}" "#size-cells" 1 int ""
 
 			# no root_node required as zynq-7000.dtsi
 			set board_name [generate_board_compatible $root_node]
@@ -3232,6 +3267,9 @@ proc gen_root_node {drv_handle} {
 			global dtsi_fname
 			update_system_dts_include [file tail ${dtsi_fname}]
 			update_system_dts_include [file tail "zynqmp-clk-ccf.dtsi"]
+        		hsi::utils::add_new_dts_param "${root_node}" model "ZynqMP R5" string ""
+			hsi::utils::add_new_dts_param "${root_node}" "#address-cells" 1 int ""
+			hsi::utils::add_new_dts_param "${root_node}" "#size-cells" 1 int ""
 
 			# no root_node required as zynq-7000.dtsi
 			set board_name [generate_board_compatible $root_node]
@@ -3248,6 +3286,9 @@ proc gen_root_node {drv_handle} {
 			}
 			update_system_dts_include [file tail ${dtsi_fname}]
 			update_system_dts_include [file tail "zynqmp-clk-ccf.dtsi"]
+        		hsi::utils::add_new_dts_param "${root_node}" model "xlnx,zynqmp" string ""
+			hsi::utils::add_new_dts_param "${root_node}" "#address-cells" 2 int ""
+			hsi::utils::add_new_dts_param "${root_node}" "#size-cells" 2 int ""
 			# no root_node required as zynqmp.dtsi
 			set board_name [generate_board_compatible $root_node]
 			return 0
@@ -3269,6 +3310,10 @@ proc gen_root_node {drv_handle} {
 				update_system_dts_include [file tail "versal-clk.dtsi"]
 			}
 			set board_name [generate_board_compatible $root_node]
+	       		hsi::utils::add_new_dts_param "${root_node}" model "xlnx,versal" string ""
+			hsi::utils::add_new_dts_param "${root_node}" "#address-cells" 2 int ""
+			hsi::utils::add_new_dts_param "${root_node}" "#size-cells" 2 int ""
+
 			return 0
 		}
 		"psv_cortexr5" {
@@ -3288,6 +3333,9 @@ proc gen_root_node {drv_handle} {
 				update_system_dts_include [file tail "versal-clk.dtsi"]
 			}
 			set board_name [generate_board_compatible $root_node]
+			hsi::utils::add_new_dts_param "${root_node}" model "Versal R5" string ""
+			hsi::utils::add_new_dts_param "${root_node}" "#address-cells" 1 int ""
+			hsi::utils::add_new_dts_param "${root_node}" "#size-cells" 1 int ""
 			return 0
 		}
 		"psv_pmc" {
@@ -3307,6 +3355,9 @@ proc gen_root_node {drv_handle} {
 				update_system_dts_include [file tail "versal-clk.dtsi"]
 			}
 			set board_name [generate_board_compatible $root_node]
+			hsi::utils::add_new_dts_param "${root_node}" model "PMC FW" string ""
+			hsi::utils::add_new_dts_param "${root_node}" "#address-cells" 1 int ""
+			hsi::utils::add_new_dts_param "${root_node}" "#size-cells" 1 int ""
 			return 0
 		}
 		"microblaze" {

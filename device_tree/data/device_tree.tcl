@@ -492,12 +492,294 @@ proc generate {lib_handle} {
 	}
     }
     gen_ext_axi_interface
+    gen_resrv_memory
 }
 
+proc generate_psvreg_property {base high} {
+	set size [format 0x%x [expr {${high} - ${base} + 1}]]
+
+	set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
+	if {[string match -nocase $proctype "psv_cortexa72"]} {
+		if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
+			set temp $base
+			set temp [string trimleft [string trimleft $temp 0] x]
+			set len [string length $temp]
+			set rem [expr {${len} - 8}]
+			set high_base "0x[string range $temp $rem $len]"
+			set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
+			set low_base [format 0x%08x $low_base]
+			if {[regexp -nocase {0x([0-9a-f]{9})} "$size" match]} {
+				set temp $size
+				set temp [string trimleft [string trimleft $temp 0] x]
+				set len [string length $temp]
+				set rem [expr {${len} - 8}]
+				set high_size "0x[string range $temp $rem $len]"
+				set low_size  "0x[string range $temp 0 [expr {${rem} - 1}]]"
+				set low_size [format 0x%08x $low_size]
+				set reg "$low_base $high_base $low_size $high_size"
+			} else {
+				set reg "$low_base $high_base 0x0 $size"
+			}
+		} else {
+			set reg "0x0 $base 0x0 $size"
+		}
+	} 
+	return $reg
+}
+
+proc gen_resrv_memory {} {
+	set proc_list [get_cells -filter {IP_TYPE==PROCESSOR}]
+	set regprop ""
+        set addr_64 "0"
+    	set size_64 "0"
+	set a53map ""
+	set r5map ""
+	set pmumap ""		
+	set a53count "0"
+	set r5count "0"
+        set is_ddr_low_0 0
+        set is_ddr_low_1 0
+        set is_ddr_low_2 0
+        set is_ddr_low_3 0
+        set is_ddr_ch_1 0
+        set is_ddr_ch_2 0
+        set is_ddr_ch_3 0
+	foreach proc_map $proc_list {
+		set proctype [get_property IP_NAME $proc_map]
+		if {[string match -nocase $proctype "psu_cortexa53"] || [string match -nocase $proctype "psu_cortexr5"] || [string match -nocase $proctype "psu_pmu"]} {
+			set ranges [get_mem_ranges -of_objects $proc_map]
+			set ranges [get_mem_ranges -of_objects $proc_map -filter {MEM_TYPE==MEMORY}]
+		} elseif {[string match -nocase $proctype "psv_cortexa72"] || [string match -nocase $proctype "psv_cortexr5"] || [string match -nocase $proctype "psv_pmc"]} {
+			set interface_block_names [get_property ADDRESS_BLOCK [get_mem_ranges -of_objects $proc_map]]
+			continue
+		}
+
+		if {[string match -nocase $proctype "psu_cortexa53"] || [string match -nocase $proctype "psv_cortexa72"] } {
+			if {[string match -nocase $a53count "1"] } {
+				continue
+			}
+		}
+		if {[string match -nocase $proctype "psu_cortexr5"] || [string match -nocase $proctype "psv_cortexr5"]} {
+			if {[string match -nocase $r5count "1"] } {
+				continue
+			}
+		}
+		if {[string match -nocase $proctype "psv_cortexa72"] || [string match -nocase $proctype "psv_cortexr5"] || [string match -nocase $proctype "psv_cortexa72"]} {
+			foreach block_name $interface_block_names {
+				if {[string match "C0_DDR_LOW0*" $block_name] || [string match "C1_DDR_LOW0*" $block_name]} {
+					if {$is_ddr_low_0 == 0} {
+						set base_value_0 [common::get_property BASE_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+					}
+					set high_value_0 [common::get_property HIGH_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+					set is_ddr_low_0 1
+				} elseif {[string match "C0_DDR_LOW1*" $block_name] || [string match "C1_DDR_LOW1*" $block_name]} {
+					if {$is_ddr_low_1 == 0} {
+						set base_value_1 [common::get_property BASE_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+					}
+					set high_value_1 [common::get_property HIGH_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+					set is_ddr_low_1 1
+				} elseif {[string match "C0_DDR_LOW2*" $block_name] || [string match "C1_DDR_LOW2*" $block_name]} {
+					if {$is_ddr_low_2 == 0} {
+						set base_value_2 [common::get_property BASE_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+					}
+					set high_value_2 [common::get_property HIGH_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+					set is_ddr_low_2 1
+				} elseif {[string match "C0_DDR_LOW3*" $block_name] || [string match "C1_DDR_LOW3*" $block_name]} {
+					if {$is_ddr_low_3 == "0"} {
+						set base_value_3 [common::get_property BASE_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+					}
+					set high_value_3 [common::get_property HIGH_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+					set is_ddr_low_3 1
+				} elseif {[string match "C0_DDR_CH1*" $block_name]} {
+					if {$is_ddr_ch_1 == "0"} {
+						set base_value_4 [common::get_property BASE_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+					}
+					set high_value_4 [common::get_property HIGH_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+					set is_ddr_ch_1 1
+				} elseif {[string match "C0_DDR_CH2*" $block_name]} {
+					if {$is_ddr_ch_2 == "0"} {
+				                set base_value_5 [common::get_property BASE_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+				        }
+				        set high_value_5 [common::get_property HIGH_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+				        set is_ddr_ch_2 1
+				} elseif {[string match "C0_DDR_CH3*" $block_name]} {
+					 if {$is_ddr_ch_3 == "0"} {
+				                set base_value_6 [common::get_property BASE_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+				        }
+				        set high_value_6 [common::get_property HIGH_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+				        set is_ddr_ch_3 1
+				}
+				incr i
+			}
+			set updat ""
+			if {$is_ddr_low_0 == 1} {
+				set reg_val_0 [generate_psvreg_property $base_value_0 $high_value_0]
+				set updat [lappend updat $reg_val_0]
+			}
+			if {$is_ddr_low_1 == 1} {
+				set reg_val_1 [generate_psvreg_property $base_value_1 $high_value_1]
+				set updat [lappend updat $reg_val_1]
+			}
+			if {$is_ddr_low_2 == 1} {
+				set reg_val_2 [generate_psvreg_property $base_value_2 $high_value_2]
+				set updat [lappend updat $reg_val_2]
+			}
+			if {$is_ddr_low_3 == 1} {
+				set reg_val_3 [generate_psvreg_property $base_value_3 $high_value_3]
+				set updat [lappend updat $reg_val_3]
+			}
+			if {$is_ddr_ch_1 == 1} {
+				set reg_val_4 [generate_psvreg_property $base_value_4 $high_value_4]
+				set updat [lappend updat $reg_val_4]
+			}
+			if {$is_ddr_ch_2 == 1} {
+				set reg_val_5 [generate_psvreg_property $base_value_5 $high_value_5]
+				set updat [lappend updat $reg_val_5]
+			}
+			if {$is_ddr_ch_3 == 1} {
+				set reg_val_6 [generate_psvreg_property $base_value_6 $hiagh_value_6]
+				set updat [lappend updat $reg_val_6]
+			}
+			set len [llength $updat]
+			
+			if {[string match -nocase $len "0"] } {
+				continue
+			}	
+			switch $len {
+				"1" {
+					set reg_val [lindex $updat 0]
+				}
+				"2" {
+					set reg_val [lindex $updat 0]
+					append reg_val ">, <[lindex $updat 1]"
+				}
+				"3" {
+					set reg_val [lindex $updat 0]
+					append reg_val ">, <[lindex $updat 1]>, <[lindex $updat 2]"
+				}
+				"4" {
+					set reg_val [lindex $updat 0]
+					append reg_val ">, <[lindex $updat 1]>, <[lindex $updat 2]>, <[lindex $updat 3]"
+				}
+				"5" {
+					set reg_val [lindex $updat 0]
+					append reg_val ">, <[lindex $updat 1]>, <[lindex $updat 2]>, <[lindex $updat 3]>, <[lindex $updat 4]"
+				}
+				"6" {
+					set reg_val [lindex $updat 0]
+					append reg_val ">, <[lindex $updat 1]>, <[lindex $updat 2]>, <[lindex $updat 3]>, <[lindex $updat 4]>, <[lindex $updat 5]"
+				}
+				"7" {
+					set reg_val [lindex $updat 0]
+					append reg_val ">, <[lindex $updat 1]>, <[lindex $updat 2]>, <[lindex $updat 3]>, <[lindex $updat 4]>, <[lindex $updat 5]>, <[lindex $updat 6]"
+				}
+			}
+			set a53map $reg_val
+			set a53count "1"
+			set r5map $reg_val
+			set r5count "1"
+		} elseif {[string match -nocase $proctype "psu_cortexa53"] || [string match -nocase $proctype "psu_cortexr5"] || [string match -nocase $proctype "psu_pmu"]} {
+			foreach mem_map $ranges {
+				if {![regexp "_ddr_*" $mem_map match]} {
+					continue
+				}
+
+				set base [get_property BASE_VALUE  $mem_map]
+				set high [get_property HIGH_VALUE  $mem_map]
+				set mem_size [format 0x%x [expr {${high} - ${base} + 1}]]
+				if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
+				    set addr_64 "1"
+				    set temp $base
+				    set temp [string trimleft [string trimleft $temp 0] x]
+				    set len [string length $temp]
+				    set rem [expr {${len} - 8}]
+				    set high_base "0x[string range $temp $rem $len]"
+				    set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
+				    set low_base [format 0x%08x $low_base]
+				}
+				if {[regexp -nocase {0x([0-9a-f]{9})} "$mem_size" match]} {
+				    set size_64 "1"
+				    set temp $mem_size
+				    set temp [string trimleft [string trimleft $temp 0] x]
+				    set len [string length $temp]
+				    set rem [expr {${len} - 8}]
+				    set high_size "0x[string range $temp $rem $len]"
+				    set low_size "0x[string range $temp 0 [expr {${rem} - 1}]]"
+				    set low_size [format 0x%08x $low_size]
+				}
+				if {[string match $regprop ""]} {
+				    if {[string match $addr_64 "1"] && [string match $size_64 "1"]} {
+				        set regprop "$low_base $high_base $low_size $high_size"
+				    } elseif {[string match $addr_64 "1"] && [string match $size_64 "0"]} {
+				        set regprop "${low_base} ${high_base} 0x0 ${mem_size}"
+				    } elseif {[string match $addr_64 "0"] && [string match $size_64 "1"]} {
+				        set regprop "0x0 ${base} 0x0 ${mem_size}"
+				    } else {
+				        set regprop "0x0 ${base} 0x0 ${mem_size}"
+				    }
+				} else {
+				    if {[string match $addr_64 "1"] && [string match $size_64 "1"]} {
+				        append regprop ">, " "<$low_base $high_base $low_size $high_size"
+				    } elseif {[string match $addr_64 "1"] && [string match $size_64 "0"]} {
+				        append regprop ">, " "<${low_base} ${high_base} 0x0 ${mem_size}"
+				    } elseif {[string match $addr_64 "0"] && [string match $size_64 "1"]} {
+				        append regprop ">, " "<0x0 ${base} 0x0 ${mem_size}"
+				    } else {
+				        append regprop ">, " "<0x0 ${base} 0x0 ${mem_size}"
+				    }
+				}
+			 	if {[string match -nocase $proctype "psu_cortexa53"] || [string match -nocase $proctype "psv_cortexa72"]} {
+					set a53map $regprop
+					set a53count "1"
+				} elseif {[string match -nocase $proctype "psu_cortexr5"] || [string match -nocase $proctype "psv_cortexr5"]} {
+					set r5map $regprop
+					set r5count "1"
+				} elseif {[string match -nocase $proctype "psu_pmu"] || [string match -nocase $proctype "psv_pmc"]} {
+					set pmumap $regprop
+				}
+
+				set addr_64 "0"
+		    		set size_64 "0"
+			}
+			set regprop ""
+		}
+
+	}
+	set default_dts [get_property CONFIG.master_dts [get_os]]
+ 	set root_node [add_or_get_dt_node -n "/" -d ${default_dts}]
+	set mem_node [add_or_get_dt_node -n "reserved-memory" -d ${default_dts} -p ${root_node}]
+	hsi::utils::add_new_dts_param $mem_node "#address-cells" "0x2" hexint
+    	hsi::utils::add_new_dts_param $mem_node "#size-cells" "0x2" hexint
+    	hsi::utils::add_new_dts_param $mem_node ranges "" boolean
+    	if {[string match -nocase $proctype "psu_cortexa53"] || [string match -nocase $proctype "psu_cortexr5"] || [string match -nocase $proctype "psu_pmu"] } {
+        	set child_node [add_or_get_dt_node -l "memory_r5" -n "memory_r5" -d ${default_dts} -p $mem_node]
+        	hsi::utils::add_new_dts_param $child_node reg $r5map hexint
+        	set child_node [add_or_get_dt_node -l "memory_a53" -n "memory_a53" -d ${default_dts} -p $mem_node]
+        	hsi::utils::add_new_dts_param $child_node reg $a53map hexint
+        	set child_node [add_or_get_dt_node -l "memory_pmu" -n "memory_pmu" -d ${default_dts} -p $mem_node]
+        	hsi::utils::add_new_dts_param $child_node reg $pmumap hexint
+    	}
+    	if {[string match -nocase $proctype "psv_cortexa72"] || [string match -nocase $proctype "psv_cortexr5"] || [string match -nocase $proctype "psv_pmc"]} {
+    		if {![string_is_empty $a53map]} {
+	        	set child_node [add_or_get_dt_node -l "memory_a72" -n "memory_a72" -d ${default_dts} -p $mem_node]
+        		hsi::utils::add_new_dts_param $child_node reg $a53map hexint
+		}
+    		if {![string_is_empty $r5map]} {
+		        set child_node [add_or_get_dt_node -l "memory_r5" -n "memory_r5" -d ${default_dts} -p $mem_node]
+        		hsi::utils::add_new_dts_param $child_node reg $r5map hexint
+		}
+    		if {![string_is_empty $pmumap]} {
+        		set child_node [add_or_get_dt_node -l "memory_pmc" -n "memory_pmc" -d ${default_dts} -p $mem_node]
+        		hsi::utils::add_new_dts_param $child_node reg $pmumap hexint
+		}
+    	}
+
+}
 proc post_generate {os_handle} {
     update_chosen $os_handle
     update_alias $os_handle
     update_cpu_node $os_handle
+    gen_cpu_cluster $os_handle
     gen_dev_conf
     foreach drv_handle [get_drivers] {
         gen_peripheral_nodes $drv_handle
@@ -506,6 +788,7 @@ proc post_generate {os_handle} {
     delete_objs [get_dt_tree $zynq_soc_dt_tree]
     remove_empty_reference_node
     remove_main_memory_node
+    gen_tcmbus $os_handle
 }
 
 proc add_skeleton {} {
@@ -547,6 +830,60 @@ proc update_chosen {os_handle} {
    }
 }
 
+proc gen_cpu_cluster {os_handle} {
+
+    set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
+
+    set default_dts [get_property CONFIG.master_dts [get_os]]
+    set system_root_node [add_or_get_dt_node -n "/" -d ${default_dts}]
+    if {[string match -nocase $proctype "psu_cortexa53"] } {
+        set cpu_node [add_or_get_dt_node -n "cpus_a53" -d ${default_dts} -p ${system_root_node}]
+        hsi::utils::add_new_dts_param "${cpu_node}" "compatible" "cpus,cluster" string
+        hsi::utils::add_new_dts_param "${cpu_node}" "range-size-cells" "0x1" hexint
+        hsi::utils::add_new_dts_param "${cpu_node}" "range-address-cells" "0x1" hexint
+        hsi::utils::add_new_dts_param "${cpu_node}" "range-map" "0xf0000000 &amba 0xf0000000 0x10000000\t0xfe000000 &tcm_bus 0x0 0x10000" hexint
+        hsi::utils::add_new_dts_param "${cpu_node}" "range-address-cells" "0x1" hexint
+    } elseif {[string match -nocase $proctype "psv_cortexa72"] } {
+        set cpu_node [add_or_get_dt_node -n "cpus_a72" -d ${default_dts} -p ${system_root_node}]
+        hsi::utils::add_new_dts_param "${cpu_node}" "compatible" "cpus,cluster" string
+        hsi::utils::add_new_dts_param "${cpu_node}" "range-size-cells" "0x1" hexint
+        hsi::utils::add_new_dts_param "${cpu_node}" "range-address-cells" "0x1" hexint
+        hsi::utils::add_new_dts_param "${cpu_node}" "range-map" "0xf0000000 &amba 0xf0000000 0x10000000\t0xfe000000 &tcm_bus 0x0 0x10000" hexint
+        hsi::utils::add_new_dts_param "${cpu_node}" "range-address-cells" "0x1" hexint
+    }
+    
+
+    set cpu_node [add_or_get_dt_node -n "cpus_r5" -d ${default_dts} -p ${system_root_node}]
+    hsi::utils::add_new_dts_param "${cpu_node}" "compatible" "cpus,cluster" string
+    hsi::utils::add_new_dts_param "${cpu_node}" "range-size-cells" "0x1" hexint
+    hsi::utils::add_new_dts_param "${cpu_node}" "range-address-cells" "0x1" hexint
+    hsi::utils::add_new_dts_param "${cpu_node}" "range-map" "0xf0000000 &amba 0xf0000000 0x10000000\t 0x0 &tcm_bus 0x0 0x10000\t0xfe000000 &tcm_bus 0x0 0x10000" hexint
+    hsi::utils::add_new_dts_param "${cpu_node}" "range-address-cells" "0x1" hexint
+    
+    if {[string match -nocase $proctype "psu_pmu"] } {
+        set cpu_node [add_or_get_dt_node -n "cpus_microblaze" -d ${default_dts} -p ${system_root_node}]
+        hsi::utils::add_new_dts_param "${cpu_node}" "compatible" "cpus,cluster" string
+        hsi::utils::add_new_dts_param "${cpu_node}" "range-size-cells" "0x1" hexint
+        hsi::utils::add_new_dts_param "${cpu_node}" "range-address-cells" "0x1" hexint
+    } elseif {[string match -nocase $proctype "psv_pmc"] } {
+        set cpu_node [add_or_get_dt_node -n "cpus_microblaze" -d ${default_dts} -p ${system_root_node}]
+        hsi::utils::add_new_dts_param "${cpu_node}" "compatible" "cpus,cluster" string
+        hsi::utils::add_new_dts_param "${cpu_node}" "range-size-cells" "0x1" hexint
+        hsi::utils::add_new_dts_param "${cpu_node}" "range-address-cells" "0x1" hexint
+    }
+}
+
+proc gen_tcmbus {os_handle} {
+    set default_dts [get_property CONFIG.master_dts [get_os]]
+    set system_root_node [add_or_get_dt_node -n "/" -d ${default_dts}]
+    set tcmbus [add_or_get_dt_node -n "tcm_bus" -l "tcm_bus" -d ${default_dts} -p ${system_root_node}]
+    hsi::utils::add_new_dts_param "${tcmbus}" "compatible" "simple-bus" string
+    hsi::utils::add_new_dts_param "${tcmbus}" "#size-cells" "0x1" hexint
+    hsi::utils::add_new_dts_param "${tcmbus}" "#address-cells" "0x1" hexint
+    set tcm_node [add_or_get_dt_node -n "tcm" -u "e00000" -d ${default_dts} -p ${tcmbus}]
+    hsi::utils::add_new_dts_param "${tcm_node}" "compatible" "mmiio-sram" string
+    hsi::utils::add_new_dts_param "${tcm_node}" "reg" "0xe00000 0x10000" intlist
+}
 proc update_cpu_node {os_handle} {
     set default_dts [get_property CONFIG.master_dts [get_os]]
     set system_root_node [add_or_get_dt_node -n "/" -d ${default_dts}]

@@ -17,7 +17,7 @@
 	#address-cells = <2>;
 	#size-cells = <2>;
 
-	cpus {
+	cpus_a53: cpus_a53 {
 		#address-cells = <1>;
 		#size-cells = <0>;
 
@@ -57,26 +57,6 @@
 			cpu-idle-states = <&CPU_SLEEP_0>;
 		};
 
-		cpu4: cpu@4 {
-			compatible = "pmu-microblaze";
-			device_type = "cpu";
-			reg = <0x4>;
-			operating-points-v2 = <&cpu_opp_table>;
-		};
-
-		cpu5: cpu@5 {
-			compatible = "arm,cortex-r5";
-			device_type = "cpu";
-			reg = <0x5>;
-			operating-points-v2 = <&cpu_opp_table>;
-		};
-
-		cpu6: cpu@6 {
-			compatible = "arm,cortex-r5";
-			device_type = "cpu";
-			reg = <0x6>;
-			operating-points-v2 = <&cpu_opp_table>;
-		};
 
 		idle-states {
 			entry-method = "psci";
@@ -91,8 +71,34 @@
 			};
 		};
 	};
+	cpus_r5: cpus_r5 {
+		#address-cells = <1>;
+		#size-cells = <0>;
 
-	cpu_opp_table: cpu-opp-table {
+		cpu4: cpu@4 {
+			compatible = "arm,cortex-r5", "arm,armv8";
+			device_type = "cpu";
+			reg = <0x0>;
+		};
+
+		cpu5: cpu@5 {
+			compatible = "arm,cortex-r5", "arm,armv8";
+			device_type = "cpu";
+			reg = <0x1>;
+		};
+	};
+	cpus_microblaze: cpu_microblaze {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		cpu6: cpu@6 {
+			compatible = "pmu-microblaze";
+			device_type = "cpu";
+			reg = <0x0>;
+			operating-points-v2 = <&cpu_opp_table>;
+		};
+	};
+	cpu_opp_table: cpu_opp_table {
 		compatible = "operating-points-v2";
 		opp-shared;
 		opp00 {
