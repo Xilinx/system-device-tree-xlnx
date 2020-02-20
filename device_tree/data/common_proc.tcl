@@ -3417,16 +3417,23 @@ proc gen_cpu_nodes {drv_handle} {
 			# skip node generation for static zynq-7000 dtsi
 			# TODO: this needs to be fixed to allow override
 			cortexa9_opp_gen $drv_handle
+			return 0
 		}
 		"psu_cortexa53" {
 			# skip node generation for static zynqmp dtsi
+			return 0
 		}
 		"psv_cortexa72" {
+			return 0
 		} "microblaze" {}
 		"psu_pmu" {
+			return 0
 		} "psv_pmc" {
+			return 0
 		} "psv_cortexr5" {
+			return 0
 		} "psu_cortexr5" {
+			return 0
 		}
 		default {
 			error "Unknown arch"
