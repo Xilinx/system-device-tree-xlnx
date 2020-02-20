@@ -467,6 +467,14 @@
 			timeout-sec = <10>;
 		};
 
+		scuwdt: watchdog@f8f00620 {
+			clocks = <&clkc 45>;
+			compatible = "arm,cortex-a9-twd-wdt-timer";
+			reg = <0xf8f00620 0x1000>;
+			timeout-sec = <10>;
+			status = "disabled";
+		};
+
 		etb@f8801000 {
 			compatible = "arm,coresight-etb10", "arm,primecell";
 			reg = <0xf8801000 0x1000>;
