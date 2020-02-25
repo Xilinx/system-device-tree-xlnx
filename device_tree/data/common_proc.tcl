@@ -3417,23 +3417,16 @@ proc gen_cpu_nodes {drv_handle} {
 			# skip node generation for static zynq-7000 dtsi
 			# TODO: this needs to be fixed to allow override
 			cortexa9_opp_gen $drv_handle
-			return 0
 		}
 		"psu_cortexa53" {
 			# skip node generation for static zynqmp dtsi
-			return 0
 		}
 		"psv_cortexa72" {
-			return 0
 		} "microblaze" {}
 		"psu_pmu" {
-			return 0
 		} "psv_pmc" {
-			return 0
 		} "psv_cortexr5" {
-			return 0
 		} "psu_cortexr5" {
-			return 0
 		}
 		default {
 			error "Unknown arch"
@@ -3486,7 +3479,6 @@ proc gen_cpu_nodes {drv_handle} {
 			set compatiblelist [lappend compatiblelist "pmu-microblaze"]
 			set compatiblelist [lappend compatiblelist "pmu-microblaze-$cpu"]
 			if {[string match -nocase $loop "0"]} {
-				hsi::utils::add_new_dts_param $cpu_node "compatible" $compatiblelist stringlist 
 			}
 			set slave [get_cells -hier ${drv_handle}]
 			set model "pmu-microblaze,[hsi::utils::get_ip_version $slave]"
@@ -3500,7 +3492,6 @@ proc gen_cpu_nodes {drv_handle} {
 			set compatiblelist [lappend compatiblelist "pmc-microblaze"]
 			set compatiblelist [lappend compatiblelist "pmc-microblaze-$cpu"]
 			if {[string match -nocase $loop "0"]} {
-				hsi::utils::add_new_dts_param $cpu_node "compatible" $compatiblelist stringlist 
 			}
 			set loop 1
 		} elseif {[string match -nocase $processor_type "psu_cortexr5"] || [string match -nocase $processor_type "psv_cortexr5"]} {
@@ -3525,7 +3516,6 @@ proc gen_cpu_nodes {drv_handle} {
 			set compatiblelist [lappend compatiblelist "arm,cortex-r5"]
 			set compatiblelist [lappend compatiblelist "arm,cortex-r5-$cpu"]
 			if {[string match -nocase $loop "0"]} {
-				hsi::utils::add_new_dts_param $cpu_node "compatible" $compatiblelist stringlist 
 			}
 			set loop 1
 		} elseif {[string match -nocase $processor_type "psu_cortexa53"] || [string match -nocase $processor_type "psv_cortexa72"]} {
@@ -3545,7 +3535,6 @@ proc gen_cpu_nodes {drv_handle} {
 				set compatiblelist [lappend compatiblelist "arm,cortex-a72-$cpu_nr"]
 			}
 			if {[string match -nocase $loop "0"]} {
-				hsi::utils::add_new_dts_param $cpu_node "compatible" $compatiblelist stringlist 
 			}
 			set loop 1
 		} elseif {[string match -nocase $processor_type "ps7_cortexa9"]} {
@@ -3556,7 +3545,6 @@ proc gen_cpu_nodes {drv_handle} {
 			set compatiblelist [lappend compatiblelist "arm,cortex-a9"]
 			set compatiblelist [lappend compatiblelist "arm,cortex-a9-$cpu_nr"]
 			if {[string match -nocase $loop "0"]} {
-				hsi::utils::add_new_dts_param $cpu_node "compatible" $compatiblelist stringlist
 			}
 			set loop 1
 		} else {
