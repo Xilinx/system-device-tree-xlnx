@@ -468,6 +468,8 @@
 		};
 
 		scuwdt: watchdog@f8f00620 {
+			interrupt-parent = <&intc>;
+			interrupts = <1 30 0x301>;
 			clocks = <&clkc 45>;
 			compatible = "arm,cortex-a9-twd-wdt-timer";
 			reg = <0xf8f00620 0x1000>;
