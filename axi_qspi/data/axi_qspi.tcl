@@ -31,4 +31,36 @@ proc generate {drv_handle} {
 	set_drv_conf_prop $drv_handle "C_FIFO_DEPTH" "fifo-size" int
 	set_drv_conf_prop $drv_handle "C_SPI_MODE" "xlnx,spi-mode" int
 	set_drv_conf_prop $drv_handle "C_USE_STARTUP" "xlnx,startup-block" boolean
+	set avail_param [list_property [get_cells -hier $drv_handle]]
+	set value [get_property CONFIG.C_FIFO_EXIST [get_cells -hier $drv_handle]]
+	if {[llength $value] == 0} {
+        	set value1 [get_property CONFIG.C_FIFO_DEPTH [get_cells -hier $drv_handle]]
+		if {[llength $value1] == 0} {
+			set value1 0
+         	} else {
+           		set value1 [common::get_property CONFIG.C_FIFO_DEPTH $drv_handle]
+           		if {$value1 == 0} {
+              			set value1 0
+           		} else {
+              			set value1 1
+           		}
+        	}
+	} else {
+		set value1 $value
+	}
+	hsi::utils::add_new_property $drv_handle "xlnx,hasfifos" int $value1
+	set value [get_property CONFIG.C_SPI_SLAVE_ONLY [get_cells -hier $drv_handle]]
+	if {[llength $value] == 0} {
+		hsi::utils::add_new_property $drv_handle "xlnx,slaveonly" int 0
+	} else {
+		hsi::utils::add_new_property $drv_handle "xlnx,slaveonly" int $value
+	}
+	set_drv_conf_prop $drv_handle "C_TYPE_OF_AXI4_INTERFACE" "xlnx,axi-interface" int
+	set value [get_property CONFIG.C_S_AXI4_BASEADDR [get_cells -hier $drv_handle]]
+	if {[llength $value] == 0} {
+		hsi::utils::add_new_property $drv_handle "xlnx,Axi4-address" int 0
+	} else {
+		hsi::utils::add_new_property $drv_handle "xlnx,Axi4-address" int $value
+	}
+	set_drv_conf_prop $drv_handle "C_XIP_MODE" "xlnx,xip-mode" int
 }
