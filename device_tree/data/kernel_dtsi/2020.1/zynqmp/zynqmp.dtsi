@@ -588,6 +588,17 @@
 		};
 	};
 
+	rpu_gic: interrupt-controller@f9000000 {
+		compatible = "arm,gic-400";
+		#interrupt-cells = <3>;
+		reg = <0x0 0xf9000000 0x10000>,
+		      <0x0 0xf9001000 0x10000>;
+		interrupt-controller;
+		interrupt-parent = <&rpu_gic>;
+		interrupts = <1 9 0xf04>;
+		status = "disabled";
+	};
+
 	smmu: smmu@fd800000 {
 		compatible = "arm,mmu-500";
 		reg = <0x0 0xfd800000 0x0 0x20000>;

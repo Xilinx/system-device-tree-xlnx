@@ -1123,6 +1123,7 @@ proc gen_ps7_mapping {} {
 	    [string match -nocase $proctype "psv_cortexr5"] ||
 	    [string match -nocase $proctype "psv_pmc"]} {
 		dict set def_ps_mapping f9000000 label gic
+		dict set def_ps_mapping f9001000 label rpu_gic
 		dict set def_ps_mapping fd4b0000 label gpu
 		dict set def_ps_mapping ffa80000 label adma0
 		dict set def_ps_mapping ffa90000 label adma1
@@ -1171,6 +1172,7 @@ proc gen_ps7_mapping {} {
 		[string match -nocase $proctype "psu_pmu"] ||
 		[string match -nocase $proctype "psu_cortexr5"]} {
 		dict set def_ps_mapping f9010000 label gic
+		dict set def_ps_mapping f9000000 label rpu_gic
 		dict set def_ps_mapping ff060000 label can0
 		dict set def_ps_mapping ff070000 label can1
 		dict set def_ps_mapping fd500000 label gdma0
@@ -1274,7 +1276,8 @@ proc gen_ps7_mapping {} {
 			# only care about the device with parent ambe
 			set parent [get_property PARENT  $node]
 			set ignore_parent_list {(/|cpu)}
-			if {[regexp $ignore_parent_list $parent matched]} {
+			set node_label [get_property NODE_LABEL $node]
+			if {[regexp $ignore_parent_list $parent matched] && ![string match -nocase $node_label "rpu_gic"]} {
 				continue
 			}
 			set unit_addr [get_property UNIT_ADDRESS $node]
@@ -2642,7 +2645,14 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 		}
 	}
 	if {$status_enable_flow} {
-		set label [dict get $ps7_mapping $unit_addr label]
+		if {[string match -nocase $ip_type "psv_rcpu_gic"] } {
+			# Base address is same for gic and rpu_gic, hence set label forcefully
+			# other wise we will get lable as "gic" which is same as acpu_gic label
+			set label "rpu_gic"
+		} else {
+			set label [dict get $ps7_mapping $unit_addr label]
+		}
+
 		set dev_type [dict get $ps7_mapping $unit_addr name]
 		set bus_node ""
 		# check if it has status property
@@ -2696,6 +2706,18 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 				return
 			}
 			if {![string match -nocase $proc_type "psu_pmu"] && [string match -nocase $unit_addr "ffcb0000"]} {
+				return
+			}
+			if {[string match -nocase $proc_type "psu_cortexa53"] && [string match -nocase $ip_type "psu_rcpu_gic"]} {
+				return
+			}
+			if {[string match -nocase $proc_type "psu_cortexr5"] && [string match -nocase $ip_type "psu_acpu_gic"]} {
+				return
+			}
+			if {[string match -nocase $proc_type "psv_cortexa72"] && [string match -nocase $ip_type "psv_rcpu_gic"]} {
+				return
+			}
+			if {[string match -nocase $proc_type "psv_cortexr5"] && [string match -nocase $ip_type "psv_acpu_gic"]} {
 				return
 			}
 			hsi::utils::add_new_dts_param "${rt_node}" "status" "okay" string
