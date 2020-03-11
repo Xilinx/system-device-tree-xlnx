@@ -48,7 +48,9 @@ proc generate {drv_handle} {
 		set size [format 0x%x [expr {${high} - ${base} + 1}]]
 		set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
 
-		if {[string match -nocase $proctype "psu_cortexa53"] || [string match -nocase $proctype "psv_cortexa72"]} {
+		if {[string match -nocase $proctype "psu_cortexa53"] || \
+			[string match -nocase $proctype "psv_cortexa72"] || \
+			[string match -nocase $proctype "psv_pmc"]} {
 			if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 				set temp $base
 				set temp [string trimleft [string trimleft $temp 0] x]
@@ -91,7 +93,9 @@ proc generate {drv_handle} {
 	set high [string tolower [get_property HIGH_VALUE $ip_mem_handle]]
 	set size [format 0x%x [expr {${high} - ${base} + 1}]]
 	set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
-	if {[string match -nocase $proctype "psu_cortexa53"] || [string match -nocase $proctype "psv_cortexa72"]} {
+	if {[string match -nocase $proctype "psu_cortexa53"] || \
+		[string match -nocase $proctype "psv_cortexa72"] || \
+		[string match -nocase $proctype "psv_pmc"]} {
 		if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 			set temp $base
 			set temp [string trimleft [string trimleft $temp 0] x]
