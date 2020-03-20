@@ -62,6 +62,7 @@ proc generate {drv_handle} {
 
     set model "[get_property IP_NAME $ip],[hsi::utils::get_ip_version $ip]"
     set_property CONFIG.model $model $drv_handle
+    set_drv_conf_prop $drv_handle C_FAMILY "xlnx,family" string
 
     # create root node
     set master_root_node [gen_root_node $drv_handle]
