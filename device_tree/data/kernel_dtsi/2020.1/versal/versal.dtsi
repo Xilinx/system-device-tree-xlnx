@@ -59,21 +59,28 @@
                         reg = <0x2>;
                         operating-points-v2 = <&cpu_opp_table>;
                 };
-	};
-	cpus_r5: cpus_r5 {
-		#address-cells = <1>;
-		#size-cells = <0>;
                 cpu3: cpu@3 {
-                        compatible = "arm,cortex-r5";
+                        compatible = "psm-microblaze";
                         device_type = "cpu";
                         reg = <0x3>;
                         operating-points-v2 = <&cpu_opp_table>;
                 };
 
+	};
+	cpus_r5: cpus_r5 {
+		#address-cells = <1>;
+		#size-cells = <0>;
                 cpu4: cpu@4 {
                         compatible = "arm,cortex-r5";
                         device_type = "cpu";
                         reg = <0x4>;
+                        operating-points-v2 = <&cpu_opp_table>;
+                };
+
+                cpu5: cpu@5 {
+                        compatible = "arm,cortex-r5";
+                        device_type = "cpu";
+                        reg = <0x5>;
                         operating-points-v2 = <&cpu_opp_table>;
                 };
 	};

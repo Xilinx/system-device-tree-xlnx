@@ -17,7 +17,14 @@ proc generate {drv_handle} {
 	#set node [get_node $drv_handle]
 	set dts_file [set_drv_def_dts $drv_handle]
 	#set node [create_node -n cpu -l "cpu2" -d $dts_file -p "cpus_microblaze: cpus_microblaze" -u 2]
-	set node "&cpu2"
+	set ip_name [get_property IP_NAME [hsi::get_cells $drv_handle]]
+	if {[string match -nocase $ip_name "psu_pmu"]} {
+		set node "&cpu6"
+	} elseif {[string match -nocase $ip_name "psv_pmc"]} {
+		set node "&cpu2"
+	} else {
+		set node "&cpu3"
+	}
 	global env
         set path $env(REPO)
 

@@ -39,11 +39,8 @@ proc generate {drv_handle} {
 	} else {
 		set dtsi_fname "zynqmp/zynqmp.dtsi"
 	}
-	puts "in a543"
 	# create root node
-	puts "genroot"
 	set master_root_node [gen_root_node $drv_handle]
-	puts "cpu"
 	set nodes [gen_cpu_nodes $drv_handle]
 }
 namespace export psdt

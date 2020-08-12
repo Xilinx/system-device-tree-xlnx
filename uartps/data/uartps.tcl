@@ -51,7 +51,9 @@ proc generate {drv_handle} {
                    append bootargs "\ \, \"clk_ignore_unused\""
                 }
     }
-   add_prop $chosen_node "stdout-path" "serial0:${baud}n8" string "system-top.dts"
+	if {[catch {set val [systemdt get $chosen_node "stdout-path"]} msg]} {
+   		add_prop $chosen_node "stdout-path" "serial0:${baud}n8" stringlist "system-top.dts"
+	}
 	set val [systemdt get $chosen_node "stdout-path"]
 #        hsi::utils::set_os_parameter_value "console" "ttyPS0,$baud"
    # }

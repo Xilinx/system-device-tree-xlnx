@@ -350,7 +350,7 @@ proc get_node args {
 	if {[is_ps_ip $handle]} {
 		set ps_mapping [gen_ps_mapping]
 		if {[catch {set tmp [dict get $ps_mapping $addr label]} msg]} {
-				set node [create_node -n $dev_type -l $handle -u $addr -p $busname -d $dts_file]	
+			set node [create_node -n $dev_type -l $handle -u $addr -p $busname -d $dts_file]	
 		} else {
 			set value [split $tmp ": "]
 			set node_label [lindex $value 0]
@@ -1101,6 +1101,7 @@ proc write_dt args {
 	set fd [open $file w]
 	if {[string match -nocase $dt "systemdt"]} {
 
+		puts $fd "\/dts-v1\/\;"
 		global include_list
 		set includelist [split $include_list ","]
 		foreach val $includelist {
@@ -1544,6 +1545,7 @@ dict set driverlist ps7_pl310 driver pl310ps
 dict set driverlist ps7_pmu driver pmups
 dict set driverlist psu_pmu driver pmups
 dict set driverlist psv_pmc driver pmups
+dict set driverlist psv_psm driver pmups
 dict set driverlist pr_decoupler driver pr_decoupler
 dict set driverlist prc driver prc
 dict set driverlist dfx_controller driver prc
@@ -1757,9 +1759,35 @@ proc add_cross_property args {
 					set value "$low_base $high_base"
 				}
 
-				set node [get_node $dest_handle]
+				set valid_proclist "psv_cortexa72 psv_cortexr5 psu_cortexa53 psu_cortexr5 psu_pmu psv_pmc psv_psm"
 				if {[string match -nocase $ipname "psv_rcpu_gic"]} {
 					set node [create_node -n "&rpu_gic" -d "pcw.dtsi" -p root]
+				} elseif {[lsearch $valid_proclist $ipname] >= 0} {
+					switch $ipname {
+						"psv_cortexa72" {
+							set index [string index $src_handle end]
+							set node [create_node -n "&cpu${index}" -d "pcw.dtsi" -p root]
+						} "psv_cortexr5" {
+							set index [string index $src_handle end]
+							set index [expr $index + 4]
+							set node [create_node -n "&cpu${index}" -d "pcw.dtsi" -p root]
+						} "psv_pmc" {
+							set node [create_node -n "&cpu2" -d "pcw.dtsi" -p root]
+						} "psv_psm" {
+							set node [create_node -n "&cpu3" -d "pcw.dtsi" -p root]
+						} "psu_cortexa53" {
+							set index [string index $src_handle end]
+							set node [create_node -n "&cpu${index}" -d "pcw.dtsi" -p root] 
+						} "psu_cortexr5" {
+							set index [string index $src_handle end]
+							set index [expr $index + 4]
+							set node [create_node -n "&cpu${index}" -d "pcw.dtsi" -p root]
+						} "psu_pmu" {
+							set node [create_node -n "&cpu6" -d "pcw.dtsi" -p root]
+						}
+					}
+				} else {
+					set node [get_node $dest_handle]
 				}
 				add_prop $node $dest_prop $value $type [set_drv_def_dts $dest_handle]
 				#add_prop $dt_node $prop $value $type [set_drv_def_dts $drv_handle]
@@ -1986,11 +2014,15 @@ proc set_cur_working_dts {{dts_file ""}} {
 
 proc get_baseaddr {slave_ip {no_prefix ""}} {
 	# only returns the first addr
+	if {[string match -nocase $slave_ip "psu_sata"]} {
+		set addr [string tolower [get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $slave_ip]]]
+	} else {
 	set ip_mem_handle [lindex [hsi::get_mem_ranges [hsi::get_cells -hier $slave_ip]] 0]
 	if { [string_is_empty $ip_mem_handle] } {
 		return ""
 	}
 	set addr [string tolower [get_property BASE_VALUE $ip_mem_handle]]
+	}
 	if {![string_is_empty $no_prefix]} {
 		regsub -all {^0x} $addr {} addr
 	}
@@ -2669,7 +2701,7 @@ proc add_driver_prop {drv_handle dt_node prop} {
 		if {$type == ""} {
 			set type boolean
 		}
-	regsub -all {CONFIG.} $prop {} prop
+	regsub -all {CONFIG.} $prop {xlnx,} prop
 	set prop [string tolower $prop]
 	dtg_debug "${dt_node} - ${prop} - ${value} - ${type}"
 
@@ -2937,7 +2969,8 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping fe300000 label "dwc3_1: dwc3"
 		dict set def_ps_mapping ff9e0000 label "psu_usb_0: usb"
 		dict set def_ps_mapping ff9d0000 label "psu_usb_1: usb"
-		dict set def_ps_mapping fd4d0000 label "psu_wdt_0: watchdog"
+		dict set def_ps_mapping ff150000 label "psu_wdt_0: watchdog"
+		dict set def_ps_mapping fd4d0000 label "psu_wdt_1: watchdog"
 		dict set def_ps_mapping 43c00000 label dp
 		dict set def_ps_mapping 43c0a000 label dpsub
 		dict set def_ps_mapping fd4c0000 label "psu_dpdma: dma"
@@ -2952,6 +2985,7 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping ff333000 label "psu_ipi_6: ipi"
 		dict set def_ps_mapping ffcb0000 label "psu_csuwdt_0: watchdog"
 		dict set def_ps_mapping fd070000 label "psu_ddrc_0: memory-controller"
+		dict set def_ps_mapping fe800000 label "psu_coresight_0: coresight"
 #		dict set def_ps_mapping fd1a0000 label crfapb
 #		dict set def_ps_mapping ff5e0000 label crlapb
 #		dict set def_ps_mapping ffcc0000 label efuse
@@ -4422,7 +4456,7 @@ proc ip2drv_prop {ip_name ip_prop_name} {
 	regsub -all {CONFIG.C_} $drv_prop_name {xlnx,} drv_prop_name
 	regsub -all {_} $drv_prop_name {-} drv_prop_name
 	set drv_prop_name [string tolower $drv_prop_name]
-	set node [get_node $ip_name]
+#	set node [get_node $ip_name]
 #	add_prop $node $ip_prop_name $drv_prop_name hexint
 
 	set prop [get_property $ip_prop_name [hsi::get_cells -hier $ip_name]]
@@ -4766,7 +4800,34 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 		if {[string match -nocase $ip_type "tsn_endpoint_ethernet_mac"]} {
 			set rt_node [create_node -n tsn_endpoint_ip_0 -l tsn_endpoint_ip_0 -d $default_dts -p $bus_node] 
 		} else {
-			set rt_node [create_node -n ${dev_type} -l ${label} -u ${unit_addr} -d ${default_dts} -p $bus_node]
+			set valid_proclist "psv_cortexa72 psv_cortexr5 psu_cortexa53 psu_cortexr5 psu_pmu psv_pmc psv_psm"
+			if {[lsearch $valid_proclist $ip_type] >= 0} {
+				switch $ip_type {
+					"psv_cortexa72" {
+						set index [string index $drv_handle end]
+						set rt_node [create_node -n "&cpu${index}" -d ${default_dts} -p root]
+					} "psv_cortexr5" {
+						set index [string index $drv_handle end]
+						set index [expr $index + 4]
+						set rt_node [create_node -n "&cpu${index}" -d ${default_dts} -p root]
+					} "psv_pmc" {
+						set rt_node [create_node -n "&cpu2" -d ${default_dts} -p root]
+					} "psv_psm" {
+						set node [create_node -n "&cpu3" -d "pcw.dtsi" -p root]
+					} "psu_cortexa53" {
+						set index [string index $src_handle end]
+						set node [create_node -n "&cpu${index}" -d "pcw.dtsi" -p root] 
+					} "psu_cortexr5" {
+						set index [string index $src_handle end]
+						set index [expr $index + 4]
+						set node [create_node -n "&cpu${index}" -d "pcw.dtsi" -p root]
+					} "psu_pmu" {
+						set node [create_node -n "&cpu6" -d "pcw.dtsi" -p root]
+					}
+				}
+			} else {
+				set rt_node [create_node -n ${dev_type} -l ${label} -u ${unit_addr} -d ${default_dts} -p $bus_node]
+			}
 		}
 
 		add_prop $rt_node "status" "okay" string $default_dts
@@ -5400,6 +5461,8 @@ proc gen_root_node {drv_handle} {
 		#	hsi::utils::add_new_dts_param "${root_node}" "#address-cells" 1 int ""
 		#	hsi::utils::add_new_dts_param "${root_node}" "#size-cells" 1 int ""
 			return 0
+		} "psv_psm" {
+			return 0
 		}
 		"microblaze" {
 			set compatible "xlnx,microblaze"
@@ -5470,6 +5533,7 @@ proc gen_cpu_nodes {drv_handle} {
 		} "microblaze" {}
 		"psu_pmu" {
 		} "psv_pmc" {
+		} "psv_psm" {
 		} "psv_cortexr5" {
 		} "psu_cortexr5" {
 		}
@@ -5488,7 +5552,7 @@ proc gen_cpu_nodes {drv_handle} {
 
 	set default_dts [set_drv_def_dts $drv_handle]
 	set processor_type [get_property IP_NAME [hsi::get_cells -hier ${drv_handle}]]
-	set proc_list "psu_pmu psv_pmc psu_cortexr5 psu_cortexa53 psv_cortexa72 psv_cortexr5 ps7_cortexa9"
+	set proc_list "psu_pmu psv_pmc psu_cortexr5 psu_cortexa53 psv_cortexa72 psv_cortexr5 ps7_cortexa9 psv_psm"
 	if {[lsearch -nocase $proc_list $processor_type] >= 0} {
 	} else {
 		set cpu_root_node [get_node $drv_handle]
@@ -5526,7 +5590,7 @@ proc gen_cpu_nodes {drv_handle} {
 		if {[string match -nocase $processor_type "psu_pmu"]} {
 
 #			set cpu_node [create_node -n ${dev_type} -l "cpu4" -d ${default_dts} -p "cpus: cpus" -u 4]
-			set cpu_node [pcwdt insert root end "&cpu4"]
+			set cpu_node [pcwdt insert root end "&cpu6"]
 			add_prop $cpu_node "microblaze_ddr_reserve_ea" [get_property CONFIG.C_DDR_RESERVE_EA $slave] int $default_dts
 			add_prop $cpu_node "microblaze_ddr_reserve_sa" [get_property CONFIG.C_DDR_RESERVE_SA $slave] int $default_dts
 #			hsi::utils::add_new_dts_param $cpu_node "microblaze_ddr_reserve_ea" [get_property CONFIG.C_DDR_RESERVE_EA $slave] int ""
@@ -5543,10 +5607,14 @@ proc gen_cpu_nodes {drv_handle} {
 #			hsi::utils::add_new_dts_param $cpu_node "model" $model stringlist
 
 			set loop 1
-		} elseif {[string match -nocase $processor_type "psv_pmc"]} {
+		} elseif {[string match -nocase $processor_type "psv_pmc"] || [string match -nocase $processor_type "psv_psm"]} {
 			#set cpu_node [create_node -n "cpus_microblaze" -l "cpus_microblaze"" -d ${default_dts} -p root]
 			#set cpu_node [create_node -n ${dev_type} -l "cpu2" -d ${default_dts} -p "cpus_microblaze: cpus_microblaze" -u 2]
-			set cpu_node [pcwdt insert root end "&cpu2"]
+			if {[string match -nocase $processor_type "psv_pmc"]} {
+				set cpu_node [pcwdt insert root end "&cpu2"]
+			} else {
+				set cpu_node [pcwdt insert root end "&cpu3"]
+			}
 			set name [split [get_property NAME $slave] "_"]
 			set cpu [lindex $name 2]
 			set compatiblelist [lappend compatiblelist "pmc-microblaze"]
@@ -5560,15 +5628,15 @@ proc gen_cpu_nodes {drv_handle} {
 			set cpu [lindex $name 2]
 			if {[string match -nocase $cpu "0"]} {
 				if {[string match -nocase $processor_type "psu_cortexr5"]} {
-					set cpu_nr 5
+					set cpu_nr 4
 				} else {
-					set cpu_nr 3
+					set cpu_nr 4 
 				}
 			} else {
 				if {[string match -nocase $processor_type "psu_cortexr5"]} {
-					set cpu_nr 6
+					set cpu_nr 5
 				} else {
-					set cpu_nr 4
+					set cpu_nr 5
 				}
 			}
 #			set cpu_node [create_node -n "cpus_r5" -l "cpus_r5" -d ${default_dts} -p root]
@@ -6416,7 +6484,7 @@ proc generate_cci_node { drv_handle rt_node} {
 		}
 		if {[string match -nocase $cci_enable "1"]} {
 			add_prop $rt_node "dma-coherent" boolean $dts_file
-			hsi::utils::add_new_dts_param $rt_node "dma-coherent" "" boolean
+#			hsi::utils::add_new_dts_param $rt_node "dma-coherent" "" boolean
 		}
 	}
 }

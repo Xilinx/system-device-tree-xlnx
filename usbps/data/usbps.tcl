@@ -25,14 +25,12 @@ proc generate {drv_handle} {
         set path $env(REPO)
 
         set drvname [get_drivers $drv_handle]
-        #puts "drvname $drvname"
 
         set common_file "$path/device_tree/data/config.yaml"
         if {[file exists $common_file]} {
                 #error "file not found: $common_file"
         }
         #set file "$path/${drvname}/data/config.yaml"
-        #puts "file $common_file"
         set mainline_ker [get_user_config $common_file -mainline_kernel]
 
 #	set mainline_ker [get_property CONFIG.mainline_kernel [get_os]]
@@ -42,9 +40,7 @@ proc generate {drv_handle} {
 	}
 	if {[string match -nocase $mainline_ker "none"]} {
              set index [string index $drv_handle end]
-		puts "name usb labl psu_usb_$index dts $default_dts"
 #             set rt_node [create_node -n usb -l psu_usb_$index -d $default_dts -p $]
-		puts "rt_node $node"		
 	     add_prop $node "status" "okay" string $default_dts
 #             hsi::utils::add_new_dts_param "${rt_node}" "status" "okay" string
         }

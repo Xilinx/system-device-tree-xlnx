@@ -251,6 +251,7 @@ proc gen_sata_laneinfo {} {
 #	set dts_file [get_property CONFIG.pcw_dts [get_os]]
 	set dts_file "pcw.dtsi"
 	set sata_node [create_node -n "&psu_sata" -d $dts_file]
+	puts "sata $sata_node"
 	set hsi_version [get_hsi_version]
 	set ver [split $hsi_version "."]
 	set version [lindex $ver 0]
@@ -1097,6 +1098,7 @@ proc update_chosen {os_handle} {
          set consoleip [ps_node_mapping $consoleip label]
          set index [string first "," $console]
          set baud [string range $console [expr $index + 1] [string length $console]]
+	puts "STD"
 	add_prop $chosen_node "stdout-path" "serial0:${baud}n8" string $default_dts
 #         hsi::utils::add_new_dts_param "${chosen_node}" "stdout-path" "serial0:${baud}n8" string
    }

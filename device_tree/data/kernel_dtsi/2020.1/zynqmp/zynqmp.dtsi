@@ -1404,7 +1404,7 @@
 			xlnx,clock-freq = <99990005>;
 		};
 
-		psu_wdt_0: watchdog@fd4d0000 {
+		psu_wdt_1: watchdog@fd4d0000 {
 			compatible = "cdns,wdt-r1p2";
 			status = "disabled";
 			interrupt-parent = <&gic>;
@@ -1414,7 +1414,7 @@
 			reset-on-timeout;
 		};
 
-		psu_wdt_1: watchdog@ff150000 {
+		psu_wdt_0: watchdog@ff150000 {
 			compatible = "cdns,wdt-r1p2";
 			status = "disabled";
 			interrupt-parent = <&gic>;

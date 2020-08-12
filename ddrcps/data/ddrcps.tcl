@@ -14,7 +14,6 @@
 namespace eval ddrcps {
 proc generate {drv_handle} {
 	set node [get_node $drv_handle]
-	puts "USB $node"
 	set dts_file [set_drv_def_dts $drv_handle]
         set par_handles [get_ip_conf_prop_list $drv_handle "CONFIG.C_.*"]
         set valid_prop_names {}
@@ -24,7 +23,7 @@ proc generate {drv_handle} {
         }
         set proplist $valid_prop_names
         foreach prop_name ${proplist} {
-                ip2drv_prop $drv_handle $prop_name
+#                ip2drv_prop $drv_handle $prop_name
         }
 	set proctype [get_hw_family]
 	if { [string match -nocase $proctype "zynq"] }  {
