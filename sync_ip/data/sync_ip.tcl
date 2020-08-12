@@ -12,30 +12,27 @@
 # GNU General Public License for more details.
 #
 
+namespace eval sync_ip {
 proc generate {drv_handle} {
-	foreach i [get_sw_cores device_tree] {
-		set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-		if {[file exists $common_tcl_file]} {
-			source $common_tcl_file
-			break
-		}
-	}
 
 	set node [gen_peripheral_nodes $drv_handle]
+	set node [get_node $drv_handle]
+	set dts_file [set_drv_def_dts $drv_handle]
 	if {$node == 0} {
 		return
 	}
-	set enable_enc_dec [get_property CONFIG.ENABLE_ENC_DEC [get_cells -hier $drv_handle]]
+	set enable_enc_dec [get_property CONFIG.ENABLE_ENC_DEC [hsi::get_cells -hier $drv_handle]]
 	if {$enable_enc_dec == 0} {
 	#encode case
-		hsi::utils::add_new_dts_param "${node}" "xlnx,encode" "" boolean
-		set no_of_enc_chan [get_property CONFIG.NO_OF_ENC_CHAN [get_cells -hier $drv_handle]]
+		add_prop "${node}" "xlnx,encode" boolean $dts_file
+		set no_of_enc_chan [get_property CONFIG.NO_OF_ENC_CHAN [hsi::get_cells -hier $drv_handle]]
 		set no_of_enc_chan [expr $no_of_enc_chan + 1]
-		hsi::utils::add_new_dts_param "${node}" "xlnx,num-chan" $no_of_enc_chan int
+		add_prop "${node}" "xlnx,num-chan" $no_of_enc_chan int $dts_file
 	} else {
 	#decode case
-		set no_of_dec_chan [get_property CONFIG.NO_OF_DEC_CHAN [get_cells -hier $drv_handle]]
+		set no_of_dec_chan [get_property CONFIG.NO_OF_DEC_CHAN [hsi::get_cells -hier $drv_handle]]
 		set no_of_dec_chan [expr $no_of_dec_chan + 1]
-		hsi::utils::add_new_dts_param "${node}" "xlnx,num-chan" $no_of_dec_chan int
+		add_prop "${node}" "xlnx,num-chan" $no_of_dec_chan int $dts_file
 	}
+}
 }

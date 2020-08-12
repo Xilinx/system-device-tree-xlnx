@@ -16,29 +16,29 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
+
+namespace eval axi_dma {
 set connected_ip 0
 
 proc generate {drv_handle} {
-    global connected_ip
-    # try to source the common tcl procs
-    # assuming the order of return is based on repo priority
-    foreach i [get_sw_cores device_tree] {
-        set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-        if {[file exists $common_tcl_file]} {
-            source $common_tcl_file
-            break
-        }
-    }
+	global env
+	global dtsi_fname
+	set path $env(REPO)
 
-    set node [gen_peripheral_nodes $drv_handle]
-    if {$node == 0} {
-           return
-    }
-    set compatible [get_comp_str $drv_handle]
-    set compatible [append compatible " " "xlnx,axi-dma-1.00.a"]
-    set_drv_prop $drv_handle compatible "$compatible" stringlist
-    set dma_ip [get_cells -hier $drv_handle]
-    set dma_count [hsi::utils::get_os_parameter_value "dma_count"]
+	set node [get_node $drv_handle]
+	if {$node == 0} {
+		return
+	}
+
+    global connected_ip
+
+#    set compatible [get_comp_str $drv_handle]
+ #   set compatible [append compatible " " "xlnx,axi-dma-1.00.a"]
+ #   set_drv_prop $drv_handle compatible "$compatible" stringlist
+	pldt append $node compatible "\ \, \"xlnx,axi-dma-1.00.a\""
+    set dma_ip [hsi::get_cells -hier $drv_handle]
+#    set dma_count [hsi::utils::get_os_parameter_value "dma_count"]
+	set dma_count [get_count "dma_count"]
     if { [llength $dma_count] == 0 } {
         set dma_count 0
     }
@@ -57,7 +57,8 @@ proc generate {drv_handle} {
 
     if { $axiethernetfound || $is_xxv == 1} {
         set compatstring "xlnx,eth-dma"
-        set_property compatible "$compatstring" $drv_handle
+	add_prop $node compatible $compatstring string "pl.dtsi"
+#        set_property compatible "$compatstring" $drv_handle
     }
     set tx_chan 0
     set rx_chan 0
@@ -66,8 +67,7 @@ proc generate {drv_handle} {
         set_drv_conf_prop $drv_handle C_SG_INCLUDE_STSCNTRL_STRM xlnx,sg-include-stscntrl-strm boolean
         set_drv_conf_prop $drv_handle c_enable_multi_channel xlnx,multichannel-dma boolean
         set_drv_conf_prop $drv_handle c_addr_width xlnx,addrwidth
-        set_drv_conf_prop $drv_handle c_sg_length_width xlnx,sg-length-width
-
+#        set_drv_conf_prop $drv_handle c_sg_length_width xlnx,sg-length-width
         set baseaddr [get_baseaddr $dma_ip no_prefix]
         set tx_chan [hsi::utils::get_ip_param_value $dma_ip C_INCLUDE_MM2S]
         if { $tx_chan == 1 } {
@@ -76,7 +76,8 @@ proc generate {drv_handle} {
             set intr_info [get_intr_id $drv_handle "mm2s_introut"]
             #set intc [hsi::utils::get_interrupt_parent $dma_ip "mm2s_introut"]
             if { [llength $intr_info] && ![string match -nocase $intr_info "-1"] } {
-		    hsi::utils::add_new_dts_param $tx_chan_node "interrupts" $intr_info intlist
+			add_prop $tx_chan_node "interrupts" $intr_info intlist "pl.dtsi"
+#		    hsi::utils::add_new_dts_param $tx_chan_node "interrupts" $intr_info intlist
             } else {
 		    dtg_warning "ERROR: ${drv_handle}: mm2s_introut port is not connected"
             }
@@ -90,15 +91,18 @@ proc generate {drv_handle} {
             set intr_info [get_intr_id $drv_handle "s2mm_introut"]
             #set intc [hsi::utils::get_interrupt_parent $dma_ip "s2mm_introut"]
             if { [llength $intr_info] && ![string match -nocase $intr_info "-1"] } {
-		    hsi::utils::add_new_dts_param $rx_chan_node "interrupts" $intr_info intlist
+			add_prop $tx_chan_node "interrupts" $intr_info intlist "pl.dtsi"
+#		    hsi::utils::add_new_dts_param $rx_chan_node "interrupts" $intr_info intlist
             } else {
 		    dtg_warning "ERROR: ${drv_handle}: s2mm_introut port is not connected"
             }
             add_dma_coherent_prop $drv_handle "M_AXI_S2MM"
         }
     } else {
-	set proc_type [get_sw_proc_prop IP_NAME]
-	if {[string match -nocase $proc_type "ps7_cortexa9"] || [string match -nocase $proc_type "microblaze"] } {
+#	set proc_type [get_sw_proc_prop IP_NAME]
+	set proc_type [get_hw_family]
+#	set proc_type "psv_cortexa72"
+	if {[string match -nocase $proc_type "zynq"] || [regexp "kintex*" $proc_type match] } {
 		set_drv_property $drv_handle axistream-connected "$connected_ip" reference
 		set_drv_property $drv_handle axistream-control-connected "$connected_ip" reference
 	}
@@ -107,17 +111,29 @@ proc generate {drv_handle} {
 	set addr_width [get_property CONFIG.c_addr_width $dma_ip]
 	set inhex [format %x $addr_width]
 	append addrwidth "/bits/ 8 <0x$inhex>"
-	hsi::utils::add_new_dts_param "$node" "xlnx,addrwidth" $addrwidth noformating
+	add_prop $node "xlnx,addrwidth" $addrwidth stringlist "pl.dtsi"
+#	hsi::utils::add_new_dts_param "$node" "xlnx,addrwidth" $addrwidth noformating
 	set num_queues [get_property CONFIG.c_num_mm2s_channels $dma_ip]
 	set inhex [format %x $num_queues]
 	append numqueues "/bits/ 16 <0x$inhex>"
-	hsi::utils::add_new_dts_param $node "xlnx,num-queues" $numqueues noformating
+	add_prop $node "xlnx,num-queues" $numqueues stringlist "pl.dtsi"
+#	hsi::utils::add_new_dts_param $node "xlnx,num-queues" $numqueues noformating
     }
     incr dma_count
-    hsi::utils::set_os_parameter_value "dma_count" $dma_count
-    set mainline_ker [get_property CONFIG.mainline_kernel [get_os]]
+	set drvname [get_drivers $drv_handle]
+
+        set common_file "$path/device_tree/data/config.yaml"
+        if {[file exists $common_file]} {
+                #error "file not found: $common_file"
+        }
+        #set file "$path/${drvname}/data/config.yaml"
+        set mainline_ker [get_user_config $common_file -mainline_kernel]
+ #   hsi::utils::set_os_parameter_value "dma_count" $dma_count
+#    set mainline_ker [get_property CONFIG.mainline_kernel [get_os]]
     if {[string match -nocase $mainline_ker "none"]} {
-          set proc_type [get_sw_proc_prop IP_NAME]
+ #         set proc_type [get_sw_proc_prop IP_NAME]
+	#TODO SURESH
+	set proc_type "psv_cortexa72"
           if {[string match -nocase $proc_type "microblaze"]} {
                 generate_clk_nodes $drv_handle $axiethernetfound $tx_chan $rx_chan
           }
@@ -131,9 +147,12 @@ proc generate {drv_handle} {
 proc add_dma_channel {drv_handle parent_node xdma addr mode devid} {
     set modellow [string tolower $mode]
     set modeIndex [string index $mode 0]
-    set dma_channel [add_or_get_dt_node -n "dma-channel" -u $addr -p $parent_node]
-    hsi::utils::add_new_dts_param $dma_channel "compatible" [format "xlnx,%s-%s-channel" $xdma $modellow] stringlist
-    hsi::utils::add_new_dts_param $dma_channel "xlnx,device-id" $devid hexint
+    set dts_file [set_drv_def_dts $drv_handle]
+    set dma_channel [create_node -n "dma-channel" -u $addr -p $parent_node -d $dts_file]
+    add_prop $dma_channel "compatible" [format "xlnx,%s-%s-channel" $xdma $modellow] stringlist "pl.dtsi"
+    add_prop $dma_channel "xlnx,device-id" $devid hexint "pl.dtsi"
+#    hsi::utils::add_new_dts_param $dma_channel "compatible" [format "xlnx,%s-%s-channel" $xdma $modellow] stringlist
+ #   hsi::utils::add_new_dts_param $dma_channel "xlnx,device-id" $devid hexint
 
 
     add_cross_property_to_dtnode $drv_handle [format "CONFIG.C_INCLUDE_%s_DRE" $mode] $dma_channel "xlnx,include-dre" boolean
@@ -141,26 +160,27 @@ proc add_dma_channel {drv_handle parent_node xdma addr mode devid} {
     set datawidth_list "[format "CONFIG.C_%s_AXIS_%s_DATA_WIDTH" $modeIndex $mode] [format "CONFIG.C_%s_AXIS_%s_TDATA_WIDTH" $modeIndex $mode]"
     add_cross_property_to_dtnode $drv_handle $datawidth_list $dma_channel "xlnx,datawidth"
 
-    set num_channles [get_property CONFIG.c_num_mm2s_channels [get_cells -hier $drv_handle]]
-    hsi::utils::add_new_dts_param $dma_channel "dma-channels" $num_channles hexint
+    set num_channles [get_property CONFIG.c_num_mm2s_channels [hsi::get_cells -hier $drv_handle]]
+    add_prop $dma_channel "dma-channels" $num_channles hexint "pl.dtsi"
+#    hsi::utils::add_new_dts_param $dma_channel "dma-channels" $num_channles hexint
 
     return $dma_channel
 }
 
 proc add_dma_coherent_prop {drv_handle intf} {
-    set ip_name [::hsi::get_cells -hier -filter "NAME==$drv_handle"]
+    set ip_name [hsi::get_cells -hier -filter "NAME==$drv_handle"]
     set connectedip [hsi::utils::get_connected_stream_ip $drv_handle $intf]
     if {[llength $connectedip] == 0} {
           return
     }
-    set intrconnect [get_property IP_NAME [get_cells -hier $connectedip]]
+    set intrconnect [get_property IP_NAME [hsi::get_cells -hier $connectedip]]
     set num_master [get_property CONFIG.NUM_MI $connectedip]
     set done 0
     # check whether dma connected to interconnect ip, loop until you get the
     # port name ACP or HP
     while {[string match -nocase $intrconnect "axi_interconnect"]} {
         # loop over number of master interfaces
-        set master_intf [::hsi::get_intf_pins -of_objects [get_cells -hier $connectedip] -filter {TYPE==MASTER}]
+        set master_intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $connectedip] -filter {TYPE==MASTER}]
         if {[llength $master_intf] == 0} {
                 break
         }
@@ -168,7 +188,9 @@ proc add_dma_coherent_prop {drv_handle intf} {
             set intf_port [hsi::utils::get_connected_intf $connectedip $interface]
             set intrconnect [hsi::utils::get_connected_stream_ip $connectedip $interface]
             if {![string_is_empty $intf_port] && [string match -nocase $intf_port "S_AXI_ACP"]} {
-                hsi::utils::add_new_property $drv_handle "dma-coherent" boolean ""
+		set node [get_node $drv_handle]
+		add_prop $node "dma-coherent" boolean "pl.dtsi"
+#                hsi::utils::add_new_property $drv_handle "dma-coherent" boolean ""
                 # here dma connected to ACP port
                 set done 1
                 break;
@@ -181,10 +203,11 @@ proc add_dma_coherent_prop {drv_handle intf} {
 }
 
 proc generate_clk_nodes {drv_handle axiethernetfound tx_chan rx_chan} {
-	set proc_type [get_sw_proc_prop IP_NAME]
+#	set proc_type [get_sw_proc_prop IP_NAME]
+	#set proc_type "psv_cortexa72"
+	set proc_type [get_hw_family]
 	set clocknames "s_axi_lite_aclk"
-	switch $proc_type {
-		"ps7_cortexa9" {
+	if {[string match -nocase $proc_type "zynq"]} {
 			set clocks "clkc 15"
 			if { $axiethernetfound != 1 } {
 				append clocknames " " "m_axi_sg_aclk"
@@ -200,15 +223,8 @@ proc generate_clk_nodes {drv_handle axiethernetfound tx_chan rx_chan} {
 			}
 			set_drv_prop_if_empty $drv_handle "clocks" $clocks reference
 			set_drv_prop_if_empty $drv_handle "clock-names" $clocknames stringlist
-		} "psu_cortexa53" {
-			foreach i [get_sw_cores device_tree] {
-				set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-				if {[file exists $common_tcl_file]} {
-					source $common_tcl_file
-					break
-				}
-			}
-			set clk_freq [get_clock_frequency [get_cells -hier $drv_handle] "s_axi_lite_aclk"]
+	} elseif {[string match -nocase $proc_type "zynqmp"] || [string match -nocase $proc_type "zynquplus"]} {
+			set clk_freq [get_clock_frequency [hsi::get_cells -hier $drv_handle] "s_axi_lite_aclk"]
 			if {![string equal $clk_freq ""]} {
 				if {[lsearch $bus_clk_list $clk_freq] < 0} {
 					set bus_clk_list [lappend bus_clk_list $clk_freq]
@@ -217,11 +233,14 @@ proc generate_clk_nodes {drv_handle axiethernetfound tx_chan rx_chan} {
 			set bus_clk_cnt [lsearch -exact $bus_clk_list $clk_freq]
 			set dts_file [current_dt_tree]
 			set bus_node [add_or_get_bus_node $drv_handle $dts_file]
-			set misc_clk_node [add_or_get_dt_node -n "misc_clk_${bus_clk_cnt}" -l "misc_clk_${bus_clk_cnt}" \
-				-d ${dts_file} -p ${bus_node}]
-			hsi::utils::add_new_dts_param "${misc_clk_node}" "compatible" "fixed-clock" stringlist
-			hsi::utils::add_new_dts_param "${misc_clk_node}" "#clock-cells" 0 int
-			hsi::utils::add_new_dts_param "${misc_clk_node}" "clock-frequency" $clk_freq int
+			set misc_clk_node [create_node -n "misc_clk_${bus_clk_cnt}" -l "misc_clk_${bus_clk_cnt}" \
+				-d ${dts_file} -p ${bus_node} -d "pl.dtsi"]
+			add_prop "${misc_clk_node}" "compatible" "fixed-clock" stringlist "pl.dtsi"
+			add_prop "${misc_clk_node}" "#clock-cells" 0 int "pl.dtsi"
+			add_prop "${misc_clk_node}" "clock-frequency" $clk_freq int "pl.dtsi"
+#			hsi::utils::add_new_dts_param "${misc_clk_node}" "compatible" "fixed-clock" stringlist
+#			hsi::utils::add_new_dts_param "${misc_clk_node}" "#clock-cells" 0 int
+#			hsi::utils::add_new_dts_param "${misc_clk_node}" "clock-frequency" $clk_freq int
 			set clk_refs [lappend clk_refs misc_clk_${bus_clk_cnt}]
 			set clocks "$clk_refs"
 			if { $axiethernetfound != 1 } {
@@ -238,7 +257,7 @@ proc generate_clk_nodes {drv_handle axiethernetfound tx_chan rx_chan} {
 			}
 			set_drv_prop_if_empty $drv_handle "clocks" "$clocks" reference
 			set_drv_prop_if_empty $drv_handle "clock-names" "$clocknames" stringlist
-		} "microblaze" {
+		} elseif {[regexp "kintex*" $proc_type match]} {
 			if { $axiethernetfound != 1 } {
 				append clocknames " " "m_axi_sg_aclk"
 			}
@@ -250,29 +269,27 @@ proc generate_clk_nodes {drv_handle axiethernetfound tx_chan rx_chan} {
 			}
 			gen_dev_ccf_binding $drv_handle "$clocknames"
 			set_drv_prop_if_empty $drv_handle "clock-names" "$clocknames" stringlist
-		}
-		default {
+		} else {
 			error "Unknown arch"
 		}
-	}
 }
 
 proc get_connected_ip {drv_handle dma_pin} {
     global connected_ip
     # Check whether dma is connected to 10G/25G MAC
     # currently we are handling only data fifo
-    set intf [::hsi::get_intf_pins -of_objects [get_cells -hier $drv_handle] $dma_pin]
+    set intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $drv_handle] $dma_pin]
     set valid_eth_list "xxv_ethernet axi_ethernet axi_10g_ethernet usxgmii"
     if {[string_is_empty ${intf}]} {
         return 0
     }
-    set connected_ip [::hsi::utils::get_connected_stream_ip [get_cells -hier $drv_handle] $intf]
+    set connected_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $intf]
 
     if {[string_is_empty ${connected_ip}]} {
 	dtg_warning "$drv_handle connected ip is NULL for the pin $intf"
         return 0
     }
-    set iptype [get_property IP_NAME [get_cells -hier $connected_ip]]
+    set iptype [get_property IP_NAME [hsi::get_cells -hier $connected_ip]]
     if {[string match -nocase $iptype "axis_data_fifo"] } {
         # here dma connected to data fifo
         set dma_pin "M_AXIS"
@@ -291,4 +308,5 @@ proc get_connected_ip {drv_handle dma_pin} {
         set dma_pin "M_AXIS"
         get_connected_ip $connected_ip $dma_pin
     }
+}
 }

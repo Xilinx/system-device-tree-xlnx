@@ -17,18 +17,13 @@
 # GNU General Public License for more details.
 #
 
+namespace eval uartns {
 proc generate {drv_handle} {
     # try to source the common tcl procs
     # assuming the order of return is based on repo priority
-    foreach i [get_sw_cores device_tree] {
-        set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-        if {[file exists $common_tcl_file]} {
-            source $common_tcl_file
-            break
-        }
-    }
-
-    set ip [get_cells -hier $drv_handle]
+    set node [get_node $drv_handle]
+    set dts_file [set_drv_def_dts $drv_handle]
+    set ip [hsi::get_cells -hier $drv_handle]
     set has_xin [hsi::utils::get_ip_param_value $ip C_HAS_EXTERNAL_XIN]
     set clock_port "S_AXI_ACLK"
     if { [string match -nocase "$has_xin" "1"] } {
@@ -39,18 +34,18 @@ proc generate {drv_handle} {
 
     } else {
         set freq [hsi::utils::get_clk_pin_freq $ip "$clock_port"]
-        set_property clock-frequency $freq $drv_handle
+	add_prop $node "clock-frequency" hexint $dts_file
+#        set_property clock-frequency $freq $drv_handle
     }
 
-    set consoleip [get_property CONFIG.console_device [get_os]]
-    if { [string match -nocase $consoleip $ip] } {
+#    set consoleip [get_property CONFIG.console_device [get_os]]
+#    if { [string match -nocase $consoleip $ip] } {
         hsi::utils::set_os_parameter_value "console" "ttyS0,115200"
-    }
+ #   }
 
-    set proc_type [get_sw_proc_prop IP_NAME]
-    switch $proc_type {
-             "microblaze"   {
+    set proc_type [get_hw_family]
+    if {[regexp "kintex*" $proctype match]} {
                  gen_dev_ccf_binding $drv_handle "s_axi_aclk"
-            }
     }
+}
 }

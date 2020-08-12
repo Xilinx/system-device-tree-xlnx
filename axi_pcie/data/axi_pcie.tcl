@@ -12,8 +12,17 @@
 # GNU General Public License for more details.
 #
 
+namespace eval axi_pcie {
 proc set_pcie_ranges {drv_handle proctype} {
-	if {[string match -nocase [get_property IP_NAME [get_cells -hier $drv_handle]] "xdma"]} {
+	global env
+	global dtsi_fname
+	set path $env(REPO)
+
+	set node [get_node $drv_handle]
+	if {$node == 0} {
+		return
+	}
+	if {[string match -nocase [get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "xdma"]} {
 		set axibar_num [get_ip_property $drv_handle "CONFIG.axibar_num"]
 	} else {
 		set axibar_num [get_ip_property $drv_handle "CONFIG.AXIBAR_NUM"]
@@ -87,10 +96,12 @@ proc set_pcie_ranges {drv_handle proctype} {
 			append ranges ", " $value
 		}
 	}
-	set_property CONFIG.ranges $ranges $drv_handle
+#	set_property CONFIG.ranges $ranges $drv_handle
+	add_prop $node ranges $ranges hexlist "pl.dtsi"
 }
 
 proc set_pcie_reg {drv_handle proctype} {
+	set node [get_node $drv_handle]
 	if {[string match -nocase [get_property IP_NAME [get_cells -hier $drv_handle]] "xdma"] || [string match -nocase [get_property IP_NAME [get_cells -hier $drv_handle]] "axi_pcie3"]} {
 		set baseaddr [get_ip_property $drv_handle CONFIG.baseaddr]
 		set highaddr [get_ip_property $drv_handle CONFIG.highaddr]
@@ -111,12 +122,15 @@ proc set_pcie_reg {drv_handle proctype} {
 				set reg "0x0 $baseaddr 0x0 $size"
 			}
 		}
-		set_property CONFIG.reg $reg $drv_handle
+
+		add_prop $node reg $ranges hexlist "pl.dtsi"
+		#set_property CONFIG.reg $reg $drv_handle
 	} else {
 		set baseaddr [get_ip_property $drv_handle CONFIG.BASEADDR]
 		set highaddr [get_ip_property $drv_handle CONFIG.HIGHADDR]
 		set size [format 0x%X [expr $highaddr -$baseaddr + 1]]
-		set_property CONFIG.reg "$baseaddr $size" $drv_handle
+		add_prop $node reg $ranges hexlist "pl.dtsi"
+		#set_property CONFIG.reg "$baseaddr $size" $drv_handle
 	}
 }
 
@@ -131,47 +145,47 @@ proc axibar_num_workaround {drv_handle} {
 }
 
 proc generate {drv_handle} {
-	# try to source the common tcl procs
-	# assuming the order of return is based on repo priority
-	foreach i [get_sw_cores device_tree] {
-		set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-		if {[file exists $common_tcl_file]} {
-			source $common_tcl_file
-			break
-		}
-	}
-	set node [gen_peripheral_nodes $drv_handle]
+	global env
+	global dtsi_fname
+	set path $env(REPO)
+
+	set node [get_node $drv_handle]
 	if {$node == 0} {
 		return
 	}
-	set compatible [get_comp_str $drv_handle]
-	set compatible [append compatible " " "xlnx,axi-pcie-host-1.00.a"]
-	set_drv_prop $drv_handle compatible "$compatible" stringlist
-
-	if {[string match -nocase [get_property IP_NAME [get_cells -hier $drv_handle]] "xdma"]} {
-		hsi::utils::add_new_property $drv_handle "compatible" stringlist "xlnx,xdma-host-3.00"
-		set msi_rx_pin_en [get_property CONFIG.msi_rx_pin_en [get_cells -hier $drv_handle]]
+#	set compatible [get_comp_str $drv_handle]
+#	set compatible [append compatible " " "xlnx,axi-pcie-host-1.00.a"]
+#	set_drv_prop $drv_handle compatible "$compatible" stringlist
+	pldt append $node compatible "\ \, \"xlnx,axi-pcie-host-1.00.a\""
+	if {[string match -nocase [get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "xdma"]} {
+		add_prop $node "compatible" "xlnx,xdma-host-3.00" stringlist "pl.dtsi"
+#		hsi::utils::add_new_property $drv_handle "compatible" stringlist "xlnx,xdma-host-3.00"
+		set msi_rx_pin_en [get_property CONFIG.msi_rx_pin_en [hsi::get_cells -hier $drv_handle]]
 		if {[string match -nocase $msi_rx_pin_en "true"]} {
 			set intr_names "misc msi0 msi1"
 			set_drv_prop $drv_handle "interrupt-names" $intr_names stringlist
 		}
 	}
-	set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
+#	set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
+	set proctype [get_hw_family]
 	set_pcie_reg $drv_handle $proctype
 	set_pcie_ranges $drv_handle $proctype
 	set_drv_prop $drv_handle interrupt-map-mask "0 0 0 7" intlist
-	if {[string match -nocase $proctype "microblaze"] } {
+	if {[regexp "kintex*" $proctype match]} {
 		set_drv_prop $drv_handle bus-range "0x0 0xff" hexint
 	}
 	# Add Interrupt controller child node
-	set pcieintc_cnt [get_os_dev_count "pci_intc_cnt"]
-	set pcie_child_intc_node [add_or_get_dt_node -l "pcie_intc_${pcieintc_cnt}" -n interrupt-controller -p $node]
+#	set pcieintc_cnt [get_os_dev_count "pci_intc_cnt"]
+	set pcieintc_cnt [get_count "pci_intc_cnt"]
+	set pcie_child_intc_node [create_node -l "pcie_intc_${pcieintc_cnt}" -n interrupt-controller -p $node]
 	set int_map "0 0 0 1 &pcie_intc_${pcieintc_cnt} 1>, <0 0 0 2 &pcie_intc_${pcieintc_cnt} 2>, <0 0 0 3 &pcie_intc_${pcieintc_cnt} 3>,\
 		 <0 0 0 4 &pcie_intc_${pcieintc_cnt} 4"
 	set_drv_prop $drv_handle interrupt-map $int_map int
 	incr pcieintc_cnt
-	hsi::utils::set_os_parameter_value "pci_intc_cnt" $pcieintc_cnt
-	hsi::utils::add_new_dts_param "${pcie_child_intc_node}" "interrupt-controller" "" boolean
-	hsi::utils::add_new_dts_param "${pcie_child_intc_node}" "#address-cells" 0 int
-	hsi::utils::add_new_dts_param "${pcie_child_intc_node}" "#interrupt-cells" 1 int
+#	hsi::utils::set_os_parameter_value "pci_intc_cnt" $pcieintc_cnt
+
+	add_prop "${pcie_child_intc_node}" "interrupt-controller" "" boolean "pl.dtsi"
+	add_prop "${pcie_child_intc_node}" "#address-cells" 0 int "pl.dtsi"
+	add_prop "${pcie_child_intc_node}" "#interrupt-cells" 1 int "pl.dtsi"
+}
 }

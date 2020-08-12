@@ -12,22 +12,17 @@
 # GNU General Public License for more details.
 #
 
+namespace eval iomodule {
 proc generate {drv_handle} {
-foreach i [get_sw_cores device_tree] {
-        set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-        if {[file exists $common_tcl_file]} {
-                source $common_tcl_file
-                break
-                }
-        }
-
-        set slave [get_cells -hier $drv_handle]
+	set node [get_node $drv_handle]
+#	set dts_file [set_drv_def_dts $drv_handle]
+        set slave [hsi::get_cells -hier $drv_handle]
 	set pit_used ""
-	set dev_type [get_property CONFIG.dev_type $drv_handle]
+#	set dev_type [get_property CONFIG.dev_type $drv_handle]
 	set unit_addr [get_baseaddr ${slave} no_prefix]
 	set default_dts [set_drv_def_dts $drv_handle]
         set bus_node [add_or_get_bus_node $slave $default_dts]
-	set node [add_or_get_dt_node -n $dev_type -l $drv_handle -u $unit_addr -p $bus_node]
+#	set node [create_node -n $dev_type -l $drv_handle -u $unit_addr -p $bus_node]
 	for {set i 1} {$i < 5} {incr i} {
 	        set val [hsi::utils::get_ip_param_value $slave "C_USE_PIT${i}"]
 		if {[string match -nocase $pit_used ""]} {
@@ -36,7 +31,7 @@ foreach i [get_sw_cores device_tree] {
 			append pit_used " " $val
 		}
         }
-	hsi::utils::add_new_dts_param $node "xlnx,pit-used" $pit_used intlist
+	add_prop $node "xlnx,pit-used" $pit_used intlist $default_dts
 
 	set pit_size ""
 	set pit_mask ""
@@ -56,8 +51,8 @@ foreach i [get_sw_cores device_tree] {
 			append pit_mask " " $msk_val
 		}
         }
-	hsi::utils::add_new_dts_param $node "xlnx,pit-size" $pit_size intlist
-	hsi::utils::add_new_dts_param $node "xlnx,pit-mask" $pit_mask hexlist
+	add_prop $node "xlnx,pit-size" $pit_size intlist $default_dts
+	add_prop $node "xlnx,pit-mask" $pit_mask hexlist $default_dts
 
 	set pit_prescaler ""
 	for {set i 1} {$i < 5} {incr i} {
@@ -68,7 +63,7 @@ foreach i [get_sw_cores device_tree] {
 			append pit_prescaler " " $val
 		}
         }
-	hsi::utils::add_new_dts_param $node "xlnx,pit-prescaler" $pit_prescaler intlist
+	add_prop $node "xlnx,pit-prescaler" $pit_prescaler intlist $default_dts
 
 	set pit_readable ""
 	for {set i 1} {$i < 5} {incr i} {
@@ -79,7 +74,7 @@ foreach i [get_sw_cores device_tree] {
 			append pit_readable " " $val
 		}
         }
-	hsi::utils::add_new_dts_param $node "xlnx,pit-readable" $pit_readable intlist
+	add_prop $node "xlnx,pit-readable" $pit_readable intlist $default_dts
 
 	set gpo_init ""
 	for {set i 1} {$i < 5} {incr i} {
@@ -90,17 +85,18 @@ foreach i [get_sw_cores device_tree] {
 			append gpo_init " " $val
 		}
         }
-	hsi::utils::add_new_dts_param $node "xlnx,gpo-init" $gpo_init intlist
+	add_prop $node "xlnx,gpo-init" $gpo_init intlist $default_dts
 
 	set param_list "C_INTC_HAS_FAST C_INTC_ADDR_WIDTH C_INTC_LEVEL_EDGE C_UART_BAUDRATE"
 	foreach param $param_list {
-		ip2drv_prop $drv_handle "CONFIG.$param"
+#		ip2drv_prop $drv_handle "CONFIG.$param"
 	}
 	set val [hsi::utils::get_ip_param_value $slave "C_FREQ"]
-	hsi::utils::add_new_dts_param $node "xlnx,clock-freq" $val int
+	add_prop $node "xlnx,clock-freq" $val int $default_dts
 	set val [hsi::utils::get_ip_param_value $slave "C_INTC_INTR_SIZE"]
-	hsi::utils::add_new_dts_param $node "xlnx,max-intr-size" $val int
-	hsi::utils::add_new_dts_param $node "xlnx,options" 1 int
+	add_prop $node "xlnx,max-intr-size" $val int $default_dts
+	add_prop $node "xlnx,options" 1 int $default_dts
 	set val [hsi::utils::get_ip_param_value $slave "C_INTC_BASE_VECTORS"]
-	hsi::utils::add_new_dts_param $node "xlnx,intc-base-vectors" $val hex
+	#add_prop $node "xlnx,intc-base-vectors" $val hexint $default_dts
+}
 }

@@ -12,6 +12,7 @@
 # GNU General Public License for more details.
 #
 
+namespace eval cpu_cortexa9 {
 proc generate {drv_handle} {
 	global dtsi_fname
 	set dtsi_fname "zynq/zynq-7000.dtsi"
@@ -27,4 +28,5 @@ proc generate {drv_handle} {
 	# create root node
 	set master_root_node [gen_root_node $drv_handle]
 	set nodes [gen_cpu_nodes $drv_handle]
+}
 }

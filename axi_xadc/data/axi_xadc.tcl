@@ -12,35 +12,30 @@
 # GNU General Public License for more details.
 #
 
+namespace eval axi_xadc {
 proc generate {drv_handle} {
-	# try to source the common tcl procs
-	# assuming the order of return is based on repo priority
-	foreach i [get_sw_cores device_tree] {
-		set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-		if {[file exists $common_tcl_file]} {
-			source $common_tcl_file
-			break
-		}
-	}
 	gen_xadc_driver_prop $drv_handle
 }
 
 proc gen_xadc_driver_prop {drv_handle} {
+	set node [get_node $drv_handle]
+	set dts_file [set_drv_def_dts $drv_handle]
 	gen_drv_prop_from_ip $drv_handle
 	gen_dev_ccf_binding $drv_handle "s_axi_aclk"
 
-	set compatible [get_comp_str $drv_handle]
-	set compatible [append compatible " " "xlnx,axi-xadc-1.00.a"]
-	set_drv_prop $drv_handle compatible "$compatible" stringlist
-	set adc_ip [get_cells -hier $drv_handle]
+#	set compatible [get_comp_str $drv_handle]
+#	set compatible [append compatible " " "xlnx,axi-xadc-1.00.a"]
+#	set_drv_prop $drv_handle compatible "$compatible" stringlist
+	pldt append $node compatible "\ \, \"xlnx,axi-xadc-1.00.a\""
+	set adc_ip [hsi::get_cells -hier $drv_handle]
 	set has_dma [get_property CONFIG.C_HAS_EXTERNAL_MUX $adc_ip]
 	if {$has_dma == 0} {
 		set has_dma_str "none"
 	} elseif {$has_dma == 1} {
 		set has_dma_str "single"
 	}
-
-	hsi::utils::add_new_property $drv_handle "xlnx,external-mux" string $has_dma_str
+	add_prop $node "xlnx,external-mux" $has_dma_str string $dts_file
+#	hsi::utils::add_new_property $drv_handle "xlnx,external-mux" string $has_dma_str
 	if {$has_dma != 0} {
 		set ext_mux_chan [get_property CONFIG.EXTERNAL_MUX_CHANNEL $adc_ip]
 		if {[string match -nocase $ext_mux_chan "VP_VN"] } {
@@ -52,6 +47,8 @@ proc gen_xadc_driver_prop {drv_handle} {
 				}
 			}
 		}
-		hsi::utils::add_new_property $drv_handle "xlnx,external-mux-channel" int $chan_nr
+		add_prop $node "xlnx,external-mux-channel" $chan_nr int $dts_file
+#		hsi::utils::add_new_property $drv_handle "xlnx,external-mux-channel" int $chan_nr
 	}
+}
 }

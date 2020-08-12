@@ -12,6 +12,7 @@
 # GNU General Public License for more details.
 #
 
+namespace eval sdi_tx {
 proc generate {drv_handle} {
 	foreach i [get_sw_cores device_tree] {
 		set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
@@ -44,4 +45,5 @@ proc generate {drv_handle} {
 	hsi::utils::add_new_dts_param "${node}" "xlnx,pixels-per-clock" $pixelclock string
 	set video_intf [get_property CONFIG.C_VIDEO_INTF [get_cells -hier $drv_handle]]
 	hsi::utils::add_new_dts_param "$node" "xlnx,video-intf" $video_intf string
+}
 }

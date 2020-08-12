@@ -12,21 +12,14 @@
 # GNU General Public License for more details.
 #
 
+namespace eval nandps {
 proc ns_to_cycle {drv_handle prop_name nand_cycle_time} {
-    return [expr [get_property CONFIG.$prop_name [get_cells -hier $drv_handle]]/${nand_cycle_time}]
+    return [expr [get_property CONFIG.$prop_name [hsi::get_cells -hier $drv_handle]]/${nand_cycle_time}]
 }
 
 proc generate {drv_handle} {
-    # try to source the common tcl procs
-    # assuming the order of return is based on repo priority
-    foreach i [get_sw_cores device_tree] {
-        set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-        if {[file exists $common_tcl_file]} {
-            source $common_tcl_file
-            break
-        }
-    }
-
+    set node [get_node $drv_handle]
+    set dts_file [set_drv_def_dts $drv_handle]
     set hw_ver [get_hw_version]
     # Parameter name changed in 2014.4
     # TODO: check with 2014.3
@@ -37,7 +30,7 @@ proc generate {drv_handle} {
         } "2014.4" -
         default {
             set nand_par_prefix "NAND-CYCLE-"
-            set nand_cycle_time [expr "1000000000/[get_property CONFIG.C_NAND_CLK_FREQ_HZ [get_cells -hier $drv_handle]]"]
+            set nand_cycle_time [expr "1000000000/[get_property CONFIG.C_NAND_CLK_FREQ_HZ [hsi::get_cells -hier $drv_handle]]"]
         }
     }
     if {![regexp -nocase "psu_nand*" $drv_handle match]} {
@@ -48,7 +41,9 @@ proc generate {drv_handle} {
 	set_drv_prop $drv_handle "arm,nand-cycle-t4" [ns_to_cycle $drv_handle "${nand_par_prefix}T4" $nand_cycle_time]
 	set_drv_prop $drv_handle "arm,nand-cycle-t5" [ns_to_cycle $drv_handle "${nand_par_prefix}T5" $nand_cycle_time]
 	set_drv_prop $drv_handle "arm,nand-cycle-t6" [ns_to_cycle $drv_handle "${nand_par_prefix}T6" $nand_cycle_time]
-	set bus_width [get_property CONFIG.C_NAND_WIDTH [get_cells -hier $drv_handle]]
-	hsi::utils::add_new_property $drv_handle "nand-bus-width" int $bus_width
+	set bus_width [get_property CONFIG.C_NAND_WIDTH [hsi::get_cells -hier $drv_handle]]
+	add_prop $node "nand-bus-width" int $bus_width $dts_file
+#	hsi::utils::add_new_property $drv_handle "nand-bus-width" int $bus_width
     }
+}
 }

@@ -12,29 +12,42 @@
 # GNU General Public License for more details.
 #
 
+namespace eval usbps {
 proc generate {drv_handle} {
-    foreach i [get_sw_cores device_tree] {
-        set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-        if {[file exists $common_tcl_file]} {
-            source $common_tcl_file
-            break
-        }
-    }
     ps7_reset_handle $drv_handle CONFIG.C_USB_RESET CONFIG.usb-reset
-    set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
+	set proctype [get_hw_family]
+	set node [get_node $drv_handle]
     set default_dts [set_drv_def_dts $drv_handle]
-    if {[string match -nocase $proctype "ps7_cortexa9"] } {
+    if {[string match -nocase $proctype "zynq"] } {
         set_drv_prop $drv_handle phy_type ulpi string
     } else {
-	set mainline_ker [get_property CONFIG.mainline_kernel [get_os]]
-	if {[string match -nocase $proctype "psv_cortexa72"] || [string match -nocase $proctype "psv_cortexr5"] || [string match -nocase $proctype "psv_pmc"]} {
+	global env
+        set path $env(REPO)
+
+        set drvname [get_drivers $drv_handle]
+        #puts "drvname $drvname"
+
+        set common_file "$path/device_tree/data/config.yaml"
+        if {[file exists $common_file]} {
+                #error "file not found: $common_file"
+        }
+        #set file "$path/${drvname}/data/config.yaml"
+        #puts "file $common_file"
+        set mainline_ker [get_user_config $common_file -mainline_kernel]
+
+#	set mainline_ker [get_property CONFIG.mainline_kernel [get_os]]
+	if {[string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_cortexr5"] || [string match -nocase $proctype "psv_pmc"]} {
 		#TODO:Remove this once the versal dts is fully updated.
 		return
 	}
 	if {[string match -nocase $mainline_ker "none"]} {
              set index [string index $drv_handle end]
-             set rt_node [add_or_get_dt_node -n usb -l psu_usb_$index -d $default_dts -auto_ref_parent]
-             hsi::utils::add_new_dts_param "${rt_node}" "status" "okay" string
+		puts "name usb labl psu_usb_$index dts $default_dts"
+#             set rt_node [create_node -n usb -l psu_usb_$index -d $default_dts -p $]
+		puts "rt_node $node"		
+	     add_prop $node "status" "okay" string $default_dts
+#             hsi::utils::add_new_dts_param "${rt_node}" "status" "okay" string
         }
     }
+}
 }

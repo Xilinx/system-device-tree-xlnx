@@ -12,5 +12,7 @@
 # GNU General Public License for more details.
 #
 
+namespace eval canfdps {
 proc generate {drv_handle} {
+}
 }

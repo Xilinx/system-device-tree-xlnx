@@ -12,9 +12,12 @@
 # GNU General Public License for more details.
 #
 
+namespace eval ramps {
 proc generate {drv_handle} {
-    set ip [get_cells -hier $drv_handle]
+    set ip [hsi::get_cells -hier $drv_handle]
     if { [string match -nocase $ip "ps7_ram_1"] } {
-        set_property NAME none $drv_handle
+	#TODO SURESH
+#        set_property NAME none $drv_handle
     }
+}
 }

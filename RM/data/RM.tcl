@@ -12,11 +12,15 @@
 # GNU General Public License for more details.
 #
 
+namespace eval RM {
 proc generate {drv_handle} {
-	set val [get_property FAMILY [get_hw_designs]]
+	set val [get_property FAMILY [hsi::get_hw_designs]]
+	set node [get_node $drv_handle]
+	set dts_file [set_drv_def_dts]
 	switch -glob $val {
 		"zynq" {
-			hsi::utils::add_new_property $drv_handle "fpga-mgr" string "<&devcfg>"
+			add_prop $node "fpga-mgr" "<&devcfg>" string $dts_file
 		}
 	}
+}
 }

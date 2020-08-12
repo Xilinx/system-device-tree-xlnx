@@ -12,14 +12,9 @@
 # GNU General Public License for more details.
 #
 
+namespace eval ospips {
 proc generate {drv_handle} {
-	foreach i [get_sw_cores device_tree] {
-	set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-	if {[file exists $common_tcl_file]} {
-		source $common_tcl_file
-		break
-		}
-	}
 
         set_drv_conf_prop $drv_handle C_OSPI_CLK_FREQ_HZ xlnx,clock-freq int
+}
 }

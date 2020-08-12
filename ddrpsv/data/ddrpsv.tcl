@@ -12,36 +12,23 @@
 # GNU General Public License for more details.
 #
 
+namespace eval ddrpsv {
 proc generate {drv_handle} {
-	foreach i [get_sw_cores device_tree] {
-		set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-		if {[file exists $common_tcl_file]} {
-			source $common_tcl_file
-			break
-		}
-	}
-	set slave [get_cells -hier ${drv_handle}]
-	set master_dts [get_property CONFIG.master_dts [get_os]]
-	set cur_dts [current_dt_tree]
-	set master_dts_obj [get_dt_trees ${master_dts}]
-	set_cur_working_dts $master_dts
-
-	set parent_node [add_or_get_dt_node -n / -d ${master_dts}]
-	set addr [get_property CONFIG.C_BASEADDR [get_cells -hier $drv_handle]]
+	set slave [hsi::get_cells -hier ${drv_handle}]
+	set addr [get_property CONFIG.C_BASEADDR [hsi::get_cells -hier $drv_handle]]
+	set dts_file "system-top.dts"
 	regsub -all {^0x} $addr {} addr
-	set memory_node [add_or_get_dt_node -n memory -u $addr -p $parent_node]
-	if {[catch {set dev_type [get_property CONFIG.device_type $drv_handle]} msg]} {
+	set memory_node [create_node -n memory -u $addr -p root -d "system-top.dts"]
 		set dev_type memory
-	}
 	if {[string_is_empty $dev_type]} {set dev_type memory}
-	hsi::utils::add_new_dts_param "${memory_node}" "device_type" $dev_type string
-	set slave [get_cells -hier ${drv_handle}]
+	add_prop "${memory_node}" "device_type" $dev_type string $dts_file
+	set slave [hsi::get_cells -hier ${drv_handle}]
 	set vlnv [split [get_property VLNV $slave] ":"]
 	set name [lindex $vlnv 2]
 	set ver [lindex $vlnv 3]
 	set comp_prop "xlnx,${name}-${ver}"
 	regsub -all {_} $comp_prop {-} comp_prop
-	hsi::utils::add_new_dts_param "${memory_node}" "compatible" $comp_prop string
+	add_prop "${memory_node}" "compatible" $comp_prop string $dts_file
 	set is_ddr_low_0 0
 	set is_ddr_low_1 0
 	set is_ddr_low_2 0
@@ -50,53 +37,53 @@ proc generate {drv_handle} {
 	set is_ddr_ch_2 0
 	set is_ddr_ch_3 0
 
-	set sw_proc [hsi::get_sw_processor]
-	set periph [::hsi::utils::get_common_driver_ips $drv_handle]
-	set interface_block_names [get_property ADDRESS_BLOCK [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph]]
-
+	set periph [hsi::get_cells -hier $drv_handle]
+	set interface_block_names ""
+	if {[catch {set interface_block_names [get_property ADDRESS_BLOCK [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR} ] 0] $periph]]} msg]} {
+	}
 	set i 0
 	foreach block_name $interface_block_names {
 		if {[string match "C0_DDR_LOW0*" $block_name] || [string match "C1_DDR_LOW0*" $block_name]} {
 			if {$is_ddr_low_0 == 0} {
-				set base_value_0 [common::get_property BASE_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+				set base_value_0 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR} ] 0] $periph] $i]]
 			}
-			set high_value_0 [common::get_property HIGH_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+			set high_value_0 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR} ] 0] $periph] $i]]
 			set is_ddr_low_0 1
 		} elseif {[string match "C0_DDR_LOW1*" $block_name] || [string match "C1_DDR_LOW1*" $block_name]} {
 			if {$is_ddr_low_1 == 0} {
-				set base_value_1 [common::get_property BASE_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+				set base_value_1 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR} ] 0] $periph] $i]]
 			}
-			set high_value_1 [common::get_property HIGH_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+			set high_value_1 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR} ] 0] $periph] $i]]
 			set is_ddr_low_1 1
 		} elseif {[string match "C0_DDR_LOW2*" $block_name] || [string match "C1_DDR_LOW2*" $block_name]} {
 			if {$is_ddr_low_2 == 0} {
-				set base_value_2 [common::get_property BASE_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+				set base_value_2 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR} ] 0] $periph] $i]]
 			}
-			set high_value_2 [common::get_property HIGH_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+			set high_value_2 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR} ] 0] $periph] $i]]
 			set is_ddr_low_2 1
 		} elseif {[string match "C0_DDR_LOW3*" $block_name] || [string match "C1_DDR_LOW3*" $block_name]} {
 			if {$is_ddr_low_3 == "0"} {
-				set base_value_3 [common::get_property BASE_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+				set base_value_3 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR} ] 0] $periph] $i]]
 			}
-			set high_value_3 [common::get_property HIGH_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+			set high_value_3 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR} ] 0] $periph] $i]]
 			set is_ddr_low_3 1
 		} elseif {[string match "C0_DDR_CH1*" $block_name]} {
 			if {$is_ddr_ch_1 == "0"} {
-				set base_value_4 [common::get_property BASE_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+				set base_value_4 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR} ] 0] $periph] $i]]
 			}
-			set high_value_4 [common::get_property HIGH_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+			set high_value_4 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR} ] 0] $periph] $i]]
 			set is_ddr_ch_1 1
 		} elseif {[string match "C0_DDR_CH2*" $block_name]} {
 			if {$is_ddr_ch_2 == "0"} {
-				set base_value_5 [common::get_property BASE_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+				set base_value_5 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR} ] 0] $periph] $i]]
 			}
-			set high_value_5 [common::get_property HIGH_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+			set high_value_5 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR} ] 0] $periph] $i]]
 			set is_ddr_ch_2 1
 		} elseif {[string match "C0_DDR_CH3*" $block_name]} {
 			if {$is_ddr_ch_3 == "0"} {
-				set base_value_6 [common::get_property BASE_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+				set base_value_6 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR} ] 0] $periph] $i]]
 			}
-			set high_value_6 [common::get_property HIGH_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier $sw_proc] $periph] $i]]
+			set high_value_6 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR} ] 0] $periph] $i]]
 			set is_ddr_ch_3 1
 		}
 		incr i
@@ -134,37 +121,37 @@ proc generate {drv_handle} {
 	switch $len {
 		"1" {
 			set reg_val [lindex $updat 0]
-			hsi::utils::add_new_dts_param "${memory_node}" "reg" $reg_val inthexlist
+			add_prop "${memory_node}" "reg" $reg_val hexlist $dts_file
 		}
 		"2" {
 			set reg_val [lindex $updat 0]
 			append reg_val ">, <[lindex $updat 1]"
-			hsi::utils::add_new_dts_param "${memory_node}" "reg" $reg_val inthexlist
+			add_prop "${memory_node}" "reg" $reg_val hexlist $dts_file
 		}
 		"3" {
 			set reg_val [lindex $updat 0]
 			append reg_val ">, <[lindex $updat 1]>, <[lindex $updat 2]"
-			hsi::utils::add_new_dts_param "${memory_node}" "reg" $reg_val inthexlist
+			add_prop "${memory_node}" "reg" $reg_val hexlist $dts_file
 		}
 		"4" {
 			set reg_val [lindex $updat 0]
 			append reg_val ">, <[lindex $updat 1]>, <[lindex $updat 2]>, <[lindex $updat 3]"
-			hsi::utils::add_new_dts_param "${memory_node}" "reg" $reg_val inthexlist
+			add_prop "${memory_node}" "reg" $reg_val hexlist $dts_file
 		}
 		"5" {
 			set reg_val [lindex $updat 0]
 			append reg_val ">, <[lindex $updat 1]>, <[lindex $updat 2]>, <[lindex $updat 3]>, <[lindex $updat 4]"
-			hsi::utils::add_new_dts_param "${memory_node}" "reg" $reg_val inthexlist
+			add_prop "${memory_node}" "reg" $reg_val hexlist $dts_file
 		}
 		"6" {
 			set reg_val [lindex $updat 0]
 			append reg_val ">, <[lindex $updat 1]>, <[lindex $updat 2]>, <[lindex $updat 3]>, <[lindex $updat 4]>, <[lindex $updat 5]"
-			hsi::utils::add_new_dts_param "${memory_node}" "reg" $reg_val inthexlist
+			add_prop "${memory_node}" "reg" $reg_val hexlist $dts_file
 		}
 		"7" {
 			set reg_val [lindex $updat 0]
 			append reg_val ">, <[lindex $updat 1]>, <[lindex $updat 2]>, <[lindex $updat 3]>, <[lindex $updat 4]>, <[lindex $updat 5]>, <[lindex $updat 6]"
-			hsi::utils::add_new_dts_param "${memory_node}" "reg" $reg_val inthexlist
+			add_prop "${memory_node}" "reg" $reg_val hexlist $dts_file
 		}
 	}
 }
@@ -172,8 +159,9 @@ proc generate {drv_handle} {
 proc generate_reg_property {base high} {
 	set size [format 0x%x [expr {${high} - ${base} + 1}]]
 
-	set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
-	if {[string match -nocase $proctype "psv_cortexa72"] || [string match -nocase $proctype "psv_pmc"] || [string match -nocase $proctype "psv_cortexr5"]} {
+#	set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
+	set proctype [get_hw_family]
+	if {[string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_pmc"] || [string match -nocase $proctype "psv_cortexr5"]} {
 		if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 			set temp $base
 			set temp [string trimleft [string trimleft $temp 0] x]
@@ -199,4 +187,5 @@ proc generate_reg_property {base high} {
 		}
 	} 
 	return $reg
+}
 }

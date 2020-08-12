@@ -12,8 +12,11 @@
 # GNU General Public License for more details.
 #
 
+namespace eval spips {
 proc generate {drv_handle} {
-	set ip [get_cells -hier $drv_handle]
+	set node [get_node $drv_handle]
+	set dts_file [set_drv_def_dts $drv_handle]
+	set ip [hsi::get_cells -hier $drv_handle]
 	set cs-num 0
 	# SPI PS only have chip select range 0 - 2
 	foreach n {0 1 2} {
@@ -23,11 +26,13 @@ proc generate {drv_handle} {
 		}
 	}
 	if {${cs-num} != 0} {
-		set_property CONFIG.num-cs ${cs-num} $drv_handle
+		add_prop $node "num-cs" ${cs-num} int $dts_file
+#		set_property CONFIG.num-cs ${cs-num} $drv_handle
 	}
 
 	# the is-decoded-cs property is hard coded as we do not know if the
 	# board has external decoder connected or not
 	# Once we had the board level information, is-decoded-cs need to be
 	# generated based on it.
+}
 }

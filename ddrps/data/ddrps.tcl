@@ -13,14 +13,18 @@
 #
 
 # workaround for ps7 ddrc has none zero start address
-proc gen_ps7_ddr_reg_property {drv_handle} {
+
+namespace eval ddrps {
+proc gen_ps7_ddr_reg_property {drv_handle system_node} {
     proc_called_by
-    set regprop [ hsi::utils::get_os_parameter_value "regp"]
+#    set regprop [ hsi::utils::get_os_parameter_value "regp"]
+    set regprop [get_count "regp"]
     set psu_cortexa53 ""
-    set slave [get_cells -hier ${drv_handle}]
-    set ip_mem_handles [hsi::utils::get_ip_mem_ranges $slave]
-    set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
-    if {[string match -nocase $proctype "ps7_cortexa9"]} {
+    set slave [hsi::get_cells -hier ${drv_handle}]
+    set ip_mem_handles [hsi::get_mem_ranges $slave]
+#    set proctype [get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]]
+     set proctype [get_hw_family]
+    if {[string match -nocase $proctype "zynq"]} {
         set value 0
     } elseif {[string match -nocase $proctype "psu_pmu"]} {
         set value [generate_secure_memory_pmu $drv_handle]
@@ -30,16 +34,17 @@ proc gen_ps7_ddr_reg_property {drv_handle} {
         set value [generate_secure_memory $drv_handle]
     }
     if { $value !=0} {
-        hsi::utils::set_os_parameter_value "regp" $value
-        set_drv_prop_if_empty $drv_handle reg $value intlist
+#        hsi::utils::set_os_parameter_value "regp" $value
+	add_prop $system_node reg $value intlist "system-top.dts"
+#        set_drv_prop_if_empty $drv_handle reg $value intlist
     } else {
-        set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
+ #       set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
         foreach mem_handle ${ip_mem_handles} {
             #set base [get_property BASE_VALUE $mem_handle]
 	    set base 0x0
             set high [get_property HIGH_VALUE $mem_handle]
 	    set mem_size [format 0x%x [expr {${high} - ${base} + 1}]]
-            if {[string match -nocase $proctype "psu_cortexa53"]} {
+            if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
                 # Check if memory crossing 4GB map, then split 2GB below 32 bit limit
                 # and remaining above 32 bit limit
                 if { [expr {${mem_size} + ${base}}] >= [expr 0x100000000] } {
@@ -63,28 +68,31 @@ proc gen_ps7_ddr_reg_property {drv_handle} {
             }
         }
     }
-    hsi::utils::set_os_parameter_value "regp" $regprop
-    set_drv_prop_if_empty $drv_handle reg $regprop intlist
+#    hsi::utils::set_os_parameter_value "regp" $regprop
+    add_prop $system_node reg $value intlist "system-top.dts"
+#    set_drv_prop_if_empty $drv_handle reg $regprop intlist
     }
 }
 
 proc generate_secure_memory {drv_handle} {
-    set regprop [ hsi::utils::get_os_parameter_value "regp"]
+   # set regprop [ hsi::utils::get_os_parameter_value "regp"]
+    set regprop [get_count "regp"]
     set psu_cortexa53 ""
-    set slave [get_cells -hier ${drv_handle}]
-    set ip_mem_handles [hsi::utils::get_ip_mem_ranges $slave]
+    set slave [hsi::get_cells -hier ${drv_handle}]
+    set ip_mem_handles [hsi::get_mem_ranges $slave]
     set firstelement [lindex $ip_mem_handles 0]
-    set index [lsearch [get_mem_ranges -of_objects [get_cells -hier [get_sw_processor]]] [get_cells $firstelement]]
-    set avail_param [list_property [lindex [get_mem_ranges -of_objects [get_cells -hier [get_sw_processor]]] $index]]
+    set index [lsearch [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -filter {IP_TYPE==PROCESSOR} ] 0]] [hsi::get_cells $firstelement]] 
+#    set index [lsearch [get_mem_ranges -of_objects [get_cells -hier [get_sw_processor]]] [get_cells $firstelement]]
+    set avail_param [list_property [lindex [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -filter {IP_TYPE==PROCESSOR} ] 0]] $index]]
     set addr_64 "0"
     set size_64 "0"
     if {[lsearch -nocase $avail_param "TRUSTZONE"] >= 0} {
         foreach bank ${ip_mem_handles} {
-            set state [get_property TRUSTZONE [lindex [get_mem_ranges -of_objects [get_cells -hier [get_sw_processor]]] $index]]
+            set state [get_property TRUSTZONE [lindex [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -filter {IP_TYPE==PROCESSOR} ] 0]]] $index]
             if {[string match -nocase $state "NonSecure"]} {
-                set index [lsearch -start $index [get_mem_ranges -of_objects [get_cells -hier [get_sw_processor]]] [get_cells -hier $bank]]
-                set base [get_property BASE_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier [get_sw_processor]]] $index]]
-                set high [get_property HIGH_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier [get_sw_processor]]] $index]]
+                set index [lsearch -start $index [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -filter {IP_TYPE==PROCESSOR} ] 0]] [hsi::get_cells -hier $bank]]
+                set base [get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -filter {IP_TYPE==PROCESSOR} ] 0]] $index]]
+                set high [get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -filter {IP_TYPE==PROCESSOR} ] 0]] $index]]
                 set mem_size [format 0x%x [expr {${high} - ${base} + 1}]]
                 if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
                     set addr_64 "1"
@@ -278,18 +286,24 @@ proc generate_secure_memory_r5 {drv_handle} {
 }
 
 proc generate {drv_handle} {
-    foreach i [get_sw_cores device_tree] {
-        set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-        if {[file exists $common_tcl_file]} {
-            source $common_tcl_file
-            break
-        }
-    }
-    gen_ps7_ddr_reg_property $drv_handle
-    set value [get_property CONFIG.reg $drv_handle]
-    if {![string match $value ""]} {
-       add_memory_node $drv_handle
-    }
+    set system_node [create_node -l $drv_handle -n "memory" -u $baseaddr -p root -d "system-top.dts"]
+    gen_ps7_ddr_reg_property $drv_handle $system_node
+   # set value [get_property CONFIG.reg $drv_handle]
+   # if {![string match $value ""]} {
+    #   add_memory_node $drv_handle
+   # }
+	set dts_file "system-top.dts"
+	add_prop $system_node "device_type" $dev_type string $dts_file
+#	hsi::utils::add_new_dts_param "${memory_node}" "device_type" $dev_type string 
+#       set_cur_working_dts $cur_dts 
+        set slave [hsi::get_cells -hier ${drv_handle}] 
+        set vlnv [split [get_property VLNV $slave] ":"] 
+        set name [lindex $vlnv 2] 
+        set ver [lindex $vlnv 3] 
+        set comp_prop "xlnx,${name}-${ver}" 
+        regsub -all {_} $comp_prop {-} comp_prop 
+	add_prop $system_node "compatible" $comp_prop string $dts_file
+#        hsi::utils::add_new_dts_param "${memory_node}" "compatible" $comp_prop string
 }
 
 proc get_high_mem_size {high_mem_size} {
@@ -308,4 +322,5 @@ proc get_high_mem_size {high_mem_size} {
 		set size "0x0 $high_mem_size"
 	}
 	return $size
+}
 }

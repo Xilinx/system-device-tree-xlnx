@@ -12,15 +12,12 @@
 # GNU General Public License for more details.
 #
 
+namespace eval crl_apb {
 proc generate {drv_handle} {
-    foreach i [get_sw_cores device_tree] {
-        set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-        if {[file exists $common_tcl_file]} {
-            source $common_tcl_file
-            break
-        }
-    }
-    set default_dts [get_property CONFIG.pcw_dts [get_os]]
-    set node [add_or_get_dt_node -l "zynqmp_reset" -n "reset-controller" -d $default_dts]
-    hsi::utils::add_new_dts_param "$node" "status" "okay" string
+    set node [get_node $drv_handle]
+    set dts_file [set_drv_def_dts $drv_handle]
+    set node [create_node -l "&zynqmp_reset" -d $dts_file -p root "pcw.dtsi"]
+    add_prop $node "status" "okay" string $dts_file
+#    hsi::utils::add_new_dts_param "$node" "status" "okay" string
+}
 }

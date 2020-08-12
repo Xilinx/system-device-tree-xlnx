@@ -11,17 +11,11 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
-
+namespace eval ddrcps {
 proc generate {drv_handle} {
-	foreach i [get_sw_cores device_tree] {
-        set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-        if {[file exists $common_tcl_file]} {
-                source $common_tcl_file
-                break
-                }
-        }
-
-
+	set node [get_node $drv_handle]
+	puts "USB $node"
+	set dts_file [set_drv_def_dts $drv_handle]
         set par_handles [get_ip_conf_prop_list $drv_handle "CONFIG.C_.*"]
         set valid_prop_names {}
         foreach par $par_handles {
@@ -32,30 +26,36 @@ proc generate {drv_handle} {
         foreach prop_name ${proplist} {
                 ip2drv_prop $drv_handle $prop_name
         }
-	set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
-	if { [string match -nocase $proctype "ps7_cortexa9"] }  {
+	set proctype [get_hw_family]
+	if { [string match -nocase $proctype "zynq"] }  {
 		return
 	}
-	set zynq_periph [get_cells -hier -filter {IP_NAME == zynq_ultra_ps_e}]
-        set avail_param [list_property [get_cells -hier $zynq_periph]]
+	set zynq_periph [hsi::get_cells -hier -filter {IP_NAME == zynq_ultra_ps_e}]
+        set avail_param [list_property [hsi::get_cells -hier $zynq_periph]]
         if {[lsearch -nocase $avail_param "CONFIG.PSU__DDRC__DDR4_ADDR_MAPPING"] >= 0} {
-		set val [get_property CONFIG.PSU__DDRC__DDR4_ADDR_MAPPING [get_cells -hier $zynq_periph]]
-		hsi::utils::add_new_property $drv_handle "xlnx,addr-mapping" hexint $val
+		set val [get_property CONFIG.PSU__DDRC__DDR4_ADDR_MAPPING [hsi::get_cells -hier $zynq_periph]]
+		add_prop $node "xlnx,addr-mapping" $val hexint $dts_file
+#		hsi::utils::add_new_property $drv_handle "xlnx,addr-mapping" hexint $val
         }
 	if {[lsearch -nocase $avail_param "CONFIG.PSU__ACT_DDR_FREQ_MHZ"] >= 0} {
-		set val [get_property CONFIG.PSU__ACT_DDR_FREQ_MHZ [get_cells -hier $zynq_periph]]
-		hsi::utils::add_new_property $drv_handle "xlnx,ddr-freq" int [scan [expr $val * 1000000] "%d"]
+		set val [get_property CONFIG.PSU__ACT_DDR_FREQ_MHZ [hsi::get_cells -hier $zynq_periph]]
+		add_prop $node "xlnx,ddr-freq" [scan [expr $val * 1000000] "%d"] int $dts_file
+#		hsi::utils::add_new_property $drv_handle "xlnx,ddr-freq" int [scan [expr $val * 1000000] "%d"]
 	}
 	if {[lsearch -nocase $avail_param "CONFIG.PSU__DDRC__VIDEO_BUFFER_SIZE"] >= 0} {
-		set val [get_property CONFIG.PSU__DDRC__VIDEO_BUFFER_SIZE [get_cells -hier $zynq_periph]]
-		hsi::utils::add_new_property $drv_handle "xlnx,video-buf-size" hexint $val
+		set val [get_property CONFIG.PSU__DDRC__VIDEO_BUFFER_SIZE [hsi::get_cells -hier $zynq_periph]]
+		add_prop $node "xlnx,video-buf-size" $val hexint $dts_file
+#		hsi::utils::add_new_property $drv_handle "xlnx,video-buf-size" hexint $val
 	}
 	if {[lsearch -nocase $avail_param "CONFIG.PSU__DDRC__BRC_MAPPING"] >= 0} {
-		set val [get_property CONFIG.PSU__DDRC__BRC_MAPPING [get_cells -hier $zynq_periph]]
+		set val [get_property CONFIG.PSU__DDRC__BRC_MAPPING [hsi::get_cells -hier $zynq_periph]]
 		if { [string match -nocase $val "ROW_BANK_COL"] } {
-			hsi::utils::add_new_property $drv_handle "xlnx,brc-mapping" hexint "0"
+			add_prop $node "xlnx,brc-mapping" "0" hexint $dts_file
+			#hsi::utils::add_new_property $drv_handle "xlnx,brc-mapping" hexint "0"
 		} else {
-			hsi::utils::add_new_property $drv_handle "xlnx,brc-mapping" hexint "1"
+			add_prop $node "xlnx,brc-mapping" "1" hexint $dts_file
+			#hsi::utils::add_new_property $drv_handle "xlnx,brc-mapping" hexint "1"
 		}
 	}
+}
 }

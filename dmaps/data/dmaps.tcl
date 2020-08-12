@@ -12,28 +12,25 @@
 # GNU General Public License for more details.
 #
 
+namespace eval dmaps {
 proc generate {drv_handle} {
-
-    foreach i [get_sw_cores device_tree] {
-        set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-        if {[file exists $common_tcl_file]} {
-            source $common_tcl_file
-            break
-        }
-    }
-
-    set ip [get_cells -hier $drv_handle]
+    set node [get_node $drv_handle]
+    #TODO SURESH
+    set dts_file [set_drv_def_dts $drv_handle]
+    set ip [hsi::get_cells -hier $drv_handle]
 
     #disabling non-secure dma
     if { [string match -nocase $ip "ps7_dma_ns"] } {
-        set_property NAME none $drv_handle
+      #  set_property NAME none $drv_handle
     }
-    set ip_name [get_property IP_NAME [get_cells -hier $drv_handle]]
+    set ip_name [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
     set req_dma_list "psu_gdma psu_adma psu_csudma"
     if {[lsearch  -nocase $req_dma_list $ip_name] >= 0} {
         set_drv_conf_prop $drv_handle C_DMA_MODE xlnx,dma-type int
 	if {[string match -nocase $ip_name "psu_csudma"]} {
-	    hsi::utils::add_new_property $drv_handle "xlnx,dma-type" int 0
+	   add_prop $node "xlnx,dma-type" 0 int $dts_file
+#	    hsi::utils::add_new_property $drv_handle "xlnx,dma-type" int 0
         }
     }
+}
 }

@@ -12,19 +12,15 @@
 # GNU General Public License for more details.
 #
 
+namespace eval emaclite {
 proc generate {drv_handle} {
-    foreach i [get_sw_cores device_tree] {
-        set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-        if {[file exists $common_tcl_file]} {
-            source $common_tcl_file
-            break
-        }
-    }
-    set compatible [get_comp_str $drv_handle]
-    set compatible [append compatible " " "xlnx,xps-ethernetlite-1.00.a"]
-    set_drv_prop $drv_handle compatible "$compatible" stringlist
+    set node [get_node $drv_handle]
+#    set compatible [get_comp_str $drv_handle]
+ #   set compatible [append compatible " " "xlnx,xps-ethernetlite-1.00.a"]
+ #   set_drv_prop $drv_handle compatible "$compatible" stringlist
+    add_prop $node compatible "\ \, \"xlnx,xps-ethernetlite-1.00.a\""
     update_eth_mac_addr $drv_handle
-    set node [gen_peripheral_nodes $drv_handle]
+#    set node [gen_peripheral_nodes $drv_handle]
     gen_mdio_node $drv_handle $node
 }
-
+}

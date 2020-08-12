@@ -12,33 +12,31 @@
 # GNU General Public License for more details.
 #
 
+namespace eval mipi_dsi_tx {
 proc generate {drv_handle} {
-	foreach i [get_sw_cores device_tree] {
-		set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-		if {[file exists $common_tcl_file]} {
-			source $common_tcl_file
-			break
-		}
-	}
-	set node [gen_peripheral_nodes $drv_handle]
+	set node [get_node $drv_handle]
+	set dts_file [set_drv_def_dts $drv_handle]
+#	set node [gen_peripheral_nodes $drv_handle]
 	if {$node == 0} {
 		return
 	}
-	set compatible [get_comp_str $drv_handle]
-	set compatible [append compatible " " "xlnx,dsi"]
-	set_drv_prop $drv_handle compatible "$compatible" stringlist
-	set dsi_num_lanes [get_property CONFIG.DSI_LANES [get_cells -hier $drv_handle]]
-	hsi::utils::add_new_dts_param "$node" "xlnx,dsi-num-lanes" $dsi_num_lanes int
-	set dsi_pixels_perbeat [get_property CONFIG.DSI_PIXELS [get_cells -hier $drv_handle]]
-	hsi::utils::add_new_dts_param "$node" "xlnx,dsi-pixels-perbeat" $dsi_pixels_perbeat int
-	set dsi_datatype [get_property CONFIG.DSI_DATATYPE [get_cells -hier $drv_handle]]
+#	set compatible [get_comp_str $drv_handle]
+#	set compatible [append compatible " " "xlnx,dsi"]
+	pldt append $node compatible "\ \, \"xlnx,dsi\""
+#	set_drv_prop $drv_handle compatible "$compatible" stringlist
+	set dsi_num_lanes [get_property CONFIG.DSI_LANES [hsi::get_cells -hier $drv_handle]]
+	add_prop "$node" "xlnx,dsi-num-lanes" $dsi_num_lanes int $dts_file
+	set dsi_pixels_perbeat [get_property CONFIG.DSI_PIXELS [hsi::get_cells -hier $drv_handle]]
+	add_prop "$node" "xlnx,dsi-pixels-perbeat" $dsi_pixels_perbeat int $dts_file
+	set dsi_datatype [get_property CONFIG.DSI_DATATYPE [hsi::get_cells -hier $drv_handle]]
 	if {[string match -nocase $dsi_datatype "RGB888"]} {
-		hsi::utils::add_new_dts_param "$node" "xlnx,dsi-data-type" 0 int
+		add_prop "$node" "xlnx,dsi-data-type" 0 int $dts_file
 	} elseif {[string match -nocase $dsi_datatype "RGB666_L"]} {
-		hsi::utils::add_new_dts_param "$node" "xlnx,dsi-data-type" 1 int
+		add_prop "$node" "xlnx,dsi-data-type" 1 int $dts_file
 	} elseif {[string match -nocase $dsi_datatype "RGB666_P"]} {
-		hsi::utils::add_new_dts_param "$node" "xlnx,dsi-data-type" 2 int
+		add_prop "$node" "xlnx,dsi-data-type" 2 int $dts_file
 	} elseif {[string match -nocase $dsi_datatype "RGB565"]} {
-		hsi::utils::add_new_dts_param "$node" "xlnx,dsi-data-type" 3 int
+		add_prop "$node" "xlnx,dsi-data-type" 3 int $dts_file
 	}
+}
 }

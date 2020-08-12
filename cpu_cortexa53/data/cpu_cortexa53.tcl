@@ -12,23 +12,43 @@
 # GNU General Public License for more details.
 #
 
+namespace eval cpu_cortexa53 {
+if {[catch {set tmp [::struct::tree psdt]} msg]} {
+}
+if {[catch {set tmp [::struct::tree pldt]} msg]} {
+}
+if {[catch {set tmp [::struct::tree pcwdt]} msg]} {
+}
+if {[catch {set tmp [::struct::tree systemdt]} msg]} {
+}
+if {[catch {set tmp [::struct::tree clkdt]} msg]} {
+}
 proc generate {drv_handle} {
 	global dtsi_fname
-	set mainline_ker [get_property CONFIG.mainline_kernel [get_os]]
+	global env
+        set path $env(REPO)
+        set common_file "$path/device_tree/data/config.yaml"
+        if {[file exists $common_file]} {
+                #error "file not found: $common_file"
+        }
+        #set file "$path/${drvname}/data/config.yaml"
+        #puts "file $common_file"
+        set mainline_ker [get_user_config $common_file -mainline_kernel]
 	if {[string match -nocase "$mainline_ker" "v4.17"]} {
 		set dtsi_fname "zynqmp/zynqmp.dtsi"
 	} else {
 		set dtsi_fname "zynqmp/zynqmp.dtsi"
 	}
-	foreach i [get_sw_cores device_tree] {
-		set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-		if {[file exists $common_tcl_file]} {
-			source $common_tcl_file
-			break
-		}
-	}
-
+	puts "in a543"
 	# create root node
+	puts "genroot"
 	set master_root_node [gen_root_node $drv_handle]
+	puts "cpu"
 	set nodes [gen_cpu_nodes $drv_handle]
+}
+namespace export psdt
+namespace export systemdt
+namespace export pldt
+namespace export pcwdt
+namespace export clkdt
 }

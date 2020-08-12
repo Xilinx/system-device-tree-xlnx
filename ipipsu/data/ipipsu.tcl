@@ -12,7 +12,9 @@
 # GNU General Public License for more details.
 #
 
+namespace eval ipipsu {
 proc generate {drv_handle} {
+	if {0} {
     foreach i [get_sw_cores device_tree] {
         set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
         if {[file exists $common_tcl_file]} {
@@ -43,4 +45,6 @@ proc generate {drv_handle} {
         set node [add_or_get_dt_node -n "&$drv_handle" -d $default_dts]
         hsi::utils::add_new_dts_param "$node" "status" "okay" string
     }
+}
+}
 }

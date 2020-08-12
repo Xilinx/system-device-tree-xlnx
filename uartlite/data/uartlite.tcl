@@ -17,35 +17,50 @@
 # GNU General Public License for more details.
 #
 
+namespace eval uartlite {
 proc generate {drv_handle} {
+    set node [get_node $drv_handle]
+    set dts_file [set_drv_def_dts $drv_handle]
     # try to source the common tcl procs
     # assuming the order of return is based on repo priority
-    foreach i [get_sw_cores device_tree] {
-        set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-        if {[file exists $common_tcl_file]} {
-            source $common_tcl_file
-            break
-        }
-    }
-    set compatible [get_comp_str $drv_handle]
-    set compatible [append compatible " " "xlnx,xps-uartlite-1.00.a"]
-    set_drv_prop $drv_handle compatible "$compatible" stringlist
-    set ip [get_cells -hier $drv_handle]
-    set consoleip [get_property CONFIG.console_device [get_os]]
-    if { [string match -nocase $consoleip $ip] } {
+   # set compatible [get_comp_str $drv_handle]
+   # set compatible [append compatible " " "xlnx,xps-uartlite-1.00.a"]
+   # set_drv_prop $drv_handle compatible "$compatible" stringlist
+    pldt append $node compatible "\ \, \"xlnx,xps-uartlite-1.00.a\""
+    set ip [hsi::get_cells -hier $drv_handle]
+    #set consoleip [get_property CONFIG.console_device [get_os]]
+    #if { [string match -nocase $consoleip $ip] } {
         set ip_type [get_property IP_NAME $ip]
         if { [string match -nocase $ip_type] } {
-            hsi::utils::set_os_parameter_value "console" "ttyUL0,115200"
+            set_count "console" "ttyUL0,115200"
         } else {
-            hsi::utils::set_os_parameter_value "console" "ttyUL0,[hsi::utils::get_ip_param_value $ip C_BAUDRATE]"
+		
+            set count "console" "ttyUL0,[hsi::utils::get_ip_param_value $ip C_BAUDRATE]"
         }
+    #}
+        set avail_param [list_property [hsi::get_cells -hier $drv_handle]]
+        # This check is needed because BAUDRATE parameter for psuart is available from
+        # 2017.1 onwards
+        if {[lsearch -nocase $avail_param "CONFIG.C_BAUDRATE"] >= 0} {
+            set baud [get_property CONFIG.C_BAUDRATE [hsi::get_cells -hier $drv_handle]]
+        } else {
+            set baud "115200"
+        }
+	set chosen_node [create_node -n "chosen" -d "system-top.dts" -p root]
+        set bootargs "earlycon"
+#        set proctype "psv_cortetxa72"
+	set proctype [get_hw_family]
+    if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] || \
+        [string match -nocase $proctype "versal"]} {
+                if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+                   append bootargs "\ \, \"clk_ignore_unused\""
+                }
     }
+   add_prop $chosen_node "stdout-path" "serial0:${baud}n8" string "system-top.dts"
 
     set_drv_conf_prop $drv_handle C_BAUDRATE current-speed int
-    set proc_type [get_sw_proc_prop IP_NAME]
-    switch $proc_type {
-             "microblaze"   {
+    if {[regexp "kintex*" $proctype match]} {
                  gen_dev_ccf_binding $drv_handle "s_axi_aclk"
-	      }
     }
+}
 }

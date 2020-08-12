@@ -12,16 +12,11 @@
 # GNU General Public License for more details.
 #
 
+namespace eval iicps {
 proc generate {drv_handle} {
-    foreach i [get_sw_cores device_tree] {
-        set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-        if {[file exists $common_tcl_file]} {
-            source $common_tcl_file
-            break
-        }
-    }
 
     ps7_reset_handle $drv_handle CONFIG.C_I2C_RESET CONFIG.i2c-reset
     set_drv_conf_prop $drv_handle C_I2C_CLK_FREQ_HZ xlnx,clock-freq int
 
+}
 }

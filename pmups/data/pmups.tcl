@@ -12,21 +12,28 @@
 # GNU General Public License for more details.
 #
 
+namespace eval pmups {
 proc generate {drv_handle} {
-	set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
-        if { [string match -nocase $proctype "ps7_cortexa9"] }  {
-                return
+	#set node [get_node $drv_handle]
+	set dts_file [set_drv_def_dts $drv_handle]
+	#set node [create_node -n cpu -l "cpu2" -d $dts_file -p "cpus_microblaze: cpus_microblaze" -u 2]
+	set node "&cpu2"
+	global env
+        set path $env(REPO)
+
+#	set dts_file [set_drv_def_dts $drv_handle]
+        set drvname [get_drivers $drv_handle]
+        #puts "drvname $drvname"
+
+        set common_file "$path/device_tree/data/config.yaml"
+        if {[file exists $common_file]} {
+                #error "file not found: $common_file"
         }
+        set mainline_ker [get_user_config $common_file -mainline_kernel]
 	global dtsi_fname
-	foreach i [get_sw_cores device_tree] {
-		set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-		if {[file exists $common_tcl_file]} {
-			source $common_tcl_file
-		break
-		}
-	}
-        set proc_type [get_sw_proc_prop IP_NAME]
-	set mainline_ker [get_property CONFIG.mainline_kernel [get_os]]
+        set proc_type [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+	#set mainline_ker [get_property CONFIG.mainline_kernel [get_os]]
+ 	if {0} {
 	if {[string match -nocase "$mainline_ker" "v4.17"]} {
 		if {[string match -nocase $proc_type "psv_pmc"] } {
                         set dtsi_fname "versal/versal.dtsi"
@@ -40,19 +47,25 @@ proc generate {drv_handle} {
 			set dtsi_fname "zynqmp/zynqmp.dtsi"
 		}
 	}
-
-	set ip [get_cells -hier $drv_handle]
+	}
+	set master_root_node [gen_root_node $drv_handle]
+	set nodes [gen_cpu_nodes $drv_handle]
+	set ip [hsi::get_cells -hier $drv_handle]
 	set clk ""
-	set clkhandle [get_pins -of_objects $ip "CLK"]
+	set clkhandle [hsi::get_pins -of_objects $ip "CLK"]
 	if { [string compare -nocase $clkhandle ""] != 0 } {
 		set clk [get_property CLK_FREQ $clkhandle]
 	}
 	if { [llength $ip]  } {
-		set_property CONFIG.clock-frequency    "$clk" $drv_handle
-		set_property CONFIG.timebase-frequency "$clk" $drv_handle
+		if {$clk != ""} {
+		add_prop $node "clock-freqeuency" $clk int $dts_file
+		add_prop $node "timebase-frequency" $clk int $dts_file
+		}
+#		set_property CONFIG.clock-frequency    "$clk" $drv_handle
+#		set_property CONFIG.timebase-frequency "$clk" $drv_handle
 	}
 	if {[string match -nocase $proc_type "psu_pmu"] } {
-		hsi::utils::add_new_property $drv_handle "clock-frequency" hexint [get_property CONFIG.C_FREQ $ip]
+		add_prop $node "clock-frequency" [get_property CONFIG.C_FREQ $ip] hexint $dts_file
 	}
 	set icache_size [hsi::utils::get_ip_param_value $ip "C_CACHE_BYTE_SIZE"]
 	set icache_base [hsi::utils::get_ip_param_value $ip "C_ICACHE_BASEADDR"]
@@ -65,26 +78,28 @@ proc generate {drv_handle} {
 
 
 	if { [llength $icache_size] != 0 } {
-		set_property CONFIG.i-cache-baseaddr  "$icache_base"      $drv_handle
-		set_property CONFIG.i-cache-highaddr  "$icache_high"      $drv_handle
-		set_property CONFIG.i-cache-size      "$icache_size"      $drv_handle
-		set_property CONFIG.i-cache-line-size "$icache_line_size" $drv_handle
-	}
-	if { [llength $dcache_size] != 0 } {
-		set_property CONFIG.d-cache-baseaddr  "$dcache_base"      $drv_handle
-		set_property CONFIG.d-cache-highaddr  "$dcache_high"      $drv_handle
-		set_property CONFIG.d-cache-size      "$dcache_size"      $drv_handle
-		set_property CONFIG.d-cache-line-size "$dcache_line_size" $drv_handle
-	}
+        add_prop $node "i-cache-baseaddr"  "$icache_base" hexint $dts_file
+        add_prop $node "i-cache-highaddr" $icache_high hexint $dts_file
+        add_prop $node "i-cache-size" $icache_size int $dts_file
+        add_prop $node "i-cache-line-size" $icache_line_size int $dts_file
+    }
+    if { [llength $dcache_size] != 0 } {
+        add_prop $node "d-cache-baseaddr"  "$dcache_base" hexint $dts_file
+        add_prop $node "d-cache-highaddr" $dcache_high hexint $dts_file
+        add_prop $node "d-cache-size" $dcache_size int $dts_file
+        add_prop $node "d-cache-line-size" $dcache_line_size int $dts_file
 
-	set default_dts [set_drv_def_dts $drv_handle]
-	set root_node [add_or_get_dt_node -n / -d ${default_dts}]
-	if {[string match -nocase $proc_type "psv_pmu"] } {
-		hsi::utils::add_new_dts_param "${root_node}" model "Versal PLM" string ""
-	} else {
-		hsi::utils::add_new_dts_param "${root_node}" model "ZynqMP PMUFW" string ""
-	}
+    }
+
+
+
+#	set root_node [add_or_get_dt_node -n / -d ${default_dts}]
+#	if {[string match -nocase $proc_type "psv_pmu"] } {
+#		add_prop "${root_node}" model "Versal PLM" string ""
+#	} else {
+#		add_prop "${root_node}" model "ZynqMP PMUFW" string ""
+#	}
 	# create root node
-	set master_root_node [gen_root_node $drv_handle]
-	set nodes [gen_cpu_nodes $drv_handle]
+
+}
 }

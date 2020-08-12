@@ -12,30 +12,27 @@
 # GNU General Public License for more details.
 #
 
+namespace eval tmrctr {
 proc generate {drv_handle} {
-    # try to source the common tcl procs
-    # assuming the order of return is based on repo priority
-    foreach i [get_sw_cores device_tree] {
-        set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-        if {[file exists $common_tcl_file]} {
-            source $common_tcl_file
-            break
-        }
-    }
-    set compatible [get_comp_str $drv_handle]
-    set compatible [append compatible " " "xlnx,xps-timer-1.00.a"]
-    set_drv_prop $drv_handle compatible "$compatible" stringlist
+   # set compatible [get_comp_str $drv_handle]
+   # set compatible [append compatible " " "xlnx,xps-timer-1.00.a"]
+   # set_drv_prop $drv_handle compatible "$compatible" stringlist
+     set node [get_node $drv_handle]
+     set dts_file [set_drv_def_dts $drv_handle]
+     pldt append $node compatible "\ \, \"xlnx,xps-timer-1.00.a\""
     #adding clock frequency
-    set ip [get_cells -hier $drv_handle]
-    set clk [get_pins -of_objects $ip "S_AXI_ACLK"]
+    set ip [hsi::get_cells -hier $drv_handle]
+    set clk [hsi::get_pins -of_objects $ip "S_AXI_ACLK"]
     if {[llength $clk] } {
         set freq [get_property CLK_FREQ $clk]
-        set_property clock-frequency "$freq" $drv_handle
+        add_prop $node "clock-frequency" $freq hexint $dts_file
+#        set_property clock-frequency "$freq" $drv_handle
     }
-    set proc_type [get_sw_proc_prop IP_NAME]
-    switch $proc_type {
-          "microblaze"   {
+ #   set proc_type [get_sw_proc_prop IP_NAME]
+    #TODO SURESH
+    set proc_type [get_hw_family]
+    if {[regexp "kintex*" $proctype match]} {
                  gen_dev_ccf_binding $drv_handle "s_axi_aclk"
-          }
     }
+}
 }

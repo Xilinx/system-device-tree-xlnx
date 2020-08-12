@@ -1,0 +1,6 @@
+dict_devicetree:
+    kernel_ver: 2020.1
+    mainline_kernel: none
+    board_dts: versal-vmk180-reva
+    dt_overlay: false
+    output_dir: /proj/xhdsswstaff/nagasure/aug20

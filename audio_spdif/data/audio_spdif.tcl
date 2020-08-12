@@ -11,32 +11,44 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
-
+namespace eval audio_spdif {
 proc generate {drv_handle} {
-	foreach i [get_sw_cores device_tree] {
-		set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-		if {[file exists $common_tcl_file]} {
-			source $common_tcl_file
-			break
-		}
-	}
-	set node [gen_peripheral_nodes $drv_handle]
+	global env
+	global dtsi_fname
+	set path $env(REPO)
+
+	#set node [gen_peripheral_nodes $drv_handle]
+	set node [get_node $drv_handle]
 	if {$node == 0} {
 		return
 	}
-	set compatible [get_comp_str $drv_handle]
-	set compatible [append compatible " " "xlnx,spdif-2.0"]
-	set_drv_prop $drv_handle compatible "$compatible" stringlist
+
+#	set node [gen_peripheral_nodes $drv_handle]
+	set node [get_node $drv_handle]
+	if {$node == 0} {
+		return
+	}
+#	set compatible [get_comp_str $drv_handle]
+#	set compatible [append compatible " " "xlnx,spdif-2.0"]
+#	set_drv_prop $drv_handle compatible "$compatible" stringlist
+	pldt append compatible $node compatible "\ \, \"xlnx,spdif-2.0\""
+	
 	set spdif_mode [get_property CONFIG.SPDIF_Mode [get_cells -hier $drv_handle]]
-	hsi::utils::add_new_dts_param "${node}" "xlnx,spdif-mode" $spdif_mode int
+	add_prop $node "xlnx,spdif-mode" $spdif_mode int "pl.dtsi"
+#	hsi::utils::add_new_dts_param "${node}" "xlnx,spdif-mode" $spdif_mode int
 	set cstatus_reg [get_property CONFIG.CSTATUS_REG [get_cells -hier $drv_handle]]
-	hsi::utils::add_new_dts_param "${node}" "xlnx,chstatus-reg" $cstatus_reg int
+	add_prop $node "xlnx,chstatus-reg" $cstatus_reg int "pl.dtsi"
+#	hsi::utils::add_new_dts_param "${node}" "xlnx,chstatus-reg" $cstatus_reg int
 	set userdata_reg [get_property CONFIG.USERDATA_REG [get_cells -hier $drv_handle]]
-	hsi::utils::add_new_dts_param "${node}" "xlnx,userdata-reg" $userdata_reg int
+	add_prop $node "xlnx,userdata-reg" $userdata_reg int "pl.dtsi"
+#	hsi::utils::add_new_dts_param "${node}" "xlnx,userdata-reg" $userdata_reg int
 	set axi_buffer_size [get_property CONFIG.AXI_BUFFER_Size [get_cells -hier $drv_handle]]
-	hsi::utils::add_new_dts_param "${node}" "xlnx,fifo-depth" $axi_buffer_size int
+	add_prop $node "xlnx,fifo-depth" $axi_buffer_size int "pl.dtsi"
+#	hsi::utils::add_new_dts_param "${node}" "xlnx,fifo-depth" $axi_buffer_size int
 	set clk_freq [get_clock_frequency [get_cells -hier $drv_handle] "aud_clk_i"]
 	if {[llength $clk_freq] != 0} {
-		hsi::utils::add_new_dts_param "${node}" "clock-frequency" $clk_freq int
+		add_prop $node "${node}" "clock-frequency" $clk_freq int "pl.dtsi"
+#		hsi::utils::add_new_dts_param "${node}" "clock-frequency" $clk_freq int
 	}
+}
 }

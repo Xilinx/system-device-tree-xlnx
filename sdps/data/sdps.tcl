@@ -12,23 +12,20 @@
 # GNU General Public License for more details.
 #
 
+namespace eval sdps {
 proc generate {drv_handle} {
-    foreach i [get_sw_cores device_tree] {
-        set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-            if {[file exists $common_tcl_file]} {
-                source $common_tcl_file
-                break
-            }
-    }
-    set ip [get_cells -hier $drv_handle]
+    set ip [hsi::get_cells -hier $drv_handle]
+    set node [get_node $drv_handle]
+    set dts_file [set_drv_def_dts $drv_handle]
     set clk_freq [hsi::utils::get_ip_param_value $ip C_SDIO_CLK_FREQ_HZ]
-    set_property CONFIG.clock-frequency "$clk_freq" $drv_handle
+#    set_property CONFIG.clock-frequency "$clk_freq" $drv_handle
+    add_prop $node "clock-frequency" $clk_freq hexint $dts_file
     set_drv_conf_prop $drv_handle C_MIO_BANK xlnx,mio_bank hexint
     set_drv_conf_prop $drv_handle C_HAS_CD xlnx,card-detect int
     set_drv_conf_prop $drv_handle C_HAS_WP xlnx,write-protect int
-    set_drv_conf_prop $drv_handle C_BUS_WIDTH xlnx,bus-width int
-    set_drv_conf_prop $drv_handle C_SDIO_CLK_FREQ_HZ xlnx,clock-freq int
-    set_drv_conf_prop $drv_handle C_HAS_EMIO xlnx,has-emio int
+#    set_drv_conf_prop $drv_handle C_BUS_WIDTH xlnx,bus-width int
+   # set_drv_conf_prop $drv_handle C_SDIO_CLK_FREQ_HZ xlnx,clock-freq int
+ #   set_drv_conf_prop $drv_handle C_HAS_EMIO xlnx,has-emio int
 }
-
+}
 

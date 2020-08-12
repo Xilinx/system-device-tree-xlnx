@@ -11,22 +11,29 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
-
+namespace eval prc {
 source api.tcl -notrace
+#SURESH TODO
 proc generate {drv_handle} {
-	foreach i [get_sw_cores device_tree] {
-        	set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-        	if {[file exists $common_tcl_file]} {
-                	source $common_tcl_file
-                	break
-                }
-        }
-
 	prc_generate_params $drv_handle
 }
 
 proc prc_generate_params {drv_handle} {
-	set ip [get_cells -hier $drv_handle]
+	global env 
+        set path $env(REPO) 
+	set node [get_node $drv_handle] 
+	set dts_file [set_drv_def_dts $drv_handle]
+        set drvname [get_drivers $drv_handle] 
+        #puts "drvname $drvname" 
+ 
+        set api_file "$path/$drvname/data/api.tcl" 
+        puts "COMMON $common_file" 
+        if {[file exists $common_file]} { 
+                source -notrace $api_file 
+        }
+
+
+	set ip [hsi::get_cells -hier $drv_handle]
 	set configuration [common::get_property CONFIG.ALL_PARAMS $ip]
 
 	# Use the PRC's API to get the number of VSMs that the user configured in this instance of the PRC
@@ -49,16 +56,16 @@ proc prc_generate_params {drv_handle} {
 	set C_VSM_SELECT_MSB	[dict get $address_offsets C_VSM_SELECT_MSB  ]
 	set C_VSM_SELECT_LSB	[dict get $address_offsets C_VSM_SELECT_LSB  ]
 
-	hsi::utils::add_new_property $drv_handle "num-vsms" int $num_vs
-	hsi::utils::add_new_property $drv_handle "clearing-bitstream" int $clearing_bitstream
-	hsi::utils::add_new_property $drv_handle "cp-arbitration-protocol" int $cp_arbitration_protocol
-	hsi::utils::add_new_property $drv_handle "has-axi-lite-if" int $has_axi_lite_if
-	hsi::utils::add_new_property $drv_handle "reset-active-level" int $reset_active_level
-	hsi::utils::add_new_property $drv_handle "cp-fifo-depth" int $cp_fifo_depth
-	hsi::utils::add_new_property $drv_handle "cp-fifo-type" int $cp_fifo_type
-	hsi::utils::add_new_property $drv_handle "cp-family" int $cp_family
-	hsi::utils::add_new_property $drv_handle "cdc-stages" int $cdc_stages
-	hsi::utils::add_new_property $drv_handle "cp-compression" int $cp_compression
+	add_prop $node "num-vsms" $num_vs int $dts_file
+	add_prop $node "clearing-bitstream" $clearing_bitstream int $dts_file
+	add_prop $node "cp-arbitration-protocol" $cp_arbitration_protocol int $dts_file
+	add_prop $node "has-axi-lite-if" $has_axi_lite_if int $dts_file
+	add_prop $node "reset-active-level" $reset_active_level int $dts_file
+	add_prop $node "cp-fifo-depth" $cp_fifo_depth int $dts_file
+	add_prop $node "cp-fifo-type" $cp_fifo_type int $dts_file
+	add_prop $node "cp-family" $cp_family int $dts_file
+	add_prop $node "cdc-stages" $cdc_stages int $dts_file
+	add_prop $node "cp-compression"  $cp_compression int $dts_file
 	set prcinfo ""
 	for {set vs_id 0} {$vs_id < $num_vs} { incr vs_id} {
 		set vs_name [prc_v1_2::priv::get_vs_name configuration $vs_id]
@@ -69,7 +76,7 @@ proc prc_generate_params {drv_handle} {
 			append prcinfo " " $num_rms
 		}
 	}
-	hsi::utils::add_new_property $drv_handle "num-rms" int $prcinfo
+	add_prop $node "num-rms" $prcinfo int $dts_file
 
 	set prcinfo ""
 	for {set vs_id 0} {$vs_id < $num_vs} { incr vs_id} {
@@ -81,7 +88,7 @@ proc prc_generate_params {drv_handle} {
 			append prcinfo " " $num_rms_alloc
 		}
 	}
-	hsi::utils::add_new_property $drv_handle "num-rms-alloc" int $prcinfo
+	add_prop $node "num-rms-alloc" $prcinfo int $dts_file
 	set prcinfo ""
 	for {set vs_id 0} {$vs_id < $num_vs} { incr vs_id} {
 		set vs_name [prc_v1_2::priv::get_vs_name configuration $vs_id]
@@ -92,7 +99,7 @@ proc prc_generate_params {drv_handle} {
 			append prcinfo " " $num_trger_alloc
 		}
 	}
-	hsi::utils::add_new_property $drv_handle "num-trigger-alloc" int $prcinfo
+	add_prop $node "num-trigger-alloc" $prcinfo int $dts_file
 	set prcinfo ""
 	for {set vs_id 0} {$vs_id < $num_vs} { incr vs_id} {
 		set vs_name [prc_v1_2::priv::get_vs_name configuration $vs_id]
@@ -103,7 +110,7 @@ proc prc_generate_params {drv_handle} {
 			append prcinfo " " $strt_in_shtdwn
 		}
 	}
-	hsi::utils::add_new_property $drv_handle "start-in-shutdown" int $prcinfo
+	add_prop $node "start-in-shutdown" $prcinfo int $dts_file
 	set prcinfo ""
 	for {set vs_id 0} {$vs_id < $num_vs} { incr vs_id} {
 		set vs_name [prc_v1_2::priv::get_vs_name configuration $vs_id]
@@ -114,7 +121,7 @@ proc prc_generate_params {drv_handle} {
 			append prcinfo " " $shtdwn_on_err
 		}
 	}
-	hsi::utils::add_new_property $drv_handle "shutdown-on-err" int $prcinfo
+	add_prop $node "shutdown-on-err" $prcinfo int $dts_file
 	set prcinfo ""
 	for {set vs_id 0} {$vs_id < $num_vs} { incr vs_id} {
 		set vs_name [prc_v1_2::priv::get_vs_name configuration $vs_id]
@@ -125,7 +132,7 @@ proc prc_generate_params {drv_handle} {
 			append prcinfo " " $has_por_rm
 		}
 	}
-	hsi::utils::add_new_property $drv_handle "has-por-rm" int $prcinfo
+	add_prop $node "has-por-rm" $prcinfo int $dts_file
 	set prcinfo ""
 	for {set vs_id 0} {$vs_id < $num_vs} { incr vs_id} {
 		set vs_name [prc_v1_2::priv::get_vs_name configuration $vs_id]
@@ -137,7 +144,7 @@ proc prc_generate_params {drv_handle} {
 			append prcinfo " " $rm_id
 		}
 	}
-	hsi::utils::add_new_property $drv_handle "por-rm" int $prcinfo
+	add_prop $node "por-rm" $prcinfo int $dts_file
 	set prcinfo ""
 	for {set vs_id 0} {$vs_id < $num_vs} { incr vs_id} {
 		set vs_name [prc_v1_2::priv::get_vs_name configuration $vs_id]
@@ -148,7 +155,7 @@ proc prc_generate_params {drv_handle} {
 			append prcinfo " " $has_axs_status
 		}
 	}
-	hsi::utils::add_new_property $drv_handle "has-axis-status" int $prcinfo
+	add_prop $node "has-axis-status" $prcinfo int $dts_file
 	set prcinfo ""
 	for {set vs_id 0} {$vs_id < $num_vs} { incr vs_id} {
 		set vs_name [prc_v1_2::priv::get_vs_name configuration $vs_id]
@@ -159,7 +166,7 @@ proc prc_generate_params {drv_handle} {
 			append prcinfo " " $has_axs_control
 		}
 	}
-	hsi::utils::add_new_property $drv_handle "has-axis-control" int $prcinfo
+	add_prop $node "has-axis-control" $prcinfo int $dts_file
 	set prcinfo ""
 	for {set vs_id 0} {$vs_id < $num_vs} { incr vs_id} {
 		set vs_name [prc_v1_2::priv::get_vs_name configuration $vs_id]
@@ -170,7 +177,7 @@ proc prc_generate_params {drv_handle} {
 			append prcinfo " " $skp_rm_strtup_aft_rst
 		}
 	}
-	hsi::utils::add_new_property $drv_handle "skip-rm-startup-after-reset" int $prcinfo
+	add_prop $node "skip-rm-startup-after-reset" $prcinfo int $dts_file
 	set prcinfo ""
 	for {set vs_id 0} {$vs_id < $num_vs} { incr vs_id} {
 		set vs_name [prc_v1_2::priv::get_vs_name configuration $vs_id]
@@ -181,11 +188,12 @@ proc prc_generate_params {drv_handle} {
 			append prcinfo " " $num_hw_trgers
 		}
 	}
-	hsi::utils::add_new_property $drv_handle "num-hw-triggers" int $prcinfo
-	hsi::utils::add_new_property $drv_handle "vsm-msb" int $C_VSM_SELECT_MSB
-	hsi::utils::add_new_property $drv_handle "vsm-lsb" int $C_VSM_SELECT_MSB
-	hsi::utils::add_new_property $drv_handle "bank-msb" int $C_VSM_SELECT_MSB
-	hsi::utils::add_new_property $drv_handle "banl-lsb" int $C_VSM_SELECT_MSB
-	hsi::utils::add_new_property $drv_handle "reg-select-msb" int $C_VSM_SELECT_MSB
-	hsi::utils::add_new_property $drv_handle "reg-select-lsb" int $C_VSM_SELECT_MSB
+	add_prop $node "num-hw-triggers" $prcinfo int $dts_file
+	add_prop $node "vsm-msb" $C_VSM_SELECT_MSB int $dts_file
+	add_prop $node "vsm-lsb" $C_VSM_SELECT_MSB int $dts_file
+	add_prop $node "bank-msb"  $C_VSM_SELECT_MSB int $dts_file
+	add_prop $node "banl-lsb" $C_VSM_SELECT_MSB int $dts_file
+	add_prop $node "reg-select-msb" $C_VSM_SELECT_MSB int $dts_file
+	add_prop $node "reg-select-lsb" $C_VSM_SELECT_MSB int $dts_file
+}
 }

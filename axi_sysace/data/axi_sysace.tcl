@@ -12,6 +12,7 @@
 # GNU General Public License for more details.
 #
 
+namespace eval axi_sysace {
 proc generate {drv_handle} {
 }
-
+}

@@ -12,32 +12,30 @@
 # GNU General Public License for more details.
 #
 
+namespace eval i2s_receiver {
 proc generate {drv_handle} {
-	foreach i [get_sw_cores device_tree] {
-		set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-		if {[file exists $common_tcl_file]} {
-			source $common_tcl_file
-			break
-		}
-	}
-	set node [gen_peripheral_nodes $drv_handle]
+#	set node [gen_peripheral_nodes $drv_handle]
+	set node [get_node $drv_handle]
+	set dts_file [get_drv_def_dts $drv_handle]
 	if {$node == 0} {
 		return
 	}
-	set compatible [get_comp_str $drv_handle]
-	set compatible [append compatible " " "xlnx,i2s-receiver-1.0"]
-	set_drv_prop $drv_handle compatible "$compatible" stringlist
-	set dwidth [get_property CONFIG.C_DWIDTH [get_cells -hier $drv_handle]]
-	hsi::utils::add_new_dts_param "$node" "xlnx,dwidth" $dwidth hexint
-	set num_channels [get_property CONFIG.C_NUM_CHANNELS [get_cells -hier $drv_handle]]
-	hsi::utils::add_new_dts_param "$node" "xlnx,num-channels" $num_channels hexint
-	set depth [get_property CONFIG.C_DEPTH [get_cells -hier $drv_handle]]
-	hsi::utils::add_new_dts_param "$node" "xlnx,depth" $depth hexint
-	set ip [get_cells -hier $drv_handle]
+#	set compatible [get_comp_str $drv_handle]
+#	set compatible [append compatible " " "xlnx,i2s-receiver-1.0"]
+#	set_drv_prop $drv_handle compatible "$compatible" stringlist
+	pldt append $node compatible "\ \, \"xlnx,i2s-receiver-1.0\""
+	set dwidth [get_property CONFIG.C_DWIDTH [hsi::get_cells -hier $drv_handle]]
+	add_prop "$node" "xlnx,dwidth" $dwidth hexint $dts_file
+	set num_channels [get_property CONFIG.C_NUM_CHANNELS [hsi::get_cells -hier $drv_handle]]
+	add_prop "$node" "xlnx,num-channels" $num_channels hexint $dts_file
+	set depth [get_property CONFIG.C_DEPTH [hsi::get_cells -hier $drv_handle]]
+	add_prop "$node" "xlnx,depth" $depth hexint $dts_file
+	set ip [hsi::get_cells -hier $drv_handle]
 	set freq ""
 	set clk [get_pins -of_objects $ip "aud_mclk"]
 	if {[llength $clk] } {
 		set freq [get_property CLK_FREQ $clk]
-		hsi::utils::add_new_dts_param $node "aud_mclk" "$freq" int
+		add_prop $node "aud_mclk" "$freq" int $dts_file
 	}
+}
 }

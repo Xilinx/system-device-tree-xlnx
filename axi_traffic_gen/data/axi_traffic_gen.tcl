@@ -12,25 +12,28 @@
 # GNU General Public License for more details.
 #
 
+namespace eval axi_traffic_gen {
 proc generate {drv_handle} {
-	# try to source the common tcl procs
-	# assuming the order of return is based on repo priority
-	foreach i [get_sw_cores device_tree] {
-		set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-		if {[file exists $common_tcl_file]} {
-			source $common_tcl_file
-			break
-		}
+	global env
+	global dtsi_fname
+	set path $env(REPO)
+
+	set node [get_node $drv_handle]
+	if {$node == 0} {
+		return
 	}
-	set compatible [get_comp_str $drv_handle]
-	set compatible [append compatible " " "xlnx,axi-traffic-gen"]
-	set_drv_prop $drv_handle compatible "$compatible" stringlist
+
+#	set compatible [get_comp_str $drv_handle]
+#	set compatible [append compatible " " "xlnx,axi-traffic-gen"]
+#	set_drv_prop $drv_handle compatible "$compatible" stringlist
+	pldt append $node compatible "\ \, \"xlnx,axi-traffic-gen\""
 	# the interrupt related setting is only required for AXI4 protocol only
-	set atg_mode [get_property "CONFIG.C_ATG_MODE" [get_cells -hier $drv_handle]]
+	set atg_mode [get_property "CONFIG.C_ATG_MODE" [hsi::get_cells -hier $drv_handle]]
 	if { ![string match -nocase $atg_mode "AXI4"] } {
 		return 0
 	}
-	set proc_type [get_sw_proc_prop IP_NAME]
+#	set proc_type [get_sw_proc_prop IP_NAME]
+	set proc_type [get_hw_family]
 	# set up interrupt-names
 	set intr_list "irq-out err-out"
 	set interrupts ""
@@ -38,7 +41,7 @@ proc generate {drv_handle} {
 	foreach irq ${intr_list} {
 		set intr_info [get_intr_id $drv_handle $irq]
 		if { [string match -nocase $intr_info "-1"] } {
-			if {[string match -nocase $proc_type "psv_cortexa72"]} {
+			if {[string match -nocase $proc_type "versal"]} {
 				continue
 			} else {
 				error "ERROR: ${drv_handle}: $irq port is not connected"
@@ -52,6 +55,7 @@ proc generate {drv_handle} {
 			append interrupts " " "$intr_info"
 		}
 	}
-	hsi::utils::add_new_property $drv_handle "interrupts" int $interrupts
-	hsi::utils::add_new_property $drv_handle "interrupt-names" stringlist $interrupt_names
+	add_prop $node "interrupts" $interrupts int "pl.dtsi"
+	add_prop $node "interrupt-names" $interrupt_names stringlist "pl.dtsi"
+}
 }

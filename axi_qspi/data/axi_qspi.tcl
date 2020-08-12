@@ -12,29 +12,30 @@
 # GNU General Public License for more details.
 #
 
+namespace eval axi_qspi { 
 proc generate {drv_handle} {
-	# try to source the common tcl procs
-	# assuming the order of return is based on repo priority
-	foreach i [get_sw_cores device_tree] {
-		set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-		if {[file exists $common_tcl_file]} {
-			source $common_tcl_file
-			break
-		}
+	global env
+	global dtsi_fname
+	set path $env(REPO)
+
+	set node [get_node $drv_handle]
+	if {$node == 0} {
+		return
 	}
-	set compatible [get_comp_str $drv_handle]
-	set compatible [append compatible " " "xlnx,xps-spi-2.00.a"]
-	set_drv_prop $drv_handle compatible "$compatible" stringlist
+#	set compatible [get_comp_str $drv_handle]
+#	set compatible [append compatible " " "xlnx,xps-spi-2.00.a"]
+#	set_drv_prop $drv_handle compatible "$compatible" stringlist
+	pldt append $node compatible "\ \, \"xlnx,xps-spi-2.00.a\""
 	set_drv_conf_prop $drv_handle "C_NUM_SS_BITS" "xlnx,num-ss-bits"
 	set_drv_conf_prop $drv_handle "C_NUM_SS_BITS" "num-cs"
 	set_drv_conf_prop $drv_handle "C_NUM_TRANSFER_BITS" "bits-per-word" int
 	set_drv_conf_prop $drv_handle "C_FIFO_DEPTH" "fifo-size" int
 	set_drv_conf_prop $drv_handle "C_SPI_MODE" "xlnx,spi-mode" int
 	set_drv_conf_prop $drv_handle "C_USE_STARTUP" "xlnx,startup-block" boolean
-	set avail_param [list_property [get_cells -hier $drv_handle]]
-	set value [get_property CONFIG.C_FIFO_EXIST [get_cells -hier $drv_handle]]
+	set avail_param [list_property [hsi::get_cells -hier $drv_handle]]
+	set value [get_property CONFIG.C_FIFO_EXIST [hsi::get_cells -hier $drv_handle]]
 	if {[llength $value] == 0} {
-        	set value1 [get_property CONFIG.C_FIFO_DEPTH [get_cells -hier $drv_handle]]
+        	set value1 [get_property CONFIG.C_FIFO_DEPTH [hsi::get_cells -hier $drv_handle]]
 		if {[llength $value1] == 0} {
 			set value1 0
          	} else {
@@ -48,19 +49,25 @@ proc generate {drv_handle} {
 	} else {
 		set value1 $value
 	}
-	hsi::utils::add_new_property $drv_handle "xlnx,hasfifos" int $value1
-	set value [get_property CONFIG.C_SPI_SLAVE_ONLY [get_cells -hier $drv_handle]]
+	add_prop $node "xlnx,hasfifos" $value1 int "pl.dtsi"
+#	hsi::utils::add_new_property $drv_handle "xlnx,hasfifos" int $value1
+	set value [get_property CONFIG.C_SPI_SLAVE_ONLY [hsi::get_cells -hier $drv_handle]]
 	if {[llength $value] == 0} {
-		hsi::utils::add_new_property $drv_handle "xlnx,slaveonly" int 0
+		add_prop $node "xlnx,slaveonly" 0 int "pl.dtsi"
+#		hsi::utils::add_new_property $drv_handle "xlnx,slaveonly" int 0
 	} else {
-		hsi::utils::add_new_property $drv_handle "xlnx,slaveonly" int $value
+		add_prop $node "xlnx,slaveonly" $value int "pl.dtsi"
+#		hsi::utils::add_new_property $drv_handle "xlnx,slaveonly" int $value
 	}
 	set_drv_conf_prop $drv_handle "C_TYPE_OF_AXI4_INTERFACE" "xlnx,axi-interface" int
 	set value [get_property CONFIG.C_S_AXI4_BASEADDR [get_cells -hier $drv_handle]]
 	if {[llength $value] == 0} {
-		hsi::utils::add_new_property $drv_handle "xlnx,Axi4-address" int 0
+		add_prop $node "xlnx,Axi4-address" 0 int "pl.dtsi"
+#		hsi::utils::add_new_property $drv_handle "xlnx,Axi4-address" int 0
 	} else {
-		hsi::utils::add_new_property $drv_handle "xlnx,Axi4-address" int $value
+		add_prop $node "xlnx,Axi4-address" $value int "pl.dtsi"
+#		hsi::utils::add_new_property $drv_handle "xlnx,Axi4-address" int $value
 	}
 	set_drv_conf_prop $drv_handle "C_XIP_MODE" "xlnx,xip-mode" int
+}
 }

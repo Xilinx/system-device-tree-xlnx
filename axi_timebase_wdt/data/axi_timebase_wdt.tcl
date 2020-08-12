@@ -12,27 +12,29 @@
 # GNU General Public License for more details.
 #
 
+namespace eval axi_timebase_wdt {
 proc generate {drv_handle} {
-	# try to source the common tcl procs
-	# assuming the order of return is based on repo priority
-	foreach i [get_sw_cores device_tree] {
-		set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-		if {[file exists $common_tcl_file]} {
-			source $common_tcl_file
-			break
-		}
+	global env
+	global dtsi_fname
+	set path $env(REPO)
+
+	set node [get_node $drv_handle]
+	if {$node == 0} {
+		return
 	}
-	set compatible [get_comp_str $drv_handle]
-	set compatible [append compatible " " "xlnx,xps-timebase-wdt-1.00.a"]
-	set_drv_prop $drv_handle compatible "$compatible" stringlist
+#	set compatible [get_comp_str $drv_handle]
+#	set compatible [append compatible " " "xlnx,xps-timebase-wdt-1.00.a"]
+#	set_drv_prop $drv_handle compatible "$compatible" stringlist
+	pldt append $node compatible "\ \, \"xlnx,xps-timebase-wdt-1.00.a\""
 	# get bus clock frequency
-	set clk_freq [get_clock_frequency [get_cells -hier $drv_handle] "S_AXI_ACLK"]
+	set clk_freq [get_clock_frequency [hsi::get_cells -hier $drv_handle] "S_AXI_ACLK"]
 	if {![string equal $clk_freq ""]} {
-		set_property CONFIG.clock-frequency $clk_freq $drv_handle
+		add_prop $node "clock-frequency" $clk_freq int "pl.dtsi"
+#		set_property CONFIG.clock-frequency $clk_freq $drv_handle
 	}
 	set_drv_conf_prop $drv_handle "C_WDT_ENABLE_ONCE" "xlnx,wdt-enable-once"
 	set_drv_conf_prop $drv_handle "C_WDT_INTERVAL" "xlnx,wdt-interval"
 	set_drv_conf_prop $drv_handle "C_ENABLE_WINDOW_WDT" "xlnx,enable-window-wdt"
 
 }
-
+}

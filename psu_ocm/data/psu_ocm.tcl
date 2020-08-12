@@ -12,45 +12,40 @@
 # GNU General Public License for more details.
 #
 
+namespace eval psu_ocm {
 proc generate {drv_handle} {
-	foreach i [get_sw_cores device_tree] {
-		set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-		if {[file exists $common_tcl_file]} {
-			source $common_tcl_file
-			break
-		}
-	}
-	set remove_pl [get_property CONFIG.remove_pl [get_os]]
-	if {[is_pl_ip $drv_handle] && $remove_pl} {
-		return 0
-	}
 
 	set ocm_ip ""
-	set slave [get_cells -hier ${drv_handle}]
-	set ip_mem_handles [hsi::utils::get_ip_mem_ranges $slave]
-	set main_memory  [get_property CONFIG.main_memory [get_os]]
+	set slave [hsi::get_cells -hier ${drv_handle}]
+	set ip_mem_handles [hsi::get_mem_ranges $slave]
+#	set main_memory  [get_property CONFIG.main_memory [get_os]]
+	set main_memory "none"
 	if {![string match -nocase $main_memory "none"]} {
-		set ocm_ip [get_property IP_NAME [get_cells -hier $main_memory]]
+		set ocm_ip [get_property IP_NAME [hsi::get_cells -hier $main_memory]]
 	}
 
-	set drv_ip [get_property IP_NAME [get_cells -hier $drv_handle]]
-	set master_dts [get_property CONFIG.master_dts [get_os]]
-	set cur_dts [current_dt_tree]
-	set master_dts_obj [get_dt_trees ${master_dts}]
-	set_cur_working_dts $master_dts
-	set parent_node [add_or_get_dt_node -n / -d ${master_dts}]
-	set base [get_property CONFIG.C_S_AXI_BASEADDR [get_cells -hier $drv_handle]]
-	set high [get_property CONFIG.C_S_AXI_HIGHADDR [get_cells -hier $drv_handle]]
-	set addr [get_property CONFIG.C_S_AXI_BASEADDR [get_cells -hier $drv_handle]]
+	set drv_ip [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+#	set master_dts [get_property CONFIG.master_dts [get_os]]
+#	set cur_dts [current_dt_tree]
+#	set master_dts_obj [get_dt_trees ${master_dts}]
+#	set_cur_working_dts $master_dts
+#	set parent_node [add_or_get_dt_node -n / -d ${master_dts}]
+	set base [get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $drv_handle]]
+	set high [get_property CONFIG.C_S_AXI_HIGHADDR [hsi::get_cells -hier $drv_handle]]
+	set addr [get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $drv_handle]]
 	regsub -all {^0x} $addr {} addr
-	set memory_node [add_or_get_dt_node -n memory -u $addr -p $parent_node]
+	#set memory_node [create_node -l $drv_handle -n "memory" -u $addr -p root -d "system-top.dts"]
+	set memory_node [create_node -n "memory" -u $addr -p root -d "system-top.dts"]
+	set dts_file "system-top.dts"
+#	set memory_node [ -n memory -u $addr -p $parent_node]
+#	set proctype "psv_cortexa72"
+	set proc_type [get_hw_family]
 	if {[regexp $drv_ip $ocm_ip match]} {
 		set size [format 0x%x [expr {${high} - ${base} + 1}]]
-		set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
+#		set proctype [get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]]
 
-		if {[string match -nocase $proctype "psu_cortexa53"] || \
-			[string match -nocase $proctype "psv_cortexa72"] || \
-			[string match -nocase $proctype "psv_pmc"]} {
+		if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] || \
+			[string match -nocase $proctype "versal"]} {
 			if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 				set temp $base
 				set temp [string trimleft [string trimleft $temp 0] x]
@@ -77,25 +72,25 @@ proc generate {drv_handle} {
 		} else {
 			set reg "$base $size"
 		}
-		hsi::utils::add_new_dts_param "${memory_node}" "reg" $reg inthexlist
+		add_prop "${memory_node}" "reg" $reg hexlist $dts_file
 		if {[catch {set dev_type [get_property CONFIG.device_type $drv_handle]} msg]} {
 			set dev_type memory
 		}
 
 		if {[string_is_empty $dev_type]} {set dev_type memory}
 
-		hsi::utils::add_new_dts_param "${memory_node}" "device_type" $dev_type string
+		add_prop "${memory_node}" "device_type" $dev_type string $dts_file
 	}
 
-	set ip_mem_handle [lindex [hsi::utils::get_ip_mem_ranges [get_cells -hier $slave]] 0]
+	set ip_mem_handle [lindex [hsi::get_mem_ranges [hsi::get_cells -hier $slave]] 0]
 	set addr [string tolower [get_property BASE_VALUE $ip_mem_handle]]
 	set base [string tolower [get_property BASE_VALUE $ip_mem_handle]]
 	set high [string tolower [get_property HIGH_VALUE $ip_mem_handle]]
 	set size [format 0x%x [expr {${high} - ${base} + 1}]]
-	set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
-	if {[string match -nocase $proctype "psu_cortexa53"] || \
-		[string match -nocase $proctype "psv_cortexa72"] || \
-		[string match -nocase $proctype "psv_pmc"]} {
+#	set proctype "psv_cortexa72"
+	set proctype [get_hw_family]
+	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] || \
+		[string match -nocase $proctype "versal"]} {
 		if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 			set temp $base
 			set temp [string trimleft [string trimleft $temp 0] x]
@@ -122,23 +117,30 @@ proc generate {drv_handle} {
 	} else {
 		set reg "$base $size"
 	}
-	set proc_type [get_sw_proc_prop IP_NAME]
-        set slave [get_cells -hier ${drv_handle}]
+#	set proc_type [get_sw_proc_prop IP_NAME]
+        set slave [hsi::get_cells -hier ${drv_handle}]
         set vlnv [split [get_property VLNV $slave] ":"]
         set name [lindex $vlnv 2]
         set ver [lindex $vlnv 3]
-        set comp_prop "xlnx,${name}-${ver}"
+	if {[string match -nocase $ver ""]} {
+	        set comp_prop "xlnx,${name}"
+	} else {
+	        set comp_prop "xlnx,${name}-${ver}"
+	}
         regsub -all {_} $comp_prop {-} comp_prop
         set_drv_prop_if_empty $drv_handle compatible $comp_prop stringlist
 
-	set prop [get_property CONFIG.compatible $drv_handle]
-	hsi::utils::add_new_dts_param "${memory_node}" "compatible" $prop string
-	hsi::utils::add_new_dts_param "${memory_node}" "reg" $reg inthexlist
-	if {[catch {set dev_type [get_property CONFIG.device_type $drv_handle]} msg]} {
+#	set prop [get_property CONFIG.compatible $drv_handle]
+	set node [get_node $drv_handle]
+#	set prop [psdt get $node compatible]
+	add_prop "${memory_node}" "compatible" $comp_prop string $dts_file
+	add_prop "${memory_node}" "reg" $reg hexlist $dts_file
+#	if {[catch {set dev_type [get_property CONFIG.device_type $drv_handle]} msg]} {
 		set dev_type memory
-	}
+#	}
 
 	if {[string_is_empty $dev_type]} {set dev_type memory}
 
-	hsi::utils::add_new_dts_param "${memory_node}" "device_type" $dev_type string
+	add_prop "${memory_node}" "device_type" $dev_type string $dts_file
+}
 }

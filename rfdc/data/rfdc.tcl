@@ -12,16 +12,8 @@
 # GNU General Public License for more details.
 #
 
+namespace eval rfdc {
 proc generate {drv_handle} {
-	# try to source the common tcl procs
-	# assuming the order of return is based on repo priority
-	foreach i [get_sw_cores device_tree] {
-		set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-		if {[file exists $common_tcl_file]} {
-			source $common_tcl_file
-			break
-		}
-	}
 	set instances [llength [::hsi::utils::get_common_driver_ips $drv_handle]]
 	hsi::utils::add_new_property $drv_handle "num-insts" hexlist $instances
 	add_param_list_property $drv_handle "DEVICE_ID" "C_BASEADDR" "C_High_Speed_ADC" "C_Sysref_Master" "C_Sysref_Master" "C_Sysref_Source" "C_Sysref_Source" "C_IP_Type" "C_Silicon_Revision" "C_DAC0_Enable" "C_DAC0_PLL_Enable" "C_DAC0_Sampling_Rate" "C_DAC0_Refclk_Freq" "C_DAC0_Fabric_Freq" "C_DAC0_FBDIV" "C_DAC0_OutDiv" "C_DAC0_Refclk_Div" "C_DAC0_Band" "C_DAC0_Fs_Max" "C_DAC0_Slices" "C_DAC_Slice00_Enable" "C_DAC_Invsinc_Ctrl00" "C_DAC_Mixer_Mode00" "C_DAC_Decoder_Mode00" "C_DAC_Slice01_Enable" "C_DAC_Invsinc_Ctrl01" "C_DAC_Mixer_Mode01" "C_DAC_Decoder_Mode01" "C_DAC_Slice02_Enable" "C_DAC_Invsinc_Ctrl02" "C_DAC_Mixer_Mode02" "C_DAC_Decoder_Mode02" "C_DAC_Slice03_Enable" "C_DAC_Invsinc_Ctrl03" "C_DAC_Mixer_Mode03" "C_DAC_Decoder_Mode03" "C_DAC_Data_Type00" "C_DAC_Data_Width00" "C_DAC_Interpolation_Mode00" "C_DAC_Fifo00_Enable" "C_DAC_Adder00_Enable" "C_DAC_Mixer_Type00" "C_DAC_Data_Type01" "C_DAC_Data_Width01" "C_DAC_Interpolation_Mode01" "C_DAC_Fifo01_Enable" \
@@ -100,4 +92,5 @@ proc add_param_list_property {drv_handle args} {
 		}
 	}
 	hsi::utils::add_new_property $drv_handle "param-list" bytelist $data
+}
 }

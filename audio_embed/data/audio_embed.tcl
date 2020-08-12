@@ -11,20 +11,26 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
-
+namespace eval audio_embed {
 proc generate {drv_handle} {
-	foreach i [get_sw_cores device_tree] {
-		set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-		if {[file exists $common_tcl_file]} {
-			source $common_tcl_file
-			break
-		}
-	}
-	set node [gen_peripheral_nodes $drv_handle]
+	global env
+	global dtsi_fname
+	set path $env(REPO)
+
+	#set node [gen_peripheral_nodes $drv_handle]
+	set node [get_node $drv_handle]
 	if {$node == 0} {
 		return
 	}
-	set compatible [get_comp_str $drv_handle]
+
+	#set node [gen_peripheral_nodes $drv_handle]
+	set node [get_node $drv_handle]
+	if {$node == 0} {
+		return
+	}
+	#set compatible [get_comp_str $drv_handle]
+	set keyval [pldt append $node " \"xlnx,v-uhdsdi-audio-2.0\""]
 	set compatible [append compatible " " "xlnx,v-uhdsdi-audio-2.0"]
-	set_drv_prop $drv_handle compatible "$compatible" stringlist
+	#set_drv_prop $drv_handle compatible "$compatible" stringlist
+}
 }

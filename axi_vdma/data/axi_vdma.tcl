@@ -17,29 +17,38 @@
 # GNU General Public License for more details.
 #
 
+namespace eval axi_vdma {
 proc generate {drv_handle} {
-	# try to source the common tcl procs
-	# assuming the order of return is based on repo priority
-	foreach i [get_sw_cores device_tree] {
-		set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-		if {[file exists $common_tcl_file]} {
-			source $common_tcl_file
-			break
-		}
-	}
 
-	set node [gen_peripheral_nodes $drv_handle]
-	if {$node == 0} {
-		return
-	}
-	set compatible [get_comp_str $drv_handle]
-	set compatible [append compatible " " "xlnx,axi-vdma-1.00.a"]
-	set_drv_prop $drv_handle compatible "$compatible" stringlist
-	set dma_ip [get_cells -hier $drv_handle]
-	set vdma_count [hsi::utils::get_os_parameter_value "vdma_count"]
+    set node [get_node $drv_handle]
+    if {$node == 0} {
+           return
+    }
+	global env
+        set path $env(REPO)
+
+        set drvname [get_drivers $drv_handle]
+        #puts "drvname $drvname"
+
+        set common_file "$path/device_tree/data/config.yaml"
+        if {[file exists $common_file]} {
+                #error "file not found: $common_file"
+        }
+        #set file "$path/${drvname}/data/config.yaml"
+        #puts "file $common_file"
+        set mainline_ker [get_user_config $common_file -mainline_kernel]
+
+#	set compatible [get_comp_str $drv_handle]
+#	set compatible [append compatible " " "xlnx,axi-vdma-1.00.a"]
+#	set_drv_prop $drv_handle compatible "$compatible" stringlist
+	pldt append $node compatible "\ \, \"xlnx,axi-vdma-1.00.a\""
+	set dma_ip [hsi::get_cells -hier $drv_handle]
+#	set vdma_count [hsi::utils::get_os_parameter_value "vdma_count"]
+	set vdma_count [get_count "vdma_count"]
 	if { [llength $vdma_count] == 0 } {
 		set vdma_count 0
 	}
+	set dts_file [set_drv_def_dts $drv_handle]
 
 	# check for C_ENABLE_DEBUG parameters
 	# C_ENABLE_DEBUG_INFO_15 - Enable S2MM Frame Count Interrupt bit
@@ -96,7 +105,8 @@ proc generate {drv_handle} {
 		set intr_info [get_intr_id $drv_handle "mm2s_introut"]
 		#set intc [hsi::utils::get_interrupt_parent $dma_ip "mm2s_introut"]
 	        if { [llength $intr_info] && ![string match -nocase $intr_info "-1"] } {
-			hsi::utils::add_new_dts_param $tx_chan_node "interrupts" $intr_info intlist
+			add_prop $tx_chan_node "interrupts" $intr_info intlist $dts_file
+			#hsi::utils::add_new_dts_param $tx_chan_node "interrupts" $intr_info intlist
 	        } else {
 			dtg_warning "ERROR: ${drv_handle}: mm2s_introut port is not connected"
 		}
@@ -109,14 +119,16 @@ proc generate {drv_handle} {
 		set intr_info [get_intr_id $drv_handle "s2mm_introut"]
 		#set intc [hsi::utils::get_interrupt_parent $dma_ip "s2mm_introut"]
 	        if { [llength $intr_info] && ![string match -nocase $intr_info "-1"] } {
-			hsi::utils::add_new_dts_param $rx_chan_node "interrupts" $intr_info intlist
+			add_prop $rx_chan_node "interrupts" $intr_info intlist $dts_file
+			#hsi::utils::add_new_dts_param $tx_chan_node "interrupts" $intr_info intlist
+			#hsi::utils::add_new_dts_param $rx_chan_node "interrupts" $intr_info intlist
 	        } else {
 			dtg_warning "ERROR: ${drv_handle}: s2mm_introut port is not connected"
 		}
 	}
-	incr vdma_count
-	hsi::utils::set_os_parameter_value "vdma_count" $vdma_count
-	set mainline_ker [get_property CONFIG.mainline_kernel [get_os]]
+#	incr vdma_count
+#	hsi::utils::set_os_parameter_value "vdma_count" $vdma_count
+	#set mainline_ker [get_property CONFIG.mainline_kernel [get_os]]
 	if {[string match -nocase $mainline_ker "none"]} {
 		set proc_type [get_sw_proc_prop IP_NAME]
 		set clocknames "s_axi_lite_aclk"
@@ -143,13 +155,17 @@ proc add_dma_channel {drv_handle parent_node xdma addr mode devid} {
 	set ip [get_cells -hier $drv_handle]
 	set modellow [string tolower $mode]
 	set modeIndex [string index $mode 0]
-	set dma_channel [add_or_get_dt_node -n "dma-channel" -u $addr -p $parent_node]
-	hsi::utils::add_new_dts_param $dma_channel "compatible" [format "xlnx,%s-%s-channel" $xdma $modellow] stringlist
-	hsi::utils::add_new_dts_param $dma_channel "xlnx,device-id" $devid hexint
+	set dma_channel [create_node -n "dma-channel" -u $addr -p $parent_node]
+	set dts_file [set_drv_def_dts $drv_handle]
+	add_prop $dma_channel "compatible" [format "xlnx,%s-%s-channel" $xdma $modellow] stringlist $dts_file
+	add_prop $dma_channel "xlnx,device-id" $devid hexint $dts_file
+#	hsi::utils::add_new_dts_param $dma_channel "compatible" [format "xlnx,%s-%s-channel" $xdma $modellow] stringlist
+#	hsi::utils::add_new_dts_param $dma_channel "xlnx,device-id" $devid hexint
 	if {[string match -nocase $mode "S2MM"]} {
 		set vert_flip  [hsi::utils::get_ip_param_value $ip C_ENABLE_VERT_FLIP]
 		if {$vert_flip == 1} {
-			hsi::utils::add_new_dts_param $dma_channel "xlnx,enable-vert-flip" "" boolean
+			add_prop $dma_channel "xlnx,enable-vert-flip" boolean $dts_file
+			#hsi::utils::add_new_dts_param $dma_channel "xlnx,enable-vert-flip" "" boolean
 		}
 	}
 	add_cross_property_to_dtnode $drv_handle [format "CONFIG.C_INCLUDE_%s_DRE" $mode] $dma_channel "xlnx,include-dre" boolean
@@ -162,10 +178,10 @@ proc add_dma_channel {drv_handle parent_node xdma addr mode devid} {
 }
 
 proc generate_clk_nodes {drv_handle tx_chan rx_chan} {
-    set proc_type [get_sw_proc_prop IP_NAME]
+#    set proc_type [get_sw_proc_prop IP_NAME]
+	set proc_type [get_hw_family]
     set clocknames "s_axi_lite_aclk"
-    switch $proc_type {
-        "ps7_cortexa9" {
+	if {[string match -nocase $proc_type "zynq"]} {
         set clocks "clkc 15"
             if { $tx_chan ==1 } {
                 append clocknames " " "m_axi_mm2s_aclk"
@@ -181,7 +197,7 @@ proc generate_clk_nodes {drv_handle tx_chan rx_chan} {
             }
             set_drv_prop_if_empty $drv_handle "clocks" $clocks reference
             set_drv_prop_if_empty $drv_handle "clock-names" $clocknames stringlist
-        } "psu_cortexa53" {
+        } elseif {[string match -nocase $proc_type "zynqmp"] || [string match -nocase $proc_type "zynquplus"]} {
             foreach i [get_sw_cores device_tree] {
                 set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
                 if {[file exists $common_tcl_file]} {
@@ -189,20 +205,23 @@ proc generate_clk_nodes {drv_handle tx_chan rx_chan} {
                     break
                 }
             }
-            set clk_freq [get_clock_frequency [get_cells -hier $drv_handle] "s_axi_lite_aclk"]
+            set clk_freq [get_clock_frequency [hsi::get_cells -hier $drv_handle] "s_axi_lite_aclk"]
             if {![string equal $clk_freq ""]} {
                 if {[lsearch $bus_clk_list $clk_freq] < 0} {
                     set bus_clk_list [lappend bus_clk_list $clk_freq]
                 }
             }
             set bus_clk_cnt [lsearch -exact $bus_clk_list $clk_freq]
-            set dts_file [current_dt_tree]
+#            set dts_file [current_dt_tree]
             set bus_node [add_or_get_bus_node $drv_handle $dts_file]
-            set misc_clk_node [add_or_get_dt_node -n "misc_clk_${bus_clk_cnt}" -l "misc_clk_${bus_clk_cnt}" \
-                -d ${dts_file} -p ${bus_node}]
-	     hsi::utils::add_new_dts_param "${misc_clk_node}" "compatible" "fixed-clock" stringlist
-	     hsi::utils::add_new_dts_param "${misc_clk_node}" "#clock-cells" 0 int
-	     hsi::utils::add_new_dts_param "${misc_clk_node}" "clock-frequency" $clk_freq int
+            set misc_clk_node [create_node -n "misc_clk_${bus_clk_cnt}" -l "misc_clk_${bus_clk_cnt}" \
+                -d ${dts_file} -p ${bus_node} -d $dts_file]
+	     add_prop "${misc_clk_node}" "compatible" "fixed-clock" stringlist $dts_file
+	     add_prop "${misc_clk_node}" "#clock-cells" 0 int $dts_file
+	     add_prop "${misc_clk_node}" "clock-frequency" $clk_freq int $dts_file
+#	     hsi::utils::add_new_dts_param "${misc_clk_node}" "compatible" "fixed-clock" stringlist
+#	     hsi::utils::add_new_dts_param "${misc_clk_node}" "#clock-cells" 0 int
+#	     hsi::utils::add_new_dts_param "${misc_clk_node}" "clock-frequency" $clk_freq int
             # create the node and assuming reg 0 is taken by cpu
             set clk_refs [lappend clk_refs misc_clk_${bus_clk_cnt}]
             set clocks "$clk_refs"
@@ -220,7 +239,7 @@ proc generate_clk_nodes {drv_handle tx_chan rx_chan} {
             }
             set_drv_prop_if_empty $drv_handle "clocks" $clocks reference
             set_drv_prop_if_empty $drv_handle "clock-names" $clocknames stringlist
-        } "microblaze" {
+        } elseif {[regexp "kintex*" $proctype match]} {
             if { $tx_chan ==1 } {
                 append clocknames " " "m_axi_mm2s_aclk"
                 append clocknames " " "m_axi_mm2s_aclk"
@@ -231,9 +250,8 @@ proc generate_clk_nodes {drv_handle tx_chan rx_chan} {
             }
             gen_dev_ccf_binding $drv_handle "$clocknames"
             set_drv_prop_if_empty $drv_handle "clock-names" "$clocknames" stringlist
-        }
-        default {
+        } else {
             error "Unknown arch"
         }
-    }
+}
 }

@@ -12,19 +12,25 @@
 # GNU General Public License for more details.
 #
 
+namespace eval axi_iic {
 proc generate {drv_handle} {
-    foreach i [get_sw_cores device_tree] {
-        set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-        if {[file exists $common_tcl_file]} {
-            source $common_tcl_file
-            break
-        }
-    }
-    set compatible [get_comp_str $drv_handle]
-    set compatible [append compatible " " "xlnx,xps-iic-2.00.a"]
-    set_drv_prop $drv_handle compatible "$compatible" stringlist
-    set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
-    if {[string match -nocase $proctype "microblaze"] } {
+	global env
+	global dtsi_fname
+	set path $env(REPO)
+
+	set node [get_node $drv_handle]
+	if {$node == 0} {
+		return
+	}
+
+   # set compatible [get_comp_str $drv_handle]
+   # set compatible [append compatible " " "xlnx,xps-iic-2.00.a"]
+   # set_drv_prop $drv_handle compatible "$compatible" stringlist
+    pldt append $node compatible "$compatible" stringlist "pl.dtsi"
+#    set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
+	set proctype [get_hw_family]
+	if {[regexp "kintex*" $proctype match]} {
         gen_dev_ccf_binding $drv_handle "s_axi_aclk"
     }
+}
 }

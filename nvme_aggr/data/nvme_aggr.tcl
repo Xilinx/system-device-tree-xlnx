@@ -11,32 +11,29 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
+
+namespace eval nvme_aggr {
 proc generate {drv_handle} {
-	foreach i [get_sw_cores device_tree] {
-		set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-		if {[file exists $common_tcl_file]} {
-			source $common_tcl_file
-			break
-		}
-	}
-	set proc_type [get_sw_proc_prop IP_NAME]
-	set node [gen_peripheral_nodes $drv_handle]
+	set proc_type [get_hw_family]
+	set node [get_node $drv_handle]
+#	set node [gen_peripheral_nodes $drv_handle]
+	set dts_file [set_drv_def_dts $drv_handle]
 	if {$node == 0} {
 		return
 	}
-	set nvme_ip [get_cells -hier $drv_handle]
+	set nvme_ip [hsi::get_cells -hier $drv_handle]
 	set ip_name [get_property IP_NAME $nvme_ip]
 
-	if {[string match -nocase $proc_type "psu_cortexa53"] ||
-            [string match -nocase $proc_type "psv_cortexa72"]} {
-		hsi::utils::add_new_dts_param $node "#address-cells" 2 int
-		hsi::utils::add_new_dts_param $node "#size-cells" 2 int
-		hsi::utils::add_new_dts_param "${node}" "ranges" "" boolean
-	} elseif {[string match -nocase $proc_type "ps7_cortexa9"] ||
+	if {[string match -nocase $proc_type "zynqmp"] || [string match -nocase $proc_type "zynquplus"] || \
+            [string match -nocase $proc_type "versal"]} {
+		add_prop $node "#address-cells" 2 int $dts_file
+		add_prop $node "#size-cells" 2 int $dts_file
+		add_prop "${node}" "ranges" "" boolean $dts_file
+	} elseif {[string match -nocase $proc_type "zynq"] ||
             [string match -nocase $proc_type "microblaze"]} {
-		hsi::utils::add_new_dts_param $node "#address-cells" 1 int
-		hsi::utils::add_new_dts_param $node "#size-cells" 1 int
-		hsi::utils::add_new_dts_param "${node}" "ranges" "" boolean
+		add_prop $node "#address-cells" 1 int $dts_file
+		add_prop $node "#size-cells" 1 int $dts_file
+		add_prop "${node}" "ranges" boolean $dts_file
 	}
 
 	set intr_val [get_property CONFIG.interrupts $drv_handle]
@@ -58,8 +55,8 @@ proc generate {drv_handle} {
 		}
 	}
 	
-  set periph_list [get_cells -hier]
-  set nvme_inst_name [get_cells -filter {IP_NAME =~ "*nvme*"}]
+  set periph_list [hsi::get_cells -hier]
+  set nvme_inst_name [hsi::get_cells -filter {IP_NAME =~ "*nvme*"}]
 	foreach periph $periph_list {
 		if {[string match -nocase "${nvme_inst_name}_nvmeha_0" $periph] } {
       set addr [get_property CONFIG.HA_S_AXI_LITE_OFFSET $nvme_ip]
@@ -80,7 +77,8 @@ proc generate {drv_handle} {
 }
 
 proc gen_ha_node {periph addr parent_node drv_handle proc_type nvme_ip intr_parent intr} {
-	set ha_node [add_or_get_dt_node -n "nvme_ha" -l nvme_ha_0 -u $addr -p $parent_node]
+	set dts_file [set_drv_def_dts $drv_handle]
+	set ha_node [create_node -n "nvme_ha" -l nvme_ha_0 -u $addr -p $parent_node -d $dts_file]
 	set lite_size [get_property CONFIG.HA_S_AXI_LITE_SIZE $nvme_ip]
 	set full_off [get_property CONFIG.HA_SW_S_AXI_OFFSET $nvme_ip]
 	set full_size [get_property CONFIG.HA_SW_S_AXI_SIZE $nvme_ip]
@@ -92,8 +90,8 @@ proc gen_ha_node {periph addr parent_node drv_handle proc_type nvme_ip intr_pare
 	} else {
 		set ha_reg "0x0 0x$addr 0x0 $lite_size 0x0 $full_off 0x0 $full_size 0x0 $ssd_off 0x0 $ssd_size"
 	}
-	hsi::utils::add_new_dts_param "${ha_node}" "reg" $ha_reg int
-	hsi::utils::add_new_dts_param "${ha_node}" "compatible" "xlnx,nvmeha-1.0" string
+	add_prop "${ha_node}" "reg" $ha_reg int $dts_file
+	add_prop "${ha_node}" "compatible" "xlnx,nvmeha-1.0" string $dts_file
 
   set intr_len [llength $intr]
   for {set i 0} {$i < $intr_len} {incr i} {
@@ -101,9 +99,9 @@ proc gen_ha_node {periph addr parent_node drv_handle proc_type nvme_ip intr_pare
 	}
 	regsub -all "\{||\t" $intr_num {} intr_num
 	regsub -all "\}||\t" $intr_num {} intr_num
-	hsi::utils::add_new_dts_param ${ha_node} "interrupts" $intr_num intlist
-	hsi::utils::add_new_dts_param "${ha_node}" "interrupt-parent" $intr_parent reference
-  hsi::utils::add_new_dts_param "${ha_node}" "interrupt-names" $intr stringlist
+	add_prop ${ha_node} "interrupts" $intr_num intlist $dts_file
+	add_prop "${ha_node}" "interrupt-parent" $intr_parent reference $dts_file
+  add_prop "${ha_node}" "interrupt-names" $intr stringlist $dts_file
 
   gen_property "CONFIG.C_NUM_SQ" "xlnx,num-sq" $nvme_ip $ha_node
   gen_property "CONFIG.C_NUM_SQ_HW_0" "xlnx,num-sq-hw-0" $nvme_ip $ha_node
@@ -176,7 +174,8 @@ proc gen_ha_node {periph addr parent_node drv_handle proc_type nvme_ip intr_pare
 }
 
 proc gen_tc_node {periph addr parent_node drv_handle proc_type nvme_ip intr_parent intr} {
-	set tc_node [add_or_get_dt_node -n "nvme_tc" -l nvme_tc_0 -u $addr -p $parent_node]
+	set dts_file [set_drv_def_dts $drv_handle]
+	set tc_node [create_node -n "nvme_tc" -l nvme_tc_0 -u $addr -p $parent_node -d $dts_file]
 	set lite_size [get_property CONFIG.TC_S_AXI_LITE_SIZE $nvme_ip]
 	set full_off [get_property CONFIG.TC_SW_S_AXI_OFFSET $nvme_ip]
 	set full_size [get_property CONFIG.TC_SW_S_AXI_SIZE $nvme_ip]
@@ -186,8 +185,8 @@ proc gen_tc_node {periph addr parent_node drv_handle proc_type nvme_ip intr_pare
 	} else {
 		set tc_reg "0x0 0x$addr 0x0 $lite_size 0x0 $full_off 0x0 $full_size"
 	}
-	hsi::utils::add_new_dts_param "${tc_node}" "reg" $tc_reg int
-	hsi::utils::add_new_dts_param "${tc_node}" "compatible" "xlnx,nvme-tc-1.0" string
+	add_prop "${tc_node}" "reg" $tc_reg int $dts_file
+	add_prop "${tc_node}" "compatible" "xlnx,nvme-tc-1.0" string $dts_file
 
   set intr_len [llength $intr]
 	for {set i 0} {$i < $intr_len} {incr i} {
@@ -195,15 +194,15 @@ proc gen_tc_node {periph addr parent_node drv_handle proc_type nvme_ip intr_pare
 	}
 	regsub -all "\{||\t" $intr_num {} intr_num
 	regsub -all "\}||\t" $intr_num {} intr_num
-	hsi::utils::add_new_dts_param ${tc_node} "interrupts" $intr_num intlist
-	hsi::utils::add_new_dts_param "${tc_node}" "interrupt-parent" $intr_parent reference
-	hsi::utils::add_new_dts_param "${tc_node}" "interrupt-names" $intr stringlist
+	add_prop ${tc_node} "interrupts" $intr_num intlist $dts_file
+	add_prop "${tc_node}" "interrupt-parent" $intr_parent reference $dts_file
+	add_prop "${tc_node}" "interrupt-names" $intr stringlist $dts_file
   
   set debug_en [get_property CONFIG.DEBUG_EN $nvme_ip]
   if {[string match -nocase $debug_en "true"]} {
-    hsi::utils::add_new_dts_param "${tc_node}" "xlnx,debug-en" "0x1" int
+    add_prop "${tc_node}" "xlnx,debug-en" "0x1" int $dts_file
   } else {
-    hsi::utils::add_new_dts_param "${tc_node}" "xlnx,debug-en" "0x0" int
+    add_prop "${tc_node}" "xlnx,debug-en" "0x0" int $dts_file
   }
 
   gen_property "CONFIG.C_ARB_BURST" "xlnx,arb-burst" $nvme_ip $tc_node
@@ -225,7 +224,8 @@ proc gen_tc_node {periph addr parent_node drv_handle proc_type nvme_ip intr_pare
 }  
 
 proc gen_mapper_node {periph addr parent_node drv_handle proc_type nvme_ip intr_parent intr} {
-	set mapper_node [add_or_get_dt_node -n "nvme_mapper" -l nvme_mapper_0 -u $addr -p $parent_node]
+	set dts_file [set_drv_def_dts $drv_handle]
+	set mapper_node [create_node -n "nvme_mapper" -l nvme_mapper_0 -u $addr -p $parent_node -d $dts_file]
 	set lite_size [get_property CONFIG.MAPPER_S_AXI_LITE_SIZE $nvme_ip]
 	set full_off [get_property CONFIG.MAPPER_SW_S_AXI_OFFSET $nvme_ip]
 	set full_size [get_property CONFIG.MAPPER_SW_S_AXI_SIZE $nvme_ip]
@@ -235,12 +235,12 @@ proc gen_mapper_node {periph addr parent_node drv_handle proc_type nvme_ip intr_
 	} else {
 		set mapper_reg "0x0 0x$addr 0x0 $lite_size 0x0 $full_off 0x0 $full_size"
 	}
-	hsi::utils::add_new_dts_param "${mapper_node}" "reg" $mapper_reg int
-	hsi::utils::add_new_dts_param "${mapper_node}" "compatible" "xlnx,nvme-mapper-1.0" string
+	add_prop "${mapper_node}" "reg" $mapper_reg int $dts_file
+	add_prop "${mapper_node}" "compatible" "xlnx,nvme-mapper-1.0" string $dts_file
 
 	set en_p2p [get_property CONFIG.EN_P2P_BUFFERS $nvme_ip]
 	if {[string match -nocase $en_p2p "true"]} {
-	    hsi::utils::add_new_dts_param "${mapper_node}" "xlnx,en-p2p-buffer" "" boolean
+	    add_prop "${mapper_node}" "xlnx,en-p2p-buffer" boolean $dts_file
     }
     gen_property "CONFIG.MAX_PRP_PER_CMD" "xlnx,max-prp-per-cmd" $periph $mapper_node
     gen_property "CONFIG.NUM_UID_SUPPORT" "xlnx,num-uid-support" $periph $mapper_node
@@ -249,6 +249,7 @@ proc gen_mapper_node {periph addr parent_node drv_handle proc_type nvme_ip intr_
 
 proc gen_property {property pro_dt_name nvme_ip node} {
   set num_sgls [get_property $property $nvme_ip]
-  set num_sgls 0x[format %0x $num_sgls]
-  hsi::utils::add_new_dts_param "$node" $pro_dt_name $num_sgls int
+  set num_sgls 0x[format %0x $num_sgls] 
+  add_prop "$node" $pro_dt_name $num_sgls int $dts_file
+}
 }

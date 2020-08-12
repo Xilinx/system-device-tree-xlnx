@@ -17,45 +17,54 @@
 # GNU General Public License for more details.
 #
 
+namespace eval uartps {
 proc generate {drv_handle} {
-    foreach i [get_sw_cores device_tree] {
-        set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-        if {[file exists $common_tcl_file]} {
-            source $common_tcl_file
-            break
-        }
-    }
-    set ip [get_cells -hier $drv_handle]
-    set consoleip [get_property CONFIG.console_device [get_os]]
+    set node [get_node $drv_handle]
+    set dts_file [set_drv_def_dts $drv_handle]
+    set ip [hsi::get_cells -hier $drv_handle]
+#    set consoleip [get_count CONFIG.console_device [get_os]]
     set port_number 0
-    if {[string match -nocase "$ip" "$consoleip"] == 0} {
-        set serial_count [hsi::utils::get_os_parameter_value "serial_count"]
-        if { [llength $serial_count]  == 0 } {
-            set serial_count 0
-        }
-        incr serial_count
-        hsi::utils::set_os_parameter_value "serial_count" $serial_count
-        set port_number $serial_count
-    } else {
+#    if {[string match -nocase "$ip" "$consoleip"] == 0} {
+ #       set serial_count [hsi::utils::get_os_parameter_value "serial_count"]
+ #       if { [llength $serial_count]  == 0 } {
+ #           set serial_count 0
+ #       }
+ #       incr serial_count
+ #       hsi::utils::set_os_parameter_value "serial_count" $serial_count
+  #      set port_number $serial_count
+  #  } else {
         #adding os console property if this is console ip
-        set avail_param [list_property [get_cells -hier $drv_handle]]
+        set avail_param [list_property [hsi::get_cells -hier $drv_handle]]
         # This check is needed because BAUDRATE parameter for psuart is available from
         # 2017.1 onwards
         if {[lsearch -nocase $avail_param "CONFIG.C_BAUDRATE"] >= 0} {
-            set baud [get_property CONFIG.C_BAUDRATE [get_cells -hier $drv_handle]]
+            set baud [get_property CONFIG.C_BAUDRATE [hsi::get_cells -hier $drv_handle]]
         } else {
             set baud "115200"
         }
-        hsi::utils::set_os_parameter_value "console" "ttyPS0,$baud"
+	set chosen_node [create_node -n "chosen" -d "system-top.dts" -p root]
+        set bootargs "earlycon"
+	set proctype [get_hw_family]
+    if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] || \
+        [string match -nocase $proctype "versal"]} {
+                if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+                   append bootargs "\ \, \"clk_ignore_unused\""
+                }
     }
-    set_property CONFIG.port-number $port_number $drv_handle
-    set uboot_prop [get_property IP_NAME [get_cells -hier $drv_handle]]
-    if {[string match -nocase $uboot_prop "psu_uart"] || [string match -nocase $uboot_prop "psu_sbsauart"]} {
+   add_prop $chosen_node "stdout-path" "serial0:${baud}n8" string "system-top.dts"
+	set val [systemdt get $chosen_node "stdout-path"]
+#        hsi::utils::set_os_parameter_value "console" "ttyPS0,$baud"
+   # }
+#    set_property CONFIG.port-number $port_number $drv_handle
+	add_prop $node "port-number" $port_number int $dts_file
+    set uboot_prop [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+    if {[string match -nocase $uboot_prop "psu_uart"] || [string match -nocase $uboot_prop "psv_sbsauart"]} {
         set_drv_prop $drv_handle "u-boot,dm-pre-reloc" "" boolean
     }
-    set has_modem [get_property CONFIG.C_HAS_MODEM [get_cells -hier $drv_handle]]
+    set has_modem [get_property CONFIG.C_HAS_MODEM [hsi::get_cells -hier $drv_handle]]
     if {$has_modem == 0} {
-         hsi::utils::add_new_property $drv_handle "cts-override" boolean ""
+         add_prop $node "cts-override" boolean $dts_file
     }
     set_drv_conf_prop $drv_handle C_UART_CLK_FREQ_HZ xlnx,clock-freq int
+}
 }

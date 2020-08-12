@@ -1,4 +1,3 @@
-#
 # (C) Copyright 2014-2015 Xilinx, Inc.
 #
 # This program is free software; you can redistribute it and/or
@@ -12,20 +11,21 @@
 # GNU General Public License for more details.
 #
 
+namespace eval axi_clk_wiz {  
 proc generate {drv_handle} {
-	# try to source the common tcl procs
-	# assuming the order of return is based on repo priority
-	foreach i [get_sw_cores device_tree] {
-		set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-		if {[file exists $common_tcl_file]} {
-			source $common_tcl_file
-			break
-		}
+
+	global env
+	global dtsi_fname
+	set path $env(REPO)
+
+	set node [get_node $drv_handle]
+	if {$node == 0} {
+		return
 	}
-	set compatible [get_comp_str $drv_handle]
-	set compatible [append compatible " " "xlnx,clocking-wizard"]
-	set_drv_prop $drv_handle compatible "$compatible" stringlist
-	set ip [get_cells -hier $drv_handle]
+#	set compatible [append compatible " " "xlnx,clocking-wizard"]
+#	set_drv_prop $drv_handle compatible "$compatible" stringlist
+	set keyval [pldt append $node compatible "\ \, \"xlnx,clocking-wizard\""]
+	set ip [hsi::get_cells -hier $drv_handle]
 	gen_speedgrade $drv_handle
 	set output_names ""
 	for {set i 1} {$i < 8} {incr i} {
@@ -38,13 +38,14 @@ proc generate {drv_handle} {
 		}
 	}
 	if {![string_is_empty $output_names]} {
-		set_property CONFIG.clock-output-names $output_names $drv_handle
+		add_prop $node "clock-output-names" $output_names string "pl.dtsi"
+#		set_property CONFIG.clock-output-names $output_names $drv_handle
 	}
 
 
 	gen_dev_ccf_binding $drv_handle "clk_in1 s_axi_aclk" "clocks clock-names"
-	set sw_proc [get_sw_processor]
-	set proc_ip [get_cells -hier $sw_proc]
+#	set sw_proc [get_sw_processor]
+	set proc_ip [hsi::get_cells -hier $sw_proc]
 	set proctype [get_property IP_NAME $proc_ip]
 	if {[string match -nocase $proctype "microblaze"] } {
 		gen_dev_ccf_binding $drv_handle "clk_in1 s_axi_aclk" "clocks clock-names"
@@ -52,9 +53,12 @@ proc generate {drv_handle} {
 }
 
 proc gen_speedgrade {drv_handle} {
-	set speedgrade [get_property SPEEDGRADE [get_hw_designs]]
+	set speedgrade [get_property SPEEDGRADE [hsi::get_hw_designs]]
 	set num [regexp -all -inline -- {[0-9]} $speedgrade]
 	if {![string equal $num ""]} {
-		hsi::utils::add_new_property $drv_handle "speed-grade" int $num
+		set node [get_node $drv_handle]
+		add_prop $node "speed-grade" $num int "pl.dtsi"
+#		hsi::utils::add_new_property $drv_handle "speed-grade" int $num
 	}
+}
 }
