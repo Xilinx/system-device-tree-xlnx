@@ -726,6 +726,7 @@ proc add_prop args {
 
 	set bypass 0
 	set incr 0
+	set overwrite 0
 	foreach val $args {
 		incr count
 	}
@@ -740,6 +741,9 @@ proc add_prop args {
 		set val ""
 		set type [lindex $args 2]
 		set dts_file [lindex $args 3]
+	}
+	if {$count > 5} {
+		set overwrite [lindex $args 5]
 	}
 
 	if {[string match -nocase $node "&gic"]} {
@@ -757,7 +761,7 @@ proc add_prop args {
 		set treeobj "pcwdt"
 	} elseif {[string match -nocase $dts_file "pl.dtsi"]} {
 		set treeobj "pldt"
-	} elseif {[string match -nocase $dts_file "versal.dtsi"]} {
+	} elseif {[string match -nocase $dts_file "versal.dtsi"] || [string match -nocase $dts_file "zynqmp.dtsi"]} {
 		set treeobj "psdt"
 	} else {
 		set treeobj "systemdt"
@@ -779,7 +783,7 @@ proc add_prop args {
 			set keyval [$treeobj set $node $prop $val]
 		}
 	} else {
-		if {[string match -nocase $prop "status"]} {
+		if {[string match -nocase $prop "status"] || $overwrite == 1} {
 			set keyval [$treeobj set $node $prop $val]
 		} else {
 			set keyval [$treeobj append $node $prop " $val"]
@@ -1550,7 +1554,7 @@ proc set_drv_conf_prop args {
 				set type [lindex $args 3]
 				if {[string equal -nocase $type "boolean"]} {
 					if {[expr $value < 1]} {
-						return 0
+				#		return 0
 					}
 					set value ""
 				}
@@ -1558,7 +1562,20 @@ proc set_drv_conf_prop args {
 			regsub -all {^CONFIG.} $conf_prop {} conf_prop
 			set node [get_node $drv_handle]
 			set dts_file [set_drv_def_dts $drv_handle]
-			add_prop $node $conf_prop $value $type $dts_file
+			if {[string match -nocase $dts_file "pcw.dtsi"]} {
+				set treeobj "pcwdt"
+			} elseif {[string match -nocase $dts_file "pl.dtsi"]} {
+				set treeobj "pldt"
+			} elseif {[string match -nocase $dts_file "versal.dtsi"] || [string match -nocase $dts_file "zynqmp.dtsi"]} {
+				set treeobj "psdt"
+			} else {
+				set treeobj "systemdt"
+			}
+			if {[catch {set val [$treeobj get $node $conf_prop]} msg]} {
+				add_prop $node $conf_prop $value $type $dts_file
+			} else {
+				add_prop $node $conf_prop $value $type $dts_file 1
+			}
 		}
 	}
 }
@@ -4423,7 +4440,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 		}
 	}
 	if {[regexp "pmc_*" $ip_type" match]} {
-		return 0
+	#	return 0
 	}
 	if {[lsearch $ignore_list $ip_type] >= 0  \
 		} {
@@ -4453,7 +4470,6 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 		set bus_node "root"
 	}
 	if {[is_ps_ip $drv_handle]} {
-
 		set node [get_node $drv_handle]
 		set values [$treeobj getall $node]
 		set status_prop ""

@@ -40,7 +40,7 @@ namespace eval axi_cdma {
 		if {$node == 0} {
 			return
 		}
-		set keyval [pldt append $node compatible "\ \, \"xlnx,axi-cdma-1.00.a\""
+		set keyval [pldt append $node compatible "\ \, \"xlnx,axi-cdma-1.00.a\""]
 		set dma_ip [hsi::get_cells -hier $drv_handle]
 		set cdma_count [get_count "cdma_count"]
 		if { [llength $cdma_count] == 0 } {
@@ -48,7 +48,6 @@ namespace eval axi_cdma {
 		}
 
 		set baseaddr [get_baseaddr $dma_ip no_prefix]
-		set tx_chan [create_node -n 
 		set tx_chan [add_dma_channel $drv_handle $node "axi-cdma" $baseaddr "MM2S" $cdma_count ]
 		incr cdma_count
 		set drvname [get_drivers $drv_handle]
@@ -73,7 +72,7 @@ namespace eval axi_cdma {
 	proc add_dma_channel {drv_handle parent_node xdma addr mode devid} {
 		set modellow [string tolower $mode]
 		set modeIndex [string index $mode 0]
-		set dma_channel [create_node -n "dma-channel" -u $addr -p $parent_node] 
+		set dma_channel [create_node -n "dma-channel" -u $addr -p $parent_node -d "pl.dtsi"] 
 
 		add_prop $dma_channel "compatible" [format "xlnx,%s-channel" $xdma] stringlist "pl.dtsi"
 		add_prop $dma_channel "xlnx,device-id" $devid hexint "pl.dtsi"
