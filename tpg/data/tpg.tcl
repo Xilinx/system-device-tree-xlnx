@@ -13,33 +13,28 @@
 #
 
 namespace eval tpg {
-proc generate {drv_handle} {
-#	set node [gen_peripheral_nodes $drv_handle]
-	set node [get_node $drv_handle]
-	set dts_file [set_drv_def_dts $dts_file]
-	if {$node == 0} {
-		return
+	proc generate {drv_handle} {
+		set node [get_node $drv_handle]
+		set dts_file [set_drv_def_dts $dts_file]
+		if {$node == 0} {
+			return
+		}
+		set tpg_count [get_count "tpg_count"]
+		if { [llength $tpg_count] == 0 } {
+			set tpg_count 0
+		}
+		pldt append $node compatible "\ \, \"xlnx,v-tpg-7.0\""	
+		set ip [hsi::get_cells -hier $drv_handle]
+		set s_axi_ctrl_addr_width [get_property CONFIG.C_S_AXI_CTRL_ADDR_WIDTH [hsi::get_cells -hier $drv_handle]]
+		add_prop "${node}" "xlnx,s-axi-ctrl-addr-width" $s_axi_ctrl_addr_width int $dts_file
+		set s_axi_ctrl_data_width [get_property CONFIG.C_S_AXI_CTRL_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
+		add_prop "${node}" "xlnx,s-axi-ctrl-data-width" $s_axi_ctrl_data_width int $dts_file
+		set max_data_width [get_property CONFIG.MAX_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
+		set pixels_per_clock [get_property CONFIG.SAMPLES_PER_CLOCK [hsi::get_cells -hier $drv_handle]]
+		add_prop "${node}" "xlnx,ppc" $pixels_per_clock int $dts_file
+		set max_cols [get_property CONFIG.MAX_COLS [hsi::get_cells -hier $drv_handle]]
+		add_prop "${node}" "xlnx,max-width" $max_cols int $dts_file
+		set max_rows [get_property CONFIG.MAX_ROWS [hsi::get_cells -hier $drv_handle]]
+		add_prop "${node}" "xlnx,max-height" $max_rows int $dts_file
 	}
-#	set tpg_count [hsi::utils::get_os_parameter_value "tpg_count"]
-	set tpg_count [get_count "tpg_count"]
-	if { [llength $tpg_count] == 0 } {
-		set tpg_count 0
-	}
-#	set compatible [get_comp_str $drv_handle]
-#	set compatible [append compatible " " "xlnx,v-tpg-7.0"]
-#	set_drv_prop $drv_handle compatible "$compatible" stringlist
-	pldt append $node compatible "\ \, \"xlnx,v-tpg-7.0\""	
-	set ip [hsi::get_cells -hier $drv_handle]
-	set s_axi_ctrl_addr_width [get_property CONFIG.C_S_AXI_CTRL_ADDR_WIDTH [hsi::get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,s-axi-ctrl-addr-width" $s_axi_ctrl_addr_width int $dts_file
-	set s_axi_ctrl_data_width [get_property CONFIG.C_S_AXI_CTRL_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,s-axi-ctrl-data-width" $s_axi_ctrl_data_width int $dts_file
-	set max_data_width [get_property CONFIG.MAX_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
-	set pixels_per_clock [get_property CONFIG.SAMPLES_PER_CLOCK [hsi::get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,ppc" $pixels_per_clock int $dts_file
-	set max_cols [get_property CONFIG.MAX_COLS [hsi::get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,max-width" $max_cols int $dts_file
-	set max_rows [get_property CONFIG.MAX_ROWS [hsi::get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,max-height" $max_rows int $dts_file
-}
 }

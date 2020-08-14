@@ -12,8 +12,6 @@
 # GNU General Public License for more details.
 #
 namespace eval prc {
-source api.tcl -notrace
-#SURESH TODO
 proc generate {drv_handle} {
 	prc_generate_params $drv_handle
 }
@@ -24,10 +22,8 @@ proc prc_generate_params {drv_handle} {
 	set node [get_node $drv_handle] 
 	set dts_file [set_drv_def_dts $drv_handle]
         set drvname [get_drivers $drv_handle] 
-        #puts "drvname $drvname" 
  
         set api_file "$path/$drvname/data/api.tcl" 
-        puts "COMMON $common_file" 
         if {[file exists $common_file]} { 
                 source -notrace $api_file 
         }

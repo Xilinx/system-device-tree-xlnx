@@ -13,15 +13,11 @@
 #
 
 namespace eval sdi_rx {
-proc generate {drv_handle} {
-	set node [get_node $drv_handle]
-#	set node [gen_peripheral_nodes $drv_handle]
-	if {$node == 0} {
-		return
+	proc generate {drv_handle} {
+		set node [get_node $drv_handle]
+		if {$node == 0} {
+			return
+		}
+		pldt append $node compatible "\ \, \"xlnx,v-smpte-uhdsdi-rx-ss\""
 	}
-#	set compatible [get_comp_str $drv_handle]
-#	set compatible [append compatible " " "xlnx,v-smpte-uhdsdi-rx-ss"]
-	pldt append $node compatible "\ \, \"xlnx,v-smpte-uhdsdi-rx-ss\""
-#	set_drv_prop $drv_handle compatible "$compatible" stringlist
-}
 }

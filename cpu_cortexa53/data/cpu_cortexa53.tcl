@@ -13,39 +13,37 @@
 #
 
 namespace eval cpu_cortexa53 {
-if {[catch {set tmp [::struct::tree psdt]} msg]} {
-}
-if {[catch {set tmp [::struct::tree pldt]} msg]} {
-}
-if {[catch {set tmp [::struct::tree pcwdt]} msg]} {
-}
-if {[catch {set tmp [::struct::tree systemdt]} msg]} {
-}
-if {[catch {set tmp [::struct::tree clkdt]} msg]} {
-}
-proc generate {drv_handle} {
-	global dtsi_fname
-	global env
-        set path $env(REPO)
-        set common_file "$path/device_tree/data/config.yaml"
-        if {[file exists $common_file]} {
-                #error "file not found: $common_file"
-        }
-        #set file "$path/${drvname}/data/config.yaml"
-        #puts "file $common_file"
-        set mainline_ker [get_user_config $common_file -mainline_kernel]
-	if {[string match -nocase "$mainline_ker" "v4.17"]} {
-		set dtsi_fname "zynqmp/zynqmp.dtsi"
-	} else {
-		set dtsi_fname "zynqmp/zynqmp.dtsi"
+	if {[catch {set tmp [::struct::tree psdt]} msg]} {
 	}
-	# create root node
-	set master_root_node [gen_root_node $drv_handle]
-	set nodes [gen_cpu_nodes $drv_handle]
-}
-namespace export psdt
-namespace export systemdt
-namespace export pldt
-namespace export pcwdt
-namespace export clkdt
+	if {[catch {set tmp [::struct::tree pldt]} msg]} {
+	}
+	if {[catch {set tmp [::struct::tree pcwdt]} msg]} {
+	}
+	if {[catch {set tmp [::struct::tree systemdt]} msg]} {
+	}
+	if {[catch {set tmp [::struct::tree clkdt]} msg]} {
+	}
+	proc generate {drv_handle} {
+		global dtsi_fname
+		global env
+		set path $env(REPO)
+		set common_file "$path/device_tree/data/config.yaml"
+		if {[file exists $common_file]} {
+			#error "file not found: $common_file"
+		}
+		set mainline_ker [get_user_config $common_file -mainline_kernel]
+		if {[string match -nocase "$mainline_ker" "v4.17"]} {
+			set dtsi_fname "zynqmp/zynqmp.dtsi"
+		} else {
+			set dtsi_fname "zynqmp/zynqmp.dtsi"
+		}
+		# create root node
+		set master_root_node [gen_root_node $drv_handle]
+		set nodes [gen_cpu_nodes $drv_handle]
+	}
+	namespace export psdt
+	namespace export systemdt
+	namespace export pldt
+	namespace export pcwdt
+	namespace export clkdt
 }

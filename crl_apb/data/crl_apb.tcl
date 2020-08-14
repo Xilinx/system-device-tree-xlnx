@@ -13,10 +13,9 @@
 #
 
 namespace eval crl_apb {
-proc generate {drv_handle} {
-    set dts_file [set_drv_def_dts $drv_handle]
-    set node [create_node -n "&zynqmp_reset" -d $dts_file -p root "pcw.dtsi"]
-    add_prop $node "status" "okay" string $dts_file
-#    hsi::utils::add_new_dts_param "$node" "status" "okay" string
-}
+	proc generate {drv_handle} {
+	    set dts_file [set_drv_def_dts $drv_handle]
+	    set node [create_node -n "&zynqmp_reset" -d $dts_file -p root "pcw.dtsi"]
+	    add_prop $node "status" "okay" string $dts_file
+	}
 }

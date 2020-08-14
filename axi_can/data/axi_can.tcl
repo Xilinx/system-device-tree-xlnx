@@ -13,53 +13,36 @@
 #
 
 namespace eval axi_can {
-proc generate {drv_handle} {
-	global env
-	global dtsi_fname
-	set path $env(REPO)
+	proc generate {drv_handle} {
+		global env
+		global dtsi_fname
+		set path $env(REPO)
 
-	#set node [gen_peripheral_nodes $drv_handle]
-	set node [get_node $drv_handle]
-	if {$node == 0} {
-		return
+		set node [get_node $drv_handle]
+		if {$node == 0} {
+			return
+		}
+
+		set keyval [pldt append $node compatible "\ \, \"xlnx,axi-can-1.00.a\""]
+	    	set ip_name [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+		    set version [string tolower [common::get_property VLNV $drv_handle]]
+		    if {[string match -nocase $ip_name "canfd"]} {
+			if {[string compare -nocase "xilinx.com:ip:canfd:1.0" $version] == 0} {
+				add_prop $node "compatible" "xlnx,canfd-1.0" stringlist "pl.dtsi"
+			} else {
+				add_prop $node "compatible" "xlnx,axi-canfd-2.0" stringlist "pl.dtsi"
+			}
+			set_drv_conf_prop $drv_handle NUM_OF_TX_BUF tx-mailbox-count hexint
+			set_drv_conf_prop $drv_handle NUM_OF_TX_BUF rx-fifo-depth hexint
+		    } else {
+			set_drv_conf_prop $drv_handle c_can_num_acf can-num-acf hexint
+			set_drv_conf_prop $drv_handle c_can_tx_dpth tx-fifo-depth hexint
+			set_drv_conf_prop $drv_handle c_can_rx_dpth rx-fifo-depth hexint
+		    }
+
+		set proc_type [get_hw_family]
+		if {[regexp "kintex*" $proc_type match]} {
+		    gen_dev_ccf_binding $drv_handle "s_axi_aclk"
+		}
 	}
-
-    # try to source the common tcl procs
-    # assuming the order of return is based on repo priority
-#    foreach i [get_sw_cores device_tree] {
- #       set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-  #      if {[file exists $common_tcl_file]} {
-   #         source $common_tcl_file
-    #        break
-     #   }
-  #  }
-	set keyval [pldt append $node compatible "\ \, \"xlnx,axi-can-1.00.a\""
-#    set compatible [get_comp_str $drv_handle]
- #   set compatible [append compatible " " "xlnx,axi-can-1.00.a"]
-  #  set_drv_prop $drv_handle compatible "$compatible" stringlist
-    set ip_name [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
-    set version [string tolower [common::get_property VLNV $drv_handle]]
-    if {[string match -nocase $ip_name "canfd"]} {
-        if {[string compare -nocase "xilinx.com:ip:canfd:1.0" $version] == 0} {
-		add_prop $node "compatible" stringlist "xlnx,canfd-1.0" "pl.dtsi"
-#            hsi::utils::add_new_property $drv_handle "compatible" stringlist "xlnx,canfd-1.0"
-        } else {
-		add_prop $node "compatible" stringlist "xlnx,axi-canfd-2.0" "pl.dtsi"
- #           hsi::utils::add_new_property $drv_handle "compatible" stringlist "xlnx,axi-canfd-2.0"
-        }
-        set_drv_conf_prop $drv_handle NUM_OF_TX_BUF tx-mailbox-count hexint
-        set_drv_conf_prop $drv_handle NUM_OF_TX_BUF rx-fifo-depth hexint
-    } else {
-        set_drv_conf_prop $drv_handle c_can_num_acf can-num-acf hexint
-        set_drv_conf_prop $drv_handle c_can_tx_dpth tx-fifo-depth hexint
-        set_drv_conf_prop $drv_handle c_can_rx_dpth rx-fifo-depth hexint
-    }
-
-  #  set proc_type [get_sw_proc_prop IP_NAME]
-	set proc_type "psv_cortexa72"
-	set proc_type [get_hw_family]
-	if {[regexp "kintex*" $proc_type match]} {
-            gen_dev_ccf_binding $drv_handle "s_axi_aclk"
-	}
-}
 }

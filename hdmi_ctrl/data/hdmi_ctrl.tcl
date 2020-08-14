@@ -13,16 +13,12 @@
 #
 
 namespace eval hdmi_ctrl {
-proc generate {drv_handle} {
-	set node [get_node $drv_handle]
-	set dts_file [set_drv_def_dts $drv_handle]
-	#set node [gen_peripheral_nodes $drv_handle]
-	if {$node == 0} {
-		return
+	proc generate {drv_handle} {
+		set node [get_node $drv_handle]
+		set dts_file [set_drv_def_dts $drv_handle]
+		if {$node == 0} {
+			return
+		}
+		pldt append $node compatible "\ \, \"xlnx,hdmi_act_ctrl\""
 	}
-#	set compatible [get_comp_str $drv_handle]
-#	set compatible [append compatible " " "xlnx,hdmi_act_ctrl"]
-#	set_drv_prop $drv_handle compatible "$compatible" stringlist
-	pldt append $node compatible "\ \, \"xlnx,hdmi_act_ctrl\""
-}
 }

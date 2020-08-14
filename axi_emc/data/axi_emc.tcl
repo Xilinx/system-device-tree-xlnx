@@ -17,30 +17,26 @@
 # GNU General Public License for more details.
 #
 namespace eval axi_emc { 
-proc generate {drv_handle} {
-	global env
-	global dtsi_fname
-	set path $env(REPO)
+	proc generate {drv_handle} {
+		global env
+		global dtsi_fname
+		set path $env(REPO)
 
-	set node [get_node $drv_handle]
-	if {$node == 0} {
-		return
-	}
+		set node [get_node $drv_handle]
+		if {$node == 0} {
+			return
+		}
 
 
-	set ip [hsi::get_cells -hier $drv_handle]
-#	set compatible [get_comp_str $drv_handle]
-#	set compatible [append compatible " " "cfi-flash"]
-#	set_drv_prop $drv_handle compatible "$compatible" stringlist
-	pldt append $node compatible "\ \, \"cfi-flash\""
-	set count [hsi::utils::get_ip_param_value $ip "C_NUM_BANKS_MEM"]
-	if { [llength $count] == 0 } {
-		set count 1
+		set ip [hsi::get_cells -hier $drv_handle]
+		pldt append $node compatible "\ \, \"cfi-flash\""
+		set count [hsi::utils::get_ip_param_value $ip "C_NUM_BANKS_MEM"]
+		if { [llength $count] == 0 } {
+			set count 1
+		}
+		for {set x 0} { $x < $count} {incr x} {
+			set datawidth [hsi::utils::get_ip_param_value $ip [format "C_MEM%d_WIDTH" $x]]
+			add_prop $node "bank-width" [expr ($datawidth/8)] int "pl.dtsi"
+		}
 	}
-	for {set x 0} { $x < $count} {incr x} {
-		set datawidth [hsi::utils::get_ip_param_value $ip [format "C_MEM%d_WIDTH" $x]]
-		add_prop $node "bank-width" [expr ($datawidth/8)] int "pl.dtsi"
-#		set_property bank-width "[expr ($datawidth/8)]" $drv_handle
-	}
-}
 }

@@ -13,19 +13,15 @@
 #
 
 namespace eval sdps {
-proc generate {drv_handle} {
-    set ip [hsi::get_cells -hier $drv_handle]
-    set node [get_node $drv_handle]
-    set dts_file [set_drv_def_dts $drv_handle]
-    set clk_freq [hsi::utils::get_ip_param_value $ip C_SDIO_CLK_FREQ_HZ]
-#    set_property CONFIG.clock-frequency "$clk_freq" $drv_handle
-    add_prop $node "clock-frequency" $clk_freq hexint $dts_file
-    set_drv_conf_prop $drv_handle C_MIO_BANK xlnx,mio_bank hexint
-    set_drv_conf_prop $drv_handle C_HAS_CD xlnx,card-detect int
-    set_drv_conf_prop $drv_handle C_HAS_WP xlnx,write-protect int
-#    set_drv_conf_prop $drv_handle C_BUS_WIDTH xlnx,bus-width int
-   # set_drv_conf_prop $drv_handle C_SDIO_CLK_FREQ_HZ xlnx,clock-freq int
- #   set_drv_conf_prop $drv_handle C_HAS_EMIO xlnx,has-emio int
-}
+	proc generate {drv_handle} {
+	    set ip [hsi::get_cells -hier $drv_handle]
+	    set node [get_node $drv_handle]
+	    set dts_file [set_drv_def_dts $drv_handle]
+	    set clk_freq [hsi::utils::get_ip_param_value $ip C_SDIO_CLK_FREQ_HZ]
+	    add_prop $node "clock-frequency" $clk_freq hexint $dts_file
+	    set_drv_conf_prop $drv_handle C_MIO_BANK xlnx,mio_bank hexint
+	    set_drv_conf_prop $drv_handle C_HAS_CD xlnx,card-detect int
+	    set_drv_conf_prop $drv_handle C_HAS_WP xlnx,write-protect int
+	}
 }
 

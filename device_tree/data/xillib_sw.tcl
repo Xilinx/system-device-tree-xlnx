@@ -976,12 +976,15 @@ proc hsi::utils::is_pin_interrupting_current_proc { periph_name intr_pin_name} {
         return $ret
     }
     #get the list of connected 
+	puts "is"
     set intr_cntrls [hsi::utils::get_connected_intr_cntrl "$periph_name" "$intr_pin_name"]
+	puts "is1"
     foreach intr_cntrl $intr_cntrls {
         if { [hsi::utils::is_ip_interrupting_current_proc $intr_cntrl] == 1} {
             return 1
         }
     }
+	puts "is3"
    return [hsi::__internal::special_handling_for_ps7_interrupt $periph_name]
 }
 
@@ -1014,6 +1017,7 @@ proc hsi::utils::is_ip_interrupting_current_proc { periph_name} {
        return $ret
    }
    if { [hsi::utils::is_intr_cntrl $periph_name] == 1} {
+
         set cntrl_driver [get_drivers $periph_name]
 	if {[string match -nocase $cntrl_driver "generic"]} {
 		set cntrl_driver ""
@@ -1024,7 +1028,9 @@ proc hsi::utils::is_ip_interrupting_current_proc { periph_name} {
         }
         #set current_proc [common::get_property HW_INSTANCE [hsi::get_sw_processor]]
 	#SURESH
-        set current_proc "psv_cortexa72_0"
+	set proc_list "psv_cortexa72_0 psu_cortexa53_0 ps7_cortexa9_0"
+#        set current_proc "psv_cortexa72_0"
+#	set current_proc [get_hw_family]
         set intr_pin [hsi::get_pins -of_objects $periph "Irq"]
         if { [llength $intr_pin] != 0} {
             set sink_pins [hsi::utils::get_sink_pins $intr_pin]
@@ -1033,7 +1039,7 @@ proc hsi::utils::is_ip_interrupting_current_proc { periph_name} {
                 #Connected interface should be IP Instance
                 #Connected IP should be current_processor
                 set ip_name [common::get_property NAME $connected_ip]
-                if { [string match -nocase "$ip_name" "$current_proc"] } {
+		if {[lsearch -nocase $proc_list $ip_name] >= 0} {
                     return 1
                 }
             }
@@ -1046,7 +1052,7 @@ proc hsi::utils::is_ip_interrupting_current_proc { periph_name} {
                 #Connected interface should be IP Instance
                 #Connected IP should be current_processor
                 set ip_name [common::get_property NAME $connected_ip]
-                if { [string match -nocase "ip_name" "$current_proc"] == 0 } {
+		if {[lsearch -nocase $proc_list $ip_name] >= 0} {
                     return 1
                 }
             }
@@ -1061,7 +1067,7 @@ proc hsi::utils::is_ip_interrupting_current_proc { periph_name} {
                 #Connected interface should be IP Instance
                 #Connected IP should be current_processor
                 set ip_name [common::get_property NAME $connected_ip]
-                if { [string match -nocase "$ip_name" "$current_proc"] } {
+		if {[lsearch -nocase $proc_list $ip_name] >= 0} {
 #			puts "return3"
                     return 1
                 }

@@ -13,43 +13,41 @@
 #
 
 namespace eval ernic {
-proc generate {drv_handle} {
-	#set proc_type [get_sw_proc_prop IP_NAME]
-	#set node [gen_peripheral_nodes $drv_handle]
-	set node [get_node $drv_handle]
-	if {$node == 0} {
-		return
-	}
-	set ernic_ip [hsi::get_cells -hier $drv_handle]
-	set ip_name [get_property IP_NAME $ernic_ip]
+	proc generate {drv_handle} {
+		set node [get_node $drv_handle]
+		if {$node == 0} {
+			return
+		}
+		set ernic_ip [hsi::get_cells -hier $drv_handle]
+		set ip_name [get_property IP_NAME $ernic_ip]
 
-	set ethip [get_connected_ip $drv_handle "rx_pkt_hndler_s_axis"]
-	if {[llength $ethip]} {
-		set_drv_property $drv_handle eth-handle "$ethip" reference
+		set ethip [get_connected_ip $drv_handle "rx_pkt_hndler_s_axis"]
+		if {[llength $ethip]} {
+			set_drv_property $drv_handle eth-handle "$ethip" reference
+		}
 	}
-}
 
-proc get_connected_ip {drv_handle dma_pin} {
-	global connected_ip
-	set intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $drv_handle] $dma_pin]
-	set valid_eth_list "l_ethernet"
-	if {[string_is_empty ${intf}]} {
-		return 0
+	proc get_connected_ip {drv_handle dma_pin} {
+		global connected_ip
+		set intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $drv_handle] $dma_pin]
+		set valid_eth_list "l_ethernet"
+		if {[string_is_empty ${intf}]} {
+			return 0
+		}
+		set connected_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $intf]
+		if {[string_is_empty ${connected_ip}]} {
+			dtg_warning "$drv_handle connected ip is NULL for the pin $intf"
+			return 0
+		}
+		set iptype [get_property IP_NAME [get_cells -hier $connected_ip]]
+		if {[string match -nocase $iptype "axis_data_fifo"] } {
+			set dma_pin "M_AXIS"
+			get_connected_ip $connected_ip $dma_pin
+		} elseif {[lsearch -nocase $valid_eth_list $iptype] >= 0 } {
+			return $connected_ip
+		} else {
+			set dma_pin "S_AXIS"
+			get_connected_ip $connected_ip $dma_pin
+		}
 	}
-	set connected_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $intf]
-	if {[string_is_empty ${connected_ip}]} {
-		dtg_warning "$drv_handle connected ip is NULL for the pin $intf"
-		return 0
-	}
-	set iptype [get_property IP_NAME [get_cells -hier $connected_ip]]
-	if {[string match -nocase $iptype "axis_data_fifo"] } {
-		set dma_pin "M_AXIS"
-		get_connected_ip $connected_ip $dma_pin
-	} elseif {[lsearch -nocase $valid_eth_list $iptype] >= 0 } {
-		return $connected_ip
-	} else {
-		set dma_pin "S_AXIS"
-		get_connected_ip $connected_ip $dma_pin
-	}
-}
 }

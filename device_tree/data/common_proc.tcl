@@ -38,21 +38,55 @@ set include_list ""
 set pstree 0
 global repo_path
 set repo_path ""
-#global psdt
-#global pldt
-#global pcwdt
-#global systemdt
-#namespace import cpu_cortexa72::*
 global set osmap [dict create]
 global set label_addr [dict create]
 global set label_type [dict create]
-#global set driver_param {dev_type {items {}} alias {items {}}}
-#set driver_param {dev_type {items {}} alias {items {}}}
-#set driver_param [list ""]
-#dict with driver_param dev_type { lappend items {}}
-#dict with driver_param alias { lappend items {}}
+
 package require Tcl 8.5.14
 package require yaml
+
+global driver_param
+set driver_param {dev_type {items {}} alias {items {}}}
+dict with driver_param dev_type {
+	lappend items psv_cortexa72 cpu
+	lappend items psu_cortexa53 cpu
+	lappend items psv_cortexr5 cpu
+	lappend items psu_cortexr5 cpu
+	lappend items psu_pmu cpu
+	lappend items ps7_pmu cpu
+	lappend items psv_pmc cpu
+	lappend items microblaze cpu
+}
+
+dict with driver_param alias {
+	lappend items axi_ethernet ethernet
+	lappend items axi_ethernet_buffer ethernet
+	lappend items axi_10g_ethernet ethernet
+	lappend items xxv_ethernet ethernet
+	lappend items usxgmii ethernet
+	lappend items axi_iic i2c
+	lappend items axi_quad_spi spi
+	lappend items axi_ethernetlite ethernet
+	lappend items ps7_ethernet ethernet
+	lappend items psu_ethernet ethernet
+	lappend items psv_ethernet ethernet
+	lappend items ps7_i2c i2c
+	lappend items psu_i2c i2c
+	lappend items psv_i2c i2c
+	lappend items psu_ospi spi
+	lappend items psv_pmc_ospi spi
+	lappend items ps7_qspi spi
+	lappend items psu_qspi spi
+	lappend items psv_pmc_qspi spi
+	lappend items mdm serial
+	lappend items axi_uartlite serial
+	lappend items axi_uart16550 serial
+	lappend items ps7_uart serial
+	lappend items psu_uart serial
+	lappend items psu_sbsauart serial
+	lappend items psv_uart serial
+	lappend items psv_sbsauart serial
+}
 
 proc get_type args {
 	set prop [lindex $args 1]
@@ -125,49 +159,6 @@ proc get_dt_param args {
        return $val
 }
 
-	global driver_param
-#	set driver_param {}
-	set driver_param {dev_type {items {}} alias {items {}}}
-	dict with driver_param dev_type {
-		lappend items psv_cortexa72 cpu
-		lappend items psu_cortexa53 cpu
-		lappend items psv_cortexr5 cpu
-		lappend items psu_cortexr5 cpu
-		lappend items psu_pmu cpu
-		lappend items ps7_pmu cpu
-		lappend items psv_pmc cpu
-		lappend items microblaze cpu
-	}
-	dict with driver_param alias {
-		lappend items axi_ethernet ethernet
-		lappend items axi_ethernet_buffer ethernet
-		lappend items axi_10g_ethernet ethernet
-		lappend items xxv_ethernet ethernet
-		lappend items usxgmii ethernet
-		lappend items axi_iic i2c
-		lappend items axi_quad_spi spi
-		lappend items axi_ethernetlite ethernet
-		lappend items ps7_ethernet ethernet
-		lappend items psu_ethernet ethernet
-		lappend items psv_ethernet ethernet
-		lappend items ps7_i2c i2c
-		lappend items psu_i2c i2c
-		lappend items psv_i2c i2c
-		lappend items psu_ospi spi
-		lappend items psv_pmc_ospi spi
-		lappend items ps7_qspi spi
-		lappend items psu_qspi spi
-		lappend items psv_pmc_qspi spi
-		lappend items mdm serial
-		lappend items axi_uartlite serial
-		lappend items axi_uart16550 serial
-		lappend items ps7_uart serial
-		lappend items psu_uart serial
-		lappend items psu_sbsauart serial
-		lappend items psv_uart serial
-		lappend items psv_sbsauart serial
-	}
-
 proc get_driver_param args {
 	global driver_param
 
@@ -177,6 +168,7 @@ proc get_driver_param args {
 	set ip_name [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]	
 	if {[catch {set val [dict get $driver_param $type items $ip_name]} msg]} {
 	}
+
 	return $val
 }
 
@@ -189,12 +181,11 @@ proc get_count args {
 	} else {
 		set value [expr $rt + 1]
 	}
-	return $value
 
+	return $value
 }
 
 proc get_label_addr args {
-
 	set name [lindex $args 0]
 	set label [lindex $args 1]
 	global label_addr
@@ -220,8 +211,8 @@ proc get_label_addr args {
 	} else {
 		set value $tmp
 	}
-	return $value
 
+	return $value
 }
 
 proc set_count args {
@@ -229,13 +220,7 @@ proc set_count args {
 	set param [lindex $args 0]
 	set val [lindex $args 1]
 	global osmap
-#	if {[catch {set rt [dict get $osmap $param]} msg]} {
-		dict append osmap $param $val
-#		set value 0
-#	} else {
-#		set value [expr $rt + 1]
-	}
-#	return $value
+	dict append osmap $param $val
 
 }
 
@@ -250,18 +235,15 @@ proc get_dt_data args {
 	set prop [lindex $args 1]
 	set drv_handle [lindex $args 0]
 	set drvname [get_drivers $drv_handle]
-
-
 	set common_file "$path/$drvname/data/config.yaml"
 	if {[file exists $common_file]} {
         	#error "file not found: $common_file"
     	} else {
 		return ""
 	}
-	#set file "$path/${drvname}/data/config.yaml"
 	set value [get_driver_config $drv_handle $prop]
-	return $value
 
+	return $value
 }
 
 # set global dict_devicetree
@@ -307,8 +289,6 @@ proc get_user_config args {
         return $param
 }
 
-
-
 proc get_node args {
 	proc_called_by
 	set handle [lindex $args 0]
@@ -346,7 +326,6 @@ proc get_node args {
 	foreach child $childs {
 	}
 	set dev_type [get_property IP_NAME [hsi::get_cells -hier $handle]]
-#	set dts [set_drv_def_dts $handle]
 	if {[is_ps_ip $handle]} {
 		set ps_mapping [gen_ps_mapping]
 		if {[catch {set tmp [dict get $ps_mapping $addr label]} msg]} {
@@ -362,6 +341,7 @@ proc get_node args {
 	}
 	set node [string trimleft $node "\{"]
 	set node [string trimright $node "\}"]
+
 	return $node
 }
 
@@ -394,7 +374,6 @@ proc get_prop args {
 	set dts [set_drv_def_dts $handle]
 	set node [get_node $drv_handle]
 	set val [$treeobj get $node $property]
-	#set node [create_node -n $handle -l $label -u $addr -p $busname -d $dts]
 	return $val
 }
 
@@ -404,7 +383,6 @@ proc get_driver_config args {
 	set drv_handle [lindex $args 0]
 	set type [lindex $args 1]
 	set param [get_driver_param $drv_handle $type]
-	#set common_file [lindex $args 2]
 	if {[string match -nocase $param ""]} {
 		set drvname [get_drivers $drv_handle]
 		set common_file "$path/$drvname/data/config.yaml"
@@ -413,15 +391,16 @@ proc get_driver_config args {
 			puts "file not found <$common_file>" 
 		}
         	set dict_drvdata  {}
-#        	set config_file [lindex $args 0]
         	set cfg [get_yaml_dict $common_file]
         	set dict_devicetree [dict get $cfg dict_drvdata]
 		if {[catch {set param [dict get $dict_devicetree [lindex $args 1]]} msg]} {
         		return ""
 		}
 	}
+
 	return $param
 }
+
 # load yaml file into dict
 proc get_yaml_dict { config_file } {
 	proc_called_by
@@ -436,20 +415,7 @@ proc get_yaml_dict { config_file } {
     return [yaml::yaml2dict $data]
 }
 
-#if {[catch {set tmp [::struct::tree psdt]} msg]} {
-#}
-#if {[catch {set tmp [::struct::tree pldt]} msg]} {
-#}
-#if {[catch {set tmp [::struct::tree pcwdt]} msg]} {
-#}
-#if {[catch {set tmp [::struct::tree systemdt]} msg]} {
-#}
-#::struct::tree psdt
-#::struct::tree pldt
-#::struct::tree pcwdt
-#::struct::tree systemdt
-
-proc write_value1 {type value} {
+proc write_value {type value} {
         if {[catch {
                 if {$type == "int"} {
 			set base [format %x $value]
@@ -554,9 +520,6 @@ proc write_value1 {type value} {
                         }
 				set val [append val "\""]
 			}
-#			set val ""
-#			set val [append val $value]
-#			set val [append val ""] 
 		} else {
                         puts "unknown type $type"
                 }
@@ -567,9 +530,6 @@ proc write_value1 {type value} {
         return $val
 }
 
-proc node_format args {
-
-}
 proc create_node args {
 	set node_name ""
 	set node_unit_addr ""
@@ -757,6 +717,7 @@ proc create_node args {
 			}
 		}
         }
+
         return $drvnode
 }
 proc add_prop args {
@@ -770,8 +731,6 @@ proc add_prop args {
 	}
 	set node [lindex $args 0]
 	set prop [lindex $args 1]
-
-
 
 	if {$count > 4} {
 		set val [lindex $args 2]
@@ -793,7 +752,7 @@ proc add_prop args {
 	if {[string match -nocase $type "boolean"] && [string match -nocase $val ""]} {
 		set bypass 1
 	}
-	set val [write_value1 $type $val]
+	set val [write_value $type $val]
 	if {[string match -nocase $dts_file "pcw.dtsi"]} {
 		set treeobj "pcwdt"
 	} elseif {[string match -nocase $dts_file "pl.dtsi"]} {
@@ -806,16 +765,10 @@ proc add_prop args {
 	if {[catch {set already_key [$treeobj get $node $prop]} msg]} {
 
 		set temp [$treeobj children root]
-		if {[string match -nocase $temp ""]} {
-	
-		} else {
-		}
 		foreach kid $temp {
 			foreach nkid [$treeobj children $kid] {
 				if {[string match -nocase $nkid $node]} {
-	#				set keyval [$treeobj set $nkid $prop $val]
 				}
-			
 			}
 		}
 		set node [string trimleft $node "\{"]
@@ -859,7 +812,6 @@ proc line_to_node_val {line} {
 	}
 }
 
-#set a [open "zynqmp_old.dtsi"]
 proc create_ps_tree args {
 	global pstree
 
@@ -868,221 +820,201 @@ proc create_ps_tree args {
 	}
 
 	set ps_mapping [gen_ps_mapping]
-#global env
-#set path $env(REPO)
-#set psfile "$path/device_tree/data/kernel_dtsi/2020.1/versal/versal.dtsi"
-set psfile [lindex $args 0]
-set psdt [lindex $args 1]
-set a [open $psfile]
-set lines [split [read $a] "\n"]
-close $a;                          # Saves a few bytes :-)
-set levels {}
-set temp 0
-set parent "root"
-set next_cmd 0
-set next_prop ""
-set chain_list ""
-foreach line $lines {
-	if {[string match *\\\{* $line]} {
-		if {$temp == "0"} {
-		} else {
-			regsub -all {^[ \t]+} $line {} line
-			regsub -all {[ \{]$} $line {} line
+	set psfile [lindex $args 0]
+	set psdt [lindex $args 1]
+	set a [open $psfile]
+	set lines [split [read $a] "\n"]
+	close $a;                          # Saves a few bytes :-)
+	set levels {}
+	set temp 0
+	set parent "root"
+	set next_cmd 0
+	set next_prop ""
+	set chain_list ""
+	foreach line $lines {
+		if {[string match *\\\{* $line]} {
+			if {$temp == "0"} {
+			} else {
+				regsub -all {^[ \t]+} $line {} line
+				regsub -all {[ \{]$} $line {} line
+				set line [string trimleft $line " "]
+				set line [string trimright $line " "]
+				set parent [regsub -all {\{|\}} $parent ""]
+				regsub -all "\{| |\t" $line {} line
+				set node_label ""
+				set node_name ""
+				set node_unit_addr ""
+		
+				set node_data [split $line ":"]
+				set node_data_size [llength $node_data]
+				if {$node_data_size == 2} {
+					set node_label [lindex $node_data 0]
+					set tmp_data [split [lindex $node_data 1] "@"]
+					set node_name [lindex $tmp_data 0]
+					if {[llength $tmp_data] >= 2} {
+						set node_unit_addr [lindex $tmp_data 1]
+					}
+				} elseif {$node_data_size == 1} {
+					set node_name [lindex $node_data 0]
+				} else {
+					error "invalid node found - $line"
+				}
+				if {[string match -nocase $psdt "psdt"]} {
+					set tempfile "versal.dtsi"
+				} else {
+					set tempfile "versal-clk.dtsi"
+				}
+				if {[string match -nocase $node_name ""]} {
+				
+				} else {
+					
+					if {[catch {set tmp [dict get $ps_mapping $node_unit_addr label]} msg]} {
+						set parent [create_node -n $node_name -l $node_label -u $node_unit_addr -p $parent -d $tempfile]
+					} else {
+						set value [split $tmp ": "]
+						set node_label [lindex $value 0]
+						set node_name [lindex $value 2]
+						set parent [create_node -n $node_name -l $node_label -u $node_unit_addr -p $parent -d $tempfile]
+					}
+					lappend levels $parent
+				}
+			}
+			set temp [expr $temp + 1]
+		} elseif {[string match *\\\}* $line]} {
+			set levels [lreplace $levels [expr [llength $levels] - 1] [expr [llength $levels] - 1]]
 			set line [string trimleft $line " "]
 			set line [string trimright $line " "]
 			set parent [regsub -all {\{|\}} $parent ""]
-			regsub -all "\{| |\t" $line {} line
-			set node_label ""
-			set node_name ""
-			set node_unit_addr ""
-	
-			set node_data [split $line ":"]
-			set node_data_size [llength $node_data]
-			if {$node_data_size == 2} {
-				set node_label [lindex $node_data 0]
-				set tmp_data [split [lindex $node_data 1] "@"]
-				set node_name [lindex $tmp_data 0]
-				if {[llength $tmp_data] >= 2} {
-					set node_unit_addr [lindex $tmp_data 1]
+			if {[string match -nocase $parent ""] || [string match -nocase $parent "root"]} {
+			} else {
+				set parent [$psdt parent $parent]
+			}
+			set temp [expr $temp - 1]
+		} else {
+			regsub -all {^[ \t]+} $line {} line
+			set val [regexp -all {[\=]} $line matched]
+			if {$val == 0 && [string match $next_cmd 0]} {
+				if {[regexp -all {[\#]} $line matched]} {
+				} elseif {[regexp -all {[\/][\/]} $line matched]} {
+				} elseif {[regexp -all {[\/][\*]} $line matched]} {
+				} elseif {[regexp -all {[\*]} $line matched]} {
+				} elseif {[string match -nocase $line ""]} {
+				} else {			
+					set parent [regsub -all {\{|\}} $parent ""]
+					$psdt set $parent $line ""
 				}
-			} elseif {$node_data_size == 1} {
-				set node_name [lindex $node_data 0]
-			} else {
-				error "invalid node found - $line"
-			}
-			if {[string match -nocase $psdt "psdt"]} {
-				set tempfile "versal.dtsi"
-			} else {
-				set tempfile "versal-clk.dtsi"
-			}
-			if {[string match -nocase $node_name ""]} {
-			
 			} else {
 				
-			if {[catch {set tmp [dict get $ps_mapping $node_unit_addr label]} msg]} {
-				set parent [create_node -n $node_name -l $node_label -u $node_unit_addr -p $parent -d $tempfile]
-			} else {
-				set value [split $tmp ": "]
-				set node_label [lindex $value 0]
-				set node_name [lindex $value 2]
-				set parent [create_node -n $node_name -l $node_label -u $node_unit_addr -p $parent -d $tempfile]
-			}
-			lappend levels $parent
-			}
-		}
-		set temp [expr $temp + 1]
-  	} elseif {[string match *\\\}* $line]} {
-		set levels [lreplace $levels [expr [llength $levels] - 1] [expr [llength $levels] - 1]]
-		set line [string trimleft $line " "]
-		set line [string trimright $line " "]
-		set parent [regsub -all {\{|\}} $parent ""]
-		if {[string match -nocase $parent ""] || [string match -nocase $parent "root"]} {
-		} else {
-		set parent [$psdt parent $parent]
-		}
-		set temp [expr $temp - 1]
-		
-
-	} else {
-		regsub -all {^[ \t]+} $line {} line
-		set val [regexp -all {[\=]} $line matched]
-		if {$val == 0 && [string match $next_cmd 0]} {
-			if {[regexp -all {[\#]} $line matched]} {
-			} elseif {[regexp -all {[\/][\/]} $line matched]} {
-			} elseif {[regexp -all {[\/][\*]} $line matched]} {
-			} elseif {[regexp -all {[\*]} $line matched]} {
-			} elseif {[string match -nocase $line ""]} {
-			} else {			
-				set parent [regsub -all {\{|\}} $parent ""]
-				$psdt set $parent $line ""
-			}
-		} else {
-			
-			if {[regexp -all {[\/][\/]} $line matched]} {
-			} elseif {[regexp -all {[\/][\*]} $line matched]} {
-			} elseif {[regexp -all {[\*]} $line matched]} {
-			} elseif {[string match -nocase $line ""]} {
-			} else {
-			if {[string match $next_cmd 1]} {
-				if {[string match [string index $line end] ";"]} {
-					set comval [string trimright $line ";"]
-					if {[regexp -all {^[\"]} $line] } {
-						set inner [split $line " "]
-						foreach inn $inner {
-							set inn [string trimright $inn ","]
-							set inn [string trimright $inn ";"]
-							append chain_list " " $inn
-						}
-					} else {
-
-					#set comval [string trimright $comval ">"]
-					#set comval [string trimleft $comval " "]
-					#set comval [string trimleft $comval "<"]
-						append chain_list " " $comval
-					}
-					set next_cmd 0
-					set prop $next_prop 
+				if {[regexp -all {[\/][\/]} $line matched]} {
+				} elseif {[regexp -all {[\/][\*]} $line matched]} {
+				} elseif {[regexp -all {[\*]} $line matched]} {
+				} elseif {[string match -nocase $line ""]} {
 				} else {
-					if {[regexp -all {^[\"]} $line] } {
-						set inner [split $line " "]
-						foreach inn $inner {
-							set inn [string trimright $inn ","]
-							set inn [string trimright $inn ";"]
-							append chain_list " " $inn
-						}
-					} else {
-						set comval [string trimright $line ","]
-						#set comval [string trimright $comval ">"]
-						#set comval [string trimleft $comval " "]
-						#set comval [string trimleft $comval "<"]
-						append chain_list " " $comval
-					}
-					continue
-				
-				}
-				set dtval $chain_list
-				set chain_list ""
-			} else {
-				set parent [regsub -all {\{|\}} $parent ""]
-				set dtval [split $line "="]
-				set comma [string index [lindex $dtval 1] end]
-				set multival [regsub -all {\{|\}} [lindex $dtval 1] ""]
-				set multival [string trimleft $multival " "]
-				set spl [split $multival " "]
-				if {[llength $spl] >= 1 && [string match $comma ","] || [string match $next_cmd 1]} {
-					if {[regexp -all {^[\"]} $multival] } {
-						set inner [split $multival " " ]
-						set tempin ""
-						foreach inn $inner {
-
-							set inn [string trimright $inn ","]
-							if {[string match -nocase $next_cmd 0]} {
-								set next_prop [lindex $dtval 0]
-								append tempin " " $inn
+					if {[string match $next_cmd 1]} {
+						if {[string match [string index $line end] ";"]} {
+							set comval [string trimright $line ";"]
+							if {[regexp -all {^[\"]} $line] } {
+								set inner [split $line " "]
+								foreach inn $inner {
+									set inn [string trimright $inn ","]
+									set inn [string trimright $inn ";"]
+									append chain_list " " $inn
+								}
 							} else {
-								append chain_list " " $inn
+								append chain_list " " $comval
+							}
+							set next_cmd 0
+							set prop $next_prop 
+						} else {
+							if {[regexp -all {^[\"]} $line] } {
+								set inner [split $line " "]
+								foreach inn $inner {
+									set inn [string trimright $inn ","]
+									set inn [string trimright $inn ";"]
+									append chain_list " " $inn
+								}
+							} else {
+								set comval [string trimright $line ","]
+								append chain_list " " $comval
+							}
+							continue
+						
+						}
+						set dtval $chain_list
+						set chain_list ""
+					} else {
+						set parent [regsub -all {\{|\}} $parent ""]
+						set dtval [split $line "="]
+						set comma [string index [lindex $dtval 1] end]
+						set multival [regsub -all {\{|\}} [lindex $dtval 1] ""]
+						set multival [string trimleft $multival " "]
+						set spl [split $multival " "]
+						if {[llength $spl] >= 1 && [string match $comma ","] || [string match $next_cmd 1]} {
+							if {[regexp -all {^[\"]} $multival] } {
+								set inner [split $multival " " ]
+								set tempin ""
+								foreach inn $inner {
+									set inn [string trimright $inn ","]
+									if {[string match -nocase $next_cmd 0]} {
+										set next_prop [lindex $dtval 0]
+										append tempin " " $inn
+									} else {
+										append chain_list " " $inn
+									}
+								}
+								if {[string match -nocase $next_cmd 0]} {
+									set chain_list $tempin
+								}
+								set next_cmd 1
+								continue
+							} else {
+								set comval [string trimright [lindex $dtval 1] ","]
+								if {[string match -nocase $next_cmd 0]} {
+									set next_prop [lindex $dtval 0]
+									set chain_list $comval
+								} else {
+									append chain_list " " $comval
+								}
+								set next_cmd 1
+
+								continue
 							}
 						}
-						if {[string match -nocase $next_cmd 0]} {
-							set chain_list $tempin
-						}
-						set next_cmd 1
-						continue
-					} else {
-					set comval [string trimright [lindex $dtval 1] ","]
-					#set comval [string trimright $comval ">"]
-					#set comval [string trimleft $comval " "]
-					#set comval [string trimleft $comval "<"]
-					if {[string match -nocase $next_cmd 0]} {
-						set next_prop [lindex $dtval 0]
-						set chain_list $comval
-					} else {
-						append chain_list " " $comval
-					}
-					set next_cmd 1
-
-					continue
-					}
-				}
-				if {[llength $spl] > 1 && [regexp -all {[\,]} $multival matched] && ![string match -nocase [string index $multival 0] "<"]} {
-					set prop [regsub -all {\{|\}} [lindex $dtval 0] ""]
-					#set dtval {}
-					set va [split $multival " "]
-					set len [expr [llength $va]]
-					for {set i 0} {$i < $len} {incr i} {
-						set ind [string index [lindex $va $i] end]
-						if {[string match $ind ";"]} {
-							set temp_va [string trimright [lindex $va $i] ";"]
-						} elseif {[string match $ind ","]} {
-							set temp_va [string trimright [lindex $va $i] ","]
-						}
-						if {$i == 0} {
-							set dtval $temp_va
+						if {[llength $spl] > 1 && [regexp -all {[\,]} $multival matched] && ![string match -nocase [string index $multival 0] "<"]} {
+							set prop [regsub -all {\{|\}} [lindex $dtval 0] ""]
+							set va [split $multival " "]
+							set len [expr [llength $va]]
+							for {set i 0} {$i < $len} {incr i} {
+								set ind [string index [lindex $va $i] end]
+								if {[string match $ind ";"]} {
+									set temp_va [string trimright [lindex $va $i] ";"]
+								} elseif {[string match $ind ","]} {
+									set temp_va [string trimright [lindex $va $i] ","]
+								}
+								if {$i == 0} {
+									set dtval $temp_va
+								} else {
+									append dtval " " $temp_va
+								}
+							}
 						} else {
-							append dtval " " $temp_va
+							##TODO for multiple values
+							set value [lindex $dtval 1]
+							set prop [regsub -all {\{|\}} [lindex $dtval 0] ""]
+							set prop [string trimright $prop " "]
+							set dtval [string trimright $value ";"]
 						}
 					}
-				} else {
-					##TODO for multiple values
-					set value [lindex $dtval 1]
-					set prop [regsub -all {\{|\}} [lindex $dtval 0] ""]
-					set prop [string trimright $prop " "]
-					set dtval [string trimright $value ";"]
-				}
-			}
-			if {[string match -nocase $parent ""]} {
-			} else {
-			$psdt set $parent $prop $dtval
-			}
-		} 
+					if {[string match -nocase $parent ""]} {
+					} else {
+						$psdt set $parent $prop $dtval
+					}
+				} 
+			}	
 		}
-		
 	}
 }
-}
 proc write_dt args {
-
-	#set dt "psdt"
 	set dt [lindex $args 0]
 	set bool_col 0
 	if {[string match -nocase $dt "psdt"]} {
@@ -1100,7 +1032,6 @@ proc write_dt args {
 	}
 	set fd [open $file w]
 	if {[string match -nocase $dt "systemdt"]} {
-
 		puts $fd "\/dts-v1\/\;"
 		global include_list
 		set includelist [split $include_list ","]
@@ -1124,15 +1055,14 @@ proc write_dt args {
 			if {[string match -nocase $prop ""] || [string match -nocase $prop "data"]} {
 			} else {
 				set val [$dt get $rootn $prop]
-						set val_temp [string trimright $val " "]
-						set val_temp [string trimleft $val_temp " "]
+				set val_temp [string trimright $val " "]
+				set val_temp [string trimleft $val_temp " "]
 				if {[llength $val] > 1} {
 					set first_str "\"[lindex $val 0]\""
 					set first_str ""
 					set first true
                 			foreach element $val {
                 				if {$first != true} {
-                				#	set first_str [append first_str ", \"$element\""]
                 				} 
 						set first false
 					}
@@ -1167,23 +1097,22 @@ proc write_dt args {
 				if {[string match -nocase $prop ""] || [string match -nocase $prop "data"]} {
 				} else {
 					set val [$dt get $children $prop]
-						set val_temp [string trimright $val " "]
-						set val_temp [string trimleft $val_temp " "]
+					set val_temp [string trimright $val " "]
+					set val_temp [string trimleft $val_temp " "]
 					if {[llength $val] > 1} {
 						if {[regexp -all {^[\<]} $val_temp matched] && [regexp -all {[\>]$} $val_temp matched]} {
 							puts $fd "\t\t$prop = $val_temp;"
 						} else {	
-						set first_str "\"[lindex $val 0]\""
-					set first_str "\"[lindex $val 0]\""
-					set first_str ""
-						set first true
-       		         			foreach element $val {
-       	        	 				if {$first != true} {
-                				#		set first_str [append first_str ", \"$element\""]
-                					} 
-							set first false
-						}
-						puts $fd "\t\t$prop = $first_str;"
+							set first_str "\"[lindex $val 0]\""
+							set first_str "\"[lindex $val 0]\""
+							set first_str ""
+							set first true
+       		         				foreach element $val {
+       	        	 					if {$first != true} {
+                						} 
+								set first false
+							}
+							puts $fd "\t\t$prop = $first_str;"
 						} 
 					} else {
 						if {[string match -nocase $val ""]} {
@@ -1227,7 +1156,6 @@ proc write_dt args {
 								set first true
        				         			foreach element $val {
        			        	 				if {$first != true} {
-       		        	 					#	set first_str [append first_str ", \"$element\""]
        			         					} 
 									set first false
 								}
@@ -1268,12 +1196,11 @@ proc write_dt args {
 									puts $fd "\t\t\t$prop = $val_temp;"
 								} else {
 								set first_str "\"[lindex $val 0]\""
-					set first_str "\"[lindex $val 0]\""
-					set first_str ""
+								set first_str "\"[lindex $val 0]\""
+								set first_str ""
 								set first true
                         					foreach element $val {
                                 					if {$first != true} {
-                                					#	set first_str [append first_str ", \"$element\""]
                         						} 
 									set first false
 								}
@@ -1308,19 +1235,18 @@ proc write_dt args {
 							if {[string match -nocase $prop ""] || [string match -nocase $prop "data"]} {
 							} else {
 								set val [$dt get $child $prop]
-						set val_temp [string trimright $val " "]
-						set val_temp [string trimleft $val_temp " "]
+								set val_temp [string trimright $val " "]
+								set val_temp [string trimleft $val_temp " "]
 								if {[llength $val] > 1} {
 									if {[regexp -all {^[\<]} $val_temp matched] && [regexp -all {[\>]$} $val_temp matched]} {
 										puts $fd "\t\t\t\t$prop = $val_temp;"
 									} else {
 										set first_str "\"[lindex $val 0]\""
-					set first_str "\"[lindex $val 0]\""
-					set first_str ""
+										set first_str "\"[lindex $val 0]\""
+										set first_str ""
 										set first true
                         							foreach element $val {
                               			 		 			if {$first != true} {
-                                				#				set first_str [append first_str ", \"$element\""]
                         								} 
 											set first false
 										}
@@ -1355,75 +1281,6 @@ proc write_dt args {
 	close $fd
 }
 
-if {0} {
-#****************************************************************
-# check if file exists
-#****************************************************************
-proc check_file { file_name } {
-    set file_content ""
-    if { [ file exists  $file_name ] } {
-        set fp [open $file_name r]
-        set file_content [read $fp]
-        close $fp
-    } else {
-        lib_error YAML "Cannot open filename $file_name..."
-    }
-    return $file_content
-}
-
-#****************************************************************
-# load yaml file into dict
-#****************************************************************
-proc get_yaml_dict { config_file } {
-        set data ""
-        if {[file exists $config_file]} {
-                set fd [open $config_file r]
-                set data [read $fd]
-                close $fd
-        } else {
-                error "YAML:: No such file $config_file"
-        }
-    return [yaml::yaml2dict $data]
-}
-
-#****************************************************************
-# set global dict_prj
-#****************************************************************
-proc get_user_config2 args {
-	proc_called_by
-	set dict_devicetree  {}
-	set config_file "config.yaml"
-
-	set cfg [get_yaml_dict $config_file]
-	set dict_devicetree [dict get $cfg dict_devicetree]
-	set user [dict get $dict_devicetree dict_user]
-	set path [dict get $user repo_path]
-	set overlay [dict get $user dt_overlay]
-	set config_dts [dict get $user config_dts]
-	set board_dts [dict get $user board_dts]
-	set master_dts [dict get $user master_dts]
-	set pl_only [dict get $user pl_only]
-	set param ""
-	switch -glob -- [lindex $args 0] {
-		-repo {
-			set param $path
-		} -master_dts {
-			set param $master_dts
-		} -config_dts {
-			set param $config_dts
-		} -board_dts {
-			set param $board_dts
-		} -overlay {
-			set param $overaly
-		} -pl_only {
-			set param $pl_only
-		} default {
-			error "get_user_config bad option - [lindex $args 0]"
-		}
-	}
-	return $param
-}
-}
 proc get_repo_path args {
 	if { [info exists ::env(REPO) ] } {
 		set path $env(repo_path)
@@ -1435,211 +1292,207 @@ proc get_repo_path args {
 }
 
 proc get_drivers args {
-set driverlist [dict create]
-dict set driverlist RM driver RM
-dict set driverlist ai_engine driver ai_engine
-dict set driverlist psu_ams driver ams
-dict set driverlist psu_apm driver apmps
-dict set driverlist psv_apm driver apmps
-dict set driverlist v_uhdsdi_audio driver audio_embed
-dict set driverlist audio_formatter driver audio_spdif
-dict set driverlist spdif driver audio_spdif
-dict set driverlist axi_bram_ctrl driver axi_bram
-dict set driverlist lmb_bram_if_cntlr driver axi_bram
-dict set driverlist can driver axi_can
-dict set driverlist canfd driver axi_can
-dict set driverlist axi_cdma driver axi_cdma
-dict set driverlist clk_wiz driver axi_clk_wiz
-dict set driverlist axi_dma driver axi_dma
-dict set driverlist axi_emc driver axi_emc
-dict set driverlist axi_ethernet driver axi_ethernet
-dict set driverlist axi_ethernet_buffer  driver axi_ethernet
-dict set driverlist axi_10g_ethernet driver axi_ethernet
-dict set driverlist xxv_ethernet driver axi_ethernet
-dict set driverlist usxgmii driver axi_ethernet
-dict set driverlist axi_gpio driver gpio
-dict set driverlist axi_iic driver axi_iic
-dict set driverlist axi_mcdma driver axi_mcdma
-dict set driverlist axi_pcie driver axi_pcie
-dict set driverlist axi_pcie3 driver axi_pcie
-dict set driverlist xdma driver axi_pcie
-dict set driverlist axi_perf_mon driver axi_perf_mon
-dict set driverlist axi_quad_spi driver axi_qspi
-dict set driverlist axi_sysace driver axi_sysace
-dict set driverlist axi_tft driver axi_tft
-dict set driverlist axi_timebase_wdt driver axi_timebase_wdt
-dict set driverlist axi_traffic_gen driver axi_traffic_gen
-dict set driverlist axi_usb2_device driver axi_usb2_device
-dict set driverlist vcu driver axi_vcu
-dict set driverlist axi_vdma driver axi_vdma
-dict set driverlist xadc_wiz driver axi_xadc
-dict set driverlist psu_canfd driver canfdps
-dict set driverlist psv_canfd driver canfdps
-dict set driverlist ps7_can driver canps
-dict set driverlist psu_can driver canps
-dict set driverlist psv_can driver canps
-dict set driverlist microblaze driver cpu
-dict set driverlist psu_cortexa53 driver cpu_cortexa53
-dict set driverlist psv_cortexa72 driver cpu_cortexa72
-dict set driverlist ps7_cortexa9 driver cpu_cortexa9
-dict set driverlist psu_cortexr5 driver cpu_cortexr5
-dict set driverlist psv_cortexr5 driver cpu_cortexr5
-dict set driverlist psu_crl_apb driver crl_apb
-dict set driverlist ps7_ddrc driver ddrcps
-dict set driverlist psu_ddrc driver ddrcps
-dict set driverlist psv_ddrc driver ddrcps
-dict set driverlist axi_noc driver ddrpsv
-dict set driverlist noc_mc_ddr4 driver ddrpsv
-dict set driverlist debug_bridge driver debug_bridge
-dict set driverlist v_demosaic driver demosaic
-dict set driverlist ps7_dev_cfg driver devcfg
-dict set driverlist ps7_dma driver dmaps
-dict set driverlist psu_gdma driver dmaps
-dict set driverlist psu_csudma driver dmaps
-dict set driverlist psv_adma driver dmaps
-dict set driverlist psv_gdma driver dmaps
-dict set driverlist psv_csudma driver dmaps
-dict set driverlist psu_dp driver dp
-dict set driverlist psv_dp driver dp
-dict set driverlist dpu_eu driver dpu_eu
-dict set driverlist axi_ethernetlite driver emaclite
-dict set driverlist ps7_ethernet driver emacps
-dict set driverlist psu_ethernet driver emacps
-dict set driverlist psv_ethernet driver emacps
-dict set driverlist ernic driver ernic
-dict set driverlist v_frmbuf_rd driver framebuf_rd
-dict set driverlist v_frmbuf_wr driver framebuf_wr
-dict set driverlist v_gamma_lut driver gamma_lut
-dict set driverlist ps7_globaltimer driver globaltimerps
-dict set driverlist ps7_gpio driver gpiops
-dict set driverlist psu_gpio driver gpiops
-dict set driverlist psv_gpio driver gpiops
-dict set driverlist hdmi_acr_ctlr driver hdmi_ctrl
-dict set driverlist hdmi_gt_controller driver hdmi_gt_ctrl
-dict set driverlist v_hdmi_rx_ss driver hdmi_rx_ss
-dict set driverlist v_hdmi_tx_ss driver hdmi_tx_ss
-dict set driverlist i2s_receiver driver i2s_receiver
-dict set driverlist i2s_transmitter driver i2s_transmitter
-dict set driverlist ps7_i2c driver iicps
-dict set driverlist psu_i2c driver iicps
-dict set driverlist psv_i2c driver iicps
-dict set driverlist axi_intc driver intc
-dict set driverlist iomodule driver iomodule
-dict set driverlist psu_ipi driver ipipsu
-dict set driverlist psv_ipi driver ipipsu
-dict set driverlist mig_7series driver mig_7series
-dict set driverlist dd4 driver mig_7series
-dict set driverlist ddr3 driver mig_7series
-dict set driverlist mipi_csi2_rx_subsystem driver mipi_csi2_rx
-dict set driverlist mipi_csi2_tx_subsystem driver mipi_csi2_tx
-dict set driverlist v_mix driver mixer
-dict set driverlist v_multi_scaler driver multi_scaler
-dict set driverlist ps7_nand driver nandps
-dict set driverlist psu_nand driver nandps
-dict set driverlist ps7_sram driver norps
-dict set driverlist nvme_subsystem driver nvme_aggr
-dict set driverlist ps7_ocmc driver ocmcps
-dict set driverlist psu_ocmc driver ocmcps
-dict set driverlist psv_ocmc driver ocmcps
-dict set driverlist ps7_pl310 driver pl310ps
-dict set driverlist ps7_pmu driver pmups
-dict set driverlist psu_pmu driver pmups
-dict set driverlist psv_pmc driver pmups
-dict set driverlist psv_psm driver pmups
-dict set driverlist pr_decoupler driver pr_decoupler
-dict set driverlist prc driver prc
-dict set driverlist dfx_controller driver prc
-dict set driverlist psu_ocm_ram_0 driver psu_ocm
-dict set driverlist psv_ocm_ram_0 driver psu_ocm
-dict set driverlist ps7_ram driver ramps
-dict set driverlist usp_rf_data_converter driver rfdc
-dict set driverlist v_scenechange driver scene_change_detector
-dict set driverlist ps7_scugic driver scugic
-dict set driverlist psu_acpu_gic driver scugic
-dict set driverlist psv_acpu_gic driver scugic
-#dict set driverlist psv_rcpu_gic driver scugic
-dict set driverlist ps7_scutimer driver scutimer
-dict set driverlist ps7_scuwdt driver scuwdt
-dict set driverlist psu_wdt driver scuwdt
-dict set driverlist psv_wdt driver scuwdt
-dict set driverlist sd_fec driver sdfec
-dict set driverlist v_smpte_uhdsdi_rx_ss driver sdi_rx
-dict set driverlist v_smpte_uhdsdi_tx_ss driver sdi_tx
-dict set driverlist ps7_sdioi driver sdps
-dict set driverlist psu_sd driver sdps
-dict set driverlist psv_pmc_sd driver sdps
-dict set driverlist ps7_slcr driver slcrps
-dict set driverlist ps7_smcc driver smccps
-dict set driverlist ps7_spi driver spips
-dict set driverlist psu_qspi driver spips
-dict set driverlist psv_pmc_qspi driver qspips
-dict set driverlist psu_qspi driver qspips
-dict set driverlist ps7_qspi driver qspips
-dict set driverlist psv_spi driver spips
-dict set driverlist sync_ip driver sync_ip
-dict set driverlist axi_timer driver tmrctr
-dict set driverlist v_tpg driver tpg
-dict set driverlist tsn_endpoint_ethernet_mac driver tsn
-dict set driverlist ps7_ttc driver ttcps
-dict set driverlist psu_ttc driver ttcps
-dict set driverlist psv_ttc driver ttcps
-dict set driverlist mdm driver uartlite
-dict set driverlist axi_uartlite driver uartlite
-dict set driverlist axi_uart16550 driver uartns
-dict set driverlist ps7_uart driver uartps
-dict set driverlist psu_uart driver uartps
-dict set driverlist psu_sbsauart driver uartps
-dict set driverlist psv_uart driver uartps
-dict set driverlist psv_sbsauart driver uartps
-dict set driverlist ps7_usb driver usbps
-dict set driverlist psu_usb_xhci driver usbps
-dict set driverlist psv_usb_xhci driver usbps
-dict set driverlist vid_phy_controller driver vid_phy_ctrl
-dict set driverlist v_proc_ss driver vproc_ss
-dict set driverlist v_tc driver vtc
-dict set driverlist ps7_wdt driver wdtps
-dict set driverlist psu_wdt driver wdtps
-dict set driverlist psv_wdt driver wdtps
-dict set driverlist ps7_xadc driver xadcps
+	set driverlist [dict create]
+	dict set driverlist RM driver RM
+	dict set driverlist ai_engine driver ai_engine
+	dict set driverlist psu_ams driver ams
+	dict set driverlist psu_apm driver apmps
+	dict set driverlist psv_apm driver apmps
+	dict set driverlist v_uhdsdi_audio driver audio_embed
+	dict set driverlist audio_formatter driver audio_spdif
+	dict set driverlist spdif driver audio_spdif
+	dict set driverlist axi_bram_ctrl driver axi_bram
+	dict set driverlist lmb_bram_if_cntlr driver axi_bram
+	dict set driverlist can driver axi_can
+	dict set driverlist canfd driver axi_can
+	dict set driverlist axi_cdma driver axi_cdma
+	dict set driverlist clk_wiz driver axi_clk_wiz
+	dict set driverlist axi_dma driver axi_dma
+	dict set driverlist axi_emc driver axi_emc
+	dict set driverlist axi_ethernet driver axi_ethernet
+	dict set driverlist axi_ethernet_buffer  driver axi_ethernet
+	dict set driverlist axi_10g_ethernet driver axi_ethernet
+	dict set driverlist xxv_ethernet driver axi_ethernet
+	dict set driverlist usxgmii driver axi_ethernet
+	dict set driverlist axi_gpio driver gpio
+	dict set driverlist axi_iic driver axi_iic
+	dict set driverlist axi_mcdma driver axi_mcdma
+	dict set driverlist axi_pcie driver axi_pcie
+	dict set driverlist axi_pcie3 driver axi_pcie
+	dict set driverlist xdma driver axi_pcie
+	dict set driverlist axi_perf_mon driver axi_perf_mon
+	dict set driverlist axi_quad_spi driver axi_qspi
+	dict set driverlist axi_sysace driver axi_sysace
+	dict set driverlist axi_tft driver axi_tft
+	dict set driverlist axi_timebase_wdt driver axi_timebase_wdt
+	dict set driverlist axi_traffic_gen driver axi_traffic_gen
+	dict set driverlist axi_usb2_device driver axi_usb2_device
+	dict set driverlist vcu driver axi_vcu
+	dict set driverlist axi_vdma driver axi_vdma
+	dict set driverlist xadc_wiz driver axi_xadc
+	dict set driverlist psu_canfd driver canfdps
+	dict set driverlist psv_canfd driver canfdps
+	dict set driverlist ps7_can driver canps
+	dict set driverlist psu_can driver canps
+	dict set driverlist psv_can driver canps
+	dict set driverlist microblaze driver cpu
+	dict set driverlist psu_cortexa53 driver cpu_cortexa53
+	dict set driverlist psv_cortexa72 driver cpu_cortexa72
+	dict set driverlist ps7_cortexa9 driver cpu_cortexa9
+	dict set driverlist psu_cortexr5 driver cpu_cortexr5
+	dict set driverlist psv_cortexr5 driver cpu_cortexr5
+	dict set driverlist psu_crl_apb driver crl_apb
+	dict set driverlist ps7_ddrc driver ddrcps
+	dict set driverlist psu_ddrc driver ddrcps
+	dict set driverlist psv_ddrc driver ddrcps
+	dict set driverlist axi_noc driver ddrpsv
+	dict set driverlist noc_mc_ddr4 driver ddrpsv
+	dict set driverlist debug_bridge driver debug_bridge
+	dict set driverlist v_demosaic driver demosaic
+	dict set driverlist ps7_dev_cfg driver devcfg
+	dict set driverlist ps7_dma driver dmaps
+	dict set driverlist psu_gdma driver dmaps
+	dict set driverlist psu_csudma driver dmaps
+	dict set driverlist psv_adma driver dmaps
+	dict set driverlist psv_gdma driver dmaps
+	dict set driverlist psv_csudma driver dmaps
+	dict set driverlist psu_dp driver dp
+	dict set driverlist psv_dp driver dp
+	dict set driverlist dpu_eu driver dpu_eu
+	dict set driverlist axi_ethernetlite driver emaclite
+	dict set driverlist ps7_ethernet driver emacps
+	dict set driverlist psu_ethernet driver emacps
+	dict set driverlist psv_ethernet driver emacps
+	dict set driverlist ernic driver ernic
+	dict set driverlist v_frmbuf_rd driver framebuf_rd
+	dict set driverlist v_frmbuf_wr driver framebuf_wr
+	dict set driverlist v_gamma_lut driver gamma_lut
+	dict set driverlist ps7_globaltimer driver globaltimerps
+	dict set driverlist ps7_gpio driver gpiops
+	dict set driverlist psu_gpio driver gpiops
+	dict set driverlist psv_gpio driver gpiops
+	dict set driverlist hdmi_acr_ctlr driver hdmi_ctrl
+	dict set driverlist hdmi_gt_controller driver hdmi_gt_ctrl
+	dict set driverlist v_hdmi_rx_ss driver hdmi_rx_ss
+	dict set driverlist v_hdmi_tx_ss driver hdmi_tx_ss
+	dict set driverlist i2s_receiver driver i2s_receiver
+	dict set driverlist i2s_transmitter driver i2s_transmitter
+	dict set driverlist ps7_i2c driver iicps
+	dict set driverlist psu_i2c driver iicps
+	dict set driverlist psv_i2c driver iicps
+	dict set driverlist axi_intc driver intc
+	dict set driverlist iomodule driver iomodule
+	dict set driverlist psu_ipi driver ipipsu
+	dict set driverlist psv_ipi driver ipipsu
+	dict set driverlist mig_7series driver mig_7series
+	dict set driverlist dd4 driver mig_7series
+	dict set driverlist ddr3 driver mig_7series
+	dict set driverlist mipi_csi2_rx_subsystem driver mipi_csi2_rx
+	dict set driverlist mipi_csi2_tx_subsystem driver mipi_csi2_tx
+	dict set driverlist v_mix driver mixer
+	dict set driverlist v_multi_scaler driver multi_scaler
+	dict set driverlist ps7_nand driver nandps
+	dict set driverlist psu_nand driver nandps
+	dict set driverlist ps7_sram driver norps
+	dict set driverlist nvme_subsystem driver nvme_aggr
+	dict set driverlist ps7_ocmc driver ocmcps
+	dict set driverlist psu_ocmc driver ocmcps
+	dict set driverlist psv_ocmc driver ocmcps
+	dict set driverlist ps7_pl310 driver pl310ps
+	dict set driverlist ps7_pmu driver pmups
+	dict set driverlist psu_pmu driver pmups
+	dict set driverlist psv_pmc driver pmups
+	dict set driverlist psv_psm driver pmups
+	dict set driverlist pr_decoupler driver pr_decoupler
+	dict set driverlist prc driver prc
+	dict set driverlist dfx_controller driver prc
+	dict set driverlist psu_ocm_ram_0 driver psu_ocm
+	dict set driverlist psv_ocm_ram_0 driver psu_ocm
+	dict set driverlist ps7_ram driver ramps
+	dict set driverlist usp_rf_data_converter driver rfdc
+	dict set driverlist v_scenechange driver scene_change_detector
+	dict set driverlist ps7_scugic driver scugic
+	dict set driverlist psu_acpu_gic driver scugic
+	dict set driverlist psv_acpu_gic driver scugic
+	dict set driverlist ps7_scutimer driver scutimer
+	dict set driverlist ps7_scuwdt driver scuwdt
+	dict set driverlist psu_wdt driver scuwdt
+	dict set driverlist psv_wdt driver scuwdt
+	dict set driverlist sd_fec driver sdfec
+	dict set driverlist v_smpte_uhdsdi_rx_ss driver sdi_rx
+	dict set driverlist v_smpte_uhdsdi_tx_ss driver sdi_tx
+	dict set driverlist ps7_sdioi driver sdps
+	dict set driverlist psu_sd driver sdps
+	dict set driverlist psv_pmc_sd driver sdps
+	dict set driverlist ps7_slcr driver slcrps
+	dict set driverlist ps7_smcc driver smccps
+	dict set driverlist ps7_spi driver spips
+	dict set driverlist psu_qspi driver spips
+	dict set driverlist psv_pmc_qspi driver qspips
+	dict set driverlist psu_qspi driver qspips
+	dict set driverlist ps7_qspi driver qspips
+	dict set driverlist psv_spi driver spips
+	dict set driverlist sync_ip driver sync_ip
+	dict set driverlist axi_timer driver tmrctr
+	dict set driverlist v_tpg driver tpg
+	dict set driverlist tsn_endpoint_ethernet_mac driver tsn
+	dict set driverlist ps7_ttc driver ttcps
+	dict set driverlist psu_ttc driver ttcps
+	dict set driverlist psv_ttc driver ttcps
+	dict set driverlist mdm driver uartlite
+	dict set driverlist axi_uartlite driver uartlite
+	dict set driverlist axi_uart16550 driver uartns
+	dict set driverlist ps7_uart driver uartps
+	dict set driverlist psu_uart driver uartps
+	dict set driverlist psu_sbsauart driver uartps
+	dict set driverlist psv_uart driver uartps
+	dict set driverlist psv_sbsauart driver uartps
+	dict set driverlist ps7_usb driver usbps
+	dict set driverlist psu_usb_xhci driver usbps
+	dict set driverlist psv_usb_xhci driver usbps
+	dict set driverlist vid_phy_controller driver vid_phy_ctrl
+	dict set driverlist v_proc_ss driver vproc_ss
+	dict set driverlist v_tc driver vtc
+	dict set driverlist ps7_wdt driver wdtps
+	dict set driverlist psu_wdt driver wdtps
+	dict set driverlist psv_wdt driver wdtps
+	dict set driverlist ps7_xadc driver xadcps
 	set val [lindex $args 0]
 	if {[string match -nocase $val "1"]} {
-	set drivers ""
-	foreach drv_handle [hsi::get_cells -hier] {
-        	set ipname [get_property IP_NAME $drv_handle]
-	        set val [hsi::get_mem_ranges $drv_handle]
-		#TODO SURESH
-		if {[string match -nocase [get_property IP_TYPE [hsi::get_cells -hier $drv_handle]] "processor"]} {
-			if {[string match -nocase $ipname "psv_cortexa72"] || [string match -nocase $ipname "psu_cortexa53"]} {
-				set index [string index $drv_handle end]
-				if {$index == 0} {
+		set drivers ""
+		foreach drv_handle [hsi::get_cells -hier] {
+			set ipname [get_property IP_NAME $drv_handle]
+			set val [hsi::get_mem_ranges $drv_handle]
+			if {[string match -nocase [get_property IP_TYPE [hsi::get_cells -hier $drv_handle]] "processor"]} {
+				if {[string match -nocase $ipname "psv_cortexa72"] || [string match -nocase $ipname "psu_cortexa53"]} {
+					set index [string index $drv_handle end]
+					if {$index == 0} {
+						continue
+					}
+				}
+			} else {
+				if {[string_is_empty $val]} {
 					continue
 				}
 			}
-		} else {
-       	 		if {[string_is_empty $val]} {
-                		continue
-        		}
+			if {[catch {set tmp [dict get $driverlist $ipname]} msg]} {
+					continue
+			}
+			if {[string match -nocase $drivers ""]} {
+				set drivers $drv_handle
+			} else {
+				lappend drivers $drv_handle
+			}
 		}
-		if {[catch {set tmp [dict get $driverlist $ipname]} msg]} {
-				continue
-		}
+		
 		if {[string match -nocase $drivers ""]} {
-			set drivers $drv_handle
-		} else {
-			lappend drivers $drv_handle
+			set drivers "generic"
 		}
-	}
-	
-	if {[string match -nocase $drivers ""]} {
-		set drivers "generic"
-	}
-	return $drivers
+		return $drivers
 	} else {
 		set ipname [get_property IP_NAME [hsi::get_cells -hier $val]]
 		if {[catch {set tmp [dict get $driverlist $ipname]} msg]} {
 			set drivers "generic"
-		#	error "not found"
-			#return ""
 			return "generic"
 		}
 		regsub "driver " $tmp "" tmp
@@ -1678,7 +1531,6 @@ proc set_drv_property args {
 			regsub -all {^CONFIG.} $conf_prop {} conf_prop
 			set node [get_node $drv_handle]
 			add_prop $node $conf_prop $value $type $dts_file
-			#hsi::utils::add_new_property $drv_handle $conf_prop $type $value
 		}
 	}
 }
@@ -1704,7 +1556,6 @@ proc set_drv_conf_prop args {
 				}
 			}
 			regsub -all {^CONFIG.} $conf_prop {} conf_prop
-		#	hsi::utils::add_new_property $drv_handle $conf_prop $type $value
 			set node [get_node $drv_handle]
 			set dts_file [set_drv_def_dts $drv_handle]
 			add_prop $node $conf_prop $value $type $dts_file
@@ -1790,8 +1641,6 @@ proc add_cross_property args {
 					set node [get_node $dest_handle]
 				}
 				add_prop $node $dest_prop $value $type [set_drv_def_dts $dest_handle]
-				#add_prop $dt_node $prop $value $type [set_drv_def_dts $drv_handle]
-				#hsi::utils::add_new_property $dest_handle $dest_prop $type $value
 				return 0
 			}
 		}
@@ -1824,7 +1673,6 @@ proc add_cross_property_to_dtnode args {
 					regsub -all {"} $value "" value
 				}
 				add_prop $dest_node $dest_prop $value $type $dts_file
-#				hsi::utils::add_new_dts_param $dest_node $dest_prop $value $type
 				return 0
 			}
 		}
@@ -1858,10 +1706,7 @@ proc get_intr_id {drv_handle intr_port_name} {
 
 	set slave [hsi::get_cells -hier $drv_handle]
 	set intr_info ""
-#	set proctype [get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]]
 	set proctype [get_hw_family]
-	#TODO SURESH
-#	set proctype "psv_cortexa72"
 	foreach pin ${intr_port_name} {
 		set intc [hsi::utils::get_interrupt_parent $drv_handle $pin]
 		if {[string_is_empty $intc] == 1} {continue}
@@ -2208,19 +2053,10 @@ proc update_system_dts_include {include_file} {
        		 	#error "file not found: $common_file"
     		}
 		set board_dts [get_user_config $common_file -board_dts]
-
-#		set overrides [get_property CONFIG.periph_type_overrides [get_os]]
 		set dtsi_file " "
 		set dtsi_file $board_dts
 	}
 
-#	if {[string_is_empty $master_dts_obj] == 1} {
-#		set master_dts_obj [set_cur_working_dts ${master_dts}]
-#	}
-#	if {[string equal ${include_file} ${master_dts_obj}]} {
-#		return 0
-#	}
-	#set cur_inc_list [get_property INCLUDE_FILES $master_dts_obj]
 	global include_list
 	set cur_inc_list $include_list
 	set tmp_list [split $cur_inc_list ","]
@@ -2245,12 +2081,7 @@ proc update_system_dts_include {include_file} {
 				set cur_inc_list [join $cur_inc_list ","]
 			}
 		}
-#	}
-
-	if {$count == 2} {
-	#	while 1 {}
 	}
-
 	set include_list $cur_inc_list
 }
 
@@ -2266,6 +2097,7 @@ proc get_dts_include {} {
 		return "$dir/pl.dtsi"
 	}
 }
+
 proc set_drv_def_dts {drv_handle} {
 	global env
 	set path $env(REPO)
@@ -2276,12 +2108,10 @@ proc set_drv_def_dts {drv_handle} {
 	if {[file exists $common_file]} {
         	#error "file not found: $common_file"
     	}
-	#set file "$path/${drvname}/data/config.yaml"
 	set dt_overlay [get_user_config $common_file -dt_overlay]
 
 	# optional dts control by adding the following line in mdd file
 	# PARAMETER name = def_dts, default = ps.dtsi, type = string;
-	#set default_dts [get_property CONFIG.def_dts $drv_handle]
 	#set dt_overlay [get_property CONFIG.dt_overlay [get_os]]
 	set family [get_hw_family]
 	if {[is_pl_ip $drv_handle]} {
@@ -2290,16 +2120,8 @@ proc set_drv_def_dts {drv_handle} {
 		update_system_dts_include $default_dts
 	} else {
 		# PS IP, read pcw_dts property
-		#set default_dts [get_property CONFIG.pcw_dts [get_os]]
 		set default_dts "pcw.dtsi"
 		update_system_dts_include $default_dts
-		if {[string match -nocase $family "versal"]} {
-#			set default_dts "versal.dtsi"
-		} elseif {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
-#			set default_dts "zynqmp.dtsi"
-		} elseif {[string match -nocase $family "zynq"]} {
-#			set default_dts "zynq-7000.dtsi"
-		}
 	}
 	if {0} {
 	set default_dts [set_cur_working_dts $default_dts]
@@ -2745,7 +2567,6 @@ proc add_driver_prop {drv_handle dt_node prop} {
 	}
 	add_prop $node $prop $value $type [set_drv_def_dts $drv_handle]
 	}
-	#hsi::utils::add_new_dts_param "${dt_node}" "${prop}" "${value}" "${type}"
 }
 
 proc create_dt_tree_from_dts_file {} {
@@ -2856,12 +2677,12 @@ proc line_to_node {line node_level default_dts} {
 
 	set cur_node [add_or_get_dt_node -n ${node_name} -l ${node_label} -u ${node_unit_addr} -d ${default_dts} -p ${parent_node}]
 	dict set dt_node_dict $node_level parent_node $cur_node
+
 	return $cur_node
 }
 
 proc gen_ps_mapping {} {
 	set family [get_hw_family]
-#	set proctype "psv_cortexa72"
 	set def_ps_mapping [dict create]
 	if {[string match -nocase $family "versal"]} {
 		dict set def_ps_mapping f9000000 label "gic: interrupt-controller"
@@ -3001,7 +2822,6 @@ proc gen_ps7_mapping {} {
 
 	# TODO: remove def_ps7_mapping
 	proc_called_by
-#	set proctype [get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]]
 	set proctype "versal"
 	set def_ps_mapping [dict create]
 	if {[string match -nocase $proctype "psv_cortexa72"] ||
@@ -3281,7 +3101,6 @@ proc zynq_gen_pl_clk_binding {drv_handle} {
 	} else {
 		set valid_ip_list "xadc_wiz"
 	}
-#	set valid_proc_list "zynq zynqmp"
 	set valid_plt "zynq zynqmp zynquplus"
 	if {[lsearch  -nocase $valid_plt $plattype] >= 0} {
 		set iptype [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
@@ -3297,7 +3116,6 @@ proc zynq_gen_pl_clk_binding {drv_handle} {
 			}
 			foreach pin $clks {
 			if {[string match -nocase $plattype "zynqmp"] || [string match -nocase $plattype "zynquplus"]} {
-#				set dts_file [current_dt_tree]
 				set dts_file [set_drv_def_dts $drv_handle]
 				set bus_node [add_or_get_bus_node $drv_handle $dts_file]
 				set clk_freq [get_clock_frequency [hsi::get_cells -hier $drv_handle] $pin]
@@ -3313,9 +3131,6 @@ proc zynq_gen_pl_clk_binding {drv_handle} {
 					add_prop "${misc_clk_node}" "compatible" "fixed-clock" stringlist $dts_file
 					add_prop "${misc_clk_node}" "#clock-cells" 0 int $dts_file
 					add_prop "${misc_clk_node}" "clock-frequency" $clk_freq int $dts_file
-					#hsi::utils::add_new_dts_param "${misc_clk_node}" "compatible" "fixed-clock" stringlist
-					#hsi::utils::add_new_dts_param "${misc_clk_node}" "#clock-cells" 0 int
-					#hsi::utils::add_new_dts_param "${misc_clk_node}" "clock-frequency" $clk_freq int
 					if {[string match -nocase $iptype "can"] || [string match -nocase $iptype "vcu"] || [string match -nocase $iptype "canfd"]} {
 						set clocks [lindex $clk_refs 0]
 						append clocks ">, <&[lindex $clk_refs 1]"
@@ -3348,7 +3163,6 @@ proc gen_clk_property {drv_handle} {
 	if {[file exists $common_file]} {
         	#error "file not found: $common_file"
     	}
-	#set file "$path/${drvname}/data/config.yaml"
 	set mainline_ker [get_user_config $common_file -mainline_kernel]
 	if {[string match -nocase $mainline_ker "v4.17"]} {
 		return 0
@@ -3362,7 +3176,6 @@ proc gen_clk_property {drv_handle} {
 	set clocknames ""
 
 	proc_called_by
-#	set proctype [get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]]
 	set proctype [get_hw_family]
 	if {[regexp "kintex*" $proctype match]} {
 		return
@@ -3420,33 +3233,22 @@ proc gen_clk_property {drv_handle} {
 				if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
 					switch $num {
 						"0" {
-							#set fclk_node [add_or_get_dt_node -n "&fclk0" -d $def_dts]
-							#hsi::utils::add_new_dts_param "${fclk_node}" "status" "okay" string
 							set def_dts "pcw.dtsi"
 							set fclk_node [create_node -n "&fclk0" -d $def_dts]]
 							add_prop $fclk_node "status" "okay" string $dts_file
 
 						}
 						"1" {
-							#set def_dts [get_property CONFIG.pcw_dts [get_os]]
-							#set fclk_node [add_or_get_dt_node -n "&fclk1" -d $def_dts]
-							#hsi::utils::add_new_dts_param "${fclk_node}" "status" "okay" string
 							set def_dts "pcw.dtsi"
 							set fclk_node [create_node -n "&fclk1" -d $def_dts]]
 							add_prop $fclk_node "status" "okay" string $dts_file
 						}
 						"2" {
-							#set def_dts [get_property CONFIG.pcw_dts [get_os]]
-							#set fclk_node [add_or_get_dt_node -n "&fclk2" -d $def_dts]
-							#hsi::utils::add_new_dts_param "${fclk_node}" "status" "okay" string
 							set def_dts "pcw.dtsi"
 							set fclk_node [create_node -n "&fclk2" -d $def_dts]]
 							add_prop $fclk_node "status" "okay" string $dts_file
 						}
 						"3" {
-							#set def_dts [get_property CONFIG.pcw_dts [get_os]]
-							#set fclk_node [add_or_get_dt_node -n "&fclk3" -d $def_dts]
-							#hsi::utils::add_new_dts_param "${fclk_node}" "status" "okay" string
 							set def_dts "pcw.dtsi"
 							set fclk_node [create_node -n "&fclk3" -d $def_dts]]
 							add_prop $fclk_node "status" "okay" string $dts_file
@@ -3472,13 +3274,9 @@ proc gen_clk_property {drv_handle} {
 					-d ${dts_file} -p ${bus_node}]
 					set clk_refs [lappend clk_refs misc_clk_${bus_clk_cnt}]
 					set updat [lappend updat misc_clk_${bus_clk_cnt}]
-					#add_prop $misc_clk_node 
 					add_prop $misc_clk_node "compatible" "fixed-clock" stringlist $dts_file 
 					add_prop $misc_clk_node "#clock-cells" 0 int $dts_file 
 					add_prop $misc_clk_node "clock-frequency" $clk_freq int $dts_file 
-#					hsi::utils::add_new_dts_param "${misc_clk_node}" "compatible" "fixed-clock" stringlist
-#					hsi::utils::add_new_dts_param "${misc_clk_node}" "#clock-cells" 0 int
-#					hsi::utils::add_new_dts_param "${misc_clk_node}" "clock-frequency" $clk_freq int
 				}
 			}
 			if {![string match -nocase $axi "0"]} {
@@ -3649,9 +3447,6 @@ proc gen_clk_property {drv_handle} {
 				add_prop $misc_clk_node "compatible" "fixed-clock" stringlist $dts_file 
 				add_prop $misc_clk_node "#clock-cells" 0 int $dts_file 
 				add_prop $misc_clk_node "clock-frequency" $clk_freq int $dts_file 
-			#	hsi::utils::add_new_dts_param "${misc_clk_node}" "compatible" "fixed-clock" stringlist
-			#	hsi::utils::add_new_dts_param "${misc_clk_node}" "#clock-cells" 0 int
-			#	hsi::utils::add_new_dts_param "${misc_clk_node}" "clock-frequency" $clk_freq int
 			}
 		}
 		append clocknames " " "$clk"
@@ -3940,7 +3735,6 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 			set intr_port_name [hsi::get_pins -of_objects $slave -filter {TYPE==INTERRUPT}]
 		}
 	}
-
 	# TODO: consolidation with get_intr_id proc
 	foreach pin ${intr_port_name} {
 		set connected_intc [get_intr_cntrl_name $drv_handle $pin]
@@ -3952,7 +3746,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 		}
 		set connected_intc_name [get_property IP_NAME $connected_intc]
 		set valid_gpio_list "ps7_gpio axi_gpio"
-		set valid_cascade_proc "kintex7 zynq zynqmp zynquplusversal"
+		set valid_cascade_proc "kintex7 zynq zynqmp zynquplus versal"
 		# check whether intc is gpio or other
 		if {[lsearch  -nocase $valid_gpio_list $connected_intc_name] >= 0} {
 			generate_gpio_intr_info $connected_intc $drv_handle $pin
@@ -4000,7 +3794,6 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 					set intr_id [hsi::utils::get_interrupt_id $drv_handle $pin]
 				}
 			}
-			
 
 	if {[regexp "kintex*" $proctype match]} {
 				if {[string match -nocase [common::get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "axi_intc"] } {
@@ -4446,7 +4239,6 @@ proc ip2drv_prop {ip_name ip_prop_name} {
 		regsub -all {_} $drv_prop_name {-} drv_prop_name
 		set drv_prop_name [string tolower $drv_prop_name]
 		set node [get_node $drv_handle]
-		#add_cross_property $ip $ip_prop_name $drv_handle ${drv_prop_name} hexint
 		add_prop $node $ip_prop_name $drv_prop_name hexint
 		return
 	}
@@ -4456,8 +4248,6 @@ proc ip2drv_prop {ip_name ip_prop_name} {
 	regsub -all {CONFIG.C_} $drv_prop_name {xlnx,} drv_prop_name
 	regsub -all {_} $drv_prop_name {-} drv_prop_name
 	set drv_prop_name [string tolower $drv_prop_name]
-#	set node [get_node $ip_name]
-#	add_prop $node $ip_prop_name $drv_prop_name hexint
 
 	set prop [get_property $ip_prop_name [hsi::get_cells -hier $ip_name]]
 	if {[regexp -nocase {0x([0-9a-f])} $prop match]} {
@@ -4585,13 +4375,6 @@ proc ps7_reset_handle {drv_handle reset_pram conf_prop} {
 proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	# Check if the peripheral is in Secure or Non-secure zone
 	proc_called_by
-#	if {[check_ip_trustzone_state $drv_handle] == 1} {
-#		return
-#	}
-#	set remove_pl [get_property CONFIG.remove_pl [get_os]]
-#	if {[is_pl_ip $drv_handle] && $remove_pl} {
-#		return 0
-#	}
 	set status_enable_flow 0
 	set ip [hsi::get_cells -hier $drv_handle]
 	# TODO: check if the base address is correct
@@ -4599,11 +4382,8 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	if { [string equal $unit_addr "-1"] } {
 		return 0
 	}
-	#set proc_type [get_sw_proc_prop IP_NAME]
 	set proc_type [get_hw_family]
-#	set proc_type "versal"
 	set label $drv_handle
-	#set dev_type [get_property CONFIG.dev_type $drv_handle]
 	set dev_type ""
 	if {[string_is_empty $dev_type] == 1} {
 		set ps_mapping [gen_ps_mapping]
@@ -4615,7 +4395,6 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 			set dev_type [lindex $value 2]
 		} 
 	}
-#	set proc_type [get_sw_proc_prop IP_NAME]
 	if {[string match -nocase $proc_type "versal"] } {
 		set ip_type [get_property IP_NAME $ip]
 		if {[string match -nocase $ip_type "psv_cpm_slcr"]} {
@@ -4661,7 +4440,6 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	} else {
 		set treeobj "systemdt"
 	}
-#	set ps7_mapping [gen_ps7_mapping]
 	set bus_node [add_or_get_bus_node $ip $default_dts]
 	set status_enable_flow 0
 	set status_disabled 0
@@ -4676,7 +4454,6 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	}
 	if {[is_ps_ip $drv_handle]} {
 
-		#create_node -n "amba_apu" -l "amba_apu" -p root -d "pcw.dtsi"
 		set node [get_node $drv_handle]
 		set values [$treeobj getall $node]
 		set status_prop ""
@@ -4704,19 +4481,14 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 			# other wise we will get lable as "gic" which is same as acpu_gic label
 			set label "rpu_gic"
 		} else {
-			#set label [dict get $ps7_mapping $unit_addr label]
 		}
 
-		#set dev_type [dict get $ps7_mapping $unit_addr name]
-	#	set bus_node ""
 		# check if it has status property
 		set rt_node [get_node $drv_handle]
 		if {[string match -nocase $ip_type "psv_rcpu_gic"]} {
 			set node [create_node -n "&rpu_gic" -d "pcw.dtsi" -p root]
 		}
-		#set rt_node [add_or_get_dt_node -n ${dev_type} -l ${label} -u ${unit_addr} -d ${default_dts} -p $bus_node -auto_ref_parent]
 		if {[string match -nocase $rt_node "&dwc3_0"]} {
-		#	set proc_type "zynqmp"
 				if {[string match -nocase $proc_type "zynqmp"] || [string match -nocase $proc_type "zynquplus"]} {
 					set zynq_periph [hsi::get_cells -hier -filter {IP_NAME == zynq_ultra_ps_e}]
 					set avail_param [list_property [hsi::get_cells -hier $zynq_periph]]
@@ -4731,11 +4503,6 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 									add_prop "${rt_node}" "snps,dis_u3_susphy_quirk"  boolean $default_dts
 									add_prop "${rt_node}" "/delete-property/ phy-names" boolean $$default_dts
 									add_prop "${rt_node}" "/delete-property/ phys" boolean $$default_dts
-#									hsi::utils::add_new_dts_param "${rt_node}" "maximum-speed" "high-speed" stringlist
-#									hsi::utils::add_new_dts_param "${rt_node}" "snps,dis_u2_susphy_quirk" "" boolean
-#									hsi::utils::add_new_dts_param "${rt_node}" "snps,dis_u3_susphy_quirk" "" boolean
-#									hsi::utils::add_new_dts_param "${rt_node}" "/delete-property/ phy-names" "" boolean
-#									hsi::utils::add_new_dts_param "${rt_node}" "/delete-property/ phys" "" boolean
 								}
 							}
 						}
@@ -4743,8 +4510,6 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 				}
 		}
 		if {[string match -nocase $rt_node "&dwc3_1"]} {
-			#set proc_type [get_sw_proc_prop IP_NAME]
-		#	set proc_type "zynqmp"
 				if {[string match -nocase $proc_type "zynqmp"] || [string match -nocase $proc_type "zynquplus"]} {
 					set zynq_periph [hsi::get_cells -hier -filter {IP_NAME == zynq_ultra_ps_e}]
 					set avail_param [list_property [hsi::get_cells -hier $zynq_periph]]
@@ -4759,12 +4524,6 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 									add_prop "${rt_node}" "snps,dis_u3_susphy_quirk"  boolean $default_dts
 									add_prop "${rt_node}" "/delete-property/ phy-names" boolean $$default_dts
 									add_prop "${rt_node}" "/delete-property/ phys" boolean $$default_dts
-
-#									hsi::utils::add_new_dts_param "${rt_node}" "maximum-speed" "high-speed" stringlist
-#									hsi::utils::add_new_dts_param "${rt_node}" "snps,dis_u2_susphy_quirk" "" boolean
-#									hsi::utils::add_new_dts_param "${rt_node}" "snps,dis_u3_susphy_quirk" "" boolean
-#									hsi::utils::add_new_dts_param "${rt_node}" "/delete-property/ phy-names" "" boolean
-#									hsi::utils::add_new_dts_param "${rt_node}" "/delete-property/ phys" "" boolean
 								}
 							}
 						}
@@ -4793,8 +4552,6 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 			}
 			}
 			add_prop $rt_node "status" "okay" string $default_dts 
-				
-			#hsi::utils::add_new_dts_param "${rt_node}" "status" "okay" string
 		}
 	} else {
 		if {[string match -nocase $ip_type "tsn_endpoint_ethernet_mac"]} {
@@ -4857,7 +4614,6 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 		set dts_prop_list [get_property CONFIG.${dts_file} $drv_handle]
 		set dt_node ""
 		if {[string_is_empty ${dts_prop_list}] == 0} {
-#			set dt_node [add_or_get_dt_node -n ${dev_type} -l ${label} -u ${unit_addr} -d ${dts_file} -p $bus_node]
 			foreach prop ${dts_prop_list} {
 				add_driver_prop $drv_handle $dt_node CONFIG.${prop}
 				# remove from default list
@@ -4893,8 +4649,6 @@ proc detect_bus_name {ip_drv} {
 			return "amba_apu: amba_apu"
 		}
 		return "amba: amba"
-
-	#return "amba_pl"
 }
 
 proc get_afi_val {val} {
@@ -5280,7 +5034,7 @@ proc add_or_get_bus_node {ip_drv dts_file} {
 				add_prop $bus_node ranges boolean $dts_file 
 			} else {}
 		}
-}
+	}
 	return $bus_node
 }
 
@@ -5288,12 +5042,10 @@ proc gen_root_node {drv_handle} {
 	set default_dts [set_drv_def_dts $drv_handle]
 	# add compatible
 	set ip_name [get_property IP_NAME [hsi::get_cell -hier ${drv_handle}]]
-	#set root_node [add_or_get_dt_node -n / -d ${default_dts}]
 	set busname [detect_bus_name $drv_handle]
 	set unit_addr [get_baseaddr $drv_handle noprefix]
 	set ps_mapping [gen_ps_mapping]
 	if {[catch {set tmp [dict get $ps_mapping $unit_addr label]} msg]} {
-		#set root_node [create_node -n root -d $default_dts -p $busname]
 		set root_node [create_node -n "&amba" -d $default_dts -p root]
 	} elseif {[string match -nocase $default_dts "pcw.dtsi"]} {
 		set root_node "root"
@@ -5307,40 +5059,11 @@ proc gen_root_node {drv_handle} {
 			return 0
 		}
 		"psu_pmu" {
-			# set compatible "xlnx,pmu-microblaze"
-			# set model "Xilinx PMU MicroBlaze"
-			#create_dt_tree_from_dts_file
 			global dtsi_fname
-			#update_system_dts_include [file tail ${dtsi_fname}]
-			#update_system_dts_include [file tail "zynqmp-clk-ccf.dtsi"]
-		#	add_prop $root_node "model" "xlnx,versal" string $default_dts
-		#	add_prop $root_node "#address-cells" 2 int $default_dts
-		#	add_prop $root_node "#size-cells" 2 int $default_dts
-
-        	#	hsi::utils::add_new_dts_param "${root_node}" model "ZynqMP PMUFW" string ""
-		#	hsi::utils::add_new_dts_param "${root_node}" "#address-cells" 1 int ""
-		#	hsi::utils::add_new_dts_param "${root_node}" "#size-cells" 1 int ""
-
-			# no root_node required as zynq-7000.dtsi
-		#	set board_name [generate_board_compatible $root_node]
 			return 0
 		}
 		"psu_cortexr5" {
-			# set compatible "xlnx,pmu-microblaze"
-			# set model "Xilinx PMU MicroBlaze"
-			#create_dt_tree_from_dts_file
 			global dtsi_fname
-		#	update_system_dts_include [file tail ${dtsi_fname}]
-		#	update_system_dts_include [file tail "zynqmp-clk-ccf.dtsi"]
-		#	add_prop "${root_node}" model "ZynqMP R5" string $default_dts
-		#	add_prop "${root_node}" "#address-cells" 1 int $default_dts
-		#	add_prop "${root_node}" "#size-cells" 1 int $default_dts
-#        		hsi::utils::add_new_dts_param "${root_node}" model "ZynqMP R5" string ""
-#			hsi::utils::add_new_dts_param "${root_node}" "#address-cells" 1 int ""
-#			hsi::utils::add_new_dts_param "${root_node}" "#size-cells" 1 int ""
-
-			# no root_node required as zynq-7000.dtsi
-#			set board_name [generate_board_compatible $root_node]
 			return 0
 		}
 		"psu_cortexa53" {
@@ -5364,8 +5087,6 @@ proc gen_root_node {drv_handle} {
 			update_system_dts_include [file tail ${dtsi_fname}]
 			update_system_dts_include [file tail "zynqmp-clk-ccf.dtsi"]
 			set pstree 1
-			#update_system_dts_include [file tail ${dtsi_fname}]
-			#update_system_dts_include [file tail "zynqmp-clk-ccf.dtsi"]
         		add_prop "${root_node}" model "xlnx,zynqmp" string $default_dts
 			add_prop "${root_node}" "#address-cells" 2 int $default_dts
 			add_prop "${root_node}" "#size-cells" 2 int $default_dts
@@ -5374,7 +5095,6 @@ proc gen_root_node {drv_handle} {
 			return 0
 		}
 		"psv_cortexa72" {
-			#create_dt_tree_from_dts_file
 			global env
 			global pstree
 			set path $env(REPO)
@@ -5393,73 +5113,25 @@ proc gen_root_node {drv_handle} {
 
 
 			global dtsi_fname
-			if {1} {
 			update_system_dts_include [file tail ${dtsi_fname}]
 			set overrides ""
-			#set overrides [get_property CONFIG.periph_type_overrides [get_os]]
 			set dtsi_file " "
 			set dtsi_file $board_dts
 			if {[string match -nocase $dtsi_file "versal-spp-itr8-cn13940875"] || [string match -nocase $dtsi_file "versal-vc-p-a2197-00-reva-x-prc-01-reva-pm"]} {
-		#		set mainline_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${release}/${dtsi_fname}"]
-		 #               set file_name [file normalize [file dirname ${mainline_dtsi}]]
-				
 				update_system_dts_include "versal-spp-pm.dtsi"
 			} else {
 				update_system_dts_include "versal-clk.dtsi"
 			}
 			set board_name [generate_board_compatible $root_node]
-
-			}
-
 			add_prop $root_node "model" "xlnx,versal" string $default_dts
 			add_prop $root_node "#address-cells" 2 int $default_dts
 			add_prop $root_node "#size-cells" 2 int $default_dts
 			return 0
 		}
 		"psv_cortexr5" {
-		#	create_dt_tree_from_dts_file
-		#	global dtsi_fname
-		#	update_system_dts_include [file tail ${dtsi_fname}]
-		#	set overrides [get_property CONFIG.periph_type_overrides [get_os]]
-		#	set dtsi_file " "
-		#	foreach override $overrides {
-		#		if {[lindex $override 0] == "BOARD"} {
-		#			set dtsi_file [lindex $override 1]
-		#		}
-		#	}
-			if {0} {
-			if {[string match -nocase $dtsi_file "versal-spp-itr8-cn13940875"] || [string match -nocase $dtsi_file "versal-vc-p-a2197-00-reva-x-prc-01-reva-pm"]} {
-				update_system_dts_include [file tail "versal-spp-pm.dtsi"]
-			} else {
-				update_system_dts_include [file tail "versal-clk.dtsi"]
-			}
-		#	set board_name [generate_board_compatible $root_node]
-		#	hsi::utils::add_new_dts_param "${root_node}" model "Versal R5" string ""
-		#	hsi::utils::add_new_dts_param "${root_node}" "#address-cells" 1 int ""
-		#	hsi::utils::add_new_dts_param "${root_node}" "#size-cells" 1 int ""
-			}
 			return 0
 		}
 		"psv_pmc" {
-		#	create_dt_tree_from_dts_file
-		#	global dtsi_fname
-		#	update_system_dts_include [file tail ${dtsi_fname}]
-		#	set overrides [get_property CONFIG.periph_type_overrides [get_os]]
-		#	set dtsi_file " "
-		#	foreach override $overrides {
-		#		if {[lindex $override 0] == "BOARD"} {
-		#			set dtsi_file [lindex $override 1]
-		#		}
-		#	}
-		#	if {[string match -nocase $dtsi_file "versal-spp-itr8-cn13940875"] || [string match -nocase $dtsi_file "versal-vc-p-a2197-00-reva-x-prc-01-reva-pm"]} {
-		#		update_system_dts_include [file tail "versal-spp-pm.dtsi"]
-		#	} else {
-		#		update_system_dts_include [file tail "versal-clk.dtsi"]
-		#	}
-		#	set board_name [generate_board_compatible $root_node]
-		#	hsi::utils::add_new_dts_param "${root_node}" model "PMC FW" string ""
-		#	hsi::utils::add_new_dts_param "${root_node}" "#address-cells" 1 int ""
-		#	hsi::utils::add_new_dts_param "${root_node}" "#size-cells" 1 int ""
 			return 0
 		} "psv_psm" {
 			return 0
@@ -5476,10 +5148,6 @@ proc gen_root_node {drv_handle} {
 	add_prop "${root_node}" "#size-cells" 1 int $default_dts
 	add_prop "${root_node}" model $model string $default_dts
 	add_prop "${root_node}" compatible $compatible string $default_dts
-#	hsi::utils::add_new_dts_param "${root_node}" "#address-cells" 1 int ""
-#	hsi::utils::add_new_dts_param "${root_node}" "#size-cells" 1 int ""
-#	hsi::utils::add_new_dts_param "${root_node}" model $model string ""
-#	hsi::utils::add_new_dts_param "${root_node}" compatible $compatible string ""
 
 	return $root_node
 }
@@ -5558,8 +5226,6 @@ proc gen_cpu_nodes {drv_handle} {
 		set cpu_root_node [get_node $drv_handle]
 		add_prop $cpu_root_node "#address-cells" 1 int $default_dts
 		add_prop $cpu_root_node "#size-cells" 0 int $default_dts
-	#	hsi::utils::add_new_dts_param "${cpu_root_node}" "#address-cells" 1 int ""
-	#	hsi::utils::add_new_dts_param "${cpu_root_node}" "#size-cells" 0 int ""
 	}
 	if {[string match -nocase $processor_type "psv_cortexa72"] || [string match -nocase $processor_type "psu_cortexa53"] || \
 		[string match -nocase $processor_type "ps7_cortexa9"]} {
@@ -5586,15 +5252,10 @@ proc gen_cpu_nodes {drv_handle} {
 			set loop 0
 			}
 		}
-		#set bus_label [get_property NODE_LABEL $bus_node]
 		if {[string match -nocase $processor_type "psu_pmu"]} {
-
-#			set cpu_node [create_node -n ${dev_type} -l "cpu4" -d ${default_dts} -p "cpus: cpus" -u 4]
 			set cpu_node [pcwdt insert root end "&cpu6"]
 			add_prop $cpu_node "microblaze_ddr_reserve_ea" [get_property CONFIG.C_DDR_RESERVE_EA $slave] int $default_dts
 			add_prop $cpu_node "microblaze_ddr_reserve_sa" [get_property CONFIG.C_DDR_RESERVE_SA $slave] int $default_dts
-#			hsi::utils::add_new_dts_param $cpu_node "microblaze_ddr_reserve_ea" [get_property CONFIG.C_DDR_RESERVE_EA $slave] int ""
-#			hsi::utils::add_new_dts_param $cpu_node "microblaze_ddr_reserve_sa" [get_property CONFIG.C_DDR_RESERVE_SA $slave] int ""
 			set name [split [get_property NAME $slave] "_"]
 			set cpu [lindex $name 2]
 			set compatiblelist [lappend compatiblelist "pmu-microblaze"]
@@ -5602,14 +5263,9 @@ proc gen_cpu_nodes {drv_handle} {
 			if {[string match -nocase $loop "0"]} {
 			}
 			set slave [hsi::get_cells -hier ${drv_handle}]
-#			set model "pmu-microblaze,[hsi::utils::get_ip_version $slave]"
-#			add_prop $cpu_node "model" $model stringlist $default_dts
-#			hsi::utils::add_new_dts_param $cpu_node "model" $model stringlist
 
 			set loop 1
 		} elseif {[string match -nocase $processor_type "psv_pmc"] || [string match -nocase $processor_type "psv_psm"]} {
-			#set cpu_node [create_node -n "cpus_microblaze" -l "cpus_microblaze"" -d ${default_dts} -p root]
-			#set cpu_node [create_node -n ${dev_type} -l "cpu2" -d ${default_dts} -p "cpus_microblaze: cpus_microblaze" -u 2]
 			if {[string match -nocase $processor_type "psv_pmc"]} {
 				set cpu_node [pcwdt insert root end "&cpu2"]
 			} else {
@@ -5639,11 +5295,8 @@ proc gen_cpu_nodes {drv_handle} {
 					set cpu_nr 5
 				}
 			}
-#			set cpu_node [create_node -n "cpus_r5" -l "cpus_r5" -d ${default_dts} -p root]
-#			set cpu_node [create_node -n ${dev_type} -l "cpu${cpu_nr}" -u $cpu_nr -d ${default_dts} -p "cpus_r5: cpus_r5"]
 			set cpu_node [pcwdt insert root end "&cpu${cpu_nr}"]
 			add_prop $cpu_node "cpu-frequency" [get_property CONFIG.C_CPU_CLK_FREQ_HZ $slave] int $default_dts
-#			hsi::utils::add_new_dts_param $cpu_node cpu-frequency [get_property CONFIG.C_CPU_CLK_FREQ_HZ $slave] int ""
 			set compatiblelist [lappend compatiblelist "arm,cortex-r5"]
 			set compatiblelist [lappend compatiblelist "arm,cortex-r5-$cpu"]
 			if {[string match -nocase $loop "0"]} {
@@ -5655,16 +5308,11 @@ proc gen_cpu_nodes {drv_handle} {
 			set cpu_nr [lindex $name 2]
 			if {[string match -nocase $processor_type "psu_cortexa53"]} {
 				set cpu_node [pcwdt insert root end "&cpu${cpu_nr}"]
-#				set cpu_node [create_node -n ${dev_type} -l "cpu${cpu_nr}" -d ${default_dts} -p "cpus_a53: cpus_a53" -u $cpu_nr]
 			} else {
-			#	set cpu_node [create_node -n "cpus_a72" -l "cpus_a72" -d ${default_dts} -p root]
 				set cpu_node [pcwdt insert root end "&cpu${cpu_nr}"]
-#				set cpu_node [create_node -n ${dev_type} -l "cpu${cpu_nr}" -d ${default_dts} -p root -u $cpu_nr]
 			}
 			add_prop $cpu_node "cpu-frequency" [get_property CONFIG.C_CPU_CLK_FREQ_HZ $slave] int $default_dts
 			add_prop $cpu_node "stamp-frequency" [get_property CONFIG.C_TIMESTAMP_CLK_FREQ $slave] int $default_dts
-			#hsi::utils::add_new_dts_param $cpu_node cpu-frequency [get_property CONFIG.C_CPU_CLK_FREQ_HZ $slave] int ""
-			#hsi::utils::add_new_dts_param $cpu_node stamp-frequency [get_property CONFIG.C_TIMESTAMP_CLK_FREQ $slave] int ""
 			if {[string match -nocase $processor_type "psu_cortexa53"]} {
 				set compatiblelist [lappend compatiblelist "arm,cortex-a53"]
 				set compatiblelist [lappend compatiblelist "arm,armv8"] 
@@ -5689,16 +5337,12 @@ proc gen_cpu_nodes {drv_handle} {
 			set loop 1
 		} else {
 			set cpu_node [create_node -l ${dev_type} -n "$cpu" -u ${cpu_no} -d ${default_dts} -p root]
-#			set cpu_node [add_or_get_dt_node -n ${dev_type} -l ${cpu} -u ${cpu_no} -d ${default_dts} -p ${cpu_root_node}]
 			add_prop $cpu_node "reg" $cpu_no int $default_dts
-#			hsi::utils::add_new_dts_param "${cpu_node}" "reg" $cpu_no int ""
 		}
-		#hsi::utils::add_new_dts_param "${cpu_node}" "bus-handle" $bus_label reference
 		add_prop $cpu_node "bus-handle" $bus_label reference $default_dts
 		foreach drv_prop_name $drv_dt_prop_list {
 			set slave [hsi::get_cells -hier $tmp]
 			set prop [get_property $drv_prop_name $slave]
-			####SURESH
 			add_driver_prop $drv_handle $cpu_node ${drv_prop_name}
 		}
 
@@ -5727,16 +5371,10 @@ proc remove_all_tree {} {
 }
 
 proc gen_mdio_node {drv_handle parent_node} {
-#	set remove_pl [get_property CONFIG.remove_pl [get_os]]
-#	if {[is_pl_ip $drv_handle] && $remove_pl} {
-#		return
-#	}
 	set dts_file [set_drv_def_dts $drv_handle]
 	set mdio_node [create_node -l ${drv_handle}_mdio -n mdio -p $parent_node]
 	add_prop $mdio_node "#address-cells" 1 int $dts_file
 	add_prop "${mdio_node}" "#size-cells" 0 int $dts_file 
-#	hsi::utils::add_new_dts_param "${mdio_node}" "#address-cells" 1 int ""
-#	hsi::utils::add_new_dts_param "${mdio_node}" "#size-cells" 0 int ""
 	return $mdio_node
 }
 
@@ -5809,9 +5447,6 @@ proc generate_mb_ccf_node {drv_handle} {
 	global bus_clk_list
 
 	proc_called_by
-#	set sw_proc [get_sw_processor]
-#	set proc_ip [hsi::get_cells -hier $sw_proc]
-#	set proctype [get_property IP_NAME $proc_ip]
 	set family [get_hw_family]
 	if {[regexp "kintex*" $family match]} {
 		set cpu_clk_freq [get_clock_frequency $drv_handle "CLK"]
@@ -5836,7 +5471,6 @@ proc gen_dev_ccf_binding args {
 
 	set sw_proc [get_sw_processor]
 	set proc_ip [hsi::get_cells -hier $sw_proc]
-#	set proctype [get_property IP_NAME $proc_ip]
 	set proctype [get_hw_family]
 	if {[regexp "kintex*" $proctype match]} {
 		set clk_refs ""
@@ -5871,9 +5505,7 @@ proc gen_dev_ccf_binding args {
 
 proc update_eth_mac_addr {drv_handle} {
 	proc_called_by
-#	set eth_count [get_os_dev_count "eth_mac_count"]
 	set eth_count [get_count "eth_mac_count"]
-#	set tmp [list_property $drv_handle CONFIG.local-mac-address]
 	set tmp ""
 	if {![string_is_empty $tmp]} {
 		set def_mac [get_property CONFIG.local-mac-address $drv_handle]
@@ -5890,9 +5522,7 @@ proc update_eth_mac_addr {drv_handle} {
 	incr eth_count
 	set node [get_node $drv_handle]
 	set dts_file [set_drv_def_dts $drv_handle]
-#	hsi::utils::set_os_parameter_value "eth_mac_count" $eth_count
 	add_prop $node "local-mac-address" ${mac_addr} bytesequence $dts_file
-#	hsi::utils::add_new_property $drv_handle "local-mac-address" bytelist ${mac_addr}
 }
 
 proc get_os_dev_count {count_para {drv_handle ""} {os_para ""}} {
@@ -5940,7 +5570,6 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 	if { [llength $intr_pin_name] == 0 } {
 		return $intr_cntrl
 	}
-
 	if { [llength $periph_name] != 0 } {
 	# This is the case where IP pin is interrupting
 	set periph [hsi::get_cells -hier -filter "NAME==$periph_name"]
@@ -5952,11 +5581,8 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 	if { [llength $intr_pin] == 0 } {
 		return $intr_cntrl
 	}
-	#set valid_cascade_proc "microblaze ps7_cortexa9 psu_cortexa53 psv_cortexa72"
 	set valid_cascade_proc "kintex zynq zynqmp zynquplus versal"
-	#set proctype [get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]]
 	set proctype [get_hw_family]
-	#set proctype "psv_cortexa72"
 	if { [string match -nocase [common::get_property IP_NAME $periph] "axi_intc"] && [lsearch -nocase $valid_cascade_proc $proctype] >= 0 } {
 		set sinks [hsi::utils::get_sink_pins $intr_pin]
 		foreach intr_sink ${sinks} {
@@ -5997,7 +5623,6 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 			return $intr_cntrl
 		}
 	}
-
 	set intr_sink_pins [hsi::utils::get_sink_pins $intr_pin]
 	if { [llength $intr_sink_pins] == 0 || [string match $intr_sink_pins "{}"]} {
 		return $intr_cntrl
@@ -6279,9 +5904,7 @@ proc get_psu_interrupt_id { ip_name port_name } {
     if { [llength $sink_pins] == 0 } {
         return
     }
-#    set proctype [get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]]
 	set proctype [get_hw_family]
-#	set proctype "psv_cortexa72"
 	if {[regexp "kintex*" $proctype match]} {
          if {[string match -nocase "[get_property IP_NAME $periph]" "axi_intc"]} {
              set ip [get_property IP_NAME $periph]
@@ -6484,7 +6107,6 @@ proc generate_cci_node { drv_handle rt_node} {
 		}
 		if {[string match -nocase $cci_enable "1"]} {
 			add_prop $rt_node "dma-coherent" boolean $dts_file
-#			hsi::utils::add_new_dts_param $rt_node "dma-coherent" "" boolean
 		}
 	}
 }
@@ -6496,7 +6118,6 @@ proc generate_board_compatible { rt_node } {
                 lassign $fields prefix board suffix
                 if { [string length $board] != 0 } {
 			add_prop root compatible $board string "system-top.dts"
-#			hsi::utils::add_new_dts_param "${rt_node}" compatible $board string ""
                 }
             }
 }

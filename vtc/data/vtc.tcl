@@ -13,24 +13,20 @@
 #
 
 namespace eval vtc {
-proc generate {drv_handle} {
-#	set node [gen_peripheral_nodes $drv_handle]
-	set node [get_node $drv_handle]
-	if {$node == 0} {
-		return
+	proc generate {drv_handle} {
+		set node [get_node $drv_handle]
+		if {$node == 0} {
+			return
+		}
+		set dts_file [set_drv_def_dts $drv_handle]
+		pldt append $node compatible "\ \, \"xlnx,v-tc-6.1\""
+		set generate_en [get_property CONFIG.C_GENERATE_EN [hsi::get_cells -hier $drv_handle]]
+		if {$generate_en == 1} {
+			add_prop "${node}" "xlnx,generator" boolean $dts_file
+		}
+		set detect_en [get_property CONFIG.C_DETECT_EN [hsi::get_cells -hier $drv_handle]]
+		if {$detect_en == 1} {
+			add_prop "${node}" "xlnx,detector" boolean $dts_file
+		}
 	}
-	set dts_file [set_drv_def_dts $drv_handle]
-#	set compatible [get_comp_str $drv_handle]
-#	set compatible [append compatible " " "xlnx,v-tc-6.1"]
-#	set_drv_prop $drv_handle compatible "$compatible" stringlist
-	pldt append $node compatible "\ \, \"xlnx,v-tc-6.1\""
-	set generate_en [get_property CONFIG.C_GENERATE_EN [hsi::get_cells -hier $drv_handle]]
-	if {$generate_en == 1} {
-		add_prop "${node}" "xlnx,generator" boolean $dts_file
-	}
-	set detect_en [get_property CONFIG.C_DETECT_EN [hsi::get_cells -hier $drv_handle]]
-	if {$detect_en == 1} {
-		add_prop "${node}" "xlnx,detector" boolean $dts_file
-	}
-}
 }

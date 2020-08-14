@@ -33,66 +33,6 @@ proc get_yaml_dict { config_file } {
     return [yaml::yaml2dict $data]
 }
 
-# set global dict_devicetree
-proc get_user_config1 args {
-        set dict_devicetree  {}
-        set config_file "config.yaml"
-	#TODO SURESH where to put the config.yaml
-        set cfg [get_yaml_dict $config_file]
-        set dict_devicetree [dict get $cfg dict_devicetree]
-        set user [dict get $dict_devicetree dict_user]
-        set path [dict get $user repo_path]
-        set overlay [dict get $user dt_overlay]
-        set config_dts [dict get $user config_dts]
-        set board_dts [dict get $user board_dts]
-        set master_dts [dict get $user master_dts]
-        set pl_only [dict get $user pl_only]
-        set param ""
-        switch -glob -- [lindex $args 0] {
-                -repo {
-                        set param $path
-                } -master_dts {
-                        set param $master_dts
-                } -config_dts {
-                        set param $config_dts
-                } -board_dts {
-                        set param $board_dts
-                } -overlay {
-                        set param $overaly
-                } -pl_only {
-                        set param $pl_only
-                } default {
-                        error "get_user_config bad option - [lindex $args 0]"
-                }
-        }
-        return $param
-}
-# set global dict_devicetree
-proc aget_driver_config args {
-        set dict_drvdata  {}
-        set config_file [lindex $args 0]
-	#TODO SURESH where to put the config.yaml
-        set cfg [get_yaml_dict $config_file]
-        set dict_devicetree [dict get $cfg dict_drvdata]
-        set param [dict get $dict_drvdata [lindex $args 1]]
-        return $param
-}
-
-if {0} {
-foreach i [get_sw_cores device_tree] {
-    set common_tcl_file "[get_property "REPOSITORY" $i]/data/common_proc.tcl"
-    if {[file exists $common_tcl_file]} {
-        source $common_tcl_file
-        break
-    }
-}
-}
-proc get_ip_prop {drv_handle pram} {
-    set ip [get_cells -hier $drv_handle]
-    set value [get_property ${pram} $ip]
-    return $value
-}
-
 proc inc_os_prop {drv_handle os_conf_dev_var var_name conf_prop} {
     set ip_check "False"
     set os_ip [get_property ${os_conf_dev_var} [get_os]]
@@ -205,10 +145,6 @@ proc extract_dts_name {override value} {
 }
 
 proc gen_sata_laneinfo {} {
-#	set remove_pl [get_property CONFIG.remove_pl [get_os]]
-#	if {$remove_pl} {
-#		return 0
-#	}
 
 	foreach ip [hsi::get_cells] {
 		set slane 0
@@ -248,10 +184,8 @@ proc gen_sata_laneinfo {} {
 
 	lset freq 0 $i
 	lset freq 1 $j
-#	set dts_file [get_property CONFIG.pcw_dts [get_os]]
 	set dts_file "pcw.dtsi"
 	set sata_node [create_node -n "&psu_sata" -d $dts_file]
-	puts "sata $sata_node"
 	set hsi_version [get_hsi_version]
 	set ver [split $hsi_version "."]
 	set version [lindex $ver 0]
@@ -300,13 +234,7 @@ proc gen_sata_laneinfo {} {
 }
 
 proc gen_ext_axi_interface {}  {
-#	set remove_pl [get_property CONFIG.remove_pl [get_os]]
-#	if {$remove_pl} {
-#		return 0
-#	}
-#	set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
 	set family [get_hw_family]
-#	set proctype "psv_cortexa72"
 	if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
 		set ext_axi_intf [get_mem_ranges -of_objects [get_cells -hier [get_sw_processor]] -filter {INSTANCE ==""}]
 		if {[regexp "ps._*" "$ext_axi_intf" match]} {
@@ -372,7 +300,6 @@ proc gen_include_headers {} {
 	set family [get_hw_family]
 	set include_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${kernel_ver}/include"]
 	set include_list "include*"
-#	set dir_path "./"
 	set dir_path [get_user_config $common_file -dir]
 	if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
 		set power_list "xlnx-zynqmp-power.h"
@@ -403,136 +330,117 @@ proc gen_include_headers {} {
 }
 
 proc gen_board_info {} {
-    # periph_type_overrides = {BOARD KC705 full/lite} or {BOARD ZYNQ} or {BOARD ZC1751 ES2/ES1}
 	global env
 	set path $env(REPO)
-
 
 	set common_file "$path/device_tree/data/config.yaml"
 	set kernel_ver [get_user_config $common_file -kernel_ver]
 	if {[file exists $common_file]} {
         	#error "file not found: $common_file"
     	}
-	#set file "$path/${drvname}/data/config.yaml"
 	set dtsi_file [get_user_config $common_file -board_dts]
 	set dir_path [get_user_config $common_file -dir]
-#    set overrides [get_property CONFIG.periph_type_overrides [get_os]]
-    if {[string match $dtsi_file "none"]} {
+    	if {[string match $dtsi_file "none"]} {
 		return
-    }
-#    foreach i [giet_sw_cores device_tree] {
-#    foreach override $overrides {
-	#if {[lindex $override 0] == "BOARD"} {
-	#	set first_element [lindex $override 0]
-#		set dtsi_file [lindex $override 1]
-		if {[file exists $dtsi_file]} {
-			set dir $dir_path
-			set pathtype [file pathtype $dtsi_file]
-			if {[string match -nocase $pathtype "relative"]} {
-				dtg_warning "checking file:$dtsi_file  pwd:$dir"
-				#Get the absolute path from relative path
-				set dtsi_file [file normalize $dtsi_file]
-			}
-			file copy -force $dtsi_file $dir_path
-			update_system_dts_include [file tail $dtsi_file]
-			return
+    	}
+	if {[file exists $dtsi_file]} {
+		set dir $dir_path
+		set pathtype [file pathtype $dtsi_file]
+		if {[string match -nocase $pathtype "relative"]} {
+			dtg_warning "checking file:$dtsi_file  pwd:$dir"
+			#Get the absolute path from relative path
+			set dtsi_file [file normalize $dtsi_file]
 		}
-#		set dts_name [string tolower [lindex $override 1]]
-		set dts_name $dtsi_file
-		if {[string match -nocase $dts_name "template"]} {
-			return
-		}
-		if {[llength $dts_name] == 0} {
-			return
-		}
-#		set kernel_ver [get_property CONFIG.kernel_version [get_os]]
-		set include_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${kernel_ver}/include"]
-		set include_list "include*"
-	#	set dir_path 
-		set gpio_list "gpio.h"
-		set intr_list "irq.h"
-		set phy_list  "phy.h"
-		set input_list "input.h"
-		set pinctrl_list "pinctrl-zynqmp.h"
-		set gpiodir "$dir_path/include/dt-bindings/gpio"
-		set phydir "$dir_path/include/dt-bindings/phy"
-		set intrdir "$dir_path/include/dt-bindings/interrupt-controller"
-		set inputdir "$dir_path/include/dt-bindings/input"
-		set pinctrldir "$dir_path/include/dt-bindings/pinctrl"
-		file mkdir $phydir
-		file mkdir $gpiodir
-		file mkdir $intrdir
-		file mkdir $inputdir
-		file mkdir $pinctrldir
-		if {[file exists $include_dtsi]} {
-			foreach file [glob [file normalize [file dirname ${include_dtsi}]/*/*/*/*]] {
-				if {[string first $gpio_list $file] != -1} {
-					file copy -force $file $gpiodir
-				} elseif {[string first $phy_list $file] != -1} {
-					file copy -force $file $phydir
-				} elseif {[string first $intr_list $file] != -1} {
-					file copy -force $file $intrdir
-				} elseif {[string first $input_list $file] != -1} {
-					file copy -force $file $inputdir
-				} elseif {[string first $pinctrl_list $file] != -1} {
-					file copy -force $file $pinctrldir
-				}
+		file copy -force $dtsi_file $dir_path
+		update_system_dts_include [file tail $dtsi_file]
+		return
+	}
+	set dts_name $dtsi_file
+	if {[string match -nocase $dts_name "template"]} {
+		return
+	}
+	if {[llength $dts_name] == 0} {
+		return
+	}
+	set include_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${kernel_ver}/include"]
+	set include_list "include*"
+	set gpio_list "gpio.h"
+	set intr_list "irq.h"
+	set phy_list  "phy.h"
+	set input_list "input.h"
+	set pinctrl_list "pinctrl-zynqmp.h"
+	set gpiodir "$dir_path/include/dt-bindings/gpio"
+	set phydir "$dir_path/include/dt-bindings/phy"
+	set intrdir "$dir_path/include/dt-bindings/interrupt-controller"
+	set inputdir "$dir_path/include/dt-bindings/input"
+	set pinctrldir "$dir_path/include/dt-bindings/pinctrl"
+	file mkdir $phydir
+	file mkdir $gpiodir
+	file mkdir $intrdir
+	file mkdir $inputdir
+	file mkdir $pinctrldir
+	if {[file exists $include_dtsi]} {
+		foreach file [glob [file normalize [file dirname ${include_dtsi}]/*/*/*/*]] {
+			if {[string first $gpio_list $file] != -1} {
+				file copy -force $file $gpiodir
+			} elseif {[string first $phy_list $file] != -1} {
+				file copy -force $file $phydir
+			} elseif {[string first $intr_list $file] != -1} {
+				file copy -force $file $intrdir
+			} elseif {[string first $input_list $file] != -1} {
+				file copy -force $file $inputdir
+			} elseif {[string first $pinctrl_list $file] != -1} {
+				file copy -force $file $pinctrldir
 			}
 		}
-		set mainline_ker [get_user_config $common_file -mainline_kernel]
-#		set mainline_ker [get_property CONFIG.mainline_kernel [get_os]]
-		if {[string match -nocase $mainline_ker "v4.17"]} {
-			set mainline_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${mainline_ker}/board"]
-			if {[file exists $mainline_dtsi]} {
-				set mainline_board_file 0
-				foreach file [glob [file normalize [file dirname ${mainline_dtsi}]/board/*]] {
-					set dtsi_name "$dts_name.dtsi"
-					# NOTE: ./ works only if we did not change our directory
-					if {[regexp $dtsi_name $file match]} {
-						file copy -force $file $dir_path
-						update_system_dts_include [file tail $file]
-						set mainline_board_file 1
-					}
+	}
+	set mainline_ker [get_user_config $common_file -mainline_kernel]
+	if {[string match -nocase $mainline_ker "v4.17"]} {
+		set mainline_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${mainline_ker}/board"]
+		if {[file exists $mainline_dtsi]} {
+			set mainline_board_file 0
+			foreach file [glob [file normalize [file dirname ${mainline_dtsi}]/board/*]] {
+				set dtsi_name "$dts_name.dtsi"
+				# NOTE: ./ works only if we did not change our directory
+				if {[regexp $dtsi_name $file match]} {
+					file copy -force $file $dir_path
+					update_system_dts_include [file tail $file]
+					set mainline_board_file 1
 				}
-				if {$mainline_board_file == 0} {
-					error "Error:$dtsi_name board file is not present in DTG. Please add a vaild board."
+			}
+			if {$mainline_board_file == 0} {
+				error "Error:$dtsi_name board file is not present in DTG. Please add a vaild board."
+			}
+		}
+	} else {
+		set kernel_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${kernel_ver}/BOARD"]
+		if {[file exists $kernel_dtsi]} {
+			set valid_board_file 0
+			foreach file [glob [file normalize [file dirname ${kernel_dtsi}]/BOARD/*]] {
+				set dtsi_name "$dts_name.dtsi"
+				# NOTE: ./ works only if we did not change our directory
+				if {[regexp $dtsi_name $file match]} {
+					file copy -force $file $dir_path
+					update_system_dts_include [file tail $file]
+					set valid_board_file 1
 				}
+			}
+			if {$valid_board_file == 0} {
+				error "Error:$dtsi_name board file is not present in DTG. Please add a valid board."
+			}
+			set default_dts "system-top.dts"
+			set valid_axi_list "kc705-full kc705-lite ac701-full ac701-lite"
+			set valid_no_axi_list "kcu105 zc702 zc706 zc1751-dc1 zc1751-dc2 zedboard"
+			if {[lsearch -nocase $valid_axi_list $dts_name] >= 0 || [string match -nocase $dts_name "kcu705"]} {
+				add_prop root "hard-reset-gpios" "reset_gpio 0 0 1" reference $default_dts
 			}
 		} else {
-			set kernel_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${kernel_ver}/BOARD"]
-			if {[file exists $kernel_dtsi]} {
-				set valid_board_file 0
-				foreach file [glob [file normalize [file dirname ${kernel_dtsi}]/BOARD/*]] {
-					set dtsi_name "$dts_name.dtsi"
-					# NOTE: ./ works only if we did not change our directory
-					if {[regexp $dtsi_name $file match]} {
-						file copy -force $file $dir_path
-						update_system_dts_include [file tail $file]
-						set valid_board_file 1
-					}
-				}
-				if {$valid_board_file == 0} {
-					error "Error:$dtsi_name board file is not present in DTG. Please add a valid board."
-				}
-				set default_dts "system-top.dts"
-#				set root_node [add_or_get_dt_node -n / -d ${default_dts}]
-				set valid_axi_list "kc705-full kc705-lite ac701-full ac701-lite"
-				set valid_no_axi_list "kcu105 zc702 zc706 zc1751-dc1 zc1751-dc2 zedboard"
-				if {[lsearch -nocase $valid_axi_list $dts_name] >= 0 || [string match -nocase $dts_name "kcu705"]} {
-					add_prop root "hard-reset-gpios" "reset_gpio 0 0 1" reference $default_dts
-#					hsi::utils::add_new_dts_param "${root_node}" hard-reset-gpios "reset_gpio 0 0 1" reference
-				}
-			} else {
-				puts "File not found\n\r"
-			}
+			puts "File not found\n\r"
 		}
-#        }
- #   }
-  #}
+	}
 }
 
 proc gen_zynqmp_ccf_clk {} {
-#	set default_dts [get_property CONFIG.pcw_dts [get_os]]
 	set default_dts "pcw.dts"
 	set ccf_node [create_node -n "&pss_ref_clk" -d $default_dts -p root]
 	set periph_list [hsi::get_cells -hier]
@@ -547,7 +455,6 @@ proc gen_zynqmp_ccf_clk {} {
 				} else {
 					dtg_warning "Frequency $freq used instead of 33.333"
 					add_prop ${ccf_node} "clock-frequency" [scan [expr $freq * 1000000] "%d"] int $default_dts
-#					hsi::utils::add_new_dts_param "${ccf_node}" "clock-frequency" [scan [expr $freq * 1000000] "%d"] int
 				}
 			}
 		}
@@ -588,10 +495,10 @@ proc generate {} {
 			namespace import ::${drvname}::\*
 		        ::${drvname}::generate $procc
     			add_skeleton
-		#	init_driver_param
 			set non_val_list "versal_cips noc_nmu noc_nsu"
 			set non_val_ip_types "MONITOR BUS PROCESSOR"
     			foreach drv_handle $peri_list {
+				
 				set ip_name [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
 				set ip_type [get_property IP_TYPE [hsi::get_cells -hier $drv_handle]]
 				if {[lsearch -nocase $non_val_list $ip_name] >= 0} {
@@ -600,7 +507,6 @@ proc generate {} {
 				if {[lsearch -nocase $non_val_ip_types $ip_type] >= 0} {
 					continue
 				}
-				
  	       			gen_peripheral_nodes $drv_handle "create_node_only"
 	        		gen_reg_property $drv_handle
 	        		gen_compatible_property $drv_handle
@@ -610,7 +516,6 @@ proc generate {} {
 
 				set driver_name [get_drivers $drv_handle]
     			}
-			if {1} {
 			set non_val_list "psv_cortexa72 psu_cortexa53 ps7_cortexa9 versal_cips noc_nmu noc_nsu"
 			set non_val_ip_types "MONITOR BUS"
 			foreach drv_handle $peri_list {
@@ -628,7 +533,6 @@ proc generate {} {
 				namespace import ::${drvname}::\*
 				::${drvname}::generate $drv_handle
 			}
-			}
 			namespace forget ::
 		} else {
 			continue
@@ -637,7 +541,6 @@ proc generate {} {
     	gen_board_info
     	gen_include_headers
 	set proctype [get_hw_family]
-#	set proctype "psv_cortexa72"
 	set common_file "$path/device_tree/data/config.yaml"
 	if {[file exists $common_file]} {
         	#error "file not found: $common_file"
@@ -651,9 +554,7 @@ proc generate {} {
 			gen_zynqmp_ccf_clk
 		}
     	}
-    	#gen_ext_axi_interface
     	gen_resrv_memory
-  	#update_chosen $drv_handle
     	update_alias $drv_handle
     	update_cpu_node $drv_handle
     	gen_cpu_cluster $drv_handle
@@ -665,13 +566,11 @@ proc generate {} {
 	set release [get_user_config $common_file -kernel_ver]
 	global dtsi_fname
 	if {[string match -nocase $family "versal"] || [string match -nocase $family "zynqmp"] || [string match -nocase $family "zynq"] || [string match -nocase $family "zynquplus"]} {
-		###PATH needed
 		set mainline_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${release}/${dtsi_fname}"]
 		foreach file [glob [file normalize [file dirname ${mainline_dtsi}]/*]] {
-				# NOTE: ./ works only if we did not change our directory
-				file copy -force $file $dir
+			# NOTE: ./ works only if we did not change our directory
+			file copy -force $file $dir
 		}
-	#	write_dt psdt root "$dir/versal.dtsi"
 		write_dt systemdt root "$dir/system-top.dts"
 		write_dt pldt root "$dir/pl.dtsi"
 		write_dt pcwdt root "$dir/pcw.dtsi"
@@ -685,7 +584,6 @@ proc generate {} {
 proc generate_psvreg_property {base high} {
 	set size [format 0x%x [expr {${high} - ${base} + 1}]]
 
-	#set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
 	set family [get_hw_family]
 	if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"] || [string match -nocase $family "versal"]} {
 		if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
@@ -748,7 +646,6 @@ proc gen_resrv_memory {} {
 			set ranges [hsi::get_mem_ranges -of_objects $proc_map -filter {MEM_TYPE==MEMORY}]
 		} elseif {[string match -nocase $proctype "psv_cortexa72"] || [string match -nocase $proctype "psv_cortexr5"] || [string match -nocase $proctype "psv_pmc"]} {
 			set interface_block_names [get_property ADDRESS_BLOCK [hsi::get_mem_ranges -of_objects $proc_map]]
-		#	continue
 		}
 
 		if {[string match -nocase $proctype "psu_cortexa53"] || [string match -nocase $proctype "psv_cortexa72"] } {
@@ -981,20 +878,14 @@ proc gen_resrv_memory {} {
 		}
 
 	}
-#	set default_dts [get_property CONFIG.master_dts [get_os]]
 	set default_dts "system-top.dts"
 	set mem_node [create_node -n "reserved-memory" -p root -d $default_dts]
-# 	set root_node [add_or_get_dt_node -n "/" -d ${default_dts}]
-#	set mem_node [add_or_get_dt_node -n "reserved-memory" -d ${default_dts} -p ${root_node}]
 	if {$first == 0} { 
 	add_prop $mem_node "#address-cells" "0x2" hexint $default_dts
 	add_prop $mem_node "#size-cells" "0x2" hexint $default_dts
 	add_prop $mem_node "ranges" boolean $default_dts
 	set first 1
 	}
-#	hsi::utils::add_new_dts_param $mem_node "#address-cells" "0x2" hexint
- #   	hsi::utils::add_new_dts_param $mem_node "#size-cells" "0x2" hexint
-  #  	hsi::utils::add_new_dts_param $mem_node ranges "" boolean
     	if {[string match -nocase $proctype "psu_cortexa53"] || [string match -nocase $proctype "psu_cortexr5"] || [string match -nocase $proctype "psu_pmu"] } {
         	set child_node [create_node -l "memory_r5" -n "memory_r5" -d ${default_dts} -p $mem_node]
         	add_prop $child_node reg $r5map hexint -d ${default_dts}
@@ -1007,17 +898,14 @@ proc gen_resrv_memory {} {
     		if {![string_is_empty $a53map]} {
 	        	set child_node [create_node -l "memory_a72" -n "memory_a72" -d ${default_dts} -p $mem_node]
 			add_prop $child_node reg $a53map hexlist $default_dts
-#        		hsi::utils::add_new_dts_param $child_node reg $a53map hexint
 		}
     		if {![string_is_empty $r5map]} {
 		        set child_node [create_node -l "memory_r5" -n "memory_r5" -d ${default_dts} -p $mem_node]
 			add_prop $child_node reg $r5map hexlist $default_dts
-#        		hsi::utils::add_new_dts_param $child_node reg $r5map hexint
 		}
     		if {![string_is_empty $pmumap]} {
         		set child_node [create_node -l "memory_pmc" -n "memory_pmc" -d ${default_dts} -p $mem_node]
 			add_prop $child_node reg $pmumap hexlist $default_dts
-#        		hsi::utils::add_new_dts_param $child_node reg $pmumap hexint
 		}
     	}
 }
@@ -1042,66 +930,41 @@ proc add_skeleton {} {
 	global env
 	set path $env(REPO)
 
-#	set drvname [get_drivers $drv_handle]
-
 	set common_file "$path/device_tree/data/config.yaml"
 	if {[file exists $common_file]} {
         	#error "file not found: $common_file"
     	}
-	#set file "$path/${drvname}/data/config.yaml"
-#	set dev_type [get_driver_config $common_file dev_type]
-#	if {[string_is_empty $dev_type] == 1} {
-#		set dev_type $drv_handle
-#	}
 
-	#set mainline_ker [get_property CONFIG.mainline_kernel [get_os]]
-	#set default_dts [get_user_config $common_file "master_dts"]
 	set default_dts "system-top.dts"
-
-#    set default_dts [get_property CONFIG.master_dts [get_os]]
-#    set system_root_node [add_or_get_dt_node -n "/" -d ${default_dts}]
 	set chosen_node [create_node -n "chosen" -p root -d $default_dts]
 	set chosen_node [create_node -n "aliases" -p root -d $default_dts]
-#    set chosen_node [add_or_get_dt_node -n "chosen" -d ${default_dts} -p ${system_root_node}]
-#    set alias_node [add_or_get_dt_node -n "aliases" -d ${default_dts} -p ${system_root_node}]
 }
 
 proc update_chosen {os_handle} {
-#    set default_dts [get_property CONFIG.master_dts [get_os]]
 	set default_dts "system-top.dts"
-#    set system_root_node [add_or_get_dt_node -n "/" -d ${default_dts}]
-    set chosen_node [create_node -n "chosen" -d ${default_dts} -p root]
+    	set chosen_node [create_node -n "chosen" -d ${default_dts} -p root]
 
-    #getting boot arguments
 	set bootargs ""
- #   set bootargs [get_property CONFIG.bootargs $os_handle]
- #   set console [hsi::utils::get_os_parameter_value "console"]
- #   set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
-    if {[llength $bootargs]} {
-        append bootargs " earlycon"
-    } else {
-	set bootargs "earlycon"
-    }
-#	set proctype "psv_cortetxa72"
+    	if {[llength $bootargs]} {
+        	append bootargs " earlycon"
+    	} else {
+		set bootargs "earlycon"
+    	}
 	set family [get_hw_family]
-    if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"] || \
-	[string match -nocase $family "versal"]} {
+    	if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"] || \
+		[string match -nocase $family "versal"]} {
 		if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
-	           append bootargs " clk_ignore_unused"
+	           	append bootargs " clk_ignore_unused"
 		}
-    }
-    add_prop $chosen_node "bootargs" $bootargs string $default_dts
-#    hsi::utils::add_new_dts_param "${chosen_node}" "bootargs" "$bootargs" string
- #   set consoleip [get_property CONFIG.console_device $os_handle]
-     set consoleip "none"
-    if {![string match -nocase $consoleip "none"]} {
-         set consoleip [ps_node_mapping $consoleip label]
-         set index [string first "," $console]
-         set baud [string range $console [expr $index + 1] [string length $console]]
-	puts "STD"
-	add_prop $chosen_node "stdout-path" "serial0:${baud}n8" string $default_dts
-#         hsi::utils::add_new_dts_param "${chosen_node}" "stdout-path" "serial0:${baud}n8" string
-   }
+    	}
+    	add_prop $chosen_node "bootargs" $bootargs string $default_dts
+     	set consoleip "none"
+    	if {![string match -nocase $consoleip "none"]} {
+         	set consoleip [ps_node_mapping $consoleip label]
+         	set index [string first "," $console]
+         	set baud [string range $console [expr $index + 1] [string length $console]]
+		add_prop $chosen_node "stdout-path" "serial0:${baud}n8" string $default_dts
+   	}
 }
 
 proc gen_cpu_cluster {os_handle} {
@@ -1146,67 +1009,59 @@ proc gen_tcmbus {os_handle} {
     hsi::utils::add_new_dts_param "${tcm_node}" "compatible" "mmiio-sram" string
     hsi::utils::add_new_dts_param "${tcm_node}" "reg" "0xe00000 0x10000" intlist
 }
+
 proc update_cpu_node {os_handle} {
-#    set default_dts [get_property CONFIG.master_dts [get_os]]
 	set default_dts "system-top.dts"
-#    set system_root_node [add_or_get_dt_node -n "/" -d ${default_dts}]
-
- #   set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
-#	set proctype "psv_cortexa72"
 	set proctype [get_hw_family]
-    if {[string match -nocase $proctype "versal"] } {
-        set current_proc "psv_cortexa72_"
-        set total_cores 2
-    } elseif {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
-        set current_proc "psu_cortexa53_"
-        set total_cores 4
-    } elseif {[string match -nocase $proctype "zynq"] } {
-        set current_proc "ps7_cortexa9_"
-        set total_cores 2
-    } else {
-        set current_proc ""
-    }
+    	if {[string match -nocase $proctype "versal"] } {
+        	set current_proc "psv_cortexa72_"
+        	set total_cores 2
+    	} elseif {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+        	set current_proc "psu_cortexa53_"
+        	set total_cores 4
+    	} elseif {[string match -nocase $proctype "zynq"] } {
+        	set current_proc "ps7_cortexa9_"
+        	set total_cores 2
+    	} else {
+        	set current_proc ""
+    	}
 
-    if {[string compare -nocase $current_proc ""] == 0} {
-        return
-    }
-    if {[string match -nocase $proctype "versal"]} {
-        set procs [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
-        set pnames ""
-	foreach proc_name $procs {
-              if {[regexp "psv_cortexa72*" $proc_name match]} {
-	             append pnames " " $proc_name
-              }
-        }
-        set a72cores [llength $pnames]
-        if {[string match -nocase $a72cores $total_cores]} {
-	     return
-        }
-    }
-    #getting boot arguments
-    set proc_instance 0
-    for {set i 0} {$i < $total_cores} {incr i} {
-        set proc_name [lindex [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}] $i]
-        if {[llength $proc_name] == 0} {
-            #set cpu_node [add_or_get_dt_node -n "cpus" -d ${default_dts} -p ${system_root_node}]
-		set cpu_node [create_node -n "cpus" -d "system-top.dts" -p root]
-           # hsi::utils::add_new_dts_param "${cpu_node}" "/delete-node/ cpu@$i" "" boolean
-		add_prop "cpus" "/delete-node/ cpu@$i" boolean "system-top.dts"
-            continue
-        }
-	if {[string match -nocase [get_property IP_NAME [hsi::get_cells -hier $proc_name]] "microblaze"]} {
-		return
-	}
-        if {[string match -nocase $proc_name "$current_proc$i"] } {
-            continue
-        } else {
-#            set cpu_node [add_or_get_dt_node -n "cpus" -d ${default_dts} -p ${system_root_node}]
-		set cpu_node [create_node -n "cpus" -d $default_dts -p root]
- #           hsi::utils::add_new_dts_param "${cpu_node}" "/delete-node/ cpu@$i" "" boolean
-		add_prop "cpus" "/delete-node/ cpu@$i" boolean "system-top.dts"
+    	if {[string compare -nocase $current_proc ""] == 0} {
+        	return
+    	}
+    	if {[string match -nocase $proctype "versal"]} {
+        	set procs [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
+        	set pnames ""
+		foreach proc_name $procs {
+              		if {[regexp "psv_cortexa72*" $proc_name match]} {
+	             		append pnames " " $proc_name
+              		}
+        	}
+        	set a72cores [llength $pnames]
+        	if {[string match -nocase $a72cores $total_cores]} {
+	     	return
+        	}
+    	}
+    	#getting boot arguments
+    	set proc_instance 0
+    	for {set i 0} {$i < $total_cores} {incr i} {
+        	set proc_name [lindex [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}] $i]
+        	if {[llength $proc_name] == 0} {
+			set cpu_node [create_node -n "cpus" -d "system-top.dts" -p root]
+			add_prop "cpus" "/delete-node/ cpu@$i" boolean "system-top.dts"
+            		continue
+        	}
+		if {[string match -nocase [get_property IP_NAME [hsi::get_cells -hier $proc_name]] "microblaze"]} {
+			return
+		}
+        	if {[string match -nocase $proc_name "$current_proc$i"] } {
+            		continue
+        	} else {
+			set cpu_node [create_node -n "cpus" -d $default_dts -p root]
+			add_prop "cpus" "/delete-node/ cpu@$i" boolean "system-top.dts"
 
-        }
-    }
+        	}
+    	}
 }
 
 proc update_alias {os_handle} {
@@ -1217,24 +1072,15 @@ proc update_alias {os_handle} {
 	if {[file exists $common_file]} {
         	#error "file not found: $common_file"
     	}
-	#set file "$path/${drvname}/data/config.yaml"
 	set mainline_ker [get_user_config $common_file -mainline_kernel]
-
-
- #   set mainline_ker [get_property CONFIG.mainline_kernel [get_os]]
-    if {[string match -nocase $mainline_ker "v4.17"]} {
-         return
-    }
-#    set default_dts [get_property CONFIG.master_dts [get_os]]
-set default_dts "system-top.dts"
-  #  set system_root_node [add_or_get_dt_node -n "/" -d ${default_dts}]
-   # set all_labels [get_all_dt_labels]
+    	if {[string match -nocase $mainline_ker "v4.17"]} {
+         	return
+    	}
+	set default_dts "system-top.dts"
 	set all_drivers [get_drivers 1]
 
 	# Search for ps_qspi, if it is there then interchange this with first driver
 	# because to have correct internal u-boot commands qspi has to be listed in aliases as the first for spi0
-	#set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
-#	set proctype "psv_cortexa72"
 	set proctype [get_hw_family]
 	if {[string match -nocase $proctype "zynq"]} {
 		set pos [lsearch $all_drivers "ps7_qspi*"]
@@ -1250,32 +1096,27 @@ set default_dts "system-top.dts"
 		set qspi_element [lindex $all_drivers $pos]
 		set all_drivers [lreplace $all_drivers 0 0 $qspi_element]
 		set all_drivers [lreplace $all_drivers $pos $pos $first_element]
-    }
+    	}
 	# Update all_drivers list such that console device should be the first
 	# uart device in the list.
-#	set console_ip [get_property CONFIG.console_device [get_os]]
-#	if {![string match -nocase $console_ip "none"]} {
-#		set valid_console [lsearch $all_drivers $console_ip]
-#		if { $valid_console < 0 } {
-#			error "Trying to assign a console::$console_ip which doesn't exists !!!"
-#		}
-#	}
-#	set dt_overlay [get_property CONFIG.DT_Overlay [get_os]]
-#	set remove_pl [get_property CONFIG.remove_pl [get_os]]
+	#set console_ip [get_property CONFIG.console_device [get_os]]
+	#if {![string match -nocase $console_ip "none"]} {
+		#set valid_console [lsearch $all_drivers $console_ip]
+		#if { $valid_console < 0 } {
+			#error "Trying to assign a console::$console_ip which doesn't exists !!!"
+		#}
+	#}
+	#set dt_overlay [get_property CONFIG.DT_Overlay [get_os]]
+	#set remove_pl [get_property CONFIG.remove_pl [get_os]]
 	
 	foreach drv_handle $all_drivers {
-#		if {[is_pl_ip $drv_handle] && $remove_pl} {
-#			continue
-#		}
 		set drvname [get_drivers $drv_handle]
-
 		set common_file "$path/$drvname/data/config.yaml"
 		set exists [file exists $common_file]
 		if {$exists == 0} {
 			continue
 		}
 		set alias_str [get_driver_config $drv_handle alias]
-#		set alias_str [get_property CONFIG.dtg.alias $drv_handle]
 		if {0} {
 		if {[string match -nocase $alias_str "serial"]} {
 			if {![string match -nocase $console_ip "none"]} {
@@ -1294,26 +1135,18 @@ set default_dts "system-top.dts"
 					break
 				}
 			}
-		 } }
+		 }
+		}
 	}
 
 	foreach drv_handle $all_drivers {
-     #       if {[is_pl_ip $drv_handle] && $dt_overlay} {
-      #          continue
-      #      }
-       #     if {[is_pl_ip $drv_handle] && $remove_pl} {
-       #         continue
-       #     }
-        #    if {[check_ip_trustzone_state $drv_handle] == 1} {
-        #        continue
-        #    }
-            set ip_name  [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
-            if {[string match -nocase $ip_name "psv_pmc_qspi"]} {
-                  set ip_type [get_property IP_TYPE [hsi::get_cells -hier $drv_handle]]
-                  if {[string match -nocase $ip_type "PERIPHERAL"]} {
-                        continue
-                  }
-            }
+            	set ip_name  [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+            	if {[string match -nocase $ip_name "psv_pmc_qspi"]} {
+                  	set ip_type [get_property IP_TYPE [hsi::get_cells -hier $drv_handle]]
+                  	if {[string match -nocase $ip_type "PERIPHERAL"]} {
+                        	continue
+                  	}
+            	}
 		set drvname [get_drivers $drv_handle]
 
 		set common_file "$path/$drvname/data/config.yaml"
@@ -1323,34 +1156,19 @@ set default_dts "system-top.dts"
 		}
 		set tmp [get_driver_config $drv_handle alias]
 
-#        set tmp [list_property $drv_handle CONFIG.dtg.alias]
-        if {[string_is_empty $tmp]} {
-            continue
-        } else {
-         #   set alias_str [get_property CONFIG.dtg.alias $drv_handle]
-		set alias_str $tmp
-		set alias_count [get_count $alias_str]
-            #set alias_count [get_os_dev_count alias_${alias_str}_count]
-            set conf_name ${alias_str}${alias_count}
-           # set value [ps_node_mapping $drv_handle label]
-		set value [get_node $drv_handle]
-		set value [split $value ": "]
-#		set value [split [lindex $value 2] "@"]
-		set value [lindex $value 0]
-            set ip_list "i2c spi serial"
-            # TODO: need to check if the label already exists in the current system
-#			if {[lsearch $all_labels $conf_name] >=0} {
-#				set str [lsearch $ip_list $alias_str]
-#				if {[string match $str "-1"]} {
-#					continue
-#				}
-#			}
-#		set default_dts [set_drv_def_dts $drv_handle]
+        	if {[string_is_empty $tmp]} {
+            	continue
+        	} else {
+			set alias_str $tmp
+			set alias_count [get_count $alias_str]
+            		set conf_name ${alias_str}${alias_count}
+			set value [get_node $drv_handle]
+			set value [split $value ": "]
+			set value [lindex $value 0]
+		            set ip_list "i2c spi serial"
+            	# TODO: need to check if the label already exists in the current system
 		set alias_node [create_node -n "aliases" -p root -d "system-top.dts"]
-#            set alias_node [create_node -n "aliases" -d ${default_dts} -p ${system_root_node}]
 		add_prop $alias_node $conf_name $value aliasref $default_dts
-#            hsi::utils::add_new_dts_param "${alias_node}" ${conf_name} ${value} aliasref
-           # hsi::utils::set_os_parameter_value alias_${alias_str}_count [expr $alias_count + 1]
         }
     }
 }

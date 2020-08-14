@@ -13,26 +13,20 @@
 #
 
 namespace eval tmrctr {
-proc generate {drv_handle} {
-   # set compatible [get_comp_str $drv_handle]
-   # set compatible [append compatible " " "xlnx,xps-timer-1.00.a"]
-   # set_drv_prop $drv_handle compatible "$compatible" stringlist
-     set node [get_node $drv_handle]
-     set dts_file [set_drv_def_dts $drv_handle]
-     pldt append $node compatible "\ \, \"xlnx,xps-timer-1.00.a\""
-    #adding clock frequency
-    set ip [hsi::get_cells -hier $drv_handle]
-    set clk [hsi::get_pins -of_objects $ip "S_AXI_ACLK"]
-    if {[llength $clk] } {
-        set freq [get_property CLK_FREQ $clk]
-        add_prop $node "clock-frequency" $freq hexint $dts_file
-#        set_property clock-frequency "$freq" $drv_handle
-    }
- #   set proc_type [get_sw_proc_prop IP_NAME]
-    #TODO SURESH
-    set proc_type [get_hw_family]
-    if {[regexp "kintex*" $proctype match]} {
-                 gen_dev_ccf_binding $drv_handle "s_axi_aclk"
-    }
-}
+	proc generate {drv_handle} {
+	     set node [get_node $drv_handle]
+	     set dts_file [set_drv_def_dts $drv_handle]
+	     pldt append $node compatible "\ \, \"xlnx,xps-timer-1.00.a\""
+	    #adding clock frequency
+	    set ip [hsi::get_cells -hier $drv_handle]
+	    set clk [hsi::get_pins -of_objects $ip "S_AXI_ACLK"]
+	    if {[llength $clk] } {
+		set freq [get_property CLK_FREQ $clk]
+		add_prop $node "clock-frequency" $freq hexint $dts_file
+	    }
+	    set proctype [get_hw_family]
+	    if {[regexp "kintex*" $proctype match]} {
+			 gen_dev_ccf_binding $drv_handle "s_axi_aclk"
+	    }
+	}
 }

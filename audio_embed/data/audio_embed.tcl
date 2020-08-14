@@ -12,25 +12,21 @@
 # GNU General Public License for more details.
 #
 namespace eval audio_embed {
-proc generate {drv_handle} {
-	global env
-	global dtsi_fname
-	set path $env(REPO)
+	proc generate {drv_handle} {
+		global env
+		global dtsi_fname
+		set path $env(REPO)
 
-	#set node [gen_peripheral_nodes $drv_handle]
-	set node [get_node $drv_handle]
-	if {$node == 0} {
-		return
-	}
+		set node [get_node $drv_handle]
+		if {$node == 0} {
+			return
+		}
 
-	#set node [gen_peripheral_nodes $drv_handle]
-	set node [get_node $drv_handle]
-	if {$node == 0} {
-		return
+		set node [get_node $drv_handle]
+		if {$node == 0} {
+			return
+		}
+		set keyval [pldt append $node " \"xlnx,v-uhdsdi-audio-2.0\""]
+		set compatible [append compatible " " "xlnx,v-uhdsdi-audio-2.0"]
 	}
-	#set compatible [get_comp_str $drv_handle]
-	set keyval [pldt append $node " \"xlnx,v-uhdsdi-audio-2.0\""]
-	set compatible [append compatible " " "xlnx,v-uhdsdi-audio-2.0"]
-	#set_drv_prop $drv_handle compatible "$compatible" stringlist
-}
 }

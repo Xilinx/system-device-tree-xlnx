@@ -13,20 +13,18 @@
 #
 
 namespace eval  generic {
-proc generate {drv_handle} {
+	proc generate {drv_handle} {
 
-	set hsi_version [get_hsi_version]
-	set ver [split $hsi_version "."]
-	set value [lindex $ver 0]
-	set dts_file [set_drv_def_dts $drv_handle]
-	if {$value >= 2018} {
-		set generic_node [get_node $drv_handle]
-#		set generic_node [gen_peripheral_nodes $drv_handle]
-		set last [string last "@" $generic_node]
-		if {$last != -1} {
-			add_prop "${generic_node}" "\/\* This is a place holder node for a custom IP, user may need to update the entries \*\/" boolean $dts_file
-#			hsi::utils::add_new_dts_param "${generic_node}" "/* This is a place holder node for a custom IP, user may need to update the entries */" "" comment
+		set hsi_version [get_hsi_version]
+		set ver [split $hsi_version "."]
+		set value [lindex $ver 0]
+		set dts_file [set_drv_def_dts $drv_handle]
+		if {$value >= 2018} {
+			set generic_node [get_node $drv_handle]
+			set last [string last "@" $generic_node]
+			if {$last != -1} {
+				add_prop "${generic_node}" "\/\* This is a place holder node for a custom IP, user may need to update the entries \*\/" boolean $dts_file
+			}
 		}
 	}
-}
 }
