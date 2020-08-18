@@ -39,10 +39,8 @@ namespace eval axi_clk_wiz {
 		}
 
 
-		gen_dev_ccf_binding $drv_handle "clk_in1 s_axi_aclk" "clocks clock-names"
-		set proc_ip [hsi::get_cells -hier $sw_proc]
-		set proctype [get_property IP_NAME $proc_ip]
-		if {[string match -nocase $proctype "microblaze"] } {
+		set family [get_hw_family]
+		if {[regexp "kintex*" $family match]} {
 			gen_dev_ccf_binding $drv_handle "clk_in1 s_axi_aclk" "clocks clock-names"
 		}
 	}

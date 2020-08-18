@@ -814,7 +814,7 @@ proc gen_resrv_memory {} {
 		} elseif {[string match -nocase $proctype "psu_cortexa53"] || [string match -nocase $proctype "psu_cortexr5"] || [string match -nocase $proctype "psu_pmu"]} {
 			foreach mem_map $ranges {
 				if {![regexp "_ddr_*" $mem_map match]} {
-					continue
+		#			continue
 				}
 
 				set base [get_property BASE_VALUE  $mem_map]
@@ -881,18 +881,18 @@ proc gen_resrv_memory {} {
 	set default_dts "system-top.dts"
 	set mem_node [create_node -n "reserved-memory" -p root -d $default_dts]
 	if {$first == 0} { 
-	add_prop $mem_node "#address-cells" "0x2" hexint $default_dts
-	add_prop $mem_node "#size-cells" "0x2" hexint $default_dts
-	add_prop $mem_node "ranges" boolean $default_dts
-	set first 1
+		add_prop $mem_node "#address-cells" "0x2" hexint $default_dts
+		add_prop $mem_node "#size-cells" "0x2" hexint $default_dts
+		add_prop $mem_node "ranges" boolean $default_dts
+		set first 1
 	}
     	if {[string match -nocase $proctype "psu_cortexa53"] || [string match -nocase $proctype "psu_cortexr5"] || [string match -nocase $proctype "psu_pmu"] } {
         	set child_node [create_node -l "memory_r5" -n "memory_r5" -d ${default_dts} -p $mem_node]
-        	add_prop $child_node reg $r5map hexint -d ${default_dts}
+        	add_prop $child_node reg $r5map hexlist -d ${default_dts}
         	set child_node [create_node -l "memory_a53" -n "memory_a53" -d ${default_dts} -p $mem_node]
-        	add_prop $child_node reg $a53map hexint -d ${default_dts}
+        	add_prop $child_node reg $a53map hexlist -d ${default_dts}
         	set child_node [create_node -l "memory_pmu" -n "memory_pmu" -d ${default_dts} -p $mem_node]
-        	add_prop $child_node reg $pmumap hexint -d ${default_dts}
+        	add_prop $child_node reg $pmumap hexlist -d ${default_dts}
     	}
     	if {[string match -nocase $proctype "psv_cortexa72"] || [string match -nocase $proctype "psv_cortexr5"] || [string match -nocase $proctype "psv_pmc"] || [string match -nocase $proctype "psv_psm"]} {
     		if {![string_is_empty $a53map]} {

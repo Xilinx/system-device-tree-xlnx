@@ -89,6 +89,7 @@ dict with driver_param alias {
 }
 
 proc get_type args {
+	if {0} {
 	set prop [lindex $args 1]
 	set handle [lindex $args 0]
 	report_property [hsi::get_cells -hier $handle] > values
@@ -107,7 +108,22 @@ proc get_type args {
 				return $val
 			}
         	}
+	}}
+	set prop [lindex $args 1]
+	set handle [lindex $args 0]
+	set value [get_property $prop [hsi::get_cells -hier $handle]]
+	if {[regexp -nocase {0x([0-9a-f])} $value match]} {
+		set type "hexint"
+	} elseif {[string is integer -strict $value]} {
+		set type "int"
+	} elseif {[string is boolean -strict $value]} {
+		set type "boolean"
+	} elseif {[string is wordchar -strict $value]} {
+		set type "string"
+	} else {
+		set type "mixed"
 	}
+	return $type
 }
 
 proc set_dt_param args {
@@ -440,7 +456,7 @@ proc write_value {type value} {
                                 	set val "<$low_base $high_base 0x0 $size>"
                         	}
                 	} else {
-                        	set val "<[format %d $value]>"
+                        	set val "<$value>"
                 	}
 			
 
@@ -732,6 +748,7 @@ proc add_prop args {
 	}
 	set node [lindex $args 0]
 	set prop [lindex $args 1]
+
 
 	if {$count > 4} {
 		set val [lindex $args 2]
@@ -1629,7 +1646,7 @@ proc add_cross_property args {
 
 				set valid_proclist "psv_cortexa72 psv_cortexr5 psu_cortexa53 psu_cortexr5 psu_pmu psv_pmc psv_psm"
 				if {[string match -nocase $ipname "psv_rcpu_gic"]} {
-					set node [create_node -n "&rpu_gic" -d "pcw.dtsi" -p root]
+					set node [create_node -n "&gic_r5" -d "pcw.dtsi" -p root]
 				} elseif {[lsearch $valid_proclist $ipname] >= 0} {
 					switch $ipname {
 						"psv_cortexa72" {
@@ -1736,8 +1753,10 @@ proc get_intr_id {drv_handle intr_port_name} {
 					}
 				}
 			}
-			if {[string match -nocase $proctype "zynqmp"] && [string match -nocase $intc "axi_intc"] || [string match -nocase $proctype "zynquplus"]} {
-				set intc [hsi::utils::get_interrupt_parent $drv_handle $pin]
+			if {[string match -nocase $proctype "zynqmp"] && [string match -nocase $proctype "zynquplus"] } {
+				if {[string match -nocase $intc "axi_intc"]} {
+					set intc [hsi::utils::get_interrupt_parent $drv_handle $pin]
+				}
 			}
 			if {[string match -nocase $proctype "versal"] && [string match -nocase $intc "axi_intc"] } {
 				set intc [hsi::utils::get_interrupt_parent $drv_handle $pin]
@@ -1770,6 +1789,7 @@ proc get_intr_id {drv_handle intr_port_name} {
 			set cur_intr_info "$intr_id $intr_type"
 		}
 		if {[string_is_empty $intr_info]} {
+
 			set intr_info "$cur_intr_info"
 		} else {
 			append intr_info " " $cur_intr_info
@@ -2536,10 +2556,12 @@ proc add_driver_prop {drv_handle dt_node prop} {
 		return -1
 	}
 
-		set type [get_type $drv_handle $prop]
-		if {$type == ""} {
-			set type boolean
-		}
+	set type [get_type $drv_handle $prop]
+	if {$type == ""} {
+		set type boolean
+	}
+
+	set ipval $prop
 	regsub -all {CONFIG.} $prop {xlnx,} prop
 	set prop [string tolower $prop]
 	dtg_debug "${dt_node} - ${prop} - ${value} - ${type}"
@@ -2571,12 +2593,12 @@ proc add_driver_prop {drv_handle dt_node prop} {
 		set value [string trimleft $value "\""]
 	}
 
-	if {[string is integer -strict $value]} {
+	if {[regexp -nocase {0x([0-9a-f])} $value match]} {
+		set type "hexint"
+	} elseif {[string is integer -strict $value]} {
 		set type "int"
 	} elseif {[string is boolean -strict $value] || [string match -nocase $type ""]} {
 		set type "boolean"
-	} elseif {[regexp -nocase {0x([0-9a-f])} $value match]} {
-		set type "hexint"
 	} elseif {[string is wordchar -strict $value]} {
 		set type "string"
 	} else {
@@ -2702,8 +2724,8 @@ proc gen_ps_mapping {} {
 	set family [get_hw_family]
 	set def_ps_mapping [dict create]
 	if {[string match -nocase $family "versal"]} {
-		dict set def_ps_mapping f9000000 label "gic: interrupt-controller"
-		dict set def_ps_mapping f9001000 label "rpu_gic: interrupt-controller"
+		dict set def_ps_mapping f9000000 label "gic_a72: interrupt-controller"
+		dict set def_ps_mapping f9001000 label "gic_r5: interrupt-controller"
 		dict set def_ps_mapping fd4b0000 label gpu
 		dict set def_ps_mapping ffa80000 label "psv_adma_0: dma"
 		dict set def_ps_mapping ffa90000 label "psv_adma_1: dma"
@@ -2760,8 +2782,8 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping f11c0000 label "psv_pmc_dma_0: pmcdma"
 		dict set def_ps_mapping f11d0000 label "psv_pmc_dma_1: pmcdma"
 	} elseif {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
-		dict set def_ps_mapping f9010000 label "gic: interrupt-controller"
-		dict set def_ps_mapping f9000000 label "rpu_gic: interrupt-controller"
+		dict set def_ps_mapping f9010000 label "gic_a53: interrupt-controller"
+		dict set def_ps_mapping f9000000 label "gic_r5: interrupt-controller"
 		dict set def_ps_mapping ff060000 label "psu_can_0: can"
 		dict set def_ps_mapping ff070000 label "psu_can_1: can"
 		dict set def_ps_mapping fd500000 label "psu_gdma_0: dma"
@@ -2824,6 +2846,18 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping ffcb0000 label "psu_csuwdt_0: watchdog"
 		dict set def_ps_mapping fd070000 label "psu_ddrc_0: memory-controller"
 		dict set def_ps_mapping fe800000 label "psu_coresight_0: coresight"
+		dict set def_ps_mapping ff960000 label "ocm: memory-controller"
+		dict set def_ps_mapping ffa00000 label "perf_monitor_ocm: perf-monitor"
+		dict set def_ps_mapping fd0b0000 label "perf_monitor_ddr: perf-monitor"
+		dict set def_ps_mapping fd490000 label "perf_monitor_cci: perf-monitor"
+		dict set def_ps_mapping ffa10000 label "perf_monitor_lpd: perf-monitor"
+		dict set def_ps_mapping ffc80000 label "psu_csudma_0: dma"
+		dict set def_ps_mapping fd400000 label "serdes: zynqmp_phy"
+		dict set def_ps_mapping ffa50000 label "xilinx_ams: ams"
+		dict set def_ps_mapping ffa50800 label "ams_ps: ams_ps"
+		dict set def_ps_mapping ffa50c00 label "ams_pl: ams_pl"
+		dict set def_ps_mapping fd4a0000 label "psu_dp: zynqmp-display"
+		dict set def_ps_mapping fd4c0000 label "psu_dpdma: dma"
 #		dict set def_ps_mapping fd1a0000 label crfapb
 #		dict set def_ps_mapping ff5e0000 label crlapb
 #		dict set def_ps_mapping ffcc0000 label efuse
@@ -3001,7 +3035,7 @@ proc gen_ps7_mapping {} {
 			set parent [get_property PARENT  $node]
 			set ignore_parent_list {(/|cpu)}
 			set node_label [get_property NODE_LABEL $node]
-			if {[regexp $ignore_parent_list $parent matched] && ![string match -nocase $node_label "rpu_gic"]} {
+			if {[regexp $ignore_parent_list $parent matched] && ![string match -nocase $node_label "gic_r5"]} {
 				continue
 			}
 			set unit_addr [get_property UNIT_ADDRESS $node]
@@ -3251,24 +3285,24 @@ proc gen_clk_property {drv_handle} {
 					switch $num {
 						"0" {
 							set def_dts "pcw.dtsi"
-							set fclk_node [create_node -n "&fclk0" -d $def_dts]]
-							add_prop $fclk_node "status" "okay" string $dts_file
+							set fclk_node [create_node -n "&fclk0" -d $def_dts -p root]
+							add_prop $fclk_node "status" "okay" string $def_dts
 
 						}
 						"1" {
 							set def_dts "pcw.dtsi"
-							set fclk_node [create_node -n "&fclk1" -d $def_dts]]
-							add_prop $fclk_node "status" "okay" string $dts_file
+							set fclk_node [create_node -n "&fclk1" -d $def_dts -p root]
+							add_prop $fclk_node "status" "okay" string $def_dts
 						}
 						"2" {
 							set def_dts "pcw.dtsi"
-							set fclk_node [create_node -n "&fclk2" -d $def_dts]]
-							add_prop $fclk_node "status" "okay" string $dts_file
+							set fclk_node [create_node -n "&fclk2" -d $def_dts -p root]
+							add_prop $fclk_node "status" "okay" string $def_dts
 						}
 						"3" {
 							set def_dts "pcw.dtsi"
-							set fclk_node [create_node -n "&fclk3" -d $def_dts]]
-							add_prop $fclk_node "status" "okay" string $dts_file
+							set fclk_node [create_node -n "&fclk3" -d $def_dts -p root]
+							add_prop $fclk_node "status" "okay" string $def_dts
 						}
 					}
 				}
@@ -3865,6 +3899,9 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 	if { [string match -nocase $intc "psu_acpu_gic"] || [string match -nocase $intc "psv_acpu_gic"]} {
 		set intc "gic"
 	}
+	if {[string match -nocase $intc "gic"]} {
+		set intc "imux"
+	}
 	set_drv_prop $drv_handle interrupt-parent $intc reference
 	if {[string match -nocase [get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "xdma"]} {
 		set msi_rx_pin_en [get_property CONFIG.msi_rx_pin_en [hsi::get_cells -hier $drv_handle]]
@@ -4267,6 +4304,7 @@ proc ip2drv_prop {ip_name ip_prop_name} {
 	set drv_prop_name [string tolower $drv_prop_name]
 
 	set prop [get_property $ip_prop_name [hsi::get_cells -hier $ip_name]]
+
 	if {[regexp -nocase {0x([0-9a-f])} $prop match]} {
 		set type "hexint"
 	} elseif {[string is integer -strict $prop]} {
@@ -4495,14 +4533,14 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 		if {[string match -nocase $ip_type "psv_rcpu_gic"] } {
 			# Base address is same for gic and rpu_gic, hence set label forcefully
 			# other wise we will get lable as "gic" which is same as acpu_gic label
-			set label "rpu_gic"
+			set label "gic_r5"
 		} else {
 		}
 
 		# check if it has status property
 		set rt_node [get_node $drv_handle]
 		if {[string match -nocase $ip_type "psv_rcpu_gic"]} {
-			set node [create_node -n "&rpu_gic" -d "pcw.dtsi" -p root]
+			set node [create_node -n "&gic_r5" -d "pcw.dtsi" -p root]
 		}
 		if {[string match -nocase $rt_node "&dwc3_0"]} {
 				if {[string match -nocase $proc_type "zynqmp"] || [string match -nocase $proc_type "zynquplus"]} {
