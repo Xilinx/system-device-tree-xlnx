@@ -1267,6 +1267,7 @@ proc write_dt args {
 				}
 				foreach child $innerchilds {
 					puts $fd "\t\t\t\t$child {"
+					set nextinner [$dt children $child]
 					set proplist [$dt getall $child]
 					if {[string match -nocase $proplist ""]} {
 					} else {
@@ -1309,6 +1310,52 @@ proc write_dt args {
 							set pr [expr $pr + 2]
 						}
 					}
+					foreach child $nextinner {
+						puts $fd "\t\t\t\t\t$child {"
+						set proplist [$dt getall $child]
+						if {[string match -nocase $proplist ""]} {
+						} else {
+							set lenact [llength $proplist]
+							set len [expr $lenact / 2]
+							for {set pr 0} {$pr <= $lenact} {} {
+								set prop [lindex $proplist $pr]
+								if {[string match -nocase $prop ""] || [string match -nocase $prop "data"]} {
+								} else {
+									set val [$dt get $child $prop]
+									set val_temp [string trimright $val " "]
+									set val_temp [string trimleft $val_temp " "]
+									if {[llength $val] > 1} {
+										if {[regexp -all {^[\<]} $val_temp matched] && [regexp -all {[\>]$} $val_temp matched]} {
+											puts $fd "\t\t\t\t\t\t$prop = $val_temp;"
+										} else {
+											set first_str "\"[lindex $val 0]\""
+											set first_str "\"[lindex $val 0]\""
+											set first_str ""
+											set first true
+											foreach element $val {
+				      			 		 			if {$first != true} {
+												} 
+												set first false
+											}
+											puts $fd "\t\t\t\t\t\t$prop = $first_str;"
+										}
+									} else {
+										if {[string match -nocase $val ""]} {
+											if {$bool_col} {
+												puts $fd "\t\t\t\t\t\t$prop"
+											} else {
+												puts $fd "\t\t\t\t\t\t$prop;"
+											}
+										} else {
+											puts $fd "\t\t\t\t\t\t$prop = $val;"
+										}
+									}
+								}
+								set pr [expr $pr + 2]
+							}
+					}
+					puts $fd "\t\t\t\t};"
+				}
 					puts $fd "\t\t\t\t};"
 				}
 				puts $fd "\t\t\t};"

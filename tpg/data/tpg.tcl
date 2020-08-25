@@ -36,18 +36,5 @@ namespace eval tpg {
 		add_prop "${node}" "xlnx,max-width" $max_cols int $dts_file
 		set max_rows [get_property CONFIG.MAX_ROWS [hsi::get_cells -hier $drv_handle]]
 		add_prop "${node}" "xlnx,max-height" $max_rows int $dts_file
-		
-		set ports_node [create_node -n "ports" -l tpg_ports$drv_handle -p $node -d $dts_file]
-                puts "ports_node:$ports_node"
-                add_prop "$ports_node" "#address-cells" 1 int $dts_file
-                puts "ports1_node:$ports_node"
-                add_prop "$ports_node" "#size-cells" 0 int $dts_file
-                puts "ports2_node:$ports_node"
-                set port1_node [create_node -n "port" -l tpg_port1$drv_handle -u 1 -p $ports_node -d $dts_file]
-                puts "port1_node:$port1_node"
-                add_prop "$port1_node" "reg" 1 int $dts_file
-                #add_prop "${port1_node}" "/* Fill the field xlnx,video-format based on user requirement */" "" comment
-                add_prop "$port1_node" "xlnx,video-format" 12 int $dts_file
-                add_prop "$port1_node" "xlnx,video-width" $max_data_width int $dts_file
 	}
 }
