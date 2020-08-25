@@ -461,7 +461,13 @@ proc write_value {type value} {
 			
 
                 } elseif {$type == "hexint"} {
-                        set val "<0x[format %x $value]>"
+			if {[regexp -nocase {0x([0-9a-f])} $value match]} {
+				set val "<$value>"
+			} elseif {[regexp -nocase {([a-f])} $value match]} {
+				set val "<0x$value>"
+			} else {
+                        	set val "<0x[format %x $value]>"
+			}
                 } elseif {$type == "empty"} {
                 } elseif {$type == "inttuple" || $type == "intlist"} {
                         set val "< "
@@ -476,7 +482,6 @@ proc write_value {type value} {
                         }
                         set val [append val ">"]
                 } elseif {$type == "hexlist"} {
-		#	set value [split $value " "]
                         set val "<"
                         foreach element $value {
 				append val "$element" " "
@@ -487,7 +492,9 @@ proc write_value {type value} {
                 } elseif {$type == "bytesequence"} {
                         set val "\[ "
                         foreach element $value {
-                                if {[expr $element > 255]} {
+				if {[catch {set tmp [expr $element > 255]} msg ]} {
+				}
+                                if {$tmp} {
                                         error {"Value $element is not a byte!"}
                                 }
                                set val [append val "[format %02x $element] "]
@@ -536,6 +543,8 @@ proc write_value {type value} {
                         }
 				set val [append val "\""]
 			}
+		} elseif {$type == "comment"} {
+			set val "$value"
 		} else {
                         puts "unknown type $type"
                 }
@@ -693,7 +702,11 @@ proc create_node args {
 			if {[string match -nocase $node_label ""]} {
 				set drvnode [$treeobj insert $parent_obj end "$node_name@$node_unit_addr"]	
 			} else {
+			#	puts "add $node_label: $node_name@$node_unit_addr to $parent_obj"
 				set drvnode [$treeobj insert $parent_obj end "$node_label: $node_name@$node_unit_addr"]	
+
+				set drvnode [string trimleft $drvnode "\{"]
+				set drvnode [string trimright $drvnode "\}"]
 			}
 		}
 	} else {
@@ -712,6 +725,7 @@ proc create_node args {
 				if {[string match -nocase $node_label ""]} {
 	                		set drvnode [$treeobj insert $parent_obj end "$node_name@$node_unit_addr"]
 				} else {
+			#	puts "1add $node_label: $node_name@$node_unit_addr to $parent_obj"
 	                		set drvnode [$treeobj insert $parent_obj end "$node_label: $node_name@$node_unit_addr"]
 				}
 			}
@@ -729,11 +743,14 @@ proc create_node args {
 			if {[string match -nocase $node_label ""]} {
                 		set drvnode [$treeobj insert $parent_obj end "$node_name@$node_unit_addr"]
 			} else {
+			#	puts "2add $node_label: $node_name@$node_unit_addr to $parent_obj"
                 		set drvnode [$treeobj insert $parent_obj end "$node_label: $node_name@$node_unit_addr"]
 			}
 		}
         }
-
+	set drvnode [string trimleft $drvnode "\{"]
+	set drvnode [string trimright $drvnode "\}"]
+	#puts "return $drvnode"
         return $drvnode
 }
 proc add_prop args {
@@ -783,6 +800,7 @@ proc add_prop args {
 	} else {
 		set treeobj "systemdt"
 	}
+
 	if {[catch {set already_key [$treeobj get $node $prop]} msg]} {
 
 		set temp [$treeobj children root]
@@ -803,6 +821,9 @@ proc add_prop args {
 		if {[string match -nocase $prop "status"] || $overwrite == 1} {
 			set keyval [$treeobj set $node $prop $val]
 		} else {
+			if {[string match -nocase $type "hexlist"]} {
+				set val ", $val"
+			}
 			set keyval [$treeobj append $node $prop " $val"]
 		}
 	}
@@ -1198,8 +1219,10 @@ proc write_dt args {
 				}
 			}
 
-			if {[string match -nocase $nestchilds ""]} {
-				if {0} {
+			
+			foreach child $nestchilds {
+				puts $fd "\t\t\t$child {"
+				set innerchilds [$dt children $child]
 				set proplist [$dt getall $child]
 				if {[string match -nocase $proplist ""]} {
 				} else {
@@ -1210,42 +1233,40 @@ proc write_dt args {
 						if {[string match -nocase $prop ""] || [string match -nocase $prop "data"]} {
 						} else {
 							set val [$dt get $child $prop]
-						set val_temp [string trimright $val " "]
-						set val_temp [string trimleft $val_temp " "]
+							set val_temp [string trimright $val " "]
+							set val_temp [string trimleft $val_temp " "]
 							if {[llength $val] > 1} {
 								if {[regexp -all {^[\<]} $val_temp matched] && [regexp -all {[\>]$} $val_temp matched]} {
-									puts $fd "\t\t\t$prop = $val_temp;"
+									puts $fd "\t\t\t\t$prop = $val_temp;"
 								} else {
-								set first_str "\"[lindex $val 0]\""
-								set first_str "\"[lindex $val 0]\""
-								set first_str ""
-								set first true
-                        					foreach element $val {
-                                					if {$first != true} {
-                        						} 
-									set first false
-								}
-								puts $fd "\t\t\t$prop = $first_str;"
+									set first_str "\"[lindex $val 0]\""
+									set first_str "\"[lindex $val 0]\""
+									set first_str ""
+									set first true
+                							foreach element $val {
+                      			 		 			if {$first != true} {
+                								} 
+										set first false
+									}
+									puts $fd "\t\t\t\t$prop = $first_str;"
 								}
 							} else {
 								if {[string match -nocase $val ""]} {
 									if {$bool_col} {
-										puts $fd "\t\t\t$prop"
+										puts $fd "\t\t\t\t$prop"
 									} else {
-										puts $fd "\t\t\t$prop;"
+										puts $fd "\t\t\t\t$prop;"
 									}
 								} else {
-									puts $fd "\t\t\t$prop = $val;"
+									puts $fd "\t\t\t\t$prop = $val;"
 								}
 							}
 						}
 						set pr [expr $pr + 2]
 					}
 				}
-				}
-			} else {
-				foreach child $nestchilds {
-					puts $fd "\t\t\t$child {"
+				foreach child $innerchilds {
+					puts $fd "\t\t\t\t$child {"
 					set proplist [$dt getall $child]
 					if {[string match -nocase $proplist ""]} {
 					} else {
@@ -1260,37 +1281,39 @@ proc write_dt args {
 								set val_temp [string trimleft $val_temp " "]
 								if {[llength $val] > 1} {
 									if {[regexp -all {^[\<]} $val_temp matched] && [regexp -all {[\>]$} $val_temp matched]} {
-										puts $fd "\t\t\t\t$prop = $val_temp;"
+										puts $fd "\t\t\t\t\t$prop = $val_temp;"
 									} else {
 										set first_str "\"[lindex $val 0]\""
 										set first_str "\"[lindex $val 0]\""
 										set first_str ""
 										set first true
-                        							foreach element $val {
-                              			 		 			if {$first != true} {
-                        								} 
+		        							foreach element $val {
+		              			 		 			if {$first != true} {
+		        								} 
 											set first false
 										}
-										puts $fd "\t\t\t\t$prop = $first_str;"
+										puts $fd "\t\t\t\t\t$prop = $first_str;"
 									}
 								} else {
 									if {[string match -nocase $val ""]} {
 										if {$bool_col} {
-											puts $fd "\t\t\t\t$prop"
+											puts $fd "\t\t\t\t\t$prop"
 										} else {
-											puts $fd "\t\t\t\t$prop;"
+											puts $fd "\t\t\t\t\t$prop;"
 										}
 									} else {
-										puts $fd "\t\t\t\t$prop = $val;"
+										puts $fd "\t\t\t\t\t$prop = $val;"
 									}
 								}
 							}
 							set pr [expr $pr + 2]
 						}
 					}
-					puts $fd "\t\t\t};"
+					puts $fd "\t\t\t\t};"
 				}
+				puts $fd "\t\t\t};"
 			}
+			
 			puts $fd "\t\t};"
 		}
 		puts $fd "\t};"
@@ -1335,7 +1358,7 @@ proc get_drivers args {
 	dict set driverlist axi_10g_ethernet driver axi_ethernet
 	dict set driverlist xxv_ethernet driver axi_ethernet
 	dict set driverlist usxgmii driver axi_ethernet
-	dict set driverlist axi_gpio driver gpio
+	dict set driverlist axi_gpio driver axi_gpio
 	dict set driverlist axi_iic driver axi_iic
 	dict set driverlist axi_mcdma driver axi_mcdma
 	dict set driverlist axi_pcie driver axi_pcie
@@ -3323,6 +3346,7 @@ proc gen_clk_property {drv_handle} {
 					set bus_clk_cnt [lsearch -exact $bus_clk_list $clk_freq]
 					set misc_clk_node [create_node -n "misc_clk_${bus_clk_cnt}" -l "misc_clk_${bus_clk_cnt}" \
 					-d ${dts_file} -p ${bus_node}]
+
 					set clk_refs [lappend clk_refs misc_clk_${bus_clk_cnt}]
 					set updat [lappend updat misc_clk_${bus_clk_cnt}]
 					add_prop $misc_clk_node "compatible" "fixed-clock" stringlist $dts_file 
@@ -3493,11 +3517,13 @@ proc gen_clk_property {drv_handle} {
 				set bus_clk_cnt [lsearch -exact $bus_clk_list $clk_freq]
 				set misc_clk_node [create_node -n "misc_clk_${bus_clk_cnt}" -l "misc_clk_${bus_clk_cnt}" \
 				-d ${dts_file} -p ${bus_node}]
+				if {[catch {set compatible [pldt get $misc_clk_node "compatible"]} msg]} {
+				add_prop $misc_clk_node "compatible" "fixed-clock" stringlist $dts_file 1
+				add_prop $misc_clk_node "#clock-cells" 0 int $dts_file 1
+				add_prop $misc_clk_node "clock-frequency" $clk_freq int $dts_file 1
+				}
 				set clk_refs [lappend clk_refs misc_clk_${bus_clk_cnt}]
 				set updat [lappend updat misc_clk_${bus_clk_cnt}]
-				add_prop $misc_clk_node "compatible" "fixed-clock" stringlist $dts_file 
-				add_prop $misc_clk_node "#clock-cells" 0 int $dts_file 
-				add_prop $misc_clk_node "clock-frequency" $clk_freq int $dts_file 
 			}
 		}
 		append clocknames " " "$clk"
@@ -3505,7 +3531,9 @@ proc gen_clk_property {drv_handle} {
 		set is_clk_wiz 0
 		set axi 0
 	}
-	set_drv_prop_if_empty $drv_handle "clock-names" $clocknames stringlist
+	if {![string match -nocase $clocknames ""]} {
+		set_drv_prop_if_empty $drv_handle "clock-names" $clocknames stringlist
+	}
 	set ip [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
 	if {[string match -nocase $ip "vcu"]} {
 		set vcu_label $drv_handle

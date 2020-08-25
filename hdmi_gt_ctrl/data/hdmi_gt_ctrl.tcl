@@ -19,6 +19,7 @@ namespace eval hdmi_gt_ctrl {
 		if {$node == 0} {
 			return
 		}
+		if {0} {
 		set err_irq_en [get_property CONFIG.C_Err_Irq_En [hsi::get_cells -hier $drv_handle]]
 		add_prop "${node}" "xlnx,err-irq-en" $err_irq_en int $dts_file
 		set tx_frl_refclk_sel [get_property CONFIG.C_TX_FRL_REFCLK_SEL [hsi::get_cells -hier $drv_handle]]
@@ -55,8 +56,10 @@ namespace eval hdmi_gt_ctrl {
 		add_prop "${node}" "xlnx,transceiver-width" $transceiver_width int $dts_file
 		set hdmi_fast_switch [get_property CONFIG.C_Hdmi_Fast_Switch [hsi::get_cells -hier $drv_handle]]
 		add_prop "${node}" "xlnx,hdmi-fast-switch" $hdmi_fast_switch int $dts_file
+		}
+		set tx_no_of_channels [get_property CONFIG.C_Tx_No_Of_Channels [hsi::get_cells -hier $drv_handle]]
 		for {set ch 0} {$ch < $tx_no_of_channels} {incr ch} {
-			set phy_node [create_node -n "vphy_lane@$ch" -l vphy_lane$ch -p $node -d $dts_file]
+			set phy_node [create_node -n "vphy_lane" -u $ch -l vphy_lane$ch -p $node -d $dts_file]
 			add_prop "$phy_node" "#phy-cells" 4 int $dts_file
 		}
 		set transceiver [get_property CONFIG.Transceiver [hsi::get_cells -hier $drv_handle]]

@@ -23,7 +23,7 @@ namespace eval axi_iic {
 			return
 		}
 
-	    pldt append $node compatible "$compatible" stringlist "pl.dtsi"
+		pldt append $node compatible "\ \, \"xlnx,xps-iic-2.00.a\""
 		set proctype [get_hw_family]
 		if {[regexp "kintex*" $proctype match]} {
 		gen_dev_ccf_binding $drv_handle "s_axi_aclk"

@@ -976,26 +976,27 @@ proc gen_cpu_cluster {os_handle} {
 		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
 		add_prop $cpu_node "range-size-cells" "0x1" hexint $default_dts
 		add_prop $cpu_node "range-address-cells" "0x1" hexint $default_dts
-		add_prop $cpu_node "range-map" "0xf0000000 &amba 0xf0000000 0x10000000\t0xfe000000 &tcm_bus 0x0 0x10000" mixed $default_dts
+#		add_prop $cpu_node "range-map" "0xf0000000 &amba 0xf0000000 0x10000000\t0xfe000000 &tcm_bus 0x0 0x10000" mixed $default_dts
 
     	} elseif {[string match -nocase $proctype "versal"] } {
         	set cpu_node [create_node -n "cpus_a72"  -d ${default_dts} -p root]
 		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
-		add_prop $cpu_node "range-size-cells" "0x1" hexint $default_dts
-		add_prop $cpu_node "range-address-cells" "0x1" hexint $default_dts
-		add_prop $cpu_node "range-map" "0xf0000000 &amba 0xf0000000 0x10000000\t0xfe000000 &tcm_bus 0x0 0x10000" mixed $default_dts
+		add_prop $cpu_node "range-size-cells" "0x2" hexint $default_dts
+		add_prop $cpu_node "range-address-cells" "0x2" hexint $default_dts
+#		add_prop $cpu_node "range-map" "0x0 0xf0000000 &amba 0x0 0xf0000000 0x0 0x10000000> , <0x0 0xf9000000 &amba_apu 0x0 0xf9000000 0x0 0x80000> , <0x0 0x0 &memory 0x0 0x0 0x0 0x80000000> , <0x8 0x0 &memory 0x8 0x0 0x1 0x80000000> , <0x0 0xff330000 &zynqmp_ipi 0x0 0xff330000 0x0 0x10000> , <0x0 0xff380000 &zynqmp_ipi 0x0 0xff380000 0x0 0x50000" hexlist $default_dts
     	}
 
 	set cpu_node [create_node -n "cpus_r5" -d ${default_dts} -p root]
 	add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
 	add_prop $cpu_node "range-size-cells" "0x1" hexint $default_dts
 	add_prop $cpu_node "range-address-cells" "0x1" hexint $default_dts
-	add_prop $cpu_node "range-map" "0xf0000000 &amba 0xf0000000 0x10000000\t 0x0 &tcm_bus 0x0 0x10000\t0xfe000000 &tcm_bus 0x0 0x10000" mixed $default_dts
+#	add_prop $cpu_node "range-map" "0xf0000000 &amba 0xf0000000 0x10000000> , <0xffe00000 &tcm_bus 0x0 0x100000> , <0xf9000000 &amba_rpu 0xf9000000 0x3000> , <0x0 &memory 0x0 0x80000000> , <0xff340000 &zynqmp_ipi 0xff340000 0x20000" hexlist $default_dts
 
         set cpu_node [create_node -n "cpus_microblaze" -d ${default_dts} -p root]
         add_prop "${cpu_node}" "compatible" "cpus,cluster" string $default_dts
         add_prop "${cpu_node}" "range-size-cells" "0x1" hexint $default_dts
         add_prop "${cpu_node}" "range-address-cells" "0x1" hexint $default_dts
+#	add_prop $cpu_node "range-map" "0xf0000000 &amba 0xf0000000 0x10000000> , <0x0 &memory 0x0 0x80000000> , <0xff3f0000 &zynqmp_ipi 0xff3f0000 0x30000" hexlist $default_dts
 }
 
 proc gen_tcmbus {os_handle} {
@@ -1165,6 +1166,9 @@ proc update_alias {os_handle} {
 			set value [get_node $drv_handle]
 			set value [split $value ": "]
 			set value [lindex $value 0]
+			if {[is_pl_ip $drv_handle]} {
+				set value "&$value"
+			}
 		            set ip_list "i2c spi serial"
             	# TODO: need to check if the label already exists in the current system
 		set alias_node [create_node -n "aliases" -p root -d "system-top.dts"]
