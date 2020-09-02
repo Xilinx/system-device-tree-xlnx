@@ -168,24 +168,18 @@
 			};
 		};
 	};
-
-	gic_r5: interrupt-controller@f9001000 {
-		compatible = "arm,gic-v3";
-		#interrupt-cells = <3>;
-		#address-cells = <2>;
-		#size-cells = <2>;
+	amba_rpu: amba_rpu {
+		compatible = "simple-bus";
+		#address-cells = <0x2>;
+		#size-cells = <0x2>;
 		ranges;
-		reg = <0 0xf9000000 0 0x80000>, /* GICD */
-		      <0 0xf9001000 0 0x80000>; /* GICR */
-		interrupt-controller;
-		interrupt-parent = <&gic_r5>;
-		interrupts = <1 9 4>;
-		status = "disabled";
-		rpu_gic_its: gic-its@f9020000 {
-			compatible = "arm,gic-v3-its";
-			msi-controller;
-			msi-cells = <1>;
-			reg = <0 0xf9020000 0 0x20000>;
+
+		gic_r5: interrupt-controller@f9000000 {
+			compatible = "arm,pl390";
+			#interrupt-cells = <3>;
+			interrupt-controller;
+			status = "disabled";
+			reg = <0x0 0xf9000000 0x0 0x1000 0x0 0xf9000000 0x0 0x100>;
 		};
 	};
 
@@ -1331,9 +1325,11 @@
                 };
 
 		psv_pmc_sysmon_0: sysmon@f1270000 {
+			compatible = "xlnx,versal-sysmon";
+			reg = <0x0 0xf1270000 0x0 0x1000>;
+			interrupts = <0 144 4>;
+			xlnx,numchannels = /bits/8 <0>;
 			status = "disabled";
-			compatible = "xlnx,sysmon-psv-1.0";
-			reg = <0x0 0xf1270000 0x0 0x40000>;
 		};
 	};
 
