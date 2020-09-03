@@ -757,7 +757,7 @@ proc add_prop args {
 		}
 	}
 	if {[string match -nocase $type "boolean"] && [string match -nocase $val ""]} {
-		set bypass 1
+		#set bypass 1
 	}
 	set val [write_value $type $val]
 	if {[string match -nocase $dts_file "pcw.dtsi"]} {
@@ -771,7 +771,6 @@ proc add_prop args {
 	}
 
 	if {[catch {set already_key [$treeobj get $node $prop]} msg]} {
-
 		set temp [$treeobj children root]
 		foreach kid $temp {
 			foreach nkid [$treeobj children $kid] {
@@ -1123,7 +1122,7 @@ proc write_dt args {
                 						} 
 								set first false
 							}
-							puts $fd "\t\t$prop = $first_str;"
+							puts $fd "\t\t$prop = $val;"
 						} 
 					} else {
 						if {[string match -nocase $val ""]} {

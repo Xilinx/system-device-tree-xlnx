@@ -544,7 +544,7 @@ proc generate {} {
 			namespace import ::${drvname}::\*
 		        ::${drvname}::generate $procc
     			add_skeleton
-			set non_val_list "versal_cips noc_nmu noc_nsu"
+			set non_val_list "versal_cips noc_nmu noc_nsu ila"
 			set non_val_ip_types "MONITOR BUS PROCESSOR"
     			foreach drv_handle $peri_list {
 				
@@ -566,7 +566,7 @@ proc generate {} {
 
 				set driver_name [get_drivers $drv_handle]
     			}
-			set non_val_list "psv_cortexa72 psu_cortexa53 ps7_cortexa9 versal_cips noc_nmu noc_nsu"
+			set non_val_list "psv_cortexa72 psu_cortexa53 ps7_cortexa9 versal_cips noc_nmu noc_nsu ila"
 			set non_val_ip_types "MONITOR BUS"
 			foreach drv_handle $peri_list {
 				set ip_name [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
@@ -635,6 +635,9 @@ proc generate {} {
 }
 
 proc generate_psvreg_property {base high} {
+	if {[string match -nocase $base ""]} {
+		return
+	}
 	set size [format 0x%x [expr {${high} - ${base} + 1}]]
 
 	set family [get_hw_family]
@@ -686,10 +689,13 @@ proc gen_resrv_memory {} {
 	set periphs_list ""
 	set family [get_hw_family]
 	set first 0
- 	append periphs_list [hsi::get_cells -hier -filter {IP_TYPE==MEMORY_CNTLR}]
+	set base_value_0 ""
+	set high_value_0 ""
+	set interface_block_names ""
+ 	lappend periphs_list [hsi::get_cells -hier -filter {IP_TYPE==MEMORY_CNTLR}]
 	if {[string match -nocase $family "versal"]} {
-		append periphs_list [hsi::get_cells -hier -filter {IP_NAME==axi_noc}]
-		append periphs_list [hsi::get_cells -hier -filter {IP_NAME==noc_mc_ddr4}]
+		lappend periphs_list [hsi::get_cells -hier -filter {IP_NAME==axi_noc}]
+		lappend periphs_list [hsi::get_cells -hier -filter {IP_NAME==noc_mc_ddr4}]
 	}
 	foreach periph $periphs_list {
 	foreach proc_map $proc_list {
@@ -698,7 +704,7 @@ proc gen_resrv_memory {} {
 			set ranges [hsi::get_mem_ranges -of_objects $proc_map]
 			set ranges [hsi::get_mem_ranges -of_objects $proc_map -filter {MEM_TYPE==MEMORY}]
 		} elseif {[string match -nocase $proctype "psv_cortexa72"] || [string match -nocase $proctype "psv_cortexr5"] || [string match -nocase $proctype "psv_pmc"]} {
-			set interface_block_names [get_property ADDRESS_BLOCK [hsi::get_mem_ranges -of_objects $proc_map]]
+			if {[catch {set interface_block_names [get_property ADDRESS_BLOCK [hsi::get_mem_ranges -of_objects $proc_map $periph]]} msg]} {}
 		}
 
 		if {[string match -nocase $proctype "psu_cortexa53"] || [string match -nocase $proctype "psv_cortexa72"] } {

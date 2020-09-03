@@ -20,6 +20,8 @@ namespace eval dp {
 
 	proc generate_dp_param {drv_handle node} {
 		set periph_list [hsi::get_cells -hier]
+		set node [get_node $drv_handle]
+		set dts_file [set_drv_def_dts $drv_handle]
 		foreach periph $periph_list {
 		set zynq_ultra_ps [get_property IP_NAME $periph]
 			if {[string match -nocase $zynq_ultra_ps "zynq_ultra_ps_e"] } {
@@ -47,13 +49,13 @@ namespace eval dp {
 					if {[string match -nocase $lan_sel "Lower"]} {
 						set lan0_phy_type "lane1 6 0 $val $dp_freq"
 						set lan1_phy_type "lane0 6 1 $val $dp_freq"
-						set_drv_prop $drv_handle phy-names "dp-phy0\",\"dp-phy1" stringlist
+						add_prop $node phy-names "dp-phy0  dp-phy1" stringlist $dts_file
 						set phy_ids "$lan0_phy_type>, <&$lan1_phy_type"
 						set_drv_prop $drv_handle phys "$phy_ids" reference
 					} else {
 						set lan0_phy_type "lane3 6 0 $val $dp_freq"
 						set lan1_phy_type "lane2 6 1 $val $dp_freq"
-						set_drv_prop $drv_handle phy-names "dp-phy0\",\"dp-phy1" stringlist
+						add_prop $node phy-names "dp-phy0  dp-phy1" stringlist $dts_file
 						set phy_ids "$lan0_phy_type>, <&$lan1_phy_type"
 						set_drv_prop $drv_handle phys "$phy_ids" reference
 					}
