@@ -43,23 +43,21 @@ namespace eval cpu {
 
 
 	    if { [llength $icache_size] != 0 } {
-		add_prop $node "i-cache-baseaddr"  "$icache_base" hexint $dtsfile
-		add_prop $node "i-cache-highaddr" $icache_high hexint $dtsfile
-		add_prop $node "i-cache-size" $icache_size int $dtsfile
-		add_prop $node "i-cache-line-size" $icache_line_size int $dtsfile
+		add_prop $node "i-cache-baseaddr"  "$icache_base" hexint $dts_file
+		add_prop $node "i-cache-highaddr" $icache_high hexint $dts_file
+		add_prop $node "i-cache-size" $icache_size int $dts_file
+		add_prop $node "i-cache-line-size" $icache_line_size int $dts_file
 	    }
 	    if { [llength $dcache_size] != 0 } {
-		add_prop $node "d-cache-baseaddr"  "$dcache_base" hexint $dtsfile
-		add_prop $node "d-cache-highaddr" $dcache_high hexint $dtsfile
-		add_prop $node "d-cache-size" $dcache_size int $dtsfile
-		add_prop $node "d-cache-line-size" $dcache_line_size int $dtsfile
+		add_prop $node "d-cache-baseaddr"  "$dcache_base" hexint $dts_file
+		add_prop $node "d-cache-highaddr" $dcache_high hexint $dts_file
+		add_prop $node "d-cache-size" $dcache_size int $dts_file
+		add_prop $node "d-cache-line-size" $dcache_line_size int $dts_file
 
 	    }
-
 	    set model "[get_property IP_NAME $ip],[hsi::utils::get_ip_version $ip]"
-	    add_prop $node "model" $model string $dtsfile
+	    add_prop $node "model" $model string $dts_file
 	    set_drv_conf_prop $drv_handle C_FAMILY "xlnx,family" string
-
 	    # create root node
 	    set master_root_node [gen_root_node $drv_handle]
 	    set nodes [gen_cpu_nodes $drv_handle]

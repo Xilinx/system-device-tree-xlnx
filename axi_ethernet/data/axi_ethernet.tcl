@@ -711,7 +711,7 @@ set rxethmem 0
 		regsub -all {CONFIG.C_} $drv_prop_name {xlnx,} drv_prop_name
 		regsub -all {_} $drv_prop_name {-} drv_prop_name
 		set drv_prop_name [string tolower $drv_prop_name]
-		set value [get_property ${ip_prop_name} [get_cells -hier $drv_handle]]
+		set value [get_property ${ip_prop_name} [hsi::get_cells -hier $drv_handle]]
 		if {[llength $value]} {
 		       if {$value != "-1" && [llength $value] !=0} {
 			     set type "hex"

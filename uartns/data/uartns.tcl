@@ -35,9 +35,9 @@ namespace eval uartns {
 		add_prop $node "clock-frequency" hexint $dts_file
 	    }
 
-	    hsi::utils::set_os_parameter_value "console" "ttyS0,115200"
+#	    hsi::utils::set_os_parameter_value "console" "ttyS0,115200"
 
-	    set proc_type [get_hw_family]
+	    set proctype [get_hw_family]
 	    if {[regexp "kintex*" $proctype match]} {
 			 gen_dev_ccf_binding $drv_handle "s_axi_aclk"
 	    }

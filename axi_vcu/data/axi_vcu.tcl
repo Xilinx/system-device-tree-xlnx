@@ -21,8 +21,8 @@ namespace eval axi_vcu {
 	    }
 	    set dts_file [set_drv_def_dts $drv_handle]
 	    add_prop $node "#address-cells" 2 int $dts_file
-	    add_prop "#size-cells" 2 int $dts_file
-	    add_prop "#clock-cells" 1 int $dts_file
+	    add_prop $node "#size-cells" 2 int $dts_file
+	    add_prop $node "#clock-cells" 1 int $dts_file
 	    set vcu_ip [hsi::get_cells -hier $drv_handle]
 	    set baseaddr [get_baseaddr $vcu_ip no_prefix]
 	    set slcr_offset 0x40000
@@ -30,7 +30,7 @@ namespace eval axi_vcu {
 	    set vcu_slcr_reg [format %08x [expr 0x$baseaddr + $slcr_offset]]
 	    set logicore_reg [format %08x [expr 0x$baseaddr + $logicore_offset]]
 	    set reg "0x0 0x$vcu_slcr_reg 0x0 0x1000>, <0x0 0x$logicore_reg 0x0 0x1000"
-	    set_drv_prop $drv_handle reg $reg int
+	    set_drv_prop $drv_handle reg $reg hexlist $dts_file
 	    set intr_val [pldt get $node interrupts]
 	    set intr_parent [pldt get $node interrupt-parent]
 	    set clock-names "pll_ref"
@@ -47,7 +47,7 @@ namespace eval axi_vcu {
 
 	    # Generate child encoder
 	    set ver [get_ipdetails $drv_handle "ver"]
-	    set encoder_node [create_node -l "encoder" -n "al5e@$baseaddr" -p $node]
+	    set encoder_node [create_node -l "encoder" -n "al5e@$baseaddr" -p $node -d $dts_file]
 	    set encoder_comp "al,al5e-${ver}"
 	    set encoder_comp [append encoder_comp "\ \, \" al,al5e\""]
 	    add_prop "${encoder_node}" "compatible" $encoder_comp stringlist $dts_file
@@ -58,7 +58,7 @@ namespace eval axi_vcu {
 	    # Fenerate child decoder
 	    set decoder_offset 0x20000
 	    set decoder_reg [format %08x [expr 0x$baseaddr + $decoder_offset]]
-	    set decoder_node [create_node -l "decoder" -n "al5d@$decoder_reg" -p $node]
+	    set decoder_node [create_node -l "decoder" -n "al5d@$decoder_reg" -p $node -d $dts_file]
 	    set decoder_comp "al,al5d-${ver}"
 	    set decoder_comp [append decoder_comp "\ \, \"al,al5d\""]
 	    add_prop "${decoder_node}" "compatible" $decoder_comp stringlist $dts_file
