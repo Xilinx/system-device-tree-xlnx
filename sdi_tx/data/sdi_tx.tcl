@@ -14,8 +14,8 @@
 
 namespace eval sdi_tx {
 	proc generate {drv_handle} {
-
 		set node [get_node $drv_handle]
+		set dts_file [set_drv_def_dts $drv_handle]
 		if {$node == 0} {
 			return
 		}
@@ -37,5 +37,22 @@ namespace eval sdi_tx {
 		add_prop "${node}" "xlnx,pixels-per-clock" $pixelclock string $dts_file
 		set video_intf [get_property CONFIG.C_VIDEO_INTF [hsi::get_cells -hier $drv_handle]]
 		add_prop "$node" "xlnx,video-intf" $video_intf string $dts_file
+
+		set ports_node [create_node -n "ports" -l sditx_ports$drv_handle -p $node -d $dts_file]
+		add_prop "$ports_node" "#address-cells" 1 int $dts_file
+		add_prop "$ports_node" "#size-cells" 0 int $dts_file
+		set audio_connected_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "SDI_TX_ANC_DS_OUT"]
+		if {[llength $audio_connected_ip] != 0} {
+			set audio_connected_ip_type [get_property IP_NAME $audio_connected_ip]
+			if {[string match -nocase $audio_connected_ip_type "v_uhdsdi_audio"]} {
+				set sdi_audio_port [create_node -n "port" -l sdi_audio_port -u 1 -p $ports_node -d $dts_file]
+				add_prop "$sdi_audio_port" "reg" 1 int $dts_file
+				set sdi_audio_node [create_node -n "endpoint" -l sdi_audio_sink_port -p $sdi_audio_port -d $dts_file]
+				add_prop "$sdi_audio_node" "remote-endpoint" sditx_audio_embed_src reference $dts_file
+			}
+		} else {
+			dtg_warning "$drv_handle:connected ip for audio port pin SDI_TX_ANC_DS_OUT is NULL"
+		}
+
 	}
 }

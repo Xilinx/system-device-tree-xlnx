@@ -14,6 +14,8 @@
 
 namespace eval tpg {
 	proc generate {drv_handle} {
+		global end_mappings
+		global remo_mappings
 		set node [get_node $drv_handle]
 		set dts_file [set_drv_def_dts $drv_handle]
 		if {$node == 0} {
@@ -36,5 +38,107 @@ namespace eval tpg {
 		add_prop "${node}" "xlnx,max-width" $max_cols int $dts_file
 		set max_rows [get_property CONFIG.MAX_ROWS [hsi::get_cells -hier $drv_handle]]
 		add_prop "${node}" "xlnx,max-height" $max_rows int $dts_file
+
+		set ports_node [create_node -n "ports" -l tpg_ports$drv_handle -p $node -d $dts_file]
+                add_prop "$ports_node" "#address-cells" 1 int $dts_file
+                add_prop "$ports_node" "#size-cells" 0 int $dts_file
+                set port1_node [create_node -n "port" -l tpg_port1$drv_handle -u 1 -p $ports_node -d $dts_file]
+                add_prop "$port1_node" "reg" 1 int $dts_file
+                #add_prop "${port1_node}" "/* Fill the field xlnx,video-format based on user requirement */" "" comment
+                add_prop "$port1_node" "xlnx,video-format" 12 int $dts_file
+                add_prop "$port1_node" "xlnx,video-width" $max_data_width int $dts_file
+
+		set connect_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "S_AXIS_VIDEO"]
+		if {![llength $connect_ip]} {
+			dtg_warning "$drv_handle pin S_AXIS_VIDEO is not connected..check your design"
+		}
+		foreach connected_ip $connect_ip {
+			if {[llength $connected_ip] != 0} {
+				set connected_ip_type [get_property IP_NAME $connected_ip]
+				set ports_node ""
+				set sink_periph ""
+				if {[llength $connected_ip_type] != 0} {
+					if {[string match -nocase $connected_ip_type "system_ila"]} {
+						continue
+				}
+                                if {[string match -nocase $connected_ip_type "v_vid_in_axi4s"]} {
+                                        set pins [hsi::get_pins -of_objects [hsi::get_nets -of_objects [hsi::get_pins -of_objects $connected_ip "vid_active_video"]]]
+					puts "pins:$pins"
+                                        foreach pin $pins {
+                                                set sink_periph [::hsi::get_cells -of_objects $pin]
+						set sink_ip [get_property IP_NAME $sink_periph]
+						if {[string match -nocase $sink_ip "v_tc"]} {
+							add_prop "$node" "xlnx,vtc" "$sink_periph" reference $dts_file
+							}
+						}
+					}
+				}
+			}
+		}
+
+               set connect_out_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "M_AXIS_VIDEO"]
+               if {![llength $connect_out_ip]} {
+                       dtg_warning "$drv_handle pin M_AXIS_VIDEO is not connected ...check your design"
+               }
+
+		foreach out_ip $connect_out_ip {
+			if {[llength $out_ip] != 0} {
+			set connected_out_ip_type [get_property IP_NAME $out_ip]
+                        if {[llength $connected_out_ip_type] != 0} {
+                                if {[string match -nocase $connected_out_ip_type "system_ila"] || [string match -nocase $connected_out_ip_type "axi_dbg_hub"]} {
+                                        continue
+                                }
+                                set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $out_ip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
+                                set ip_mem_handles [hsi::get_mem_ranges $out_ip]
+                                if {[llength $ip_mem_handles]} {
+                                        set tpg_node [create_node -n "endpoint" -l tpg_out$drv_handle -p $port1_node -d $dts_file]
+                                        gen_endpoint $drv_handle "tpg_out$drv_handle"
+                                        add_prop "$tpg_node" "remote-endpoint" $out_ip$drv_handle reference $dts_file
+                                        gen_remoteendpoint $drv_handle "$out_ip$drv_handle"
+                                        if {[string match -nocase [get_property IP_NAME $out_ip] "v_frmbuf_wr"] || [string match -nocase [get_property IP_NAME $out_ip] "axi_vdma"]} {
+                                                gen_frmbuf_node $out_ip $drv_handle $dts_file
+                                        }
+                                 } else {
+                                        set connectip [get_connect_ip $out_ip $master_intf]
+					if {[llength $connectip]} {
+						if {[string match -nocase [get_property IP_NAME $connectip] "axi_dbg_hub"]} {
+							continue
+						}
+					}
+                                        if {[llength $connectip]} {
+                                                set ip_mem_handles [hsi::get_mem_ranges $connectip]
+                                                if {[llength $ip_mem_handles]} {
+                                                        set tpg_node [create_node -n "endpoint" -l tpg_out$drv_handle -p $port1_node -d $dts_file]
+                                                        gen_endpoint $drv_handle "tpg_out$drv_handle"
+                                                        add_prop "$tpg_node" "remote-endpoint" $connectip$drv_handle reference $dts_file
+                                                        gen_remoteendpoint $drv_handle "$connectip$drv_handle"
+                                                        if {[string match -nocase [get_property IP_NAME $connectip] "v_frmbuf_wr"] || [string match -nocase [get_property IP_NAME $connectip] "axi_vdma"]} {
+                                                                gen_frmbuf_node $connectip $drv_handle $dts_file
+                                                        }
+                                                }
+                                        }
+                                }
+                        }
+                } else {
+                        dtg_warning "$drv_handle pin M_AXIS_VIDEO is not connected ...check your design"
+                }
+        }
+
 	}
+}
+
+proc gen_frmbuf_node {ip drv_handle dts_file} {
+	set bus_node [detect_bus_name $drv_handle]
+	set vcap [create_node -n "vcap_sdirx$drv_handle" -p $bus_node -d $dts_file]
+	add_prop $vcap "compatible" "xlnx,video" string $dts_file
+	add_prop $vcap "dmas" "$ip 0" reference $dts_file
+	add_prop $vcap "dma-names" "port0" string $dts_file
+	set vcap_ports_node [create_node -n "ports" -l vcap_ports$drv_handle -p $vcap -d $dts_file]
+	add_prop "$vcap_ports_node" "#address-cells" 1 int $dts_file
+	add_prop "$vcap_ports_node" "#size-cells" 0 int $dts_file
+	set vcap_port_node [create_node -n "port" -l vcap_port$drv_handle -u 0 -p $vcap_ports_node -d $dts_file]
+	add_prop "$vcap_port_node" "reg" 0 int $dts_file
+	add_prop "$vcap_port_node" "direction" input string $dts_file
+	set vcap_in_node [create_node -n "endpoint" -l $ip$drv_handle -p $vcap_port_node -d $dts_file]
+	add_prop "$vcap_in_node" "remote-endpoint" tpg_out$drv_handle reference $dts_file
 }

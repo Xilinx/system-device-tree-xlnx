@@ -100,7 +100,7 @@ namespace eval framebuf_rd {
 		if {![string match $vid_formats ""]} {
 			add_prop "${node}" "xlnx,vid-formats" $vid_formats stringlist $dts_file
 		}
-		set samples_per_clk [get_property CONFIG.SAMPLES_PER_CLOCK [get_cells -hier $drv_handle]]
+		set samples_per_clk [get_property CONFIG.SAMPLES_PER_CLOCK [hsi::get_cells -hier $drv_handle]]
 		add_prop "$node" "xlnx,pixels-per-clock" $samples_per_clk int $dts_file
 		set dma_align [expr $samples_per_clk * 8]
 		add_prop "$node" "xlnx,dma-align" $dma_align int $dts_file
@@ -113,9 +113,9 @@ namespace eval framebuf_rd {
 		add_prop "$node" "#dma-cells" 1 int $dts_file
 		set max_data_width [get_property CONFIG.MAX_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
 		add_prop "$node" "xlnx,video-width" $max_data_width int $dts_file
-		set max_rows [get_property CONFIG.MAX_ROWS [get_cells -hier $drv_handle]]
+		set max_rows [get_property CONFIG.MAX_ROWS [hsi::get_cells -hier $drv_handle]]
 		add_prop "$node" "xlnx,max-height" $max_rows int $dts_file
-		set max_cols [get_property CONFIG.MAX_COLS [get_cells -hier $drv_handle]]
+		set max_cols [get_property CONFIG.MAX_COLS [hsi::get_cells -hier $drv_handle]]
 		add_prop "$node" "xlnx,max-width" $max_cols int $dts_file
 	}
 }

@@ -50,5 +50,77 @@ namespace eval mipi_csi2_rx {
 		add_prop "${node}" "xlnx,ppc" "$cmn_num_pixels" int $dts_file
 		set axis_tdata_width [get_property CONFIG.AXIS_TDATA_WIDTH [hsi::get_cells -hier $drv_handle]]
 		add_prop "${node}" "xlnx,axis-tdata-width" "$axis_tdata_width" int $dts_file
+
+		set ports_node [create_node -n "ports" -l mipi_csi_ports$drv_handle -p $node -d $dts_file]
+		add_prop "$ports_node" "#address-cells" 1 int $dts_file
+		add_prop "$ports_node" "#size-cells" 0 int $dts_file
+		set port_node [create_node -n "port" -l mipi_csi_port0$drv_handle -u 0 -p $ports_node -d $dts_file]
+		add_prop "$port_node" "reg" 0 int $dts_file
+		add_prop "$port_node" "xlnx,video-format" 12 int $dts_file
+		add_prop "$port_node" "xlnx,video-width" 8 int $dts_file
+		add_prop "$port_node" "xlnx,cfa-pattern" rggb string $dts_file
+
+		set port1_node [create_node -n "port" -l mipi_csi_port1$drv_handle -u 1 -p $ports_node -d $dts_file]
+		add_prop "$port1_node" "reg" 1 int $dts_file
+#        hsi::utils::add_new_dts_param "${port1_node}" "/* Fill cfa-pattern=rggb for raw data types, other fields video-format,video-width user needs to fill */" "" comment
+ #       hsi::utils::add_new_dts_param "${port1_node}" "/* User need to add something like remote-endpoint=<&out> under the node csiss_in:endpoint */" "" comment
+	add_prop "$port1_node" "xlnx,video-format" 12 int $dts_file
+	add_prop "$port1_node" "xlnx,video-width" 8 int $dts_file
+	add_prop "$port1_node" "xlnx,cfa-pattern" rggb string $dts_file
+        set csiss_rx_node [create_node -n "endpoint" -l mipi_csi_in$drv_handle -p $port1_node -d $dts_file]
+
+	set outip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "VIDEO_OUT"]
+        if {[llength $outip]} {
+                if {[string match -nocase [get_property IP_NAME $outip] "axis_broadcaster"]} {
+                        set mipi_node [create_node -n "endpoint" -l mipi_csirx_out$drv_handle -p $port_node -d $dts_file]
+                        gen_endpoint $drv_handle "mipi_csirx_out$drv_handle"
+                        add_prop "$mipi_node" "remote-endpoint" $outip$drv_handle reference $dts_file
+                        gen_remoteendpoint $drv_handle "$outip$drv_handle"
+                }
+        }
+	foreach ip $outip {
+		if {[llength $ip]} {
+                        set intfpins [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
+                        set ip_mem_handles [hsi::get_mem_ranges $ip]
+                        if {[llength $ip_mem_handles]} {
+                                set base [string tolower [get_property BASE_VALUE $ip_mem_handles]]
+                                set csi_rx_node [create_node -n "endpoint" -l mipi_csirx_out$drv_handle -p $port_node -d $dts_file]
+                                gen_endpoint $drv_handle "mipi_csirx_out$drv_handle"
+                                add_prop "$csi_rx_node" "remote-endpoint" $ip$drv_handle reference $dts_file
+                                gen_remoteendpoint $drv_handle $ip$drv_handle
+                                if {[string match -nocase [get_property IP_NAME $ip] "v_frmbuf_wr"]} {
+                                        gen_frmbuf_node $ip $drv_handle $dts_file
+                                }
+                        } else {
+                                set connectip [get_connect_ip $ip $intfpins $dts_file]
+                                if {[llength $connectip]} {
+                                        set csi_rx_node [create_node -n "endpoint" -l mipi_csirx_out$drv_handle -p $port_node -d $dts_file]
+                                        gen_endpoint $drv_handle "mipi_csirx_out$drv_handle"
+                                        add_prop "$csi_rx_node" "remote-endpoint" $connectip$drv_handle reference $dts_file
+                                        gen_remoteendpoint $drv_handle $connectip$drv_handle
+                                        if {[string match -nocase [get_property IP_NAME $connectip] "v_frmbuf_wr"]} {
+                                                gen_frmbuf_node $connectip $drv_handle $dts_file
+                                        }
+                                }
+                        }
+                }
+        }
+
 	}
+}
+proc gen_frmbuf_node {outip drv_handle dts_file} {
+#        set dt_overlay [get_property CONFIG.dt_overlay [get_os]]
+	set bus_node [detect_bus_name $drv_handle]
+	set vcap [create_node -n "vcap_sdirx$drv_handle" -p $bus_node -d $dts_file]
+	add_prop $vcap "compatible" "xlnx,video" string $dts_file
+	add_prop $vcap "dmas" "$outip 0" reference $dts_file
+	add_prop $vcap "dma-names" "port0" string $dts_file
+	set vcap_ports_node [create_node -n "ports" -l vcap_ports$drv_handle -p $vcap -d $dts_file]
+	add_prop "$vcap_ports_node" "#address-cells" 1 int $dts_file
+	add_prop "$vcap_ports_node" "#size-cells" 0 int $dts_file
+	set vcap_port_node [create_node -n "port" -l vcap_port$drv_handle -u 0 -p $vcap_ports_node -d $dts_file]
+	add_prop "$vcap_port_node" "reg" 0 int $dts_file
+	add_prop "$vcap_port_node" "direction" input string $dts_file
+	set vcap_in_node [create_node -n "endpoint" -l $outip$drv_handle -p $vcap_port_node -d $dts_file]
+	add_prop "$vcap_in_node" "remote-endpoint" mipi_csirx_out$drv_handle reference $dts_file
 }

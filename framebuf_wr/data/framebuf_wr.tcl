@@ -15,7 +15,7 @@
 namespace eval framebuf_wr {
 	proc generate {drv_handle} {
 		set node [get_node $drv_handle]
-		set dts_file [set_drv_dts_file $drv_handle]
+		set dts_file [set_drv_def_dts $drv_handle]
 		if {$node == 0} {
 			return
 		}

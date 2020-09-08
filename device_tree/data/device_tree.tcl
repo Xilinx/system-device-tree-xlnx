@@ -507,6 +507,7 @@ proc generate {} {
 				if {[lsearch -nocase $non_val_ip_types $ip_type] >= 0} {
 					continue
 				}
+
  	       			gen_peripheral_nodes $drv_handle "create_node_only"
 	        		gen_reg_property $drv_handle
 	        		gen_compatible_property $drv_handle
@@ -532,6 +533,9 @@ proc generate {} {
 				source -notrace $drv_file
 				namespace import ::${drvname}::\*
 				::${drvname}::generate $drv_handle
+			}
+			foreach drv_handle $peri_list {
+				update_endpoints $drv_handle
 			}
 			namespace forget ::
 		} else {
