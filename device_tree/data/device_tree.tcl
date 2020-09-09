@@ -607,10 +607,11 @@ proc generate {} {
 			gen_zynqmp_ccf_clk
 		}
     	}
-    	gen_resrv_memory
+    	#gen_resrv_memory
     	update_alias $drv_handle
     	update_cpu_node $drv_handle
     	gen_cpu_cluster $drv_handle
+	gen_tcmbus
 	set family [get_hw_family]
 	set dir [get_user_config $common_file -dir]
 	if [catch { set retstr [file mkdir $dir] } errmsg] {
@@ -1030,44 +1031,147 @@ proc gen_cpu_cluster {os_handle} {
 
 	set proctype [get_hw_family]
 	set default_dts "system-top.dts"
+	set ipi_list [hsi::get_cells -hier *ipi*]
+	foreach val $ipi_list {
+		set cpu [get_property CONFIG.C_CPU_NAME [hsi::get_cells -hier $val]]
+		if {[string match -nocase $cpu "A72"] || [string match -nocase $cpu "APU"]} {
+			set base [get_baseaddr $val]
+			set high [get_highaddr $val]
+                        set size [format 0x%x [expr {${high} - ${base} + 1}]]
+			set_memmap $val a53 "0x0 $base 0x0 $size"
+		}
+		if {[string match -nocase $cpu "RPU0"] || [string match -nocase $cpu "RPU1"]} {
+			set base [get_baseaddr $val]
+			set high [get_highaddr $val]
+                        set size [format 0x%x [expr {${high} - ${base} + 1}]]
+			set_memmap $val r5 "0x0 $base 0x0 $size"
+		}
+		if {[string match -nocase $cpu "PSM"]} {
+			set base [get_baseaddr $val]
+			set high [get_highaddr $val]
+                        set size [format 0x%x [expr {${high} - ${base} + 1}]]
+			set_memmap $val psm "0x0 $base 0x0 $size"
+		}
+		if {[string match -nocase $cpu "PMC"]} {
+			set base [get_baseaddr $val]
+			set high [get_highaddr $val]
+                        set size [format 0x%x [expr {${high} - ${base} + 1}]]
+			set_memmap $val pmc "0x0 $base 0x0 $size"
+		}
+		if {[string match -nocase $cpu "PMU"]} {
+			set base [get_baseaddr $val]
+			set high [get_highaddr $val]
+                        set size [format 0x%x [expr {${high} - ${base} + 1}]]
+			set_memmap $val pmu "0x0 $base 0x0 $size"
+		}
+
+	}
     	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
         	set cpu_node [create_node -n "cpus_a53"  -d ${default_dts} -p root]
 		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
-		add_prop $cpu_node "range-size-cells" "0x1" hexint $default_dts
-		add_prop $cpu_node "range-address-cells" "0x1" hexint $default_dts
-#		add_prop $cpu_node "range-map" "0xf0000000 &amba 0xf0000000 0x10000000\t0xfe000000 &tcm_bus 0x0 0x10000" mixed $default_dts
+		add_prop $cpu_node "range-size-cells" "0x2" hexint $default_dts
+		add_prop $cpu_node "range-address-cells" "0x2" hexint $default_dts
+		global memmap
+		set values [dict keys $memmap]
+		set list_values "0x0 0xf0000000 &amba 0x0 0xf0000000>, \n\t\t\t      <0x0 0xffe00000 &tcm_bus 0x0 0x0 0x0 0x10000>, \n\t\t\t      <0x0 0xf9000000 &amba_apu 0x0 0xf9000000 0x0 0x80000"
+		foreach val $values {
+			set temp [get_memmap $val a53]
+			set com_val [split $temp ","]
+			foreach value $com_val {
+				set addr "[lindex $value 0] [lindex $value 1]"
+				set size "[lindex $value 2] [lindex $value 3]"
+				set list_values [append list_values ">, \n\t\t\t      " "<$addr &${val} $addr $size"]
+			}
+		}
+		add_prop $cpu_node "address-map" $list_values special $default_dts
 
     	} elseif {[string match -nocase $proctype "versal"] } {
         	set cpu_node [create_node -n "cpus_a72"  -d ${default_dts} -p root]
 		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
 		add_prop $cpu_node "range-size-cells" "0x2" hexint $default_dts
 		add_prop $cpu_node "range-address-cells" "0x2" hexint $default_dts
-#		add_prop $cpu_node "range-map" "0x0 0xf0000000 &amba 0x0 0xf0000000 0x0 0x10000000> , <0x0 0xf9000000 &amba_apu 0x0 0xf9000000 0x0 0x80000> , <0x0 0x0 &memory 0x0 0x0 0x0 0x80000000> , <0x8 0x0 &memory 0x8 0x0 0x1 0x80000000> , <0x0 0xff330000 &zynqmp_ipi 0x0 0xff330000 0x0 0x10000> , <0x0 0xff380000 &zynqmp_ipi 0x0 0xff380000 0x0 0x50000" hexlist $default_dts
+		global memmap
+		set cnt 0
+		set values [dict keys $memmap]
+		set list_values "0x0 0xf0000000 &amba 0x0 0xf0000000 0x0 0x10000000>, \n\t\t\t     <0x0 0xffe00000 &tcm_bus 0x0 0xffe00000 0x0 0x10000>, \n\t\t\t      <0x0 0xf9000000 &amba_apu 0x0 0xf9000000 0x0 0x80000"
+		foreach val $values {
+			set temp [get_memmap $val a53]
+			set com_val [split $temp ","]
+			foreach value $com_val {
+				set addr "[lindex $value 0] [lindex $value 1]"
+				set size "[lindex $value 2] [lindex $value 3]"
+				set list_values [append list_values ">, \n\t\t\t      " "<$addr &${val} $addr $size"]
+			}
+		}
+		add_prop $cpu_node "address-map" $list_values special $default_dts
+#		add_prop $cpu_node "address-map" "0x0 0xf0000000 &amba 0x0 0xf0000000 0x0 0x10000000> , <0x0 0xf9000000 &amba_apu 0x0 0xf9000000 0x0 0x80000> , <0x0 0x0 &memory 0x0 0x0 0x0 0x80000000> , <0x8 0x0 &memory 0x8 0x0 0x1 0x80000000> , <0x0 0xff330000 &zynqmp_ipi 0x0 0xff330000 0x0 0x10000> , <0x0 0xff380000 &zynqmp_ipi 0x0 0xff380000 0x0 0x50000" hexlist $default_dts
     	}
 
 	set cpu_node [create_node -n "cpus_r5" -d ${default_dts} -p root]
 	add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
 	add_prop $cpu_node "range-size-cells" "0x1" hexint $default_dts
 	add_prop $cpu_node "range-address-cells" "0x1" hexint $default_dts
+	global memmap
+	set values [dict keys $memmap]
+	set list_values "0xf0000000 &amba 0xf0000000 0x10000000>, \n\t\t\t      <0x0 &tcm_bus 0xffe00000 0x100000>, \n\t\t\t      <0xf9000000 &amba_rpu 0xf9000000 0x3000"
+	foreach val $values {
+		set temp [get_memmap $val r5]
+		set com_val [split $temp ","]
+		foreach value $com_val {
+			set addr "[lindex $value 1]"
+			set size "[lindex $value 3]"
+			set addr [string trimright $addr ">"]
+			set size [string trimright $size ">"]
+			set list_values [append list_values ">, \n\t\t\t      " "<$addr &${val} $addr $size"]
+		}
+	}
+	add_prop $cpu_node "address-map" $list_values special $default_dts
 #	add_prop $cpu_node "range-map" "0xf0000000 &amba 0xf0000000 0x10000000> , <0xffe00000 &tcm_bus 0x0 0x100000> , <0xf9000000 &amba_rpu 0xf9000000 0x3000> , <0x0 &memory 0x0 0x80000000> , <0xff340000 &zynqmp_ipi 0xff340000 0x20000" hexlist $default_dts
 
         set cpu_node [create_node -n "cpus_microblaze" -d ${default_dts} -p root]
         add_prop "${cpu_node}" "compatible" "cpus,cluster" string $default_dts
         add_prop "${cpu_node}" "range-size-cells" "0x1" hexint $default_dts
         add_prop "${cpu_node}" "range-address-cells" "0x1" hexint $default_dts
+	global memmap
+	set values [dict keys $memmap]
+	set list_values "0xf0000000 &amba 0xf0000000 0x10000000"
+	foreach val $values {
+    		if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+			set temp [get_memmap $val pmu]
+		} else {
+			set temp [get_memmap $val pmc]
+		}
+		set com_val [split $temp ","]
+		foreach value $com_val {
+			set addr "[lindex $value 1]"
+			set size "[lindex $value 3]"
+			set addr [string trimright $addr ">"]
+			set size [string trimright $size ">"]
+			set list_values [append list_values ">, \n\t\t\t      " "<$addr &${val} $addr $size"]
+		}
+	}
+	foreach val $ipi_list {
+		set cpu [get_property CONFIG.C_CPU_NAME [hsi::get_cells -hier $val]]
+		if {[string match -nocase $cpu "PSM"]} {
+			set base [get_baseaddr $val]
+			set high [get_highaddr $val]
+                        set size [format 0x%x [expr {${high} - ${base} + 1}]]
+			set list_values [append list_values ">, \n\t\t\t      " "<$base &${val} $base $size"]
+		}
+	}
+	add_prop $cpu_node "address-map" $list_values special $default_dts
 #	add_prop $cpu_node "range-map" "0xf0000000 &amba 0xf0000000 0x10000000> , <0x0 &memory 0x0 0x80000000> , <0xff3f0000 &zynqmp_ipi 0xff3f0000 0x30000" hexlist $default_dts
 }
 
-proc gen_tcmbus {os_handle} {
-    set default_dts [get_property CONFIG.master_dts [get_os]]
-    set system_root_node [add_or_get_dt_node -n "/" -d ${default_dts}]
-    set tcmbus [add_or_get_dt_node -n "tcm_bus" -l "tcm_bus" -d ${default_dts} -p ${system_root_node}]
-    hsi::utils::add_new_dts_param "${tcmbus}" "compatible" "simple-bus" string
-    hsi::utils::add_new_dts_param "${tcmbus}" "#size-cells" "0x1" hexint
-    hsi::utils::add_new_dts_param "${tcmbus}" "#address-cells" "0x1" hexint
-    set tcm_node [add_or_get_dt_node -n "tcm" -u "e00000" -d ${default_dts} -p ${tcmbus}]
-    hsi::utils::add_new_dts_param "${tcm_node}" "compatible" "mmiio-sram" string
-    hsi::utils::add_new_dts_param "${tcm_node}" "reg" "0xe00000 0x10000" intlist
+proc gen_tcmbus {} {
+    set default_dts "system-top.dts"
+    set tcmbus [create_node -n tcm_bus -l tcm_bus -d ${default_dts} -p root]
+    add_prop "${tcmbus}" "compatible" "simple-bus" string $default_dts
+    add_prop "${tcmbus}" "#size-cells" "0x1" hexlist $default_dts
+    add_prop "${tcmbus}" "#address-cells" "0x1" hexlist $default_dts
+    set tcm_child [create_node -n "tcm" -u "ffe00000" -d ${default_dts} -p $tcmbus]
+    add_prop $tcm_child "compatible" "mmiio-sram" string $default_dts
+    add_prop $tcm_child "reg" "0xffe00000 0x10000" hexlist $default_dts
 }
 
 proc update_cpu_node {os_handle} {

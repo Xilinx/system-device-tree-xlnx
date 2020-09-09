@@ -32,7 +32,7 @@ namespace eval ddrps {
 		set value [generate_secure_memory $drv_handle]
 	    }
 	    if { $value !=0} {
-		add_prop $system_node reg $value intlist "system-top.dts"
+		add_prop $system_node reg $value hexlist "system-top.dts"
 	    } else {
 		foreach mem_handle ${ip_mem_handles} {
 		    set base 0x0
@@ -67,22 +67,48 @@ namespace eval ddrps {
 	}
 
 	proc generate_secure_memory {drv_handle} {
-	    set regprop [get_count "regp"]
+#	    set regprop [get_count "regp"]
+	    set regprop ""
 	    set psu_cortexa53 ""
+	    set r5 0
+	    set a53 0
+	    set pmu 0
 	    set slave [hsi::get_cells -hier ${drv_handle}]
+	    set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
+	    foreach procc $proclist {
 	    set ip_mem_handles [hsi::get_mem_ranges $slave]
 	    set firstelement [lindex $ip_mem_handles 0]
-	    set index [lsearch [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -filter {IP_TYPE==PROCESSOR} ] 0]] [hsi::get_cells $firstelement]] 
-	    set avail_param [list_property [lindex [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -filter {IP_TYPE==PROCESSOR} ] 0]] $index]]
+	    set index [lsearch [hsi::get_mem_ranges -of_objects $procc] [hsi::get_cells $firstelement]]
+	    if {$index == "-1"} {
+		continue
+	    }
+	    set avail_param [list_property [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
 	    set addr_64 "0"
 	    set size_64 "0"
-	    if {[lsearch -nocase $avail_param "TRUSTZONE"] >= 0} {
 		foreach bank ${ip_mem_handles} {
-		    set state [get_property TRUSTZONE [lindex [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -filter {IP_TYPE==PROCESSOR} ] 0]]] $index]
-		    if {[string match -nocase $state "NonSecure"]} {
-			set index [lsearch -start $index [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -filter {IP_TYPE==PROCESSOR} ] 0]] [hsi::get_cells -hier $bank]]
-			set base [get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -filter {IP_TYPE==PROCESSOR} ] 0]] $index]]
-			set high [get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects [lindex [hsi::get_cells -filter {IP_TYPE==PROCESSOR} ] 0]] $index]]
+		if {$r5 == 1 && [string match -nocase [get_property IP_NAME $procc] "psu_cortexr5"]} {
+			continue
+		}
+		if {[string match -nocase [get_property IP_NAME $procc] "psu_cortexr5"]} {
+			set r5 1
+		}
+		if {$a53 == 1 && [string match -nocase [get_property IP_NAME $procc] "psu_cortexa53"]} {
+			continue
+		}
+		if {[string match -nocase [get_property IP_NAME $procc] "psu_cortexa53"]} {
+			set a53 1
+		}
+		if {$pmu == 1 && [string match -nocase [get_property IP_NAME $procc] "psu_pmu"]} {
+			continue
+		}
+		if {[string match -nocase [get_property IP_NAME $procc] "psu_pmu"]} {
+			set pmu 1
+		}
+
+		    set state [get_property TRUSTZONE [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
+			set index [lsearch -start $index [hsi::get_mem_ranges -of_objects $procc] [hsi::get_cells -hier $bank]]
+			set base [get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
+			set high [get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
 			set mem_size [format 0x%x [expr {${high} - ${base} + 1}]]
 			if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 			    set addr_64 "1"
@@ -125,15 +151,22 @@ namespace eval ddrps {
 				append regprop ">, " "<0x0 ${base} 0x0 ${mem_size}"
 			    }
 			}
+			if {[string match -nocase [get_property IP_NAME $procc] "psu_cortexr5"]} {
+				set_memmap "${drv_handle}_memory" r5 $regprop
+			}
+			if {[string match -nocase [get_property IP_NAME $procc] "psu_cortexa53"]} {
+				set_memmap "${drv_handle}_memory" a53 $regprop
+			}
+			if {[string match -nocase [get_property IP_NAME $procc] "psu_pmu"]} {
+				set_memmap "${drv_handle}_memory" pmu $regprop
+			}
+
 		    }
 		    set addr_64 "0"
 		    set size_64 "0"
 		    set index [expr $index + 1]
-		}
-		return $regprop
-	    } else {
-		return 0
-	    }
+	      }
+		    return $regprop
 	}
 	proc generate_secure_memory_pmu {drv_handle} {
 	    set regprop [ hsi::utils::get_os_parameter_value "regp"]
@@ -276,10 +309,11 @@ namespace eval ddrps {
 	}
 
 	proc generate {drv_handle} {
-	    set system_node [create_node -l $drv_handle -n "memory" -u $baseaddr -p root -d "system-top.dts"]
+		set baseaddr [get_baseaddr $drv_handle noprefix]
+	    set system_node [create_node -l "${drv_handle}_memory" -n "memory" -u $baseaddr -p root -d "system-top.dts"]
 	    gen_ps7_ddr_reg_property $drv_handle $system_node
 		set dts_file "system-top.dts"
-		add_prop $system_node "device_type" $dev_type string $dts_file
+		add_prop $system_node "device_type" "memory" string $dts_file
 		set slave [hsi::get_cells -hier ${drv_handle}] 
 		set vlnv [split [get_property VLNV $slave] ":"] 
 		set name [lindex $vlnv 2] 

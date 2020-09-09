@@ -39,6 +39,7 @@ set pstree 0
 global repo_path
 set repo_path ""
 global set osmap [dict create]
+global set memmap [dict create]
 global set label_addr [dict create]
 global set label_type [dict create]
 global set end_mappings [dict create]
@@ -196,13 +197,48 @@ proc get_label_addr args {
 	return $value
 }
 
-proc set_count args {
+proc set_memmap args {
+	global memmap
+	set mem_ip [lindex $args 0]
+	set proc_ip [lindex $args 1]
+	set val [lindex $args 2]
+	if {[catch {dict for {memory procs} $memmap {}} msg]} {
+			dict set memmap $mem_ip $proc_ip $val
+	} else {
+		dict for {memory procs} $memmap {
+			if {[string match -nocase $memory $mem_ip]} {
+			        dict with procs {
+					if {[dict exists $memmap $memory $proc_ip]} {
+						if {[catch {set value [dict get $procs $proc_ip]} msg]} {
+							dict set memmap $mem_ip $proc_ip $val
+						} else {
+							dict set memmap $mem_ip $proc_ip "$value , $val"
+						}
+					} else {
+						dict set memmap $mem_ip $proc_ip $val
+					}
+        			}
+			} else {
+				dict set memmap $mem_ip $proc_ip $val
+			}
+		}
+	}
+}
 
-	set param [lindex $args 0]
-	set val [lindex $args 1]
-	global osmap
-	dict append osmap $param $val
-
+proc get_memmap args {
+	global memmap
+	set mem [lindex $args 0]
+	set proc [lindex $args 1]
+	dict for {memory procs} $memmap {
+		if {[string match -nocase $memory $mem]} {
+	        dict with procs {
+			if {[dict exists $memmap $memory $proc]} {
+				set val [dict get $procs $proc]
+				return $val
+			}
+        	}
+		}
+	}
 }
 
 proc get_hw_family {} {
@@ -454,6 +490,9 @@ proc write_value {type value} {
                         }
 			set val [string trimright $val " "]
                         set val [append val ">"]
+		} elseif {$type == "special"} {
+                        set val "<$value>"
+
                 } elseif {$type == "bytesequence"} {
                         set val "\[ "
                         foreach element $value {
@@ -1110,8 +1149,10 @@ proc write_dt args {
 					set val_temp [string trimright $val " "]
 					set val_temp [string trimleft $val_temp " "]
 					if {[llength $val] > 1} {
+
 						if {[regexp -all {^[\<]} $val_temp matched] && [regexp -all {[\>]$} $val_temp matched]} {
 							puts $fd "\t\t$prop = $val_temp;"
+
 						} else {	
 							set first_str "\"[lindex $val 0]\""
 							set first_str "\"[lindex $val 0]\""
@@ -1404,6 +1445,9 @@ proc get_drivers args {
 	dict set driverlist ps7_ddrc driver ddrcps
 	dict set driverlist psu_ddrc driver ddrcps
 	dict set driverlist psv_ddrc driver ddrcps
+	dict set driverlist ps7_ddr driver ddrcps
+	dict set driverlist psu_ddr driver ddrps
+	dict set driverlist psv_ddr driver ddrps
 	dict set driverlist axi_noc driver ddrpsv
 	dict set driverlist noc_mc_ddr4 driver ddrpsv
 	dict set driverlist debug_bridge driver debug_bridge
