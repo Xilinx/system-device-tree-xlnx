@@ -140,55 +140,6 @@ proc get_type args {
 	return $type
 }
 
-proc set_dt_param args {
-	global env
-	set param [lindex $args 0]
-	set val [lindex $args 1]
-	switch $param {
-		"repo" {
-			set env(REPO) $val
-		} "board" {
-			set env(board) $val
-		} "dt_overlay" {
-			set env(dt_overlay) $val
-		} "mainline_kernel" {
-			set env(kernel) $val
-		} "kernel_ver" {
-			set env(kernel_ver) $val
-		} "dir" {
-			set env(dir) $val
-		} default {
-			error "unknown option"
-		}
-	}
-
-}
-
-proc get_dt_param args {
-	global env
-	set param [lindex $args 0]
-	set val ""
-	switch $param {
-		-repo {
-			if {[catch {set val $env(REPO)} msg ]} {}
-		} -board_dts {
-			if {[catch {set val $env(board)} msg ]} {}
-		} -dt_overlay {
-			if {[catch {set val $env(dt_overlay)} msg ]} {}
-		} -mainline_kernel {
-			if {[catch {set val $env(kernel)} msg ]} {}
-		} -kernel_ver {
-			if {[catch {set val $env(kernel_ver)} msg ]} {}
-		} -dir {
-			if {[catch {set val $env(dir)} msg ]} {}
-		} default {
-			error "unknown option"
-		}
-	}
-
-       return $val
-}
-
 proc get_driver_param args {
 	global driver_param
 
@@ -637,12 +588,14 @@ proc create_node args {
 	}
 	if {[string match -nocase $node_name "amba_pl: amba_pl"] || 
 		[string match -nocase $node_name "amba: amba"] ||
-		[string match -nocase $node_name "amba_apu: amba_apu"]} {	
+		[string match -nocase $node_name "amba_apu: amba_apu"] ||
+                [string match -nocase $node_name "amba_rpu: amba_rpu"]} {	
 	} else {
 		set busname [detect_bus_name $node_name]
 	}
 	if {[string match -nocase $node_name "amba_pl: amba_pl"] || 
 		[string match -nocase $node_name "amba: amba"] ||
+		[string match -nocase $node_name "amba_rpu: amba_rpu"] ||
 		[string match -nocase $node_name "amba_apu: amba_apu"] || [string match -nocase $node_name "root"]} {	
 		set mainroot [$treeobj children root]
 		
@@ -657,6 +610,9 @@ proc create_node args {
 			if {[string match $node_name "amba_apu: amba_apu"]} {
 				set interconnect [$treeobj insert root end "amba_apu: amba_apu"]
 			}
+			if {[string match $node_name "amba_rpu: amba_rpu"]} {
+                                set interconnect [$treeobj insert root end "amba_rpu: amba_rpu"]
+                        }
 			if {[string match -nocase $node_name "root"] && [string match $parent_obj "amba_pl: amba_pl"]} {
 				set interconnect [$treeobj insert root end "amba_pl: amba_pl"]
 			}	
@@ -666,6 +622,9 @@ proc create_node args {
 			if {[string match -nocase $node_name "root"] && [string match $parent_obj "amba_apu"]} {
 				set interconnect [$treeobj insert root end "amba_apu: amba_apu"]
 			}	
+			if {[string match -nocase $node_name "root"] && [string match $parent_obj "amba_rpu"]} {
+                                set interconnect [$treeobj insert root end "amba_rpu: amba_rpu"]
+                        }
 			return $interconnect
 		} else {
 			if {[string match -nocase $node_name "root"]} {
@@ -1558,6 +1517,7 @@ proc get_drivers args {
 	dict set driverlist psu_wdt driver wdtps
 	dict set driverlist psv_wdt driver wdtps
 	dict set driverlist ps7_xadc driver xadcps
+	dict set driverlist psv_pmc_sysmon driver sysmonpsv
 	set val [lindex $args 0]
 	if {[string match -nocase $val "1"]} {
 		set drivers ""
@@ -2079,7 +2039,7 @@ proc update_dt_parent args {
 	}
 	set node [get_node_object $node $dts_file]
 	# Skip if node is a reference node (start with &) or amba
-	if {[regexp "^&.*" "$node" match] || [regexp "amba_apu" "$node" match] || [regexp "amba" "$node" match]} {
+	if {[regexp "^&.*" "$node" match] || [regexp "amba_apu" "$node" match] || [regexp "amba_rpu" "node" match] || [regexp "amba" "$node" match]} {
 		return $node
 	}
 
@@ -4623,8 +4583,9 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 
 		# check if it has status property
 		set rt_node [get_node $drv_handle]
-		if {[string match -nocase $ip_type "psv_rcpu_gic"]} {
+		if {[string match -nocase $ip_type "psv_rcpu_gic"] || [string match -nocase $ip_type "psu_rcpu_gic"]} {
 			set node [create_node -n "&gic_r5" -d "pcw.dtsi" -p root]
+			add_prop $node "status" "okay" string $default_dts
 		}
 		if {[string match -nocase $rt_node "&dwc3_0"]} {
 				if {[string match -nocase $proc_type "zynqmp"] || [string match -nocase $proc_type "zynquplus"]} {
@@ -4786,6 +4747,9 @@ proc detect_bus_name {ip_drv} {
 		if {[string match -nocase $ip_drv "psu_acpu_gic"] || [string match -nocase $ip_drv "psv_acpu_gic"]} {
 			return "amba_apu: amba_apu"
 		}
+		if {[string match -nocase $ip_drv "psu_rcpu_gic"] || [string match -nocase $ip_drv "psv_rcpu_gic"]} {
+                        return "amba_rpu: amba_rpu"
+                }
 		return "amba: amba"
 }
 

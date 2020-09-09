@@ -16,6 +16,9 @@ namespace eval ddrpsv {
 	proc generate {drv_handle} {
 		set slave [hsi::get_cells -hier ${drv_handle}]
 		set addr [get_property CONFIG.C_BASEADDR [hsi::get_cells -hier $drv_handle]]
+		if {[string match -nocase $addr ""]} {
+			return
+		}
 		set dts_file "system-top.dts"
 		regsub -all {^0x} $addr {} addr
 		set memory_node [create_node -n memory -u $addr -p root -d "system-top.dts"]

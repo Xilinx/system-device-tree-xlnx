@@ -33,6 +33,55 @@ proc get_yaml_dict { config_file } {
     return [yaml::yaml2dict $data]
 }
 
+proc set_dt_param args {
+       global env
+       set param [lindex $args 0]
+       set val [lindex $args 1]
+       switch $param {
+               "repo" {
+                       set env(REPO) $val
+               } "board" {
+                       set env(board) $val
+               } "dt_overlay" {
+                       set env(dt_overlay) $val
+               } "mainline_kernel" {
+                       set env(kernel) $val
+               } "kernel_ver" {
+                       set env(kernel_ver) $val
+               } "dir" {
+                       set env(dir) $val
+               } default {
+                       error "unknown option"
+               }
+       }
+
+}
+
+proc get_dt_param args {
+       global env
+       set param [lindex $args 0]
+       set val ""
+       switch $param {
+               -repo {
+                       if {[catch {set val $env(REPO)} msg ]} {}
+               } -board_dts {
+                       if {[catch {set val $env(board)} msg ]} {}
+               } -dt_overlay {
+                       if {[catch {set val $env(dt_overlay)} msg ]} {}
+               } -mainline_kernel {
+                       if {[catch {set val $env(kernel)} msg ]} {}
+               } -kernel_ver {
+                       if {[catch {set val $env(kernel_ver)} msg ]} {}
+               } -dir {
+                       if {[catch {set val $env(dir)} msg ]} {}
+               } default {
+                       error "unknown option"
+               }
+       }
+
+       return $val
+}
+
 proc inc_os_prop {drv_handle os_conf_dev_var var_name conf_prop} {
     set ip_check "False"
     set os_ip [get_property ${os_conf_dev_var} [get_os]]
