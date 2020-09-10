@@ -20,6 +20,7 @@ namespace eval vid_phy_ctrl {
 		}
 		set dts_file [set_drv_def_dts $drv_handle]
 		pldt append $node compatible "\ \, \"xlnx,vid-phy-controller-2.1\""
+		if {0} {
 		set input_pixels_per_clock [get_property CONFIG.C_INPUT_PIXELS_PER_CLOCK [hsi::get_cells -hier $drv_handle]]
 		add_prop "${node}" "xlnx,input-pixels-per-clock" $input_pixels_per_clock int $dts_file
 		set nidru [get_property CONFIG.C_NIDRU [hsi::get_cells -hier $drv_handle]]
@@ -48,12 +49,15 @@ namespace eval vid_phy_ctrl {
 		add_prop "${node}" "xlnx,tx-buffer-bypass" $tx_buffer_bypass int $dts_file
 		set transceiver_width [get_property CONFIG.Transceiver_Width [hsi::get_cells -hier $drv_handle]]
 		add_prop "${node}" "xlnx,transceiver-width" $transceiver_width int $dts_file
-		set use_gt_ch4_hdmi [get_property CONFIG.C_Use_GT_CH4_HDMI [hsi::get_cells -hier $drv_handle]]
-		if {[llength $use_gt_ch4_hdmi]} {
-			add_prop "${node}" "xlnx,use-gt-ch4-hdmi" $use_gt_ch4_hdmi int $dts_file
 		}
+		set use_gt_ch4_hdmi [get_property CONFIG.C_Use_GT_CH4_HDMI [hsi::get_cells -hier $drv_handle]]
+		
+		if {[llength $use_gt_ch4_hdmi]} {
+#			add_prop "${node}" "xlnx,use-gt-ch4-hdmi" $use_gt_ch4_hdmi int $dts_file
+		}
+		set tx_no_of_channels [get_property CONFIG.C_Tx_No_Of_Channels [hsi::get_cells -hier $drv_handle]]
 		for {set ch 0} {$ch <= $tx_no_of_channels} {incr ch} {
-			set phy_node [create_node -n "vphy_lane@$ch" -l vphy_lane$ch -p $node -d $dts_file]
+			set phy_node [create_node -n "vphy_lane" -u $ch -l vphy_lane$ch -p $node -d $dts_file]
 			add_prop "$phy_node" "#phy-cells" 4 int $dts_file
 		}
 		set transceiver [get_property CONFIG.Transceiver [hsi::get_cells -hier $drv_handle]]

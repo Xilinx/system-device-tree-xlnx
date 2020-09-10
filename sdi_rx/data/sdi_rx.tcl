@@ -47,7 +47,7 @@ namespace eval sdi_rx {
                                         gen_frmbuf_wr_node $ip $drv_handle $dts_file
                                 }
                         } else {
-                                set connectip [get_connect_ip $ip $intfpins]
+                                set connectip [get_connect_ip $ip $intfpins $dts_file]
                                 if {[llength $connectip]} {
                                         set sdi_rx_node [create_node -n "endpoint" -l sdirx_out$drv_handle -p $port_node -d $dts_file]
                                         gen_endpoint $drv_handle "sdirx_out$drv_handle"

@@ -91,7 +91,7 @@ namespace eval scene_change_detector {
 							gen_frmbuf_node $connected_out_ip $drv_handle $dts_file
 						}
 					} else {
-						set connectip [get_connect_ip $connected_out_ip $master_intf]
+						set connectip [get_connect_ip $connected_out_ip $master_intf $dts_file]
 						if {[llength $connectip]} {
 							set scd_port1_node [create_node -n "port" -l scd_port1$drv_handle -u 1 -p $scd_ports_node -d $dts_file]
 							add_prop "$scd_port1_node" "reg" 1 int $dts_file

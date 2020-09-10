@@ -57,7 +57,7 @@ namespace eval gamma_lut {
                                 if {[string match -nocase [get_property IP_NAME $ip] "system_ila"]} {
                                         continue
                                 }
-                                set connectip [get_connect_ip $ip $master_intf]
+                                set connectip [get_connect_ip $ip $master_intf $dts_file]
                                 if {[llength $connectip]} {
                                         set gammanode [create_node -n "endpoint" -l gamma_out$drv_handle -p $port1_node -d $dts_file]
                                         gen_endpoint $drv_handle "gamma_out$drv_handle"

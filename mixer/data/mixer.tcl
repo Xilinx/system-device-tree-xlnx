@@ -58,7 +58,7 @@ namespace eval mixer {
 				if {[string match -nocase [get_property IP_NAME $outip] "system_ila"]} {
 					continue
 				}
-				set connectip [get_connect_ip $outip $master_intf]
+				set connectip [get_connect_ip $outip $master_intf $dts_file]
 				if {[llength $connectip]} {
 					set mixer_crtc [create_node -n "endpoint" -l mixer_crtc$drv_handle -p $mixer_port_node -d $dts_file]
 					gen_endpoint $drv_handle "mixer_crtc$drv_handle"

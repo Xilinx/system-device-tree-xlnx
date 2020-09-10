@@ -99,7 +99,7 @@ namespace eval tpg {
                                                 gen_frmbuf_node $out_ip $drv_handle $dts_file
                                         }
                                  } else {
-                                        set connectip [get_connect_ip $out_ip $master_intf]
+                                        set connectip [get_connect_ip $out_ip $master_intf $dts_file]
 					if {[llength $connectip]} {
 						if {[string match -nocase [get_property IP_NAME $connectip] "axi_dbg_hub"]} {
 							continue

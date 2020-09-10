@@ -625,13 +625,33 @@ proc generate {} {
 			# NOTE: ./ works only if we did not change our directory
 			file copy -force $file $dir
 		}
+		delete_tree systemdt root
+		delete_tree pldt root
+		delete_tree pcwdt root
 		write_dt systemdt root "$dir/system-top.dts"
 		write_dt pldt root "$dir/pl.dtsi"
 		write_dt pcwdt root "$dir/pcw.dtsi"
 		
 	} else {
+		delete_tree systemdt root
+		delete_tree pldt root
 		write_dt systemdt root "$dir/system-top.dts"
 		write_dt pldt root "$dir/pl.dtsi"
+	}
+}
+
+proc delete_tree {dttree head} {
+	set childs [$dttree children $head]
+	foreach child $childs {
+		if {[catch {set amba_childs [$dttree children $child]} msg]} {
+		} else {
+			foreach amba_cchild $amba_childs {
+				set val [$dttree getall $amba_cchild]
+				if {[string match -nocase $val ""]} {
+					$dttree delete $amba_cchild
+				}
+			}
+		}
 	}
 }
 
@@ -1321,7 +1341,7 @@ proc update_alias {os_handle} {
 		set tmp [get_driver_config $drv_handle alias]
 
         	if {[string_is_empty $tmp]} {
-            	continue
+            		continue
         	} else {
 			set alias_str $tmp
 			set alias_count [get_count $alias_str]
@@ -1332,7 +1352,7 @@ proc update_alias {os_handle} {
 			if {[is_pl_ip $drv_handle]} {
 				set value "&$value"
 			}
-		            set ip_list "i2c spi serial"
+			set ip_list "i2c spi serial"
             	# TODO: need to check if the label already exists in the current system
 		set alias_node [create_node -n "aliases" -p root -d "system-top.dts"]
 		add_prop $alias_node $conf_name $value aliasref $default_dts

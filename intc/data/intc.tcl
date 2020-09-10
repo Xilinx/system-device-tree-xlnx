@@ -40,7 +40,7 @@ namespace eval intc {
 	    } else {
 		set kind_of_intr 0
 	    }
-	    add_prop $node "xlnx,kind-of-intr" $kind_of_intr hexint $dts_file
+	    add_prop $node "xlnx,kind-of-intr" $kind_of_intr hexint $dts_file 1
 	    set_drv_conf_prop $drv_handle C_NUM_INTR_INPUTS "xlnx,num-intr-inputs"
 	    set_drv_conf_prop $drv_handle C_HAS_FAST "xlnx,is-fast"
 	    set_drv_conf_prop $drv_handle C_IVAR_RESET_VALUE "xlnx,ivar-rst-val"

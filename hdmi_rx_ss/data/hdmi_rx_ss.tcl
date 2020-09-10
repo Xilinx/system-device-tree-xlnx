@@ -42,11 +42,9 @@ namespace eval hdmi_rx_ss {
                         set ip_mem_handles [hsi::get_mem_ranges $ip]
                         if {[llength $ip_mem_handles]} {
                                 set hdmi_rx_node [create_node -n "endpoint" -l hdmirx_out$drv_handle -p $port_node -d $dts_file]
-				puts "hdmi_rx_node:$hdmi_rx_node"
                                 gen_endpoint $drv_handle "hdmirx_out$drv_handle"
                                 add_prop "$hdmi_rx_node" "remote-endpoint" $ip$drv_handle reference $dts_file
                                 gen_remoteendpoint $drv_handle $ip$drv_handle
-				puts "here"
                                 if {[string match -nocase [get_property IP_NAME $ip] "v_frmbuf_wr"]} {
                                         gen_frmbuf_node $ip $drv_handle $dts_file
                                 }
@@ -55,7 +53,6 @@ namespace eval hdmi_rx_ss {
                                         continue
                                 }
                                 set connectip [get_connect_ip $ip $master_intf $dts_file]
-				puts "hdmirxconn:$connectip"
                                 if {[llength $connectip]} {
                                         set hdmi_rx_node [create_node -n "endpoint" -l hdmirx_out$drv_handle -p $port_node -d $dts_file]
                                         gen_endpoint $drv_handle "hdmirx_out$drv_handle"

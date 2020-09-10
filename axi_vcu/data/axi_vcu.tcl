@@ -32,10 +32,16 @@ namespace eval axi_vcu {
 	    set reg "0x0 0x$vcu_slcr_reg 0x0 0x1000>, <0x0 0x$logicore_reg 0x0 0x1000"
 	    set_drv_prop $drv_handle reg $reg hexlist $dts_file
 	    set intr_val [pldt get $node interrupts]
+	    set intr_val [string trimright $intr_val ">"]
+	    set intr_val [string trimleft $intr_val "<"]
 	    set intr_parent [pldt get $node interrupt-parent]
-	    set clock-names "pll_ref"
-	    set clock-names [append clock-names " aclk"]
-	    add_prop $node "clock-names" ${clock-names} stringlist $dts_file
+	    set intr_parent [string trimright $intr_parent ">"]
+	    set intr_parent [string trimleft $intr_parent "<"]
+	    set intr_parent [string trimleft $intr_parent "&"]
+	    set clock-names " pll_ref\"\ \, \"aclk\""
+#	    set clock-names [append clock-names " aclk"]
+	    pldt append $node clock-names " , \"pll_ref\" , \"aclk\" , "
+#	    pldt append $node clock-names ${clock-names}
 	    zynq_gen_pl_clk_binding $drv_handle
 	    set first_reg_name "vcu_slcr"
 	    set second_reg_name " logicore"
@@ -47,24 +53,24 @@ namespace eval axi_vcu {
 
 	    # Generate child encoder
 	    set ver [get_ipdetails $drv_handle "ver"]
-	    set encoder_node [create_node -l "encoder" -n "al5e@$baseaddr" -p $node -d $dts_file]
+	    set encoder_node [create_node -l "encoder" -n "al5e" -u $baseaddr -p $node -d $dts_file]
 	    set encoder_comp "al,al5e-${ver}"
-	    set encoder_comp [append encoder_comp "\ \, \" al,al5e\""]
-	    add_prop "${encoder_node}" "compatible" $encoder_comp stringlist $dts_file
+	    add_prop "${encoder_node}" compatible $encoder_comp string $dts_file
+	    pldt append ${encoder_node} compatible "\ \, \"al,al5e\""
 	    set encoder_reg "0x0 0x$baseaddr 0x0 0x10000"
-	    add_prop "${encoder_node}" "reg" $encoder_reg int $dts_file
-	    add_prop "${encoder_node}" "interrupts" $intr_val int $dts_file
+	    add_prop "${encoder_node}" "reg" $encoder_reg hexlist $dts_file
+	    add_prop "${encoder_node}" "interrupts" $intr_val intlist $dts_file
 	    add_prop "${encoder_node}" "interrupt-parent" $intr_parent reference  $dts_file
 	    # Fenerate child decoder
 	    set decoder_offset 0x20000
 	    set decoder_reg [format %08x [expr 0x$baseaddr + $decoder_offset]]
-	    set decoder_node [create_node -l "decoder" -n "al5d@$decoder_reg" -p $node -d $dts_file]
+	    set decoder_node [create_node -l "decoder" -n "al5d" -u $decoder_reg -p $node -d $dts_file]
 	    set decoder_comp "al,al5d-${ver}"
-	    set decoder_comp [append decoder_comp "\ \, \"al,al5d\""]
-	    add_prop "${decoder_node}" "compatible" $decoder_comp stringlist $dts_file
+	    add_prop "${decoder_node}" "compatible" $decoder_comp string $dts_file
+	    pldt append ${decoder_node} compatible "\ \, \"al,al5d\""
 	    set decoder_reg "0x0 0x$decoder_reg 0x0 0x10000"
-	    add_prop "${decoder_node}" "reg" $decoder_reg int $dts_file
-	    add_prop "${decoder_node}" "interrupts" $intr_val int $dts_file
+	    add_prop "${decoder_node}" "reg" $decoder_reg hexlist $dts_file
+	    add_prop "${decoder_node}" "interrupts" $intr_val intlist $dts_file
 	    add_prop "${decoder_node}" "interrupt-parent" $intr_parent reference $dts_file
 	    set clknames "pll_ref aclk vcu_core_enc vcu_core_dec vcu_mcu_enc vcu_mcu_dec"
 	    overwrite_clknames $clknames $drv_handle
