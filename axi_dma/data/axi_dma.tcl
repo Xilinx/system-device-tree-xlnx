@@ -53,7 +53,8 @@ set connected_ip 0
 
 	    if { $axiethernetfound || $is_xxv == 1} {
 		set compatstring "xlnx,eth-dma"
-		add_prop $node compatible $compatstring string "pl.dtsi"
+		pldt append $node compatible "\ \, \"xlnx,eth-dma\""
+		#add_prop $node compatible $compatstring string "pl.dtsi"
 	    }
 	    set tx_chan 0
 	    set rx_chan 0
