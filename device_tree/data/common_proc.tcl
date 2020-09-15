@@ -930,7 +930,17 @@ proc create_ps_tree args {
 						set value [split $tmp ": "]
 						set node_label [lindex $value 0]
 						set node_name [lindex $value 2]
+						set dummy [split $line ":"]
+						set dummy [lindex $dummy 0]
+						if {[string match -nocase $dummy "gic_r5"] } {
+							set node_label "gic_r5"
+						}
 						set parent [create_node -n $node_name -l $node_label -u $node_unit_addr -p $parent -d $tempfile]
+						if {[string match -nocase $dummy "gic_a72"] } {
+							set map "0 0xf9000000 0 0x80000> , <0x0 0xf9080000 0 0x80000"
+							add_prop $parent reg $map hexlist $tempfile
+						}
+
 					}
 					lappend levels $parent
 				}
@@ -949,6 +959,7 @@ proc create_ps_tree args {
 		} else {
 			regsub -all {^[ \t]+} $line {} line
 			set val [regexp -all {[\=]} $line matched]
+
 			if {$val == 0 && [string match $next_cmd 0]} {
 				if {[regexp -all {[\#]} $line matched]} {
 				} elseif {[regexp -all {[\/][\/]} $line matched]} {
@@ -960,7 +971,6 @@ proc create_ps_tree args {
 					$psdt set $parent $line ""
 				}
 			} else {
-				
 				if {[regexp -all {[\/][\/]} $line matched]} {
 				} elseif {[regexp -all {[\/][\*]} $line matched]} {
 				} elseif {[regexp -all {[\*]} $line matched]} {
@@ -1063,6 +1073,7 @@ proc create_ps_tree args {
 					}
 					if {[string match -nocase $parent ""]} {
 					} else {
+						set prop [string trimright $prop " "]
 						$psdt set $parent $prop $dtval
 					}
 				} 
@@ -1070,6 +1081,52 @@ proc create_ps_tree args {
 		}
 	}
 }
+
+proc create_busmap args {
+	set dt [lindex $args 0]
+	set bool_col 0
+	if {[string match -nocase $dt "psdt"]} {
+		set bool_col 1
+	}
+	set valid 0
+	if {[string match -nocase $dt "pldt"]} {
+		set valid 1
+	}
+	set rootn [lindex $args 1]
+	set mainroot [$dt children $rootn]
+	set values ""
+	foreach children $mainroot {
+#		set temp [split $children ":"]
+#		append values "[lindex $temp 0] "
+		append values "$children\n"
+		set childs [$dt children $children]
+		foreach child $childs {
+#			set temp [split $child ":"]
+#			append values "[lindex $temp 0] "
+			append values "$child\n"
+			set nestchilds [$dt children $child]
+			foreach child $nestchilds {
+#				set temp [split $child ":"]
+#				append values "[lindex $temp 0] "
+				append values "$child\n"
+				set innerchilds [$dt children $child]
+				foreach child $innerchilds {
+#					set temp [split $child ":"]
+#					append values "[lindex $temp 0] "
+					append values "$child\n"
+					set nextinner [$dt children $child]
+					foreach child $nextinner {
+						set temp [split $child ":"]
+						append values "[lindex $temp 0]\n"
+					}
+				}
+			}
+		}
+	}
+	return $values
+}
+
+
 proc write_dt args {
 	set dt [lindex $args 0]
 	set bool_col 0
