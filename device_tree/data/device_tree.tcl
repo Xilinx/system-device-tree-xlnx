@@ -672,6 +672,7 @@ proc proc_mapping {} {
 		set dt "pldt"
 	}
         foreach val $proc_list {
+		puts "for proc $val"
 		set periph_list [hsi::get_mem_ranges -of_objects [hsi::get_cells -hier $val]]
 		set iptype [get_property IP_NAME [hsi::get_cells -hier $val]]
 		foreach periph $periph_list {
@@ -679,31 +680,35 @@ proc proc_mapping {} {
 			if {[string match -nocase $ipname "psv_ipi"]} {
 				continue
 			}
+
 			foreach listvar $split_list {
 				set temp [split $listvar ":"]
 				set temp [lindex $listvar 0]
 				set temp [string trimright $temp ":"]
 				if {[string match -nocase $periph "psv_acpu_gic"]} {
 					if {[string match -nocase $temp "gic_a72"] } {
-						set temp "psv_acpu_gic"
+#						set temp "psv_acpu_gic"
 					}
 				}
 				if {[string match -nocase $periph "psu_acpu_gic"]} {
 					if {[string match -nocase $temp "gic_a53"] } {
-						set temp "psu_acpu_gic"
+#						set temp "psu_acpu_gic"
 					}
 				}
 				if {[string match -nocase $periph "psv_rcpu_gic"]} {
 					if {[string match -nocase $temp "gic_r5"] } {
-						set temp "psv_rcpu_gic"
+#						set temp "psv_rcpu_gic"
 					}
 				}
 				if {[string match -nocase $periph "psu_rcpu_gic"]} {
 					if {[string match -nocase $temp "gic_r5"] } {
-						set temp "psu_rcpu_gic"
+#						set temp "psu_rcpu_gic"
 					}
 				}
-				if {[string match -nocase $temp $periph]} {
+				set name [get_node $periph]
+				set name [string trimleft $name "&"]
+#				puts "tem $temp peri $name iptey $iptype"
+				if {[string match -nocase $temp $name]} {
 					if {[string match -nocase $iptype "psv_cortexa72"] || [string match -nocase $iptype "psu_cortexa53"]} {
 #						set node [get_node $listvar]
 						set reg [$dt get $listvar reg]

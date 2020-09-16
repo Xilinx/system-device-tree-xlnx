@@ -47,8 +47,11 @@ namespace eval ddrpsv {
 			set is_ddr_ch_3 0
 			
 			set periph [hsi::get_cells -hier $drv_handle]
-			set interface_block_names ""
+#			set interface_block_names ""
 			if {[catch {set interface_block_names [get_property ADDRESS_BLOCK [hsi::get_mem_ranges -of_objects $procc $periph]]} msg]} {
+				set interface_block_names ""
+			} else {
+				set interface_block_names [lsort $interface_block_names]
 			}
 			set i 0
 			foreach block_name $interface_block_names {
