@@ -444,7 +444,8 @@ proc gen_board_info {} {
 		}
 	}
 	set mainline_ker [get_user_config $common_file -mainline_kernel]
-	if {[string match -nocase $mainline_ker "v4.17"]} {
+	set valid_mainline_kernel_list "v4.17 v4.18 v4.19 v5.0 v5.1 v5.2 v5.3 v5.4"
+	if {[lsearch $valid_mainline_kernel_list $mainline_ker] >= 0 } {
 		set mainline_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${mainline_ker}/board"]
 		if {[file exists $mainline_dtsi]} {
 			set mainline_board_file 0
@@ -1508,7 +1509,8 @@ proc update_alias {os_handle} {
         	#error "file not found: $common_file"
     	}
 	set mainline_ker [get_user_config $common_file -mainline_kernel]
-    	if {[string match -nocase $mainline_ker "v4.17"]} {
+	set valid_mainline_kernel_list "v4.17 v4.18 v4.19 v5.0 v5.1 v5.2 v5.3 v5.4"
+	if {[lsearch $valid_mainline_kernel_list $mainline_ker] >= 0 } {
          	return
     	}
 	set default_dts "system-top.dts"
