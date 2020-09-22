@@ -3561,7 +3561,7 @@ proc gen_clk_property {drv_handle} {
 				"" {
 				}
 				default {
-						dtg_warning "not supported pl_clk:$pl_clk"
+						dtg_debug "not supported pl_clk:$pl_clk"
 				}
 			}
 		}
@@ -3590,7 +3590,7 @@ proc gen_clk_property {drv_handle} {
 				"" {
 				}
 				default {
-						dtg_warning "not supported pl_clk:$pl_clk"
+						dtg_debug "not supported pl_clk:$pl_clk"
 				}
 			}
 		}
@@ -3619,7 +3619,7 @@ proc gen_clk_property {drv_handle} {
 				"" {
 				}
 				default {
-						dtg_warning "not supported pl_clk:$pl_clk"
+						dtg_debug "not supported pl_clk:$pl_clk"
 				}
 			}
 		}
