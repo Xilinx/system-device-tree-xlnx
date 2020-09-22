@@ -42,7 +42,12 @@ namespace eval tpg {
 		set ports_node [create_node -n "ports" -l tpg_ports$drv_handle -p $node -d $dts_file]
                 add_prop "$ports_node" "#address-cells" 1 int $dts_file
                 add_prop "$ports_node" "#size-cells" 0 int $dts_file
-                set port1_node [create_node -n "port" -l tpg_port1$drv_handle -u 1 -p $ports_node -d $dts_file]
+		if {[string match -nocase $proctype "ps7_cortexa9"]} {
+	                # Workaround for issue (TBF)
+	               set port1_node [create_node -n "port" -l tpg_port1$drv_handle -p $ports_node -d $dts_file]
+	        } else {
+	               set port1_node [create_node -n "port" -l tpg_port1$drv_handle -u 1 -p $ports_node -d $dts_file]
+        	}
                 add_prop "$port1_node" "reg" 1 int $dts_file
                 #add_prop "${port1_node}" "/* Fill the field xlnx,video-format based on user requirement */" "" comment
                 add_prop "$port1_node" "xlnx,video-format" 12 int $dts_file
@@ -65,7 +70,7 @@ namespace eval tpg {
                                         set pins [hsi::get_pins -of_objects [hsi::get_nets -of_objects [hsi::get_pins -of_objects $connected_ip "vid_active_video"]]]
 					puts "pins:$pins"
                                         foreach pin $pins {
-                                                set sink_periph [::hsi::get_cells -of_objects $pin]
+                                                set sink_periph [hsi::get_cells -of_objects $pin]
 						set sink_ip [get_property IP_NAME $sink_periph]
 						if {[string match -nocase $sink_ip "v_tc"]} {
 							add_prop "$node" "xlnx,vtc" "$sink_periph" reference $dts_file
