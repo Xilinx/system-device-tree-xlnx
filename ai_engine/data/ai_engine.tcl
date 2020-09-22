@@ -33,9 +33,15 @@ namespace eval ai_engine {
 		#set dt_overlay [get_property CONFIG.dt_overlay [get_os]]
 		set dt_overlay ""
 	       	if {$dt_overlay} {
-        	       set bus_node "overlay2"
-	       	} else {
-	       	       set bus_node "amba_pl"
+			set RpRm [hsi::utils::get_rp_rm_for_drv $drv_handle]
+	               regsub -all { } $RpRm "" RpRm
+	       	        if {[llength $RpRm]} {
+	       	                set bus_node "overlay2_$RpRm"
+	       	        } else  {
+	       	                set bus_node "overlay2"
+	       	        }
+		} else {
+		       	       set bus_node "amba_pl"
        		}
 		set aie_npi_node [create_node -n "aie-npi" -l aie_npi -u f70a0000 -d "pl.dtsi" -p "amba_pl: amba_pl"]
 		add_prop $aie_npi_node "compatible" "xlnx,ai-engine-npi" stringlist "pl.dtsi"
