@@ -519,6 +519,7 @@
 			ranges = <0x0 0x0 0xfd6e0000 0x10000>;
 			#address-cells = <1>;
 			#size-cells = <1>;
+			status = "disabled";
 
 			pmu@9000 {
 				compatible = "arm,cci-400-pmu,r1";
