@@ -153,7 +153,10 @@ namespace eval axi_pcie {
 		if {$node == 0} {
 			return
 		}
-		pldt append $node compatible "\ \, \"xlnx,axi-pcie-host-1.00.a\""
+		set family [get_hw_family]
+		if {[string match -nocase $famil "versal"]} {
+			pldt append $node compatible "\ \, \"xlnx,axi-pcie-host-1.00.a\""
+		}
 		if {[string match -nocase [get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "xdma"]} {
 			pldt append $node compatible "\ \, \"xlnx,xdma-host-3.00\""
 			set msi_rx_pin_en [get_property CONFIG.msi_rx_pin_en [hsi::get_cells -hier $drv_handle]]
