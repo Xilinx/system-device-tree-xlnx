@@ -3620,7 +3620,7 @@ proc gen_clk_property {drv_handle} {
 			}
 
 			if {[string match -nocase $axi "0"]} {
-				dtg_warning "no s_axi_aclk for clockwizard"
+				dtg_warning "no s_axi_aclk for clockwizard IP block: \" $periph\"\n\r"
 				set pins [hsi::get_pins -of_objects [hsi::get_cells -hier $periph] -filter TYPE==clk]
 				set clk_list "pl_clk*"
 				set clk_pl ""
@@ -3672,7 +3672,7 @@ proc gen_clk_property {drv_handle} {
 				set bus_node [add_or_get_bus_node $drv_handle $dts_file]
 				set clk_freq [get_clock_frequency [hsi::get_cells -hier $drv_handle] "$clk"]
 				if {[llength $clk_freq] == 0} {
-					dtg_warning "clock frequency for the $clk is NULL"
+					dtg_warning "clock frequency for the $clk is NULL of IP block: \" $drv_handle\"\n\r"
 					continue
 				}
 				# if clk_freq is float convert it to int
@@ -3862,7 +3862,7 @@ proc gen_clk_property {drv_handle} {
 			set bus_node [add_or_get_bus_node $drv_handle $dts_file]
 			set clk_freq [get_clock_frequency [hsi::get_cells -hier $drv_handle] "$clk"]
 			if {[llength $clk_freq] == 0} {
-				dtg_warning "clock frequency for the $clk is NULL"
+				dtg_warning "clock frequency for the $clk is NULL of IP block: \" $drv_handle\"\n\r"
 				continue
 			}
 			# if clk_freq is float convert it to int
