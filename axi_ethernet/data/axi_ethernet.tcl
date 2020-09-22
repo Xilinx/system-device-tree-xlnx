@@ -274,10 +274,10 @@ set rxethmem 0
 	    set version [lindex $ver 0]
 	    if {![string_is_empty $connected_ip]} {
 		set connected_ipname [get_property IP_NAME $connected_ip]
-		if {$connected_ipname == "axi_mcdma"} {
+		if {$connected_ipname == "axi_mcdma" || $connected_ipname == "axi_dma"} {
 		    set num_queues [get_property CONFIG.c_num_mm2s_channels $connected_ip]
 		    set inhex [format %x $num_queues]
-		    append numqueues "/bits/ 16 <0x$inhex>"
+		    set numqueues "/bits/ 16 <0x$inhex>"
 		    add_prop $node "xlnx,num-queues" $numqueues stringlist $dts_file
 		    if {$version < 2018} {
 			dtg_warning "quotes to be removed or use 2018.1 version for $node param xlnx,num-queues"
@@ -292,7 +292,7 @@ set rxethmem 0
 		    add_prop $node "xlnx,channel-ids" $id intlist $dts_file
 		    if {$ip_name == "xxv_ethernet"  && $core!= 0} {
 			  add_prop $eth_node "xlnx,num-queues" $numqueues stringlist $dts_file
-			  add_prop $eth_node "xlnx,channel-ids" $id intlist $dts_file
+			  add_prop $eth_node "xlnx,channel-ids" $id stringlist $dts_file
 		    }
 		    set ipnode [get_node $target_handle]
 		    set intr_val [pldt get $ipnode interrupts]
@@ -310,26 +310,37 @@ set rxethmem 0
 			set intr_name [pldt get $node interrupt-names]
 			append intr_names " " $intr_name " " $int_names
 		    } else {
-			append intr_names " " $int_names
+			set intr_names $int_names
 		    }
 
 		     set default_dts "pl.dtsi"
 		    set node [create_node -n "&$drv_handle" -d "pcw.dtsi" -p root]
 		    if {![string_is_empty $intr_parent]} {
-			if { $hasbuf == "true" && $ip_name == "axi_ethernet"} {
-			    regsub -all "\{||\t" $intr_val1 {} intr_val1
-			    regsub -all "\}||\t" $intr_val1 {} intr_val1
-			    add_prop $node "interrupts" $intr_val1 int "pcw.dtsi"
-			} else {
-			    add_prop $node "interrupts" $intr_val1 int "pcw.dtsi"
-			}
-			add_prop $node "interrupt-parent" $intr_parent reference "pcw.dtsi"
-			add_prop $node "interrupt-names" $intr_names stringlist "pcw.dtsi"
+#			if { $hasbuf == "true" && $ip_name == "axi_ethernet"} {
+#			    regsub -all "\{||\t" $intr_val1 {} intr_val1
+#			    regsub -all "\}||\t" $intr_val1 {} intr_val1
+#			    add_prop $node "interrupts" $intr_val1 int "pcw.dtsi"
+#			} else {
+#			    add_prop $node "interrupts" $intr_val1 int "pcw.dtsi"
+#			}
+#			add_prop $node "interrupt-parent" $intr_parent reference "pcw.dtsi"
+#			add_prop $node "interrupt-names" $intr_names stringlist "pcw.dtsi"
 			if {$ip_name == "xxv_ethernet"  && $core!= 0} {
 			     ad_prop "${eth_node}" "interrupts" $intr_val int $dts_file
 			     add_prop "${eth_node}" "interrupt-parent" $intr_parent reference $dts_file
 			     add_prop "${eth_node}" "interrupt-names" $intr_names stringlist $dts_file
-			}
+			} else {
+                       if { $hasbuf == "true" && $ip_name == "axi_ethernet"} {
+                               regsub -all "\{||\t" $intr_val1 {} intr_val1
+                               regsub -all "\}||\t" $intr_val1 {} intr_val1
+                               add_prop "${node}" "interrupts" $intr_val1 int $dts_file
+                       } else {
+                               add_prop "${node}" "interrupts" $intr_val int $dts_file
+                       }
+                       add_prop "${node}" "interrupt-parent" $intr_parent reference $dts_file
+                       add_prop "${node}" "interrupt-names" $intr_names stringlist $dts_file
+               }
+			
 		    }
 		}
 		if {$connected_ipname == "axi_dma" || $connected_ipname == "axi_mcdma"} {
