@@ -4337,7 +4337,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 		}
 	}
 	set ip_name  [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
-	if {$ip_name == "xxv_ethernet" || $ip_name == "ddr4" || $ip_name == "psu_acpu_gic"} {
+	if {$ip_name == "xxv_ethernet" || $ip_name == "ddr4" || $ip_name == "psu_acpu_gic" || $ip_name == "mrmac"} {
 		return
 	}
 
