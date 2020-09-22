@@ -478,7 +478,7 @@ proc gen_board_info {} {
 				error "Error:$dtsi_name board file is not present in DTG. Please add a valid board."
 			}
 			set default_dts "system-top.dts"
-			set valid_axi_list "kc705-full kc705-lite ac701-full ac701-lite"
+			set valid_axi_list "kc705-full kc705-lite"
 			set valid_no_axi_list "kcu105 zc702 zc706 zc1751-dc1 zc1751-dc2 zedboard"
 			if {[lsearch -nocase $valid_axi_list $dts_name] >= 0 || [string match -nocase $dts_name "kcu705"]} {
 				add_prop root "hard-reset-gpios" "reset_gpio 0 0 1" reference $default_dts
