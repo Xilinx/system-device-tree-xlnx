@@ -3241,7 +3241,10 @@ proc add_driver_prop {drv_handle dt_node prop} {
 	regsub -all {CONFIG.} $prop {xlnx,} prop
 	set prop [string tolower $prop]
 	dtg_debug "${dt_node} - ${prop} - ${value} - ${type}"
-
+	set ipname [get_property IP_NAME [get_cells -hier $drv_handle]]
+       	if {[string match -nocase $ipname "axi_mcdma"] && [string match -nocase $prop "xlnx,sg-include-stscntrl-strm"] && [string match -nocase $type "boolean"]} {
+               set type "hexint"
+       	}
 	# only boolean allows empty string
 	if {[string_is_empty ${value}] == 1 && ![regexp {boolean*} ${type} matched]} {
 		dtg_warning "Only boolean type can have empty value. Fail to add driver($drv_handle) property($prop) type($type) value($value)"
