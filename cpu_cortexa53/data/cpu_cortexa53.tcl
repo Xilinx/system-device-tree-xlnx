@@ -32,7 +32,8 @@ namespace eval cpu_cortexa53 {
 			#error "file not found: $common_file"
 		}
 		set mainline_ker [get_user_config $common_file -mainline_kernel]
-		if {[string match -nocase "$mainline_ker" "v4.17"]} {
+		set valid_mainline_kernel_list "v4.17 v4.18 v4.19 v5.0 v5.1 v5.2 v5.3 v5.4"
+		if {[lsearch $valid_mainline_kernel_list $mainline_ker] >= 0 } {
 			set dtsi_fname "zynqmp/zynqmp.dtsi"
 		} else {
 			set dtsi_fname "zynqmp/zynqmp.dtsi"

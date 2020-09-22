@@ -3500,7 +3500,8 @@ proc zynq_gen_pl_clk_binding {drv_handle} {
     	}
 	set mainline_ker [get_user_config $common_file -mainline_kernel]
 
-	if {[string match -nocase $mainline_ker "v4.17"]} {
+	set valid_mainline_kernel_list "v4.17 v4.18 v4.19 v5.0 v5.1 v5.2 v5.3 v5.4"
+	if {[lsearch $valid_mainline_kernel_list $mainline_ker] >= 0 } {
 		set valid_ip_list "axi_timer axi_uartlite axi_uart16550 axi_gpio axi_traffic_gen axi_ethernet axi_ethernet_buffer can canfd axi_iic xadc_wiz vcu"
 	} else {
 		set valid_ip_list "xadc_wiz"
@@ -3568,7 +3569,8 @@ proc gen_clk_property {drv_handle} {
         	#error "file not found: $common_file"
     	}
 	set mainline_ker [get_user_config $common_file -mainline_kernel]
-	if {[string match -nocase $mainline_ker "v4.17"]} {
+	set valid_mainline_kernel_list "v4.17 v4.18 v4.19 v5.0 v5.1 v5.2 v5.3 v5.4"
+        if {[lsearch $valid_mainline_kernel_list $mainline_ker] >= 0 } {
 		return 0
 	}
 	set clocks ""
@@ -5549,7 +5551,8 @@ proc gen_root_node {drv_handle} {
 			create_ps_tree $psfile psdt
 			create_ps_tree $clkfile clkdt
 			global dtsi_fname
-			if {[string match -nocase $mainline_ker "v4.17"]} {
+			set valid_mainline_kernel_list "v4.17 v4.18 v4.19 v5.0 v5.1 v5.2 v5.3 v5.4"
+		        if {[lsearch $valid_mainline_kernel_list $mainline_ker] >= 0 } {
 				update_system_dts_include [file tail ${dtsi_fname}]
 				update_system_dts_include [file tail "zynqmp-clk.dtsi"]
 				return 0
