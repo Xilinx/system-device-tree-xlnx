@@ -146,7 +146,7 @@ proc generate {drv_handle} {
     if { $phya != "-1" } {
         set phy_name "[lindex $conv_data 1]"
         set_drv_prop $drv_handle phy-handle "phy1" reference
-        set mdio_node [gen_mdio_node $drv_handle $node]
+        set mdio_node [gen_mdio1_node $drv_handle $node]
         gen_phy_node $mdio_node $phy_name $phya
     }
 	set ip_name " "
@@ -184,4 +184,18 @@ proc generate {drv_handle} {
 		add_prop $node "is-internal-pcspma" boolean $dts_file
 	}
 }
+
+proc gen_mdio1_node {drv_handle parent_node} {
+    #   set remove_pl [get_property CONFIG.remove_pl [get_os]]
+     #  if {[is_pl_ip $drv_handle] && $remove_pl} {
+      #         return
+      # }
+        set default_dts "pcw.dtsi"
+       set mdio_node [create_node -l ${drv_handle}_mdio -n mdio -d $default_dts -p $parent_node]
+       add_prop "${mdio_node}" "#address-cells" 1 int $default_dts
+       add_prop "${mdio_node}" "#size-cells" 0 int $default_dts
+       return $mdio_node
 }
+}
+
+
