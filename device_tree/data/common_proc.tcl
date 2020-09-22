@@ -156,13 +156,11 @@ proc get_driver_param args {
 
 proc get_count args {
 	set param [lindex $args 0]
-	puts "param $param"
 	global osmap
 	if {[catch {set rt [dict get $osmap $param]} msg]} {
 		dict append osmap $param 0
 		set value 0
 	} else {
-		puts "rt $rt"
 		set value [expr $rt + 1]
 		dict unset osmap $param
 		dict append osmap $param $value
@@ -311,9 +309,9 @@ proc get_user_config args {
 }
 
 proc get_node args {
+
 	proc_called_by
 	set handle [lindex $args 0]
-	
 	if {[is_ps_ip $handle]} {
 		set dts_file "versal.dtsi"
 	} else {
@@ -590,7 +588,7 @@ proc create_node args {
 		}
 		Pop args
 	}
-	set ignore_list "clk_wiz xlconcat xlconstant util_vector_logic xlslice util_ds_buf proc_sys_reset axis_data_fifo v_vid_in_axi4s bufg_gt"
+	set ignore_list "clk_wiz xlconcat xlconstant util_vector_logic xlslice util_ds_buf proc_sys_reset axis_data_fifo v_vid_in_axi4s bufg_gt axis_tdest_editor util_reduced_logic"
 	set temp [lsearch $ignore_list $node_name]
 	if {[string match -nocase $node_unit_addr ""] && $temp >= 0} {
 		set val_lab [string match -nocase $node_label ""]
@@ -1126,7 +1124,6 @@ proc create_busmap args {
 			}
 		}
 	}
-	puts "values $values"
 	return $values
 }
 
@@ -2652,6 +2649,12 @@ proc is_ps_ip {ip_inst} {
 	if {[string match -nocase $ip_name "axi_noc"]} {
 		return 0
 	}
+	if {[string match -nocase $ip_name "iomodule"]} {
+		set prop [get_property IS_PL [hsi::get_cells -hier $ip_inst]]
+                if {$prop == 0} {
+                        return 1
+                }
+	}
 	if {[regexp "ps._*" "$ip_name" match]} {
 		return 1
 	}
@@ -2919,7 +2922,7 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping ff370000 label "ipi7: mailbox" 
 		dict set def_ps_mapping ff380000 label "ipi8: mailbox" 
 		dict set def_ps_mapping ff3a0000 label "ipi9: mailbox" 
-		dict set def_ps_mapping ff320000 label "ipi9: mailbox"
+		dict set def_ps_mapping ff320000 label "ipi0: mailbox"
 		dict set def_ps_mapping ff390000 label "ipi1: mailbox"
 		dict set def_ps_mapping ff310000 label "ipi2: mailbox"
 		dict set def_ps_mapping	f0280000 label "iomodule0: iomodule"
@@ -2955,7 +2958,7 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping ff0c0000 label "gem1: ethernet"
 		dict set def_ps_mapping ff0d0000 label "gem2: ethernet"
 		dict set def_ps_mapping ff0e0000 label "gem3: ethernet"
-		dict set def_ps_mapping ff0a0000 label "gpio0: gpio"
+		dict set def_ps_mapping ff0a0000 label "gpio: gpio"
 		dict set def_ps_mapping ff020000 label "i2c0: i2c"
 		dict set def_ps_mapping ff030000 label "i2c1: i2c"
 		dict set def_ps_mapping ff0f0000 label "qspi: spi"
@@ -2976,8 +2979,8 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping fe300000 label "dwc3_1: dwc3"
 		dict set def_ps_mapping ff9e0000 label "usb0: usb"
 		dict set def_ps_mapping ff9d0000 label "usb1: usb"
-		dict set def_ps_mapping ff150000 label "lpd_watchdog0: watchdog"
-		dict set def_ps_mapping fd4d0000 label "watchdog: watchdog"
+		dict set def_ps_mapping ff150000 label "lpd_watchdog: watchdog"
+		dict set def_ps_mapping fd4d0000 label "watchdog0: watchdog"
 		dict set def_ps_mapping 43c00000 label dp
 		dict set def_ps_mapping 43c0a000 label dpsub
 		dict set def_ps_mapping fd4c0000 label "xlnx_dpdma: dma"
@@ -3379,7 +3382,7 @@ proc gen_clk_property {drv_handle} {
 
 	set clk_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $drv_handle] -filter {TYPE==clk&&DIRECTION==I}]
 	set ip [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
-	set ignore_list "lmb_bram_if_cntlr PERIPHERAL axi_noc"
+	set ignore_list "lmb_bram_if_cntlr PERIPHERAL axi_noc mrmac"
 	if {[lsearch $ignore_list $ip] >= 0 } {
 		return 0
         }
