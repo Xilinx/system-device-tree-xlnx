@@ -18,12 +18,19 @@ namespace eval qspips {
 		set dts_file [set_drv_def_dts $drv_handle]
 		set slave [hsi::get_cells -hier $drv_handle]
 		set qspi_mode [hsi::utils::get_ip_param_value $slave "C_QSPI_MODE"]
+		set is_stacked 0
 		if { $qspi_mode == 2} {
 			set is_dual 1
-		} else {
+		} elseif { $qspi_mode == 1} {
+	               set is_dual 0
+	               set is_stacked 1
+	        } elseif { $qspi_mode == 0} {
 			set is_dual 0
 		}
 		add_prop $node "is-dual" $is_dual int $dts_file
+		if {$is_stacked} {
+			add_prop $node "is-stacked" $is_stacked int $dts_file
+       		}
 		set bus_width [get_property CONFIG.C_QSPI_BUS_WIDTH [hsi::get_cells -hier $drv_handle]]
 
 		switch $bus_width {
