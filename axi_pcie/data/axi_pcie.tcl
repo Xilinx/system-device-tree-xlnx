@@ -168,10 +168,21 @@ namespace eval axi_pcie {
 			set_drv_prop $drv_handle bus-range "0x0 0xff" hexint
 		}
 		# Add Interrupt controller child node
-		set pcieintc_cnt [get_count "pci_intc_cnt"]
-		set pcie_child_intc_node [create_node -l "pcie_intc_${pcieintc_cnt}" -n interrupt-controller -p $node -d "pl.dtsi"]
-		set int_map "0 0 0 1 &pcie_intc_${pcieintc_cnt} 1>, <0 0 0 2 &pcie_intc_${pcieintc_cnt} 2>, <0 0 0 3 &pcie_intc_${pcieintc_cnt} 3>,\
-			 <0 0 0 4 &pcie_intc_${pcieintc_cnt} 4"
+		if {[string match -nocase $proctype "versal"]} {
+		       set psv_pcieintc_cnt [get_count "psv_pci_intc_cnt"]
+		       set pcie_child_intc_node [create_node -l "psv_pcie_intc_${psv_pcieintc_cnt}" -n interrupt-controller -p $node -d "pl.dtsi"]
+		       set int_map "0 0 0 1 &psv_pcie_intc_${psv_pcieintc_cnt} 1>, <0 0 0 2 &psv_pcie_intc_${psv_pcieintc_cnt} 2>, <0 0 0 3 &psv_pcie_intc_${psv_pcieintc_cnt} 3>,\
+			       <0 0 0 4 &psv_pcie_intc_${psv_pcieintc_cnt} 4"
+		       incr psv_pcieintc_cnt
+		       set intr_names "misc msi0 msi1"
+		       set_drv_prop $drv_handle "interrupt-names" $intr_names stringlist
+		} else {
+		       set pcieintc_cnt [get_count "pci_intc_cnt"]
+		       set pcie_child_intc_node [create_node -l "pcie_intc_${pcieintc_cnt}" -n interrupt-controller -p $node -d "pl.dtsi"]
+		       set int_map "0 0 0 1 &pcie_intc_${pcieintc_cnt} 1>, <0 0 0 2 &pcie_intc_${pcieintc_cnt} 2>, <0 0 0 3 &pcie_intc_${pcieintc_cnt} 3>,\
+		       <0 0 0 4 &pcie_intc_${pcieintc_cnt} 4"
+		       incr pcieintc_cnt
+		}
 		set_drv_prop $drv_handle interrupt-map $int_map hexlist
 		incr pcieintc_cnt
 
