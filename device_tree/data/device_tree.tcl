@@ -511,6 +511,34 @@ proc gen_zynqmp_ccf_clk {} {
 
 }
 
+proc gen_versal_clk {} {
+       set default_dts "pcw.dtsi"
+       set ref_node [create_node -n "&ref_clk" -d $default_dts -p root]
+       set pl_alt_ref_node [create_node -n "&pl_alt_ref_clk" -d $default_dts -p root]
+       set periph_list [hsi::get_cells -hier]
+       foreach periph $periph_list {
+               set versal_ps [get_property IP_NAME $periph]
+               if {[string match -nocase $versal_ps "versal_cips"] } {
+                       set avail_param [list_property [hsi::get_cells -hier $periph]]
+                       if {[lsearch -nocase $avail_param "CONFIG.PMC_REF_CLK_FREQMHZ"] >= 0} {
+                               set freq [get_property CONFIG.PMC_REF_CLK_FREQMHZ [hsi::get_cells -hier $periph]]
+                               if {![string match -nocase $freq "33.333"]} {
+                                       dtg_warning "Frequency $freq used instead of 33.333"
+                                       add_prop "${ref_node}" "clock-frequency" [scan [expr $freq * 1000000] "%d"] int $default_dts
+                               }
+                       }
+                       if {[lsearch -nocase $avail_param "CONFIG.PMC_PL_ALT_REF_CLK_FREQMHZ"] >= 0} {
+                               set freq [get_property CONFIG.PMC_PL_ALT_REF_CLK_FREQMHZ [hsi::get_cells -hier $periph]]
+                               if {![string match -nocase $freq "33.333"]} {
+                                       dtg_warning "Frequency $freq used instead of 33.333"
+                                       add_prop "${pl_alt_ref_node}" "clock-frequency" [scan [expr $freq * 1000000] "%d"] int $default_dts
+                               }
+                       }
+               }
+       }
+
+}
+
 proc generate {} {
 
 	global env
@@ -604,6 +632,7 @@ proc generate {} {
 		if {[string match -nocase $kernel_ver "none"]} {
 			gen_sata_laneinfo
 			gen_zynqmp_ccf_clk
+			gen_versal_clk
 		}
     	}
     	#gen_resrv_memory
@@ -659,7 +688,7 @@ proc proc_mapping {} {
 	set proctype [get_hw_family]
         set default_dts "system-top.dts"
         set proc_list [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
-	
+	set periphs_list ""
 	set ps_list [create_busmap psdt root]
 	set pl_list [create_busmap pldt root]
 	set count 2
@@ -671,82 +700,137 @@ proc proc_mapping {} {
 		set split_list [split $pl_list "\n"]
 		set dt "pldt"
 	}
+
+	append periphs_list [hsi::get_cells -hier -filter {IP_TYPE==MEMORY_CNTLR}]
+	set family [get_hw_family]
+	if {[string match -nocase $family "versal"]} {
+		append periphs_list " [hsi::get_cells -hier -filter {IP_NAME==axi_noc}]"
+		append periphs_list " [hsi::get_cells -hier -filter {IP_NAME==noc_mc_ddr4}]"
+	}
         foreach val $proc_list {
-		puts "for proc $val"
+
 		set periph_list [hsi::get_mem_ranges -of_objects [hsi::get_cells -hier $val]]
 		set iptype [get_property IP_NAME [hsi::get_cells -hier $val]]
 		foreach periph $periph_list {
+			if {[lsearch $periphs_list $periph] >= 0} {
+				if {![string match -nocase $iptype "psu_qspi_linear"]} {
+					continue
+				}
+			}
 			set ipname [get_property IP_NAME [hsi::get_cells -hier $periph]]
 			if {[string match -nocase $ipname "psv_ipi"]} {
 				continue
 			}
-
-			foreach listvar $split_list {
-				set temp [split $listvar ":"]
-				set temp [lindex $listvar 0]
-				set temp [string trimright $temp ":"]
-				if {[string match -nocase $periph "psv_acpu_gic"]} {
-					if {[string match -nocase $temp "gic_a72"] } {
-#						set temp "psv_acpu_gic"
-					}
+			set regprop ""
+			set addr_64 "0"
+			set size_64 "0"
+			set base [get_baseaddr $periph]
+			set high [get_highaddr $periph]
+			set mem_size [format 0x%x [expr {${high} - ${base} + 1}]]
+			if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
+                            set addr_64 "1"
+                            set temp $base
+                            set temp [string trimleft [string trimleft $temp 0] x]
+                            set len [string length $temp]
+                            set rem [expr {${len} - 8}]
+                            set high_base "0x[string range $temp $rem $len]"
+                            set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
+                            set low_base [format 0x%08x $low_base]
+                        }
+                        if {[regexp -nocase {0x([0-9a-f]{9})} "$mem_size" match]} {
+                            set size_64 "1"
+                            set temp $mem_size
+                            set temp [string trimleft [string trimleft $temp 0] x]
+                            set len [string length $temp]
+                            set rem [expr {${len} - 8}]
+                            set high_size "0x[string range $temp $rem $len]"
+                            set low_size "0x[string range $temp 0 [expr {${rem} - 1}]]"
+                            set low_size [format 0x%08x $low_size]
+                        }
+                        if {[string match $regprop ""]} {
+                            if {[string match $addr_64 "1"] && [string match $size_64 "1"]} {
+                                set regprop "$low_base $high_base $low_size $high_size"
+                            } elseif {[string match $addr_64 "1"] && [string match $size_64 "0"]} {
+                                set regprop "${low_base} ${high_base} 0x0 ${mem_size}"
+                            } elseif {[string match $addr_64 "0"] && [string match $size_64 "1"]} {
+                                set regprop "0x0 ${base} 0x0 ${mem_size}"
+                            } else {
+                                set regprop "0x0 ${base} 0x0 ${mem_size}"
+                            }
+                        } else {
+                            if {[string match $addr_64 "1"] && [string match $size_64 "1"]} {
+                                append regprop ">, " "<$low_base $high_base $low_size $high_size"
+                            } elseif {[string match $addr_64 "1"] && [string match $size_64 "0"]} {
+                                append regprop ">, " "<${low_base} ${high_base} 0x0 ${mem_size}"
+                            } elseif {[string match $addr_64 "0"] && [string match $size_64 "1"]} {
+                                append regprop ">, " "<0x0 ${base} 0x0 ${mem_size}"
+                            } else {
+                                append regprop ">, " "<0x0 ${base} 0x0 ${mem_size}"
+                            }
+                        }
+			if {0} {
+			if {[string match -nocase $periph "psv_acpu_gic"]} {
+				if {[string match -nocase $temp "gic_a72"] } {
+						set temp "psv_acpu_gic"
 				}
-				if {[string match -nocase $periph "psu_acpu_gic"]} {
-					if {[string match -nocase $temp "gic_a53"] } {
-#						set temp "psu_acpu_gic"
-					}
+			}
+			if {[string match -nocase $periph "psu_acpu_gic"]} {
+				if {[string match -nocase $temp "gic_a53"] } {
+					set temp "psu_acpu_gic"
 				}
-				if {[string match -nocase $periph "psv_rcpu_gic"]} {
-					if {[string match -nocase $temp "gic_r5"] } {
-#						set temp "psv_rcpu_gic"
-					}
+			}
+			if {[string match -nocase $periph "psv_rcpu_gic"]} {
+				if {[string match -nocase $temp "gic_r5"] } {
+					set temp "psv_rcpu_gic"
 				}
-				if {[string match -nocase $periph "psu_rcpu_gic"]} {
-					if {[string match -nocase $temp "gic_r5"] } {
-#						set temp "psu_rcpu_gic"
-					}
+			}
+			if {[string match -nocase $periph "psu_rcpu_gic"]} {
+				if {[string match -nocase $temp "gic_r5"] } {
+					set temp "psu_rcpu_gic"
 				}
-				set name [get_node $periph]
-				set name [string trimleft $name "&"]
-#				puts "tem $temp peri $name iptey $iptype"
-				if {[string match -nocase $temp $name]} {
+			}}
+			set temp [get_node $periph]
+			set temp [string trimleft $temp "&"]
+			set len [llength $temp]
+			if {$len > 1} {
+				set temp [split $temp ":"]
+				set temp [lindex $temp 0]
+			}
 					if {[string match -nocase $iptype "psv_cortexa72"] || [string match -nocase $iptype "psu_cortexa53"]} {
 #						set node [get_node $listvar]
-						set reg [$dt get $listvar reg]
-						set reg [string trimleft $reg "<"]
-						set reg [string trimright $reg ">"]
-						set_memmap $temp a53 $reg
+				#		set reg [$dt get $listvar reg]
+#						set reg [string trimleft $reg "<"]
+#						set reg [string trimright $reg ">"]
+						set_memmap $temp a53 $regprop
 					}
 					if {[string match -nocase $iptype "psv_cortexr5"] || [string match -nocase $iptype "psu_cortexr5"]} {
 #						set node [get_node $listvar]
-						set reg [$dt get $listvar reg]
-						set reg [string trimleft $reg "<"]
-						set reg [string trimright $reg ">"]
-						set_memmap $temp r5 $reg
+				#		set reg [$dt get $listvar reg]
+#						set reg [string trimleft $reg "<"]
+#						set reg [string trimright $reg ">"]
+						set_memmap $temp r5 $regprop
 					}
 					if {[string match -nocase $iptype "psv_pmc"]} {
 #						set node [get_node $listvar]
-						set reg [$dt get $listvar reg]
-						set reg [string trimleft $reg "<"]
-						set reg [string trimright $reg ">"]
-						set_memmap $temp pmc $reg
+				#		set reg [$dt get $listvar reg]
+#						set reg [string trimleft $reg "<"]
+#						set reg [string trimright $reg ">"]
+						set_memmap $temp pmc $regprop
 					}
 					if {[string match -nocase $iptype "psv_psm"]} {
 #						set node [get_node $listvar]
-						set reg [$dt get $listvar reg]
-						set reg [string trimleft $reg "<"]
-						set reg [string trimright $reg ">"]
-						set_memmap $temp psm $reg
+#						set reg [$dt get $listvar reg]
+#						set reg [string trimleft $reg "<"]
+#						set reg [string trimright $reg ">"]
+						set_memmap $temp psm $regprop
 					}
 					if {[string match -nocase $iptype "psu_pmu"]} {
 #						set node [get_node $listvar]
-						set reg [$dt get $listvar reg]
-						set reg [string trimleft $reg "<"]
-						set reg [string trimright $reg ">"]
-						set_memmap $temp pmu $reg
+				#		set reg [$dt get $listvar reg]
+#						set reg [string trimleft $reg "<"]
+#						set reg [string trimright $reg ">"]
+						set_memmap $temp pmu $regprop
 					}
-
-				}
-			}	
 		}
 		
 	}
@@ -1151,36 +1235,45 @@ proc gen_cpu_cluster {os_handle} {
 	set default_dts "system-top.dts"
 	set ipi_list [hsi::get_cells -hier *ipi*]
 	foreach val $ipi_list {
+		set temp [get_node $val]
+		set temp [string trimleft $temp "&"]
+		set val1 $temp
+		set len [llength $temp]
+		if {$len > 1} {
+			set temp [split $temp ":"]
+			set val1 [lindex $temp 0]
+		}
+
 		set cpu [get_property CONFIG.C_CPU_NAME [hsi::get_cells -hier $val]]
 		if {[string match -nocase $cpu "A72"] || [string match -nocase $cpu "APU"]} {
 			set base [get_baseaddr $val]
 			set high [get_highaddr $val]
                         set size [format 0x%x [expr {${high} - ${base} + 1}]]
-			set_memmap $val a53 "0x0 $base 0x0 $size"
+			set_memmap $val1 a53 "0x0 $base 0x0 $size"
 		}
 		if {[string match -nocase $cpu "RPU0"] || [string match -nocase $cpu "RPU1"]} {
 			set base [get_baseaddr $val]
 			set high [get_highaddr $val]
                         set size [format 0x%x [expr {${high} - ${base} + 1}]]
-			set_memmap $val r5 "0x0 $base 0x0 $size"
+			set_memmap $val1 r5 "0x0 $base 0x0 $size"
 		}
 		if {[string match -nocase $cpu "PSM"]} {
 			set base [get_baseaddr $val]
 			set high [get_highaddr $val]
                         set size [format 0x%x [expr {${high} - ${base} + 1}]]
-			set_memmap $val psm "0x0 $base 0x0 $size"
+			set_memmap $val1 psm "0x0 $base 0x0 $size"
 		}
 		if {[string match -nocase $cpu "PMC"]} {
 			set base [get_baseaddr $val]
 			set high [get_highaddr $val]
                         set size [format 0x%x [expr {${high} - ${base} + 1}]]
-			set_memmap $val pmc "0x0 $base 0x0 $size"
+			set_memmap $val1 pmc "0x0 $base 0x0 $size"
 		}
 		if {[string match -nocase $cpu "PMU"]} {
 			set base [get_baseaddr $val]
 			set high [get_highaddr $val]
                         set size [format 0x%x [expr {${high} - ${base} + 1}]]
-			set_memmap $val pmu "0x0 $base 0x0 $size"
+			set_memmap $val1 pmu "0x0 $base 0x0 $size"
 		}
 
 	}
@@ -1263,10 +1356,14 @@ proc gen_cpu_cluster {os_handle} {
 #	add_prop $cpu_node "range-map" "0xf0000000 &amba 0xf0000000 0x10000000> , <0xffe00000 &tcm_bus 0x0 0x100000> , <0xf9000000 &amba_rpu 0xf9000000 0x3000> , <0x0 &memory 0x0 0x80000000> , <0xff340000 &zynqmp_ipi 0xff340000 0x20000" hexlist $default_dts
 
     	if {[string match -nocase $proctype "versal"]} {
-        	set cpu_node [create_node -n "&cpu2" -d "pcw.dtsi" -p root]
-        	add_prop "${cpu_node}" "compatible" "cpus,cluster" string "pcw.dtsi"
-	        add_prop "${cpu_node}" "range-size-cells" "0x1" hexint "pcw.dtsi"
-	        add_prop "${cpu_node}" "range-address-cells" "0x1" hexint "pcw.dtsi"
+		set cpu_node [create_node -l "microblaze1" -n "cpus-cluster" -u 1 -d ${default_dts} -p root]
+		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
+		add_prop $cpu_node "range-size-cells" "0x1" hexint $default_dts
+	        add_prop "${cpu_node}" "range-address-cells" "0x1" hexint $default_dts
+#        	set cpu_node [create_node -n "&cpu2" -d "pcw.dtsi" -p root]
+ #       	add_prop "${cpu_node}" "compatible" "cpus,cluster" string "pcw.dtsi"
+#	        add_prop "${cpu_node}" "range-size-cells" "0x1" hexint "pcw.dtsi"
+#	        add_prop "${cpu_node}" "range-address-cells" "0x1" hexint "pcw.dtsi"
 	} else {
         	set microblaze_node [create_node -n "cpus_microblaze" -d ${default_dts} -p root]
 	        add_prop "${microblaze_node}" "compatible" "cpus,cluster" string $default_dts
@@ -1301,15 +1398,19 @@ proc gen_cpu_cluster {os_handle} {
 		}
 	}
     	if {[string match -nocase $proctype "versal"]} {
-		add_prop $cpu_node "address-map" $list_values special "pcw.dtsi"
+		add_prop $cpu_node "address-map" $list_values special $default_dts
 	} else {
 		add_prop $microblaze_node "address-map" $list_values special $default_dts
 	}
 	if {[string match -nocase $proctype "versal"]} {
-		set cpu_node [create_node -n "&cpu3" -d "pcw.dtsi" -p root]
-		add_prop "${cpu_node}" "compatible" "cpus,cluster" string "pcw.dtsi"
-		add_prop "${cpu_node}" "range-size-cells" "0x1" hexint "pcw.dtsi"
-		add_prop "${cpu_node}" "range-address-cells" "0x1" hexint "pcw.dtsi"
+		set cpu_node [create_node -l "microblaze2" -n "cpus-cluster" -u 2 -d ${default_dts} -p root]
+		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
+		add_prop $cpu_node "range-size-cells" "0x1" hexint $default_dts
+	        add_prop "${cpu_node}" "range-address-cells" "0x1" hexint $default_dts
+		#set cpu_node [create_node -n "&cpu3" -d "pcw.dtsi" -p root]
+		#add_prop "${cpu_node}" "compatible" "cpus,cluster" string "pcw.dtsi"
+		#add_prop "${cpu_node}" "range-size-cells" "0x1" hexint "pcw.dtsi"
+		#add_prop "${cpu_node}" "range-address-cells" "0x1" hexint "pcw.dtsi"
 		global memmap
 		set values [dict keys $memmap]
 		set list_values "0xf0000000 &amba 0xf0000000 0x10000000"
@@ -1333,7 +1434,7 @@ proc gen_cpu_cluster {os_handle} {
 				set list_values [append list_values ">, \n\t\t\t      " "<$base &${val} $base $size"]
 			}
 		}
-		add_prop $cpu_node "address-map" $list_values special "pcw.dtsi"
+		add_prop $cpu_node "address-map" $list_values special $default_dts
 	}
 #	add_prop $cpu_node "range-map" "0xf0000000 &amba 0xf0000000 0x10000000> , <0x0 &memory 0x0 0x80000000> , <0xff3f0000 &zynqmp_ipi 0xff3f0000 0x30000" hexlist $default_dts
 }
