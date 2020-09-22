@@ -7728,32 +7728,39 @@ enechange"
 		set label $ip
 		set bus_node [add_or_get_bus_node $ip $default_dts]
 		set dev_type [get_property IP_NAME [hsi::get_cell -hier [hsi::get_cells -hier $ip]]]
-		set rt_node [create_node -n ${dev_type} -l ${label} -u 0 -d ${default_dts} -p $bus_node -auto_ref_parent]
 		if {[llength $axis_ip]} {
 			set intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
 			set inip [get_in_connect_ip $ip $intf]
 			puts "inip:$inip"
-			set ports_node [create_node -n "ports" -l axis_switch_ports$ip -p $rt_node]
-			add_prop "$ports_node" "#address-cells" 1 int $default_dtds
-			add_prop "$ports_node" "#size-cells" 0 int $default_dts
-			set port_node [create_node -n "port" -l axis_switch_port0$ip -u 0 -p $ports_node -d $default_dts]
-			add_prop "$port_node" "reg" 0 int $default_dts
-			if {[llength $inip]} {
-				set axis_switch_in_end ""
-				set axis_switch_remo_in_end ""
-				if {[dict exists $end_mappings $inip]} {
-					set axis_switch_in_end [dict get $end_mappings $inip]
-					puts "drv:$ip inend:$axis_switch_in_end"
-				}
-				if {[dict exists $remo_mappings $inip]} {
-					set axis_switch_remo_in_end [dict get $remo_mappings $inip]
-					puts "drv:$ip inremoend:$axis_switch_remo_in_end"
-				}
-				if {[llength $axis_switch_remo_in_end]} {
-					set axisinnode [add_or_get_dt_node -n "endpoint" -l $axis_switch_remo_in_end -p $port_node]
-				}
-				if {[llength $axis_switch_in_end]} {
-					add_prop "$axisinnode" "remote-endpoint" $axis_switch_in_end reference $default_dts
+			set inipname [get_property IP_NAME $inip]
+			set valid_mmip_list "mipi_csi2_rx_subsystem v_tpg v_hdmi_rx_ss v_smpte_uhdsdi_rx_ss v_smpte_uhdsdi_tx_ss v_demosaic v_gamma_l
+ut v_proc_ss v_frmbuf_rd v_frmbuf_wr v_hdmi_tx_ss v_uhdsdi_audio audio_formatter i2s_receiver i2s_transmitter mipi_dsi_tx_subsystem v_mix v_multi_scaler v_sc
+enechange"
+		if {[lsearch  -nocase $valid_mmip_list $inipname] >= 0} {
+       			set rt_node [create_node -n ${dev_type} -l ${label} -u 0 -d $dts_file -p $bus_node -auto_ref_parent]
+		       set ports_node [create_node -n "ports" -l axis_switch_ports$ip -p $rt_node]
+		       add_prop "$ports_node" "#address-cells" 1 int $dts_file
+		       add_prop "$ports_node" "#size-cells" 0 int $dts_file
+		       set port_node [create_node -n "port" -l axis_switch_port0$ip -u 0 -p $ports_node -d $dts_file]
+		       add_prop "$port_node" "reg" 0 int $dts_file
+		       if {[llength $inip]} {
+			       set axis_switch_in_end ""
+			       set axis_switch_remo_in_end ""
+			       if {[dict exists $end_mappings $inip]} {
+				       set axis_switch_in_end [dict get $end_mappings $inip]
+				       puts "drv:$ip inend:$axis_switch_in_end"
+			       }
+			       if {[dict exists $remo_mappings $inip]} {
+				       set axis_switch_remo_in_end [dict get $remo_mappings $inip]
+				       puts "drv:$ip inremoend:$axis_switch_remo_in_end"
+			       }
+			       if {[llength $axis_switch_remo_in_end]} {
+				       set axisinnode [create_node -n "endpoint" -l $axis_switch_remo_in_end -p $port_node]
+			       }
+			       if {[llength $axis_switch_in_end]} {
+				       add_prop "$axisinnode" "remote-endpoint" $axis_switch_in_end reference $dts_file
+			       }
+
 				}
 			}
 		}
