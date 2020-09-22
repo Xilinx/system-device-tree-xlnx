@@ -2366,24 +2366,26 @@ proc set_drv_def_dts {drv_handle} {
 		if {[string match -nocase $proctype "psu_cortexa53"]} {
 			set zynq_periph [hsi::get_cells -hier -filter {IP_NAME == zynq_ultra_ps_e}]
 			set avail_param [list_property [hsi::get_cells -hier $zynq_periph]]
-			if {[lsearch -nocase $avail_param "CONFIG.PSU__USE__FABRIC__RST"] >= 0} {
-				set val [get_property CONFIG.PSU__USE__FABRIC__RST [hsi::get_cells -hier $zynq_periph]]
-				if {$val == 1} {
-					if {[lsearch -nocase $avail_param "CONFIG.C_NUM_FABRIC_RESETS"] >= 0} {
-						set val [get_property CONFIG.C_NUM_FABRIC_RESETS [get_cells -hier $zynq_periph]]
-						switch $val {
-							"1" {
-								set resets "zynqmp_reset 116"
-							} "2" {
-								set resets "zynqmp_reset 116>,<&zynqmp_reset 117"
-							} "3" {
-								set resets "zynqmp_reset 116>, <&zynqmp_reset 117>, <&zynqmp_reset 118"
-							} "4" {
-								set resets "zynqmp_reset 116>, <&zynqmp_reset 117>, <&zynqmp_reset 118>, <&zynqmp_reset 119"
+			if {![llength $RpRm]} {
+				if {[lsearch -nocase $avail_param "CONFIG.PSU__USE__FABRIC__RST"] >= 0} {
+					set val [get_property CONFIG.PSU__USE__FABRIC__RST [hsi::get_cells -hier $zynq_periph]]
+					if {$val == 1} {
+						if {[lsearch -nocase $avail_param "CONFIG.C_NUM_FABRIC_RESETS"] >= 0} {
+							set val [get_property CONFIG.C_NUM_FABRIC_RESETS [get_cells -hier $zynq_periph]]
+							switch $val {
+								"1" {
+									set resets "zynqmp_reset 116"
+								} "2" {
+									set resets "zynqmp_reset 116>,<&zynqmp_reset 117"
+								} "3" {
+									set resets "zynqmp_reset 116>, <&zynqmp_reset 117>, <&zynqmp_reset 118"
+								} "4" {
+									set resets "zynqmp_reset 116>, <&zynqmp_reset 117>, <&zynqmp_reset 118>, <&zynqmp_reset 119"
+								}
 							}
-						}
-						if {$val != 0} {
-							hsi::utils::add_new_dts_param "${child_node}" "resets" "$resets" reference
+							if {$val != 0} {
+								hsi::utils::add_new_dts_param "${child_node}" "resets" "$resets" reference
+							}
 						}
 					}
 				}
@@ -2399,7 +2401,12 @@ proc set_drv_def_dts {drv_handle} {
 		set hw_name [get_property CONFIG.firmware_name [get_os]]
 #		set rprmpartial ""
 		if {![llength $hw_name]} {
-			 set hw_name [::hsi::get_hw_files -filter "TYPE == partial_bit"]
+			if {[string match -nocase $proctype "psu_cortexa53"]} {
+                               set hw_name [::hsi::get_hw_files -filter "TYPE == partial_bit"]
+                       } else {
+                               set hw_name [::hsi::get_hw_files -filter "TYPE == partial_pdi"]
+                               puts "hw_name:$hw_name"
+                       }
                         set RpRm1 [hsi::utils::get_rp_rm_for_drv $drv_handle]
                        regsub -all { } $RpRm1 "_" RpRm
                        if {[llength $RpRm]} {
@@ -2417,7 +2424,12 @@ proc set_drv_def_dts {drv_handle} {
                        hsi::utils::add_new_dts_param "${child_node}" "firmware-name" "$rprmpartial.bin" string
                }
                if {![llength $RpRm]} {
-			set hw_name [hsi::get_hw_files -filter "TYPE == bit"]
+			if {[string match -nocase $proctype "psu_cortexa53"]} {
+                               set hw_name [::hsi::get_hw_files -filter "TYPE == bit"]
+                               puts "hw_name:$hw_name"
+                       } else {
+                               set hw_name [::hsi::get_hw_files -filter "TYPE == pdi"]
+                       }
 			hsi::utils::add_new_dts_param "${child_node}" "firmware-name" "$hw_name.bin" string
 		}
 		#hsi::utils::add_new_dts_param "${child_node}" "firmware-name" "$hw_name.bin" string
