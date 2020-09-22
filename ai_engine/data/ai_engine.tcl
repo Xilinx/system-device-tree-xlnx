@@ -30,6 +30,13 @@ namespace eval ai_engine {
 		set keyval [pldt append $node "interrupt-names" "\ \, \"interrupt3\""]	
 		add_prop $node "interrupts" $intr_num intlist "pl.dtsi"
 		add_prop $node "power-domains" $power_domain intlist "pl.dtsi"
+		#set dt_overlay [get_property CONFIG.dt_overlay [get_os]]
+		set dt_overlay ""
+	       	if {$dt_overlay} {
+        	       set bus_node "overlay2"
+	       	} else {
+	       	       set bus_node "amba_pl"
+       		}
 		set aie_npi_node [create_node -n "aie-npi" -l aie_npi -u f70a0000 -d "pl.dtsi" -p "amba_pl: amba_pl"]
 		add_prop $aie_npi_node "compatible" "xlnx,ai-engine-npi" stringlist "pl.dtsi"
 		set aie_npi_reg "<0x0 0xf70a0000 0x0 0x1000>"
