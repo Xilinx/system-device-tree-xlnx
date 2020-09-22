@@ -150,7 +150,7 @@ namespace eval ddrpsv {
 				set updat [lappend updat $reg_val_5]
 			}
 			if {$is_ddr_ch_3 == 1} {
-				set reg_val_6 [generate_reg_property $base_value_6 $hiagh_value_6]
+				set reg_val_6 [generate_reg_property $base_value_6 $high_value_6]
 				set updat [lappend updat $reg_val_6]
 			}
 			set len [llength $updat]
