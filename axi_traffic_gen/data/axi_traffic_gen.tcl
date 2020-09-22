@@ -31,7 +31,7 @@ namespace eval axi_traffic_gen {
 		}
 		set proc_type [get_hw_family]
 		# set up interrupt-names
-		set intr_list "irq-out err-out"
+		set intr_list "irq_out err_out"
 		set interrupts ""
 		set interrupt_names ""
 		foreach irq ${intr_list} {
@@ -44,9 +44,21 @@ namespace eval axi_traffic_gen {
 				}
 			}
 			if { [string match -nocase $interrupt_names ""] } {
+				if {[string match -nocase $irq "irq_out"]} {
+        	                       set irq "irq-out"
+	                        }
+                       		if {[string match -nocase $irq "err_out"]} {
+                	               set irq "err-out"
+                       		}
 				set interrupt_names "$irq"
 				set interrupts "$intr_info"
 			} else {
+				if {[string match -nocase $irq "irq_out"]} {
+        	                       set irq "irq-out"
+	                        }
+                       		if {[string match -nocase $irq "err_out"]} {
+                	               set irq "err-out"
+                       		}
 				append interrupt_names " " "$irq"
 				append interrupts " " "$intr_info"
 			}
