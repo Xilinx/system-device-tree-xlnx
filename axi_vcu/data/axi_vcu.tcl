@@ -53,25 +53,31 @@ namespace eval axi_vcu {
 
 	    # Generate child encoder
 	    set ver [get_ipdetails $drv_handle "ver"]
-	    set encoder_node [create_node -l "encoder" -n "al5e" -u $baseaddr -p $node -d $dts_file]
-	    set encoder_comp "al,al5e-${ver}"
-	    add_prop "${encoder_node}" compatible $encoder_comp string $dts_file
-	    pldt append ${encoder_node} compatible "\ \, \"al,al5e\""
-	    set encoder_reg "0x0 0x$baseaddr 0x0 0x10000"
-	    add_prop "${encoder_node}" "reg" $encoder_reg hexlist $dts_file
-	    add_prop "${encoder_node}" "interrupts" $intr_val intlist $dts_file
-	    add_prop "${encoder_node}" "interrupt-parent" $intr_parent reference  $dts_file
-	    # Fenerate child decoder
-	    set decoder_offset 0x20000
-	    set decoder_reg [format %08x [expr 0x$baseaddr + $decoder_offset]]
-	    set decoder_node [create_node -l "decoder" -n "al5d" -u $decoder_reg -p $node -d $dts_file]
-	    set decoder_comp "al,al5d-${ver}"
-	    add_prop "${decoder_node}" "compatible" $decoder_comp string $dts_file
-	    pldt append ${decoder_node} compatible "\ \, \"al,al5d\""
-	    set decoder_reg "0x0 0x$decoder_reg 0x0 0x10000"
-	    add_prop "${decoder_node}" "reg" $decoder_reg hexlist $dts_file
-	    add_prop "${decoder_node}" "interrupts" $intr_val intlist $dts_file
-	    add_prop "${decoder_node}" "interrupt-parent" $intr_parent reference $dts_file
+	    set encoder_enable [get_property CONFIG.ENABLE_ENCODER [get_cells -hier $drv_handle]]
+	    if {[string match -nocase $encoder_enable "TRUE"]} {
+		    set encoder_node [create_node -l "encoder" -n "al5e" -u $baseaddr -p $node -d $dts_file]
+		    set encoder_comp "al,al5e-${ver}"
+		    add_prop "${encoder_node}" compatible $encoder_comp string $dts_file
+		    pldt append ${encoder_node} compatible "\ \, \"al,al5e\""
+		    set encoder_reg "0x0 0x$baseaddr 0x0 0x10000"
+		    add_prop "${encoder_node}" "reg" $encoder_reg hexlist $dts_file
+		    add_prop "${encoder_node}" "interrupts" $intr_val intlist $dts_file
+		    add_prop "${encoder_node}" "interrupt-parent" $intr_parent reference  $dts_file
+	    }
+	    set decoder_enable [get_property CONFIG.ENABLE_DECODER [get_cells -hier $drv_handle]]
+	    if {[string match -nocase $decoder_enable "TRUE"]} {
+		    # Fenerate child decoder
+		    set decoder_offset 0x20000
+		    set decoder_reg [format %08x [expr 0x$baseaddr + $decoder_offset]]
+		    set decoder_node [create_node -l "decoder" -n "al5d" -u $decoder_reg -p $node -d $dts_file]
+		    set decoder_comp "al,al5d-${ver}"
+		    add_prop "${decoder_node}" "compatible" $decoder_comp string $dts_file
+		    pldt append ${decoder_node} compatible "\ \, \"al,al5d\""
+		    set decoder_reg "0x0 0x$decoder_reg 0x0 0x10000"
+		    add_prop "${decoder_node}" "reg" $decoder_reg hexlist $dts_file
+		    add_prop "${decoder_node}" "interrupts" $intr_val intlist $dts_file
+		    add_prop "${decoder_node}" "interrupt-parent" $intr_parent reference $dts_file
+	    }
 	    set clknames "pll_ref aclk vcu_core_enc vcu_core_dec vcu_mcu_enc vcu_mcu_dec"
 	    overwrite_clknames $clknames $drv_handle
 	    set ip [hsi::get_cells -hier $drv_handle]
