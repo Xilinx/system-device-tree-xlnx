@@ -7471,6 +7471,11 @@ proc update_endpoints {drv_handle} {
         }
 
 	if {[string match -nocase [get_property IP_NAME $ip] "v_tpg"]} {
+		set family [get_hw_family]
+               if {[string match -nocase $family "zynq"]} {
+                       #TBF
+                       return
+               }
 		set ports_node [create_node -n "ports" -l tpg_ports$drv_handle -p $node -d $dts_file]
 		set port0_node [create_node -n "port" -l tpg_port0$drv_handle -u 0 -p $ports_node -d $dts_file]
                 add_prop "$port0_node" "reg" 0 int $dts_file 1
@@ -7708,7 +7713,7 @@ enechange"
 		       puts "tpg_remo_in_end:$tpg_remo_in_end"
 	       }
 	       if {[llength $tpg_remo_in_end]} {
-		       set tpg_node [create_node -n "endpoint" -l $tpg_remo_in_end -p $port0_node]
+		       set tpg_node [create_node -n "endpoint" -l $tpg_remo_in_end -p $port0_node -d $dts_file]
 	       }
 	       if {[llength $tpg_in_end]} {
 		       add_prop "$tpg_node" "remote-endpoint" $tpg_in_end reference $dts_file
@@ -7732,6 +7737,7 @@ enechange"
 			set intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
 			set inip [get_in_connect_ip $ip $intf]
 			puts "inip:$inip"
+			if {[llength $inip]} {
 			set inipname [get_property IP_NAME $inip]
 			set valid_mmip_list "mipi_csi2_rx_subsystem v_tpg v_hdmi_rx_ss v_smpte_uhdsdi_rx_ss v_smpte_uhdsdi_tx_ss v_demosaic v_gamma_l
 ut v_proc_ss v_frmbuf_rd v_frmbuf_wr v_hdmi_tx_ss v_uhdsdi_audio audio_formatter i2s_receiver i2s_transmitter mipi_dsi_tx_subsystem v_mix v_multi_scaler v_sc
