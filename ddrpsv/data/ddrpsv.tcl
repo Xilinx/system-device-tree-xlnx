@@ -79,43 +79,43 @@ namespace eval ddrpsv {
 				if {[string match -nocase [get_property IP_NAME $procc] "psv_psm"]} {
 					set psm 1
 				}
-				if {[string match "C0_DDR_LOW0*" $block_name] || [string match "C1_DDR_LOW0*" $block_name]} {
+				if {[string match "C*_DDR_LOW0*" $block_name]} {
 					if {$is_ddr_low_0 == 0} {
 						set base_value_0 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]
 					}
 					set high_value_0 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]
 					set is_ddr_low_0 1
-				} elseif {[string match "C0_DDR_LOW1*" $block_name] || [string match "C1_DDR_LOW1*" $block_name]} {
+				} elseif {[string match "C*_DDR_LOW1*" $block_name]} {
 					if {$is_ddr_low_1 == 0} {
 						set base_value_1 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]
 					}
 					set high_value_1 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]
 					set is_ddr_low_1 1
-				} elseif {[string match "C0_DDR_LOW2*" $block_name] || [string match "C1_DDR_LOW2*" $block_name]} {
+				} elseif {[string match "C*_DDR_LOW2*" $block_name]} {
 					if {$is_ddr_low_2 == 0} {
 						set base_value_2 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]
 					}
 					set high_value_2 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]
 					set is_ddr_low_2 1
-				} elseif {[string match "C0_DDR_LOW3*" $block_name] || [string match "C1_DDR_LOW3*" $block_name]} {
+				} elseif {[string match "C*_DDR_LOW3*" $block_name] } {
 					if {$is_ddr_low_3 == "0"} {
 						set base_value_3 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]
 					}
 					set high_value_3 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]
 					set is_ddr_low_3 1
-				} elseif {[string match "C0_DDR_CH1*" $block_name]} {
+				} elseif {[string match "C*_DDR_CH1*" $block_name]} {
 					if {$is_ddr_ch_1 == "0"} {
 						set base_value_4 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]
 					}
 					set high_value_4 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]
 					set is_ddr_ch_1 1
-				} elseif {[string match "C0_DDR_CH2*" $block_name]} {
+				} elseif {[string match "C*_DDR_CH2*" $block_name]} {
 					if {$is_ddr_ch_2 == "0"} {
 						set base_value_5 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]
 					}
 					set high_value_5 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]
 					set is_ddr_ch_2 1
-				} elseif {[string match "C0_DDR_CH3*" $block_name]} {
+				} elseif {[string match "C*_DDR_CH3*" $block_name]} {
 					if {$is_ddr_ch_3 == "0"} {
 						set base_value_6 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]
 					}
