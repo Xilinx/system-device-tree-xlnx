@@ -102,7 +102,7 @@
 	status = "okay";
 };
 
-&psu_ethernet_3 {
+&gem3 {
 	phy-handle = <&phy0>;
 	phy-mode = "rgmii-id";
 	phy0: ethernet-phy@c {
@@ -114,7 +114,7 @@
 	};
 };
 
-&psu_gpio_0 {
+&gpio {
 	status = "okay";
 	gpio-line-names = "QSPI_LWR_CLK", "QSPI_LWR_DQ1", "QSPI_LWR_DQ2", "QSPI_LWR_DQ3", "QSPI_LWR_DQ0", /* 0 - 4 */
 		  "QSPI_LWR_CS_B", "", "QSPI_UPR_CS_B", "QSPI_UPR_DQ0", "QSPI_UPR_DQ1", /* 5 - 9 */
@@ -154,7 +154,7 @@
 		  "", "", "", ""; /* 170 - 174 */
 };
 
-&psu_i2c_0 {
+&i2c0 {
 	status = "okay";
 	clock-frequency = <400000>;
 	pinctrl-names = "default", "gpio";
@@ -320,7 +320,7 @@
 	/* u38 MPS430 */
 };
 
-&psu_i2c_1 {
+&i2c1 {
 	status = "okay";
 	clock-frequency = <400000>;
 	pinctrl-names = "default", "gpio";
@@ -534,7 +534,7 @@
 	};
 };
 
-&psu_qspi_0 {
+&qspi {
 	is-dual = <1>;
 	flash@0 {
 		compatible = "m25p80", "jedec,spi-nor"; /* U11 and U12 MT25QU02GCBBE12 1Gb */
@@ -547,7 +547,7 @@
 	};
 };
 
-&psu_sata {
+&sata {
 	/* SATA OOB timing settings */
 	ceva,p0-cominit-params = /bits/ 8 <0x18 0x40 0x18 0x28>;
 	ceva,p0-comwake-params = /bits/ 8 <0x06 0x14 0x08 0x0E>;
@@ -562,7 +562,7 @@
 };
 
 /* SD1 with level shifter */
-&psu_sd_1 {
+&sdhci1 {
 	disable-wp;
 	xlnx,mio_bank = <1>;
 	/*

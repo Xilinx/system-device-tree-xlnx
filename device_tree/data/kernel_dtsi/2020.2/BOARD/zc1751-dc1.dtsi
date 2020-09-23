@@ -16,7 +16,7 @@
 	compatible = "xlnx,zynqmp-zc1751", "xlnx,zynqmp";
 };
 
-&psu_ethernet_3 {
+&gem3 {
 	phy-handle = <&phy0>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_gem3_default>;
@@ -30,7 +30,7 @@
 	pinctrl-0 = <&pinctrl_gpio_default>;
 };
 
-&psu_i2c_1 {
+&i2c1 {
 	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&pinctrl_i2c1_default>;
 	pinctrl-1 = <&pinctrl_i2c1_gpio>;
@@ -253,7 +253,7 @@
 	};
 };
 
-&psu_qspi_0 {
+&qspi {
 	flash@0 {
 		compatible = "m25p80", "jedec,spi-nor"; /* Micron MT25QU512ABB8ESF */
 		#address-cells = <1>;
@@ -281,7 +281,7 @@
 	};
 };
 
-&psu_sata {
+&sata {
 	ceva,p0-cominit-params = /bits/ 8 <0x1B 0x4D 0x18 0x28>;
 	ceva,p0-comwake-params = /bits/ 8 <0x06 0x19 0x08 0x0E>;
 	ceva,p0-burst-params = /bits/ 8 <0x13 0x08 0x4A 0x06>;
@@ -295,14 +295,14 @@
 };
 
 /* eMMC */
-&psu_sd_0 {
+&sdhci0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_sdhci0_default>;
 	bus-width = <8>;
 };
 
 /* SD1 with level shifter */
-&psu_sd_1 {
+&sdhci1 {
 	no-1-8-v;       /* for 1.0 silicon */
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_sdhci1_default>;
@@ -312,13 +312,13 @@
 	no-1-8-v;
 };
 
-&psu_uart_0 {
+&uart0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_uart0_default>;
 };
 
 /* ULPI SMSC USB3320 */
-&psu_usb_0 {
+&usb0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_usb0_default>;
 };
