@@ -1,5 +1,5 @@
 dict_devicetree:
-    kernel_ver: 2020.1
+    kernel_ver: 2020.2
     mainline_kernel: none
     board_dts: versal-vmk180-reva
     dt_overlay: false
