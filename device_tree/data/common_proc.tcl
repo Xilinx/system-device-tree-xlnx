@@ -2545,8 +2545,11 @@ if {[llength $ip]} {
 				                       }
 			                              hsi::utils::add_new_dts_param "${child_node}" "firmware-name" "$hw_name.bin" string
 			                      } else {
-			                              set hw_name [::hsi::get_hw_files -filter "TYPE == pdi"]
-			                              hsi::utils::add_new_dts_param "${child_node}" "firmware-name" "$hw_name" string
+							set hw_name [get_property CONFIG.firmware_name [get_os]]
+				                       if {![llength $hw_name]} {
+				                               set hw_name [::hsi::get_hw_files -filter "TYPE == pdi"]
+				                       }
+				                       hsi::utils::add_new_dts_param "${child_node}" "firmware-name" "$hw_name.pdi" string
                				     }
               				}
 	}
