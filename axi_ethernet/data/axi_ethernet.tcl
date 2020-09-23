@@ -231,8 +231,8 @@ set rxethmem 0
 		  set phya [lindex $phynode 0]
 		  if { $phya != "-1"} {
 			set phy_name "[lindex $phynode 1]"
-			set_drv_prop $drv_handle phy-handle "$phy_name" reference
-			gen_phy_node $mdio_node $phy_name $phya
+			set_drv_prop $drv_handle phy-handle "$drv_handle$phy_name" reference
+			gen_phy_node $mdio_node $phy_name $phya $drv_handle
 		  }
 	    }
 	    if {$ip_name == "xxv_ethernet" && $core != 0} {
@@ -574,8 +574,9 @@ set rxethmem 0
 	    set mdio_node [lindex $args 0]
 	    set phy_name [lindex $args 1]
 	    set phya [lindex $args 2]
+	    set drv  [lindex $args 3]
 
-	    set phy_node [create_node -l ${phy_name} -n phy -u $phya -p $mdio_node]
+	    set phy_node [create_node -l $drv$phy_name -n phy -u $phya -p $mdio_node]
 	    add_prop "${phy_node}" "reg" $phya int "pl.dtsi"
 	    add_prop "${phy_node}" "device_type" "ethernet-phy" string "pl.dtsi"
 
