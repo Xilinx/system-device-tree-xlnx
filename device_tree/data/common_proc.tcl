@@ -7949,9 +7949,11 @@ proc get_connect_ip {ip intfpins dts_file} {
         global connectip ""
         foreach intf $intfpins {
                 set connectip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $ip] $intf]
-		if {[string match -nocase [get_property IP_NAME [hsi::get_cells -hier $connectip]] "axis_switch"]} {
-                        gen_axis_switch $connectip
-                        break
+		if {[llength $connectip]} {
+                       if {[string match -nocase [get_property IP_NAME [hsi::get_cells -hier $connectip]] "axis_switch"]} {
+                               gen_axis_switch $connectip
+                               break
+                       }
                 }
                 if {[llength $connectip]} {
                         if {[string match -nocase [get_property IP_NAME [hsi::get_cells -hier $connectip]] "axis_broadcaster"]} {
