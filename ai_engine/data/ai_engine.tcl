@@ -23,7 +23,9 @@ namespace eval ai_engine {
 		}
 		set keyval [pldt append $node compatible "\ \, \"xlnx,ai_engine-v1.0\""]	
 		set intr_names "interrupt1"
-		set intr_num "0x0 0x94 0x1"
+		set intr_num "<0x0 0x94 0x1>, <0x0 0x95 0x1>, <0x0 0x96 0x1>"
+		set keyval [pldt append $node "interrupt-names" "\ \, \"interrupt2\""]  
+		set keyval [pldt append $node "interrupt-names" "\ \, \"interrupt3\""]
 		set power_domain "<&versal_firmware 0x18224072>"
 		add_prop $node "interrupt-names" $intr_names stringlist "pl.dtsi"
 		add_prop $node "interrupts" $intr_num intlist "pl.dtsi"
