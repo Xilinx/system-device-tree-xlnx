@@ -137,7 +137,7 @@ namespace eval axi_vdma {
 	}
 
 	proc add_dma_channel {drv_handle parent_node xdma addr mode devid} {
-		set ip [get_cells -hier $drv_handle]
+		set ip [hsi::get_cells -hier $drv_handle]
 		set modellow [string tolower $mode]
 		set modeIndex [string index $mode 0]
 		set dma_channel [create_node -n "dma-channel" -u $addr -p $parent_node]

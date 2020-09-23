@@ -97,7 +97,7 @@ namespace eval axi_cdma {
 		    set_drv_prop_if_empty $drv_handle "clocks" "clkc 15>, <&clkc 15" reference
 		    set_drv_prop_if_empty $drv_handle "clock-names" "s_axi_lite_aclk m_axi_aclk" stringlist
 		} elseif if {[string match -nocase $proc_type "zynqmp"] || [string match -nocase $proc_type "zynquplus"]} {
-		    set clk_freq [get_clock_frequency [get_cells -hier $drv_handle] "s_axi_lite_aclk"]
+		    set clk_freq [get_clock_frequency [hsi::get_cells -hier $drv_handle] "s_axi_lite_aclk"]
 		    if {![string equal $clk_freq ""]} {
 			if {[lsearch $bus_clk_list $clk_freq] < 0} {
 			    set bus_clk_list [lappend bus_clk_list $clk_freq]

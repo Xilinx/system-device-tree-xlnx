@@ -104,7 +104,7 @@ namespace eval axi_pcie {
 
 	proc set_pcie_reg {drv_handle proctype} {
 		set node [get_node $drv_handle]
-		if {[string match -nocase [get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "xdma"] || [string match -nocase [get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "axi_pcie3"] || [string match -nocase [get_property IP_NAME [get_cells -hier $drv_handle]] "pcie_dma_versal"]} {
+		if {[string match -nocase [get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "xdma"] || [string match -nocase [get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "axi_pcie3"] || [string match -nocase [get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "pcie_dma_versal"]} {
 			set baseaddr [get_ip_property $drv_handle CONFIG.baseaddr]
 			set highaddr [get_ip_property $drv_handle CONFIG.highaddr]
 			set size [format 0x%X [expr $highaddr -$baseaddr + 1]]
@@ -154,7 +154,7 @@ namespace eval axi_pcie {
 			return
 		}
 		set family [get_hw_family]
-		if {[string match -nocase $famil "versal"]} {
+		if {[string match -nocase $family "versal"]} {
 			pldt append $node compatible "\ \, \"xlnx,axi-pcie-host-1.00.a\""
 		}
 		if {[string match -nocase [get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "xdma"]} {

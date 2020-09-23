@@ -285,7 +285,7 @@ proc gen_sata_laneinfo {} {
 proc gen_ext_axi_interface {}  {
 	set family [get_hw_family]
 	if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
-		set ext_axi_intf [get_mem_ranges -of_objects [get_cells -hier [get_sw_processor]] -filter {INSTANCE ==""}]
+		set ext_axi_intf [get_mem_ranges -of_objects [hsi::get_cells -hier [get_sw_processor]] -filter {INSTANCE ==""}]
 		if {[regexp "ps._*" "$ext_axi_intf" match]} {
 			return 0
 		}

@@ -54,7 +54,7 @@ namespace eval axi_qspi {
 			add_prop $node "xlnx,slaveonly" $value int "pl.dtsi"
 		}
 		set_drv_conf_prop $drv_handle "C_TYPE_OF_AXI4_INTERFACE" "xlnx,axi-interface" int
-		set value [get_property CONFIG.C_S_AXI4_BASEADDR [get_cells -hier $drv_handle]]
+		set value [get_property CONFIG.C_S_AXI4_BASEADDR [hsi::get_cells -hier $drv_handle]]
 		if {[llength $value] == 0} {
 			add_prop $node "xlnx,Axi4-address" 0 int "pl.dtsi"
 		} else {

@@ -39,7 +39,7 @@ namespace eval ernic {
 			dtg_warning "$drv_handle connected ip is NULL for the pin $intf"
 			return 0
 		}
-		set iptype [get_property IP_NAME [get_cells -hier $connected_ip]]
+		set iptype [get_property IP_NAME [hsi::get_cells -hier $connected_ip]]
 		if {[string match -nocase $iptype "axis_data_fifo"] } {
 			set dma_pin "M_AXIS"
 			get_connected_ip $connected_ip $dma_pin

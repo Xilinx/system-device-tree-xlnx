@@ -304,7 +304,7 @@ set rxethmem 0
 		    set intr_parent [string trimleft $intr_parent "<"]
 		    set intr_parent [string trimleft $intr_parent "&"]
 #		    set intr_parent [get_property CONFIG.interrupt-parent $target_handle]
-		    set int_names  [pldt get $node interrupt-names]
+		    set int_names  [pldt get $ipnode interrupt-names]
 		    if { $hasbuf == "true" && $ip_name == "axi_ethernet"} {
 			set intr_val1 [pldt get $node interrupts]
 			lappend intr_val1 $intr_val
@@ -315,7 +315,7 @@ set rxethmem 0
 		    }
 
 		     set default_dts "pl.dtsi"
-		    set node [create_node -n "&$drv_handle" -d "pcw.dtsi" -p root]
+		    set nodep [create_node -n "&$drv_handle" -d "pcw.dtsi" -p root]
 		    if {![string_is_empty $intr_parent]} {
 #			if { $hasbuf == "true" && $ip_name == "axi_ethernet"} {
 #			    regsub -all "\{||\t" $intr_val1 {} intr_val1
@@ -334,12 +334,12 @@ set rxethmem 0
                        if { $hasbuf == "true" && $ip_name == "axi_ethernet"} {
                                regsub -all "\{||\t" $intr_val1 {} intr_val1
                                regsub -all "\}||\t" $intr_val1 {} intr_val1
-                               add_prop "${node}" "interrupts" $intr_val1 int $dts_file
+                               add_prop "${nodep}" "interrupts" $intr_val1 int "pcw.dtsi"
                        } else {
-                               add_prop "${node}" "interrupts" $intr_val int $dts_file
+                               add_prop "${nodep}" "interrupts" $intr_val int "pcw.dtsi"
                        }
-                       add_prop "${node}" "interrupt-parent" $intr_parent reference $dts_file
-                       add_prop "${node}" "interrupt-names" $intr_names stringlist $dts_file
+                       add_prop "${nodep}" "interrupt-parent" $intr_parent reference "pcw.dtsi"
+                       add_prop "${nodep}" "interrupt-names" $intr_names stringlist "pcw.dtsi"
                }
 			
 		    }

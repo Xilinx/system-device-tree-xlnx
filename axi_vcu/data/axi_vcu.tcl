@@ -53,7 +53,7 @@ namespace eval axi_vcu {
 
 	    # Generate child encoder
 	    set ver [get_ipdetails $drv_handle "ver"]
-	    set encoder_enable [get_property CONFIG.ENABLE_ENCODER [get_cells -hier $drv_handle]]
+	    set encoder_enable [get_property CONFIG.ENABLE_ENCODER [hsi::get_cells -hier $drv_handle]]
 	    if {[string match -nocase $encoder_enable "TRUE"]} {
 		    set encoder_node [create_node -l "encoder" -n "al5e" -u $baseaddr -p $node -d $dts_file]
 		    set encoder_comp "al,al5e-${ver}"
@@ -64,7 +64,7 @@ namespace eval axi_vcu {
 		    add_prop "${encoder_node}" "interrupts" $intr_val intlist $dts_file
 		    add_prop "${encoder_node}" "interrupt-parent" $intr_parent reference  $dts_file
 	    }
-	    set decoder_enable [get_property CONFIG.ENABLE_DECODER [get_cells -hier $drv_handle]]
+	    set decoder_enable [get_property CONFIG.ENABLE_DECODER [hsi::get_cells -hier $drv_handle]]
 	    if {[string match -nocase $decoder_enable "TRUE"]} {
 		    # Fenerate child decoder
 		    set decoder_offset 0x20000
