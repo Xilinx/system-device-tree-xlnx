@@ -21,15 +21,21 @@ namespace eval ai_engine {
 		if {$node == 0} {
 			return
 		}
-		set keyval [pldt append $node compatible "\ \, \"xlnx,ai_engine\""]	
+		set keyval [pldt append $node compatible "\ \, \"xlnx,ai_engine-v1.0\""]	
 		set intr_names "interrupt1"
-		set intr_num "<0x0 0x94 0x1>, <0x0 0x95 0x1>, <0x0 0x96 0x1>"
+		set intr_num "0x0 0x94 0x1"
 		set power_domain "<&versal_firmware 0x18224072>"
 		add_prop $node "interrupt-names" $intr_names stringlist "pl.dtsi"
-		set keyval [pldt append $node "interrupt-names" "\ \, \"interrupt2\""]	
-		set keyval [pldt append $node "interrupt-names" "\ \, \"interrupt3\""]	
 		add_prop $node "interrupts" $intr_num intlist "pl.dtsi"
 		add_prop $node "power-domains" $power_domain intlist "pl.dtsi"
+		add_prop $node "#address-cells" 2 intlist "pl.dtsi"
+		add_prop $node "#size-cells" 2 intlist "pl.dtsi"
+		# Add one AI engine partition child node
+	       	set ai_part_id 0
+       		set ai_part_nid 1
+       		set ai_part_node [create_node -n "aie_partition" -u "${ai_part_id}" -l "aie_partition${ai_part_id}" -p ${node} -d "pl.dtsi"]
+       		add_prop "${ai_part_node}" "reg" "0 0 50 9" intlist "pl.dtsi"
+       		add_prop "${ai_part_node}" "xlnx,partition-id" "${ai_part_nid}" intlist "pl.dtsi"
 		#set dt_overlay [get_property CONFIG.dt_overlay [get_os]]
 		set dt_overlay ""
 	       	if {$dt_overlay} {
@@ -43,9 +49,5 @@ namespace eval ai_engine {
 		} else {
 		       	       set bus_node "amba_pl"
        		}
-		set aie_npi_node [create_node -n "aie-npi" -l aie_npi -u f70a0000 -d "pl.dtsi" -p "amba_pl: amba_pl"]
-		add_prop $aie_npi_node "compatible" "xlnx,ai-engine-npi" stringlist "pl.dtsi"
-		set aie_npi_reg "<0x0 0xf70a0000 0x0 0x1000>"
-		add_prop $aie_npi_node reg $aie_npi_reg intlist "pl.dtsi"
 	}
 }
