@@ -22,6 +22,9 @@ namespace eval axi_pcie {
 		if {$node == 0} {
 			return
 		}
+		add_prop $node "#address-cells" 3 int "pl.dtsi"
+		add_prop $node "#size-cells" 2 int "pl.dtsi"
+		add_prop $node "#interrupt-cells" 1 int "pl.dtsi"
 		if {[string match -nocase [get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "xdma"]} {
 			set axibar_num [get_ip_property $drv_handle "CONFIG.axibar_num"]
 		} else {
@@ -125,12 +128,12 @@ namespace eval axi_pcie {
 				}
 			}
 
-			add_prop $node reg $reg hexlist "pl.dtsi"
+			add_prop $node reg $reg hexlist "pl.dtsi" 1
 		} else {
 			set baseaddr [get_ip_property $drv_handle CONFIG.BASEADDR]
 			set highaddr [get_ip_property $drv_handle CONFIG.HIGHADDR]
 			set size [format 0x%X [expr $highaddr -$baseaddr + 1]]
-			add_prop $node reg "$baseaddr $size" hexlist "pl.dtsi"
+			add_prop $node reg "$baseaddr $size" hexlist "pl.dtsi" 1
 		}
 	}
 
@@ -181,7 +184,7 @@ namespace eval axi_pcie {
 			       <0 0 0 4 &psv_pcie_intc_${psv_pcieintc_cnt} 4"
 		       incr psv_pcieintc_cnt
 		       set intr_names "misc msi0 msi1"
-		       set_drv_prop $drv_handle "interrupt-names" $intr_names stringlist
+			add_prop $node "interrupt-names" $intr_names stringlist "pl.dtsi" 1
 		} else {
 		       set pcieintc_cnt [get_count "pci_intc_cnt"]
 		       set pcie_child_intc_node [create_node -l "pcie_intc_${pcieintc_cnt}" -n interrupt-controller -p $node -d "pl.dtsi"]

@@ -6,6 +6,8 @@
  *
  * Michal Simek <michal.simek@xilinx.com>
  */
+#include "include/dt-bindings/clock/xlnx-versal-clk.h"
+#include "include/dt-bindings/power/xlnx-versal-power.h"
 
 / {
 	pl_alt_ref_clk: pl_alt_ref_clk {
@@ -236,7 +238,7 @@
 &ttc3 {
        clocks = <&versal_clk TTC3>, <&versal_clk LPD_LSBUS>;
        power-domains = <&versal_firmware PM_DEV_TTC_3>;
-}
+};
 
 &usb0 {
 	clocks = <&versal_clk USB0_BUS_REF>, <&versal_clk USB3_DUAL_REF>;

@@ -38,8 +38,8 @@ namespace eval tpg {
 		add_prop "${node}" "xlnx,max-width" $max_cols int $dts_file
 		set max_rows [get_property CONFIG.MAX_ROWS [hsi::get_cells -hier $drv_handle]]
 		add_prop "${node}" "xlnx,max-height" $max_rows int $dts_file
-
-		if {[string match -nocase $proctype "ps7_cortexa9"]} {
+		set proctype [get_hw_family]
+		if {[string match -nocase $proctype "zynq"]} {
 	                # Workaround for issue (TBF)
 			return
         	}

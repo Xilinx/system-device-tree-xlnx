@@ -596,7 +596,7 @@ proc create_node args {
 		}
 		Pop args
 	}
-	set ignore_list "clk_wiz xlconcat xlconstant util_vector_logic xlslice util_ds_buf proc_sys_reset axis_data_fifo v_vid_in_axi4s bufg_gt axis_tdest_editor util_reduced_logic"
+	set ignore_list "clk_wiz xlconcat xlconstant util_vector_logic xlslice util_ds_buf proc_sys_reset axis_data_fifo v_vid_in_axi4s bufg_gt axis_tdest_editor util_reduced_logic gt_quad_base"
 	set temp [lsearch $ignore_list $node_name]
 	if {[string match -nocase $node_unit_addr ""] && $temp >= 0} {
 		set val_lab [string match -nocase $node_label ""]
@@ -1493,6 +1493,7 @@ proc get_drivers args {
 	dict set driverlist axi_pcie driver axi_pcie
 	dict set driverlist axi_pcie3 driver axi_pcie
 	dict set driverlist xdma driver axi_pcie
+	dict set driverlist pcie_dma_versal driver axi_pcie
 	dict set driverlist axi_perf_mon driver axi_perf_mon
 	dict set driverlist axi_quad_spi driver axi_qspi
 	dict set driverlist axi_sysace driver axi_sysace
