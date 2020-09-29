@@ -30,7 +30,12 @@ set rxethmem 0
 		if {$node == 0} {
 			return
 		}
-
+		 set hw_design [hsi::current_hw_design]
+    		set board_name ""
+    		if {[llength $hw_design]} {
+        		set board [split [get_property BOARD $hw_design] ":"]
+        		set board_name [lindex $board 1]
+    		}
 	    global rxethmem
 	    set rxethmem 0
 	    set dts_file [set_drv_def_dts $drv_handle]
@@ -220,6 +225,9 @@ set rxethmem 0
 
 
 	    set phytype [string tolower [get_property CONFIG.PHY_TYPE $eth_ip]]
+	    if {$phytype == "rgmii" && $board_name == "kc705"} {
+        	set phytype "rgmii-rxid"
+    	    }
 #	    set_property phy-mode "$phytype" $drv_handle
 	    if {![string match -nocase $phytype ""]} {
 	    add_prop $node phy-mode "$phytype" string $dts_file
