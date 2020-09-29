@@ -1,4 +1,4 @@
-#
+o#
 # (C) Copyright 2020 Xilinx, Inc.
 #
 # This program is free software; you can redistribute it and/or
@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval crl_apb {
+namespace eval ::tclapp::xilinx::devicetree::crl_apb {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 	    set dts_file [set_drv_def_dts $drv_handle]
 	    set node [create_node -n "&zynqmp_reset" -d $dts_file -p root "pcw.dtsi"]

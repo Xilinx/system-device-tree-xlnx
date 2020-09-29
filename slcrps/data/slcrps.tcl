@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval slcrps {
+namespace eval ::tclapp::xilinx::devicetree::slcrps {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 
 	    set node [get_node $drv_handle]

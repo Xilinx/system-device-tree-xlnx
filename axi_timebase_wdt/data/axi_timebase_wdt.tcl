@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval axi_timebase_wdt {
+namespace eval ::tclapp::xilinx::devicetree::axi_timebase_wdt {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		global env
 		global dtsi_fname

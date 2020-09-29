@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval psu_ocm {
+namespace eval ::tclapp::xilinx::devicetree::psu_ocm {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set r5 0
 		set a53 0

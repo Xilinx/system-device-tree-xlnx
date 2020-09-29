@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval pr_decoupler {
+namespace eval ::tclapp::xilinx::devicetree::pr_decoupler {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 proc generate {drv_handle} {
 }
 }

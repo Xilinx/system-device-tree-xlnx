@@ -17,7 +17,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval cpu {
+namespace eval ::tclapp::xilinx::devicetree::cpu {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 	    set node [get_node $drv_handle]
 	    set dts_file [set_drv_def_dts $drv_handle]
@@ -32,14 +33,14 @@ namespace eval cpu {
 		add_prop $node "timebase-frequency" int $dts_file
 	    }
 
-	    set icache_size [hsi::utils::get_ip_param_value $ip "C_CACHE_BYTE_SIZE"]
-	    set icache_base [hsi::utils::get_ip_param_value $ip "C_ICACHE_BASEADDR"]
-	    set icache_high [hsi::utils::get_ip_param_value $ip "C_ICACHE_HIGHADDR"]
-	    set dcache_size [hsi::utils::get_ip_param_value $ip "C_DCACHE_BYTE_SIZE"]
-	    set dcache_base [hsi::utils::get_ip_param_value $ip "C_DCACHE_BASEADDR"]
-	    set dcache_high [hsi::utils::get_ip_param_value $ip "C_DCACHE_HIGHADDR"]
-	    set icache_line_size [expr 4*[hsi::utils::get_ip_param_value $ip "C_ICACHE_LINE_LEN"]]
-	    set dcache_line_size [expr 4*[hsi::utils::get_ip_param_value $ip "C_DCACHE_LINE_LEN"]]
+	    set icache_size [get_ip_param_value $ip "C_CACHE_BYTE_SIZE"]
+	    set icache_base [get_ip_param_value $ip "C_ICACHE_BASEADDR"]
+	    set icache_high [get_ip_param_value $ip "C_ICACHE_HIGHADDR"]
+	    set dcache_size [get_ip_param_value $ip "C_DCACHE_BYTE_SIZE"]
+	    set dcache_base [get_ip_param_value $ip "C_DCACHE_BASEADDR"]
+	    set dcache_high [get_ip_param_value $ip "C_DCACHE_HIGHADDR"]
+	    set icache_line_size [expr 4*[get_ip_param_value $ip "C_ICACHE_LINE_LEN"]]
+	    set dcache_line_size [expr 4*[get_ip_param_value $ip "C_DCACHE_LINE_LEN"]]
 
 
 	    if { [llength $icache_size] != 0 } {
@@ -55,7 +56,7 @@ namespace eval cpu {
 		add_prop $node "d-cache-line-size" $dcache_line_size int $dts_file
 
 	    }
-	    set model "[get_property IP_NAME $ip],[hsi::utils::get_ip_version $ip]"
+	    set model "[get_property IP_NAME $ip],[get_ip_version $ip]"
 	    add_prop $node "model" $model string $dts_file
 	    set_drv_conf_prop $drv_handle C_FAMILY "xlnx,family" string
 	    # create root node

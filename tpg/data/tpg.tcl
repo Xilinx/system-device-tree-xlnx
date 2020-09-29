@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval tpg {
+namespace eval ::tclapp::xilinx::devicetree::tpg {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		global end_mappings
 		global remo_mappings
@@ -52,7 +53,7 @@ namespace eval tpg {
                 add_prop "$port1_node" "xlnx,video-format" 12 int $dts_file
                 add_prop "$port1_node" "xlnx,video-width" $max_data_width int $dts_file
 
-		set connect_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "S_AXIS_VIDEO"]
+		set connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "S_AXIS_VIDEO"]
 		if {![llength $connect_ip]} {
 			dtg_warning "$drv_handle pin S_AXIS_VIDEO is not connected..check your design"
 		}
@@ -80,7 +81,7 @@ namespace eval tpg {
 			}
 		}
 
-               set connect_out_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "M_AXIS_VIDEO"]
+               set connect_out_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "M_AXIS_VIDEO"]
                if {![llength $connect_out_ip]} {
                        dtg_warning "$drv_handle pin M_AXIS_VIDEO is not connected ...check your design"
                }

@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval ocmps {
+namespace eval ::tclapp::xilinx::devicetree::ocmps {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 proc generate {drv_handle} {
 }
 }

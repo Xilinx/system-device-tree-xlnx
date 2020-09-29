@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval nandps {
+namespace eval ::tclapp::xilinx::devicetree::nandps {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc ns_to_cycle {drv_handle prop_name nand_cycle_time} {
 	    return [expr [get_property CONFIG.$prop_name [hsi::get_cells -hier $drv_handle]]/${nand_cycle_time}]
 	}

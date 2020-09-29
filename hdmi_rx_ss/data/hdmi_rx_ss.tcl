@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval hdmi_rx_ss {
+namespace eval ::tclapp::xilinx::devicetree::hdmi_rx_ss {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set node [get_node $drv_handle]
 		set dts_file [set_drv_def_dts $drv_handle]
@@ -27,7 +28,7 @@ namespace eval hdmi_rx_ss {
 		add_prop "$port_node" "xlnx,video-format" 0 int $dts_file
 		add_prop "$port_node" "xlnx,video-width" 10 int $dts_file
 		add_prop "$port_node" "reg" 0 int $dts_file
-		set outip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "VIDEO_OUT"]
+		set outip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "VIDEO_OUT"]
 		if {[llength $outip]} {
 			if {[string match -nocase [get_property IP_NAME $outip] "axis_broadcaster"]} {
 				set hdmirxnode [create_node -n "endpoint" -l hdmirx_out$drv_handle -p $port_node -d $dts_file]

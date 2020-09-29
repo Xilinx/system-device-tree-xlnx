@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval demosaic {
+namespace eval ::tclapp::xilinx::devicetree::demosaic {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set node [get_node $drv_handle]
 		set dts_file [set_drv_def_dts $drv_handle]
@@ -34,7 +35,7 @@ namespace eval demosaic {
 		add_prop "$port1_node" "reg" 1 int $dts_file 1
 		add_prop "$port1_node" "xlnx,cfa-pattern" rggb string $dts_file 1
 
-		set outip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "m_axis_video"]
+		set outip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "m_axis_video"]
 		foreach ip $outip {
 			if {[llength $ip]} {
                         set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]

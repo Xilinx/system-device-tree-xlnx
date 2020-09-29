@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval cpu_cortexr5 {
+namespace eval ::tclapp::xilinx::devicetree::cpu_cortexr5 {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set nr [string index $drv_handle end]
 		set dts_file [set_drv_def_dts $drv_handle]

@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval usbps {
+namespace eval ::tclapp::xilinx::devicetree::usbps {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 	    ps7_reset_handle $drv_handle CONFIG.C_USB_RESET CONFIG.usb-reset
 		set proctype [get_hw_family]

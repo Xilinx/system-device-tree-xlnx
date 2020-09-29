@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval hdmi_tx_ss {
+namespace eval ::tclapp::xilinx::devicetree::hdmi_tx_ss {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set node [get_node $drv_handle]
 		set dts_file [set_drv_def_dts $drv_handle]
@@ -26,7 +27,7 @@ namespace eval hdmi_tx_ss {
 		add_prop "${node}" "xlnx,max-bits-per-component" $max_bits_per_component int $dts_file
 		set phy_names ""
 		set phys ""
-		set link_data0 [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "LINK_DATA0_OUT"]
+		set link_data0 [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "LINK_DATA0_OUT"]
 		if {[llength $link_data0]} {
 			set link_data0 [get_property IP_NAME $link_data0]
 			if {[string match -nocase $link_data0 "vid_phy_controller"] || [string match -nocase $link_data0 "hdmi_gt_controller"]} {
@@ -36,7 +37,7 @@ namespace eval hdmi_tx_ss {
 		} else {
 			dtg_warning "connected stream of LINK_DATA0_IN is NULL...check the design"
 		}
-		set link_data1 [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "LINK_DATA1_OUT"]
+		set link_data1 [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "LINK_DATA1_OUT"]
 		if {[llength $link_data1]} {
 			set link_data1 [get_property IP_NAME $link_data1]
 			if {[string match -nocase $link_data1 "vid_phy_controller"] || [string match -nocase $link_data1 "hdmi_gt_controller"]} {
@@ -46,7 +47,7 @@ namespace eval hdmi_tx_ss {
 		} else {
 			dtg_warning "Connected stream of LINK_DATA1_IN is NULL...check the design"
 		}
-		set link_data2 [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "LINK_DATA2_OUT"]
+		set link_data2 [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "LINK_DATA2_OUT"]
 		if {[llength $link_data2]} {
 			set link_data2 [get_property IP_NAME $link_data2]
 			if {[string match -nocase $link_data2 "vid_phy_controller"] || [string match -nocase $link_data2 "hdmi_gt_controller"]} {
@@ -75,11 +76,11 @@ namespace eval hdmi_tx_ss {
 			add_prop "${node}" "xlnx,hdcp-authenticate" 0x1 int $dts_file
 			add_prop "${node}" "xlnx,hdcp-encrypt" 0x1 int $dts_file
 		}
-		set audio_in_connect_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "AUDIO_IN"]
+		set audio_in_connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "AUDIO_IN"]
 		if {[llength $audio_in_connect_ip] != 0} {
 			set audio_in_connect_ip_type [get_property IP_NAME $audio_in_connect_ip]
 			if {[string match -nocase $audio_in_connect_ip_type "axis_switch"]} {
-				set connected_ip [hsi::utils::get_connected_stream_ip $audio_in_connect_ip "S00_AXIS"]
+				set connected_ip [get_connected_stream_ip $audio_in_connect_ip "S00_AXIS"]
 				if {[llength $connected_ip] != 0} {
 					add_prop "$node" "xlnx,snd-pcm" $connected_ip reference $dts_file
 					add_prop "${node}" "xlnx,audio-enabled" "" boolean $dts_file

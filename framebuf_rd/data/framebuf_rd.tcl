@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval framebuf_rd {
+namespace eval ::tclapp::xilinx::devicetree::framebuf_rd {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 
 		set node [get_node $drv_handle]

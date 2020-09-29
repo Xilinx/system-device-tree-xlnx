@@ -11,7 +11,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
-namespace eval prc {
+namespace eval ::tclapp::xilinx::devicetree::prc {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 proc generate {drv_handle} {
 	prc_generate_params $drv_handle
 }

@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval iomodule {
+namespace eval ::tclapp::xilinx::devicetree::iomodule {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set node [get_node $drv_handle]
 		set slave [hsi::get_cells -hier $drv_handle]
@@ -21,7 +22,7 @@ namespace eval iomodule {
 		set default_dts [set_drv_def_dts $drv_handle]
 		set bus_node [add_or_get_bus_node $slave $default_dts]
 		for {set i 1} {$i < 5} {incr i} {
-			set val [hsi::utils::get_ip_param_value $slave "C_USE_PIT${i}"]
+			set val [get_ip_param_value $slave "C_USE_PIT${i}"]
 			if {[string match -nocase $pit_used ""]} {
 				set pit_used $val
 			} else {
@@ -33,7 +34,7 @@ namespace eval iomodule {
 		set pit_size ""
 		set pit_mask ""
 		for {set i 1} {$i < 5} {incr i} {
-			set val [hsi::utils::get_ip_param_value $slave "C_PIT${i}_SIZE"]
+			set val [get_ip_param_value $slave "C_PIT${i}_SIZE"]
 			set msk_val [expr pow(2, $val) - 1]
 			set msk_val [format "%.0f" $msk_val]
 			set msk_val [format "0x%08X" $msk_val]
@@ -53,7 +54,7 @@ namespace eval iomodule {
 
 		set pit_prescaler ""
 		for {set i 1} {$i < 5} {incr i} {
-			set val [hsi::utils::get_ip_param_value $slave "C_PIT${i}_PRESCALER"]
+			set val [get_ip_param_value $slave "C_PIT${i}_PRESCALER"]
 			if {[string match -nocase $pit_prescaler ""]} {
 				set pit_prescaler $val
 			} else {
@@ -64,7 +65,7 @@ namespace eval iomodule {
 
 		set pit_readable ""
 		for {set i 1} {$i < 5} {incr i} {
-			set val [hsi::utils::get_ip_param_value $slave "C_PIT${i}_READABLE"]
+			set val [get_ip_param_value $slave "C_PIT${i}_READABLE"]
 			if {[string match -nocase $pit_readable ""]} {
 				set pit_readable $val
 			} else {
@@ -75,7 +76,7 @@ namespace eval iomodule {
 
 		set gpo_init ""
 		for {set i 1} {$i < 5} {incr i} {
-			set val [hsi::utils::get_ip_param_value $slave "C_GPO${i}_INIT"]
+			set val [get_ip_param_value $slave "C_GPO${i}_INIT"]
 			if {[string match -nocase $gpo_init ""]} {
 				set gpo_init $val
 			} else {
@@ -88,11 +89,11 @@ namespace eval iomodule {
 		foreach param $param_list {
 	#		ip2drv_prop $drv_handle "CONFIG.$param"
 		}
-		set val [hsi::utils::get_ip_param_value $slave "C_FREQ"]
+		set val [get_ip_param_value $slave "C_FREQ"]
 		add_prop $node "xlnx,clock-freq" $val int $default_dts
-		set val [hsi::utils::get_ip_param_value $slave "C_INTC_INTR_SIZE"]
+		set val [get_ip_param_value $slave "C_INTC_INTR_SIZE"]
 		add_prop $node "xlnx,max-intr-size" $val int $default_dts
 		add_prop $node "xlnx,options" 1 int $default_dts
-		set val [hsi::utils::get_ip_param_value $slave "C_INTC_BASE_VECTORS"]
+		set val [get_ip_param_value $slave "C_INTC_BASE_VECTORS"]
 	}
 }

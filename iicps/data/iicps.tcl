@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval iicps {
+namespace eval ::tclapp::xilinx::devicetree::iicps {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 proc generate {drv_handle} {
 
     ps7_reset_handle $drv_handle CONFIG.C_I2C_RESET CONFIG.i2c-reset

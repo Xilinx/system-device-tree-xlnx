@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval scugic {
+namespace eval ::tclapp::xilinx::devicetree::scugic {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 proc generate {drv_handle} {
 }
 }

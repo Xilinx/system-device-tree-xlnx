@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval i2s_receiver {
+namespace eval ::tclapp::xilinx::devicetree::i2s_receiver {
+	namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set node [get_node $drv_handle]
 		set dts_file [set_drv_def_dts $drv_handle]
@@ -33,14 +34,14 @@ namespace eval i2s_receiver {
 			set freq [get_property CLK_FREQ $clk]
 			add_prop $node "aud_mclk" "$freq" int $dts_file
 		}
-		set connect_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "M_AXIS_AUD"]
+		set connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "M_AXIS_AUD"]
 		if {![llength $connect_ip]} {
 			dtg_warning "$drv_handle pin M_AXIS_AUD is not connected... check your design"
 		}
 		if {[llength $connect_ip]} {
 			set connect_ip_type [get_property IP_NAME $connect_ip]
 			if {[string match -nocase $connect_ip_type "axis_switch"]} {
-				set connected_ip [hsi::utils::get_connected_stream_ip $connect_ip "M00_AXIS"]
+				set connected_ip [get_connected_stream_ip $connect_ip "M00_AXIS"]
 				if {![llength $connected_ip]} {
 					dtg_warning "$connect_ip pin M00_AXIS is not connected... check your design"
 				}

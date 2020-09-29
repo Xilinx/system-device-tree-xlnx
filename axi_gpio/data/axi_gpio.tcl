@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval axi_gpio {
+namespace eval ::tclapp::xilinx::devicetree::axi_gpio {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		global env
 		global dtsi_fname

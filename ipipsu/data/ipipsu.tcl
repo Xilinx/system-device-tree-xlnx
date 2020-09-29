@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval ipipsu {
+namespace eval ::tclapp::xilinx::devicetree::ipipsu {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		if {0} {
 	    foreach i [get_sw_cores device_tree] {
@@ -43,7 +44,7 @@ namespace eval ipipsu {
 	    } else {
 		set default_dts [get_property CONFIG.pcw_dts [get_os]]
 		set node [add_or_get_dt_node -n "&$drv_handle" -d $default_dts]
-		hsi::utils::add_new_dts_param "$node" "status" "okay" string
+		add_new_dts_param "$node" "status" "okay" string
 	    }
 	}
 	}

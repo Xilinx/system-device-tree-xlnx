@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval mipi_dsi_tx {
+namespace eval ::tclapp::xilinx::devicetree::mipi_dsi_tx {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set node [get_node $drv_handle]
 		set dts_file [set_drv_def_dts $drv_handle]
@@ -35,7 +36,7 @@ namespace eval mipi_dsi_tx {
 			add_prop "$node" "xlnx,dsi-data-type" 3 int $dts_file
 		}
 		set panel_node [create_node -n "simple_panel" -l simple_panel$drv_handle -u 0 -p $node -d $dts_file]
-# 		hsi::utils::add_new_dts_param "${panel_node}" "/* User needs to add the panel node based on their requirement */" "" comment
+# 		add_new_dts_param "${panel_node}" "/* User needs to add the panel node based on their requirement */" "" comment
 		add_prop "$panel_node" "reg" 0 int $dts_file
 		add_prop "$panel_node" "compatible" "auo,b101uan01" string $dts_file
 	}

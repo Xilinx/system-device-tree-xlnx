@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval canfdps {
+namespace eval ::tclapp::xilinx::devicetree::canfdps {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 proc generate {drv_handle} {
 }
 }

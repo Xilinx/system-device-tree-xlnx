@@ -17,7 +17,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval axi_ethernet { 
+namespace eval ::tclapp::xilinx::devicetree::axi_ethernet { 
+namespace import ::tclapp::xilinx::devicetree::common::\*
 set rxethmem 0
 
 	proc generate {drv_handle} {
@@ -78,7 +79,7 @@ set rxethmem 0
 	    if { [llength $intf] } {
 		set intf_net [hsi::get_intf_nets -of_objects $intf ]
 		if { [llength $intf_net]  } {
-		    set target_intf [hsi::utils::get_other_intf_pin $intf_net $intf]
+		    set target_intf [get_other_intf_pin $intf_net $intf]
 		    if { [llength $target_intf] } {
 			set connected_ip [get_connectedip $intf]
 			
@@ -173,7 +174,7 @@ set rxethmem 0
 		set phytype [get_property CONFIG.PHY_TYPE $eth_ip]
 		set phytype [get_phytype $phytype]
 		set phyaddr [get_property CONFIG.PHYADDR $eth_ip]
-		set phyaddr [::hsi::utils::convert_binary_to_decimal $phyaddr]
+		set phyaddr [convert_binary_to_decimal $phyaddr]
 		set rxmem [get_property CONFIG.RXMEM $eth_ip]
 		set rxmem [get_memrange $rxmem]
 		add_prop $node "xlnx,txcsum" $txcsum hex $dts_file
@@ -473,7 +474,7 @@ set rxethmem 0
 
 	proc pcspma_phy_node {slave} {
 		set phyaddr [get_property CONFIG.PHYADDR $slave]
-		set phyaddr [hsi::utils::convert_binary_to_decimal $phyaddr]
+		set phyaddr [convert_binary_to_decimal $phyaddr]
 		set phymode "phy$phyaddr"
 
 		return "$phyaddr $phymode"
@@ -600,7 +601,7 @@ set rxethmem 0
 	   set target_periph ""
 	   foreach p2p_busif $p2p_busifs_i {
 	      set busif_name [string toupper [get_property NAME  $p2p_busif]]
-	      set conn_busif_handle [hsi::utils::get_connected_intf $ip $busif_name]
+	      set conn_busif_handle [get_connected_intf $ip $busif_name]
 	      if {[string_is_empty $conn_busif_handle] != 0} {
 		  continue
 	      }
@@ -625,7 +626,7 @@ set rxethmem 0
 		  }
 		  set intf [hsi::get_intf_pins -of_objects $cell_name $master_intf]
 		  set intf_net [hsi::get_intf_nets -of_objects $intf]
-		  set intf_pins [hsi::utils::get_other_intf_pin $intf_net $intf]
+		  set intf_pins [get_other_intf_pin $intf_net $intf]
 		  foreach intf $intf_pins {
 		      set target_intf [hsi::get_intf_pins -of_objects $intf_net -filter "TYPE==TARGET" $intf]
 		      if {[llength $target_intf]} {
@@ -657,7 +658,7 @@ set rxethmem 0
 	      set connected_ip ""
 	      set intf_net [hsi::get_intf_nets -of_objects $intf ]
 	      if { [llength $intf_net]  } {
-		 set target_intf [hsi::utils::get_other_intf_pin $intf_net $intf]
+		 set target_intf [get_other_intf_pin $intf_net $intf]
 		 if { [llength $target_intf] } {
 		    set connected_ip [hsi::get_cells -of_objects $target_intf]
 		    if {[llength $connected_ip]} {
@@ -752,7 +753,7 @@ set rxethmem 0
 		       set reg "$base $size"
 	       }
 	       add_prop $node "reg" $reg hexlist "pl.dtsi"
-	#       hsi::utils::add_new_dts_param "${node}" "reg" $reg inthexlist
+	#       add_new_dts_param "${node}" "reg" $reg inthexlist
 	}
 
 	proc gen_drv_prop_eth_ip {drv_handle ipname} {
@@ -782,7 +783,7 @@ set rxethmem 0
 			     }
 			     set node [get_node $drv_handle]
 			     add_prop $node "$drv_prop_name" $value $type "pl.dtsi"
-	#                     hsi::utils::add_new_dts_param "$ip_name" "$drv_prop_name" $value $type
+	#                     add_new_dts_param "$ip_name" "$drv_prop_name" $value $type
 			     return 0
 		       }
 		}

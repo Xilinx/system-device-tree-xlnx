@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval mipi_csi2_rx { 
+namespace eval ::tclapp::xilinx::devicetree::mipi_csi2_rx { 
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set node [get_node $drv_handle]
 		set dts_file [set_drv_def_dts $drv_handle]
@@ -62,14 +63,14 @@ namespace eval mipi_csi2_rx {
 
 		set port1_node [create_node -n "port" -l mipi_csi_port1$drv_handle -u 1 -p $ports_node -d $dts_file]
 		add_prop "$port1_node" "reg" 1 int $dts_file
-#        hsi::utils::add_new_dts_param "${port1_node}" "/* Fill cfa-pattern=rggb for raw data types, other fields video-format,video-width user needs to fill */" "" comment
- #       hsi::utils::add_new_dts_param "${port1_node}" "/* User need to add something like remote-endpoint=<&out> under the node csiss_in:endpoint */" "" comment
+#        add_new_dts_param "${port1_node}" "/* Fill cfa-pattern=rggb for raw data types, other fields video-format,video-width user needs to fill */" "" comment
+ #       add_new_dts_param "${port1_node}" "/* User need to add something like remote-endpoint=<&out> under the node csiss_in:endpoint */" "" comment
 	add_prop "$port1_node" "xlnx,video-format" 12 int $dts_file
 	add_prop "$port1_node" "xlnx,video-width" 8 int $dts_file
 	add_prop "$port1_node" "xlnx,cfa-pattern" rggb string $dts_file
         set csiss_rx_node [create_node -n "endpoint" -l mipi_csi_in$drv_handle -p $port1_node -d $dts_file]
 
-	set outip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "VIDEO_OUT"]
+	set outip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "VIDEO_OUT"]
         if {[llength $outip]} {
                 if {[string match -nocase [get_property IP_NAME $outip] "axis_broadcaster"]} {
                         set mipi_node [create_node -n "endpoint" -l mipi_csirx_out$drv_handle -p $port_node -d $dts_file]

@@ -11,7 +11,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval axi_clk_wiz {  
+namespace eval ::tclapp::xilinx::devicetree::axi_clk_wiz {  
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		global env
 		global dtsi_fname

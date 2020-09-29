@@ -11,7 +11,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
-namespace eval ai_engine { 
+namespace eval ::tclapp::xilinx::devicetree::ai_engine { 
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		global env
 		global dtsi_fname
@@ -41,7 +42,7 @@ namespace eval ai_engine {
 		#set dt_overlay [get_property CONFIG.dt_overlay [get_os]]
 		set dt_overlay ""
 	       	if {$dt_overlay} {
-			set RpRm [hsi::utils::get_rp_rm_for_drv $drv_handle]
+			set RpRm [get_rp_rm_for_drv $drv_handle]
 	               regsub -all { } $RpRm "" RpRm
 	       	        if {[llength $RpRm]} {
 	       	                set bus_node "overlay2_$RpRm"

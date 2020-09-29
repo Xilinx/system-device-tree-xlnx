@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval axi_sysace {
+namespace eval ::tclapp::xilinx::devicetree::axi_sysace {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 proc generate {drv_handle} {
 }
 }

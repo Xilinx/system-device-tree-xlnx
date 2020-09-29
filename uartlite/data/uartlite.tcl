@@ -17,7 +17,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval uartlite {
+namespace eval ::tclapp::xilinx::devicetree::uartlite {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set node [get_node $drv_handle]
 		set dts_file [set_drv_def_dts $drv_handle]
@@ -27,7 +28,7 @@ namespace eval uartlite {
 		if { [string match -nocase $ip_type] } {
 		    set_count "console" "ttyUL0,115200"
 		} else {
-		    set count "console" "ttyUL0,[hsi::utils::get_ip_param_value $ip C_BAUDRATE]"
+		    set count "console" "ttyUL0,[get_ip_param_value $ip C_BAUDRATE]"
 		}
 		set avail_param [list_property [hsi::get_cells -hier $drv_handle]]
 		# This check is needed because BAUDRATE parameter for psuart is available from

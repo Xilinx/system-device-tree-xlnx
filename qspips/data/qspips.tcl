@@ -12,12 +12,13 @@
 # GNU General Public License for more details.
 #
 
-namespace eval qspips {
+namespace eval ::tclapp::xilinx::devicetree::qspips {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set node [get_node $drv_handle]
 		set dts_file [set_drv_def_dts $drv_handle]
 		set slave [hsi::get_cells -hier $drv_handle]
-		set qspi_mode [hsi::utils::get_ip_param_value $slave "C_QSPI_MODE"]
+		set qspi_mode [get_ip_param_value $slave "C_QSPI_MODE"]
 		set is_stacked 0
 		if { $qspi_mode == 2} {
 			set is_dual 1

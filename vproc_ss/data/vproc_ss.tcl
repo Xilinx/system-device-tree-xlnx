@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval vproc_ss {
+namespace eval ::tclapp::xilinx::devicetree::vproc_ss {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 
 		set node [get_node $drv_handle]
@@ -64,11 +65,11 @@ namespace eval vproc_ss {
 			add_prop "$ports_node" "#address-cells" 1 int $dts_file 1
 			add_prop "$ports_node" "#size-cells" 0 int $dts_file 1
 			set port1_node [create_node -n "port" -l scaler_port1$drv_handle -u 1 -p $ports_node -d $dts_file]
-			#hsi::utils::add_new_dts_param "${port1_node}" "/* For xlnx,video-format user needs to fill as per their requirement */" "" comment
+			#add_new_dts_param "${port1_node}" "/* For xlnx,video-format user needs to fill as per their requirement */" "" comment
 			add_prop "$port1_node" "reg" 1 int $dts_file 1
 			add_prop "$port1_node" "xlnx,video-format" 3 int $dts_file 1
 			#add_prop "$port1_node" "xlnx,video-width" $max_data_width int $dts_file
-			set scaoutip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "m_axis"]
+			set scaoutip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "m_axis"]
 			if {[llength $scaoutip]} {
 				if {[string match -nocase [get_property IP_NAME $scaoutip] "axis_broadcaster"]} {
 					set sca_node [create_node -n "endpoint" -l sca_out$drv_handle -p $port1_node -d $dts_file]
@@ -149,7 +150,7 @@ namespace eval vproc_ss {
 			add_prop "$port1_node" "reg" 1 int $dts_file
 			add_prop "$port1_node" "xlnx,video-format" 3 int $dts_file
 			#add_prop "$port1_node" "xlnx,video-width" $max_data_width int $dts_file
-			set outip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "m_axis"]
+			set outip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "m_axis"]
 			if {[llength $outip]} {
 				if {[string match -nocase [get_property IP_NAME $outip] "axis_broadcaster"]} {
 					set csc_node [create_node -n "endpoint" -l csc_out$drv_handle -p $port1_node -d $dts_file]

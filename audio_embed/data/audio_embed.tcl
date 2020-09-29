@@ -11,7 +11,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
-namespace eval audio_embed {
+namespace eval ::tclapp::xilinx::devicetree::audio_embed {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set node [get_node $drv_handle]
 		if {$node == 0} {
@@ -19,7 +20,7 @@ namespace eval audio_embed {
 		}
 		set dts_file [set_drv_def_dts $drv_handle]
 		pldt append $node compatible "\ \, \"xlnx,v-uhdsdi-audio-2.0\""
-		set connected_embed_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "SDI_EMBED_ANC_DS_IN"]
+		set connected_embed_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "SDI_EMBED_ANC_DS_IN"]
 		if {[llength $connected_embed_ip] != 0} {
 			set connected_embed_ip_type [get_property IP_NAME $connected_embed_ip]
 			if {[string match -nocase $connected_embed_ip_type "v_smpte_uhdsdi_tx_ss"]} {
@@ -31,19 +32,19 @@ namespace eval audio_embed {
 		} else {
 			dtg_warning "$drv_handle connected_ip is NULL for the pin SDI_EMBED_ANC_DS_IN"
 		}
-		set connected_extract_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "SDI_EXTRACT_ANC_DS_IN"]
+		set connected_extract_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "SDI_EXTRACT_ANC_DS_IN"]
 		if {[llength $connected_extract_ip] != 0} {
 			add_prop "$node" "xlnx,sdi-rx-video" $connected_extract_ip reference $dts_file
 		} else {
 			dtg_warning "$drv_handle connected_extract_ip is NULL for the pin SDI_EXTRACT_ANC_DS_IN"
 		}
-		set connected_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "S_AXIS_DATA"]
+		set connected_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "S_AXIS_DATA"]
 		if {[llength $connected_ip] != 0} {
 			add_prop "$node" "xlnx,snd-pcm" $connected_ip reference $dts_file
 		} else {
 			dtg_warning "$drv_handle connected ip is NULL for the pin S_AXIS_DATA"
 		}
-		set connect_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "M_AXIS_DATA"]
+		set connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "M_AXIS_DATA"]
 		if {[llength $connect_ip] != 0} {
 			add_prop "$node" "xlnx,snd-pcm" $connect_ip reference $dts_file
 		} else {

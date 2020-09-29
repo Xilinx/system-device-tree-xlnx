@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval  generic {
+namespace eval ::tclapp::xilinx::devicetree::generic {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set hsi_version [get_hsi_version]
 		set ver [split $hsi_version "."]

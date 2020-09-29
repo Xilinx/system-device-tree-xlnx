@@ -17,14 +17,15 @@
 # GNU General Public License for more details.
 #
 
-namespace eval intc {
+namespace eval ::tclapp::xilinx::devicetree::intc {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 	    set node [get_node $drv_handle]
 	    set dts_file [set_drv_def_dts $drv_handle]
 	    pldt append $node compatible "\ \, \"xlnx,xps-intc-1.00.a\""
 	    set ip [hsi::get_cells -hier $drv_handle]
-	    set num_intr_inputs [hsi::utils::get_ip_param_value $ip C_NUM_INTR_INPUTS]
-	    set kind_of_intr [hsi::utils::get_ip_param_value $ip C_KIND_OF_INTR]
+	    set num_intr_inputs [get_ip_param_value $ip C_NUM_INTR_INPUTS]
+	    set kind_of_intr [get_ip_param_value $ip C_KIND_OF_INTR]
 	    # Pad to 32 bits - num_intr_inputs
 	    if { $num_intr_inputs != -1 } {
 		set count 0

@@ -16,7 +16,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
-namespace eval axi_emc { 
+namespace eval ::tclapp::xilinx::devicetree::axi_emc { 
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		global env
 		global dtsi_fname
@@ -30,12 +31,12 @@ namespace eval axi_emc {
 
 		set ip [hsi::get_cells -hier $drv_handle]
 		pldt append $node compatible "\ \, \"cfi-flash\""
-		set count [hsi::utils::get_ip_param_value $ip "C_NUM_BANKS_MEM"]
+		set count [get_ip_param_value $ip "C_NUM_BANKS_MEM"]
 		if { [llength $count] == 0 } {
 			set count 1
 		}
 		for {set x 0} { $x < $count} {incr x} {
-			set datawidth [hsi::utils::get_ip_param_value $ip [format "C_MEM%d_WIDTH" $x]]
+			set datawidth [get_ip_param_value $ip [format "C_MEM%d_WIDTH" $x]]
 			add_prop $node "bank-width" [expr ($datawidth/8)] int "pl.dtsi"
 		}
 	}

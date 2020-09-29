@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval axi_vcu {
+namespace eval ::tclapp::xilinx::devicetree::axi_vcu {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 	    # Generate properties required for vcu node
 	    set node [get_node $drv_handle]
@@ -81,7 +82,7 @@ namespace eval axi_vcu {
 	    set clknames "pll_ref aclk vcu_core_enc vcu_core_dec vcu_mcu_enc vcu_mcu_dec"
 	    overwrite_clknames $clknames $drv_handle
 	    set ip [hsi::get_cells -hier $drv_handle]
-	    set pins [hsi::utils::get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $ip] "vcu_resetn"]]
+	    set pins [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $ip] "vcu_resetn"]]
 		foreach pin $pins {
 			set sink_periph [hsi::get_cells -of_objects $pin]
 			if {[llength $sink_periph]} {

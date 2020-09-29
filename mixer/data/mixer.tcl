@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval mixer {
+namespace eval ::tclapp::xilinx::devicetree::mixer {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set node [get_node $drv_handle]
 		set dts_file [set_drv_def_dts $drv_handle]
@@ -40,7 +41,7 @@ namespace eval mixer {
 
 		set mixer_port_node [create_node -n "port" -l crtc_mixer_port$drv_handle -u 0 -p $node -d $dts_file]
 		add_prop "$mixer_port_node" "reg" 0 int $dts_file
-		set mix_outip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "m_axis_video"]
+		set mix_outip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "m_axis_video"]
 		if {![llength $mix_outip]} {
 			dtg_warning "$drv_handle pin m_axis_video is not connected ...check your design"
 		}
@@ -80,7 +81,7 @@ namespace eval mixer {
 						set maxheight [get_property CONFIG.MAX_ROWS [hsi::get_cells -hier $drv_handle]]
 						add_prop "$mixer_node0" "xlnx,layer-max-height" $maxheight int $dts_file
 						add_prop "$mixer_node0" "xlnx,layer-primary" "" boolean $dts_file
-						set connect_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video"]
+						set connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video"]
 						foreach connected_ip $connect_ip {
 						if {[llength $connected_ip] != 0} {
 							set ip_mem_handles [hsi::get_mem_ranges $connected_ip]
@@ -111,7 +112,7 @@ namespace eval mixer {
 					}
 					set layer1_maxwidth [get_property CONFIG.LAYER1_MAX_WIDTH [hsi::get_cells -hier $drv_handle]]
 					add_prop "$mixer_node1" "xlnx,layer-max-width" $layer1_maxwidth int $dts_file
-					set connect_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video1"]
+					set connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video1"]
 					foreach connected_ip $connect_ip {
 						if {[llength $connected_ip]} {
 							set ip_mem_handles [hsi::get_mem_ranges $connected_ip]
@@ -144,7 +145,7 @@ namespace eval mixer {
 					}
 					set layer2_maxwidth [get_property CONFIG.LAYER2_MAX_WIDTH [hsi::get_cells -hier $drv_handle]]
 					add_prop "$mixer_node1" "xlnx,layer-max-width" $layer2_maxwidth int $dts_file
-					set connect_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video2"]
+					set connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video2"]
 					foreach connected_ip $connect_ip {
 						if {[llength $connected_ip]} {
 							set ip_mem_handles [hsi::get_mem_ranges $connected_ip]
@@ -177,7 +178,7 @@ namespace eval mixer {
 					}
 					set layer3_maxwidth [get_property CONFIG.LAYER3_MAX_WIDTH [hsi::get_cells -hier $drv_handle]]
 					add_prop "$mixer_node1" "xlnx,layer-max-width" $layer3_maxwidth int $dts_file
-					set connect_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video3"]
+					set connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video3"]
 					foreach connected_ip $connect_ip {
 					if {[llength $connected_ip]} {
 						set ip_mem_handles [hsi::get_mem_ranges $connected_ip]
@@ -210,7 +211,7 @@ namespace eval mixer {
                                 }
                                 set layer4_maxwidth [get_property CONFIG.LAYER4_MAX_WIDTH [hsi::get_cells -hier $drv_handle]]
                                 add_prop "$mixer_node1" "xlnx,layer-max-width" $layer4_maxwidth int $dts_file
-                                set connect_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video4"]
+                                set connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video4"]
                                 foreach connected_ip $connect_ip {
                                         if {[llength $connected_ip]} {
                                                 set ip_mem_handles [hsi::get_mem_ranges $connected_ip]
@@ -243,7 +244,7 @@ namespace eval mixer {
                                 }
                                 set layer5_maxwidth [get_property CONFIG.LAYER5_MAX_WIDTH [hsi::get_cells -hier $drv_handle]]
                                 add_prop "$mixer_node1" "xlnx,layer-max-width" $layer5_maxwidth int $dts_file
-                                set connect_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video5"]
+                                set connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video5"]
                                 foreach connected_ip $connect_ip {
                                         if {[llength $connected_ip]} {
                                                 set ip_mem_handles [hsi::get_mem_ranges $connected_ip]
@@ -278,7 +279,7 @@ namespace eval mixer {
                                 }
                                 set layer6_maxwidth [get_property CONFIG.LAYER6_MAX_WIDTH [hsi::get_cells -hier $drv_handle]]
                                 add_prop "$mixer_node1" "xlnx,layer-max-width" $layer6_maxwidth int $dts_file
-                                set connect_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video6"]
+                                set connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video6"]
                                 foreach connected_ip $connect_ip {
                                         if {[llength $connected_ip]} {
                                                 set ip_mem_handles [hsi::get_mem_ranges $connected_ip]
@@ -313,7 +314,7 @@ namespace eval mixer {
                                 }
                                 set layer7_maxwidth [get_property CONFIG.LAYER7_MAX_WIDTH [hsi::get_cells -hier $drv_handle]]
                                 add_prop "$mixer_node1" "xlnx,layer-max-width" $layer7_maxwidth int $dts_file
-                                set connect_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video7"]
+                                set connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video7"]
                                 foreach connected_ip $connect_ip {
                                         if {[llength $connected_ip]} {
                                                 set connected_ip_type [get_property IP_NAME $connected_ip]
@@ -341,7 +342,7 @@ namespace eval mixer {
                                 }
                                 set layer8_maxwidth [get_property CONFIG.LAYER8_MAX_WIDTH [hsi::get_cells -hier $drv_handle]]
                                 add_prop "$mixer_node1" "xlnx,layer-max-width" $layer8_maxwidth int $dts_file
-                                set connect_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video8"]
+                                set connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video8"]
                                 foreach connected_ip $connect_ip {
                                         if {[llength $connected_ip]} {
                                                 set connected_ip_type [get_property IP_NAME $connected_ip]
@@ -369,7 +370,7 @@ namespace eval mixer {
                                 }
                                 set layer9_maxwidth [get_property CONFIG.LAYER9_MAX_WIDTH [hsi::get_cells -hier $drv_handle]]
                                 add_prop "$mixer_node1" "xlnx,layer-max-width" $layer9_maxwidth int $dts_file
-                                set connect_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video9"]
+                                set connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video9"]
                                 foreach connected_ip $connect_ip {
                                         if {[llength $connected_ip]} {
                                                 set connected_ip_type [get_property IP_NAME $connected_ip]
@@ -397,7 +398,7 @@ namespace eval mixer {
                                 }
                                 set layer10_maxwidth [get_property CONFIG.LAYER10_MAX_WIDTH [hsi::get_cells -hier $drv_handle]]
                                 add_prop "$mixer_node1" "xlnx,layer-max-width" $layer10_maxwidth int $dts_file
-                                set connect_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video10"]
+                                set connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video10"]
                                 foreach connected_ip $connect_ip {
                                         if {[llength $connected_ip]} {
                                                 set connected_ip_type [get_property IP_NAME $connected_ip]
@@ -425,7 +426,7 @@ namespace eval mixer {
                                 }
                                 set layer11_maxwidth [get_property CONFIG.LAYER11_MAX_WIDTH [hsi::get_cells -hier $drv_handle]]
                                 add_prop "$mixer_node1" "xlnx,layer-max-width" $layer11_maxwidth int $dts_file
-                                set connect_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video11"]
+                                set connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video11"]
                                 foreach connected_ip $connect_ip {
                                         if {[llength $connected_ip]} {
                                                 set connected_ip_type [get_property IP_NAME $connected_ip]
@@ -453,7 +454,7 @@ namespace eval mixer {
                                 }
                                 set layer12_maxwidth [get_property CONFIG.LAYER12_MAX_WIDTH [hsi::get_cells -hier $drv_handle]]
                                 add_prop "$mixer_node1" "xlnx,layer-max-width" $layer12_maxwidth int $dts_file
-                                set connect_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video12"]
+                                set connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video12"]
                                 foreach connected_ip $connect_ip {
                                         if {[llength $connected_ip]} {
                                                 set connected_ip_type [get_property IP_NAME $connected_ip]
@@ -481,7 +482,7 @@ namespace eval mixer {
                                 }
                                 set layer13_maxwidth [get_property CONFIG.LAYER13_MAX_WIDTH [hsi::get_cells -hier $drv_handle]]
                                 add_prop "$mixer_node1" "xlnx,layer-max-width" $layer13_maxwidth int $dts_file
-                                set connect_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video13"]
+                                set connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video13"]
                                 foreach connected_ip $connect_ip {
                                         if {[llength $connected_ip]} {
                                                 set connected_ip_type [get_property IP_NAME $connected_ip]
@@ -509,7 +510,7 @@ namespace eval mixer {
                                 }
                                 set layer14_maxwidth [get_property CONFIG.LAYER14_MAX_WIDTH [hsi::get_cells -hier $drv_handle]]
                                 add_prop "$mixer_node1" "xlnx,layer-max-width" $layer14_maxwidth int $dts_file
-                                set connect_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video14"]
+                                set connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video14"]
                                 foreach connected_ip $connect_ip {
                                         if {[llength $connected_ip]} {
                                                 set connected_ip_type [get_property IP_NAME $connected_ip]
@@ -537,7 +538,7 @@ namespace eval mixer {
                                 }
                                 set layer15_maxwidth [get_property CONFIG.LAYER15_MAX_WIDTH [hsi::get_cells -hier $drv_handle]]
                                 add_prop "$mixer_node1" "xlnx,layer-max-width" $layer15_maxwidth int $dts_file
-                                set connect_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video15"]
+                                set connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video15"]
                                 foreach connected_ip $connect_ip {
                                         if {[llength $connected_ip]} {
                                                 set connected_ip_type [get_property IP_NAME $connected_ip]
@@ -564,7 +565,7 @@ namespace eval mixer {
                                 }
                                 set layer16_maxwidth [get_property CONFIG.LAYER16_MAX_WIDTH [hsi::get_cells -hier $drv_handle]]
                                 add_prop "$mixer_node1" "xlnx,layer-max-width" $layer16_maxwidth int $dts_file
-                                set connect_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video16"]
+                                set connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video16"]
                                 foreach connected_ip $connect_ip {
                                         if {[llength $connected_ip]} {
                                                 set connected_ip_type [get_property IP_NAME $connected_ip]

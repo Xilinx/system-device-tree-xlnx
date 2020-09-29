@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval sdi_tx {
+namespace eval ::tclapp::xilinx::devicetree::sdi_tx {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set node [get_node $drv_handle]
 		set dts_file [set_drv_def_dts $drv_handle]
@@ -41,7 +42,7 @@ namespace eval sdi_tx {
 		set ports_node [create_node -n "ports" -l sditx_ports$drv_handle -p $node -d $dts_file]
 		add_prop "$ports_node" "#address-cells" 1 int $dts_file
 		add_prop "$ports_node" "#size-cells" 0 int $dts_file
-		set audio_connected_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "SDI_TX_ANC_DS_OUT"]
+		set audio_connected_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "SDI_TX_ANC_DS_OUT"]
 		if {[llength $audio_connected_ip] != 0} {
 			set audio_connected_ip_type [get_property IP_NAME $audio_connected_ip]
 			if {[string match -nocase $audio_connected_ip_type "v_uhdsdi_audio"]} {

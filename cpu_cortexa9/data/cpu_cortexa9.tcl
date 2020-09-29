@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval cpu_cortexa9 {
+namespace eval ::tclapp::xilinx::devicetree::cpu_cortexa9 {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		global dtsi_fname
 		set dtsi_fname "zynq/zynq-7000.dtsi"

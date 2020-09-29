@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval axi_pcie {
+namespace eval ::tclapp::xilinx::devicetree::axi_pcie {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc set_pcie_ranges {drv_handle proctype} {
 		global env
 		global dtsi_fname

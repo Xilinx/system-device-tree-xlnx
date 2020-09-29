@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval devcfg {
-proc generate {drv_handle} {
-}
+namespace eval ::tclapp::xilinx::devicetree::devcfg {
+namespace import ::tclapp::xilinx::devicetree::common::\*
+	proc generate {drv_handle} {
+	}
 }

@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval gamma_lut {
+namespace eval ::tclapp::xilinx::devicetree::gamma_lut {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set node [get_node $drv_handle]
 		set dts_file [set_drv_def_dts $drv_handle]
@@ -39,7 +40,7 @@ namespace eval gamma_lut {
 		add_prop "$port1_node" "reg" 1 int $dts_file
 		add_prop "$port1_node" "xlnx,video-width" $max_data_width int $dts_file
 
-		set gammaoutip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "m_axis_video"]
+		set gammaoutip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "m_axis_video"]
 		foreach outip $gammaoutip {
                 if {[llength $outip]} {
                         set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $outip] -filter { TYPE==MASTER || TYPE == INITIATOR}]

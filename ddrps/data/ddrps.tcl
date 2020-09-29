@@ -14,7 +14,7 @@
 
 # workaround for ps7 ddrc has none zero start address
 
-namespace eval ddrps {
+namespace eval ::tclapp::xilinx::devicetree::ddrps {
 	proc gen_ps7_ddr_reg_property {drv_handle system_node} {
 	    proc_called_by
 	    set regprop [get_count "regp"]
@@ -169,10 +169,10 @@ namespace eval ddrps {
 		    return $regprop
 	}
 	proc generate_secure_memory_pmu {drv_handle} {
-	    set regprop [ hsi::utils::get_os_parameter_value "regp"]
+	    set regprop [ get_os_parameter_value "regp"]
 	    set psu_cortexa53 ""
 	    set slave [get_cells -hier ${drv_handle}]
-	    set ip_mem_handles [hsi::utils::get_ip_mem_ranges $slave]
+	    set ip_mem_handles [get_ip_mem_ranges $slave]
 	    set firstelement [lindex $ip_mem_handles 0]
 	    set index [lsearch [get_mem_ranges -of_objects [get_cells -hier psu_pmu_0]] [get_cells $firstelement]]
 	    set avail_param [list_property [lindex [get_mem_ranges -of_objects [get_cells -hier psu_pmu_0]] $index]]
@@ -239,10 +239,10 @@ namespace eval ddrps {
 	}
 
 	proc generate_secure_memory_r5 {drv_handle} {
-	    set regprop [ hsi::utils::get_os_parameter_value "regp"]
+	    set regprop [ get_os_parameter_value "regp"]
 	    set psu_cortexa53 ""
 	    set slave [get_cells -hier ${drv_handle}]
-	    set ip_mem_handles [hsi::utils::get_ip_mem_ranges $slave]
+	    set ip_mem_handles [get_ip_mem_ranges $slave]
 	    set firstelement [lindex $ip_mem_handles 0]
 	    set index [lsearch [get_mem_ranges -of_objects [get_cells -hier psu_cortexr5_0]] [get_cells $firstelement]]
 	    set avail_param [list_property [lindex [get_mem_ranges -of_objects [get_cells -hier psu_cortexr5_0]] $index]]

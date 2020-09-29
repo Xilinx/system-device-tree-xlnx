@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval ramps {
+namespace eval ::tclapp::xilinx::devicetree::ramps {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 	    set ip [hsi::get_cells -hier $drv_handle]
 	    if { [string match -nocase $ip "ps7_ram_1"] } {

@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval emaclite {
+namespace eval ::tclapp::xilinx::devicetree::emaclite {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 	    set node [get_node $drv_handle]
 	    add_prop $node compatible "\ \, \"xlnx,xps-ethernetlite-1.00.a\""

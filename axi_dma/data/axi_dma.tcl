@@ -17,7 +17,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval axi_dma {
+namespace eval ::tclapp::xilinx::devicetree::axi_dma {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 set connected_ip 0
 
 	proc generate {drv_handle} {
@@ -39,7 +40,7 @@ set connected_ip 0
 		set dma_count 0
 	    }
 	    set axiethernetfound 0
-	    set connected_ip [hsi::utils::get_connected_stream_ip $dma_ip "M_AXIS_MM2S"]
+	    set connected_ip [get_connected_stream_ip $dma_ip "M_AXIS_MM2S"]
 	    if { [llength $connected_ip] } {
 		set connected_ip_type [get_property IP_NAME $connected_ip]
 		if { [string match -nocase $connected_ip_type axi_ethernet ]
@@ -64,9 +65,9 @@ set connected_ip 0
 		set_drv_conf_prop $drv_handle c_enable_multi_channel xlnx,multichannel-dma boolean
 		set_drv_conf_prop $drv_handle c_addr_width xlnx,addrwidth
 		set baseaddr [get_baseaddr $dma_ip no_prefix]
-		set tx_chan [hsi::utils::get_ip_param_value $dma_ip C_INCLUDE_MM2S]
+		set tx_chan [get_ip_param_value $dma_ip C_INCLUDE_MM2S]
 		if { $tx_chan == 1 } {
-		    set connected_ip [hsi::utils::get_connected_stream_ip $dma_ip "M_AXIS_MM2S"]
+		    set connected_ip [get_connected_stream_ip $dma_ip "M_AXIS_MM2S"]
 		    set tx_chan_node [add_dma_channel $drv_handle $node "axi-dma" $baseaddr "MM2S" $dma_count ]
 		    set intr_info [get_intr_id $drv_handle "mm2s_introut"]
 		    if { [llength $intr_info] && ![string match -nocase $intr_info "-1"] } {
@@ -76,9 +77,9 @@ set connected_ip 0
 		    }
 		    add_dma_coherent_prop $drv_handle "M_AXI_MM2S"
 		}
-		set rx_chan [hsi::utils::get_ip_param_value $dma_ip C_INCLUDE_S2MM]
+		set rx_chan [get_ip_param_value $dma_ip C_INCLUDE_S2MM]
 		if { $rx_chan ==1 } {
-		    set connected_ip [hsi::utils::get_connected_stream_ip $dma_ip "S_AXIS_S2MM"]
+		    set connected_ip [get_connected_stream_ip $dma_ip "S_AXIS_S2MM"]
 		    set rx_bassaddr [format %08x [expr 0x$baseaddr + 0x30]]
 		    set rx_chan_node [add_dma_channel $drv_handle $node "axi-dma" $rx_bassaddr "S2MM" $dma_count]
 		    set intr_info [get_intr_id $drv_handle "s2mm_introut"]
@@ -147,7 +148,7 @@ set connected_ip 0
 
 	proc add_dma_coherent_prop {drv_handle intf} {
 	    set ip_name [hsi::get_cells -hier -filter "NAME==$drv_handle"]
-	    set connectedip [hsi::utils::get_connected_stream_ip $drv_handle $intf]
+	    set connectedip [get_connected_stream_ip $drv_handle $intf]
 	    if {[llength $connectedip] == 0} {
 		  return
 	    }
@@ -163,8 +164,8 @@ set connected_ip 0
 			break
 		}
 		foreach interface ${master_intf} {
-		    set intf_port [hsi::utils::get_connected_intf $connectedip $interface]
-		    set intrconnect [hsi::utils::get_connected_stream_ip $connectedip $interface]
+		    set intf_port [get_connected_intf $connectedip $interface]
+		    set intrconnect [get_connected_stream_ip $connectedip $interface]
 		    if {![string_is_empty $intf_port] && [string match -nocase $intf_port "S_AXI_ACP"]} {
 			set node [get_node $drv_handle]
 			add_prop $node "dma-coherent" boolean "pl.dtsi"
@@ -255,7 +256,7 @@ set connected_ip 0
 	    if {[string_is_empty ${intf}]} {
 		return 0
 	    }
-	    set connected_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $intf]
+	    set connected_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $intf]
 
 	    if {[string_is_empty ${connected_ip}]} {
 		dtg_warning "$drv_handle connected ip is NULL for the pin $intf"

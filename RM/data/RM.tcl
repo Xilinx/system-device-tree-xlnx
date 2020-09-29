@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval RM {
+namespace eval ::tclapp::xilinx::devicetree::RM {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set val [get_property FAMILY [hsi::get_hw_designs]]
 		set node [get_node $drv_handle]

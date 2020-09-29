@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval pmups {
+namespace eval ::tclapp::xilinx::devicetree::pmups {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set dts_file [set_drv_def_dts $drv_handle]
 		set ip_name [get_property IP_NAME [hsi::get_cells $drv_handle]]
@@ -52,14 +53,14 @@ namespace eval pmups {
 		if {[string match -nocase $proc_type "psu_pmu"] } {
 			add_prop $node "clock-frequency" [get_property CONFIG.C_FREQ $ip] hexint $dts_file
 		}
-		set icache_size [hsi::utils::get_ip_param_value $ip "C_CACHE_BYTE_SIZE"]
-		set icache_base [hsi::utils::get_ip_param_value $ip "C_ICACHE_BASEADDR"]
-		set icache_high [hsi::utils::get_ip_param_value $ip "C_ICACHE_HIGHADDR"]
-		set dcache_size [hsi::utils::get_ip_param_value $ip "C_DCACHE_BYTE_SIZE"]
-		set dcache_base [hsi::utils::get_ip_param_value $ip "C_DCACHE_BASEADDR"]
-		set dcache_high [hsi::utils::get_ip_param_value $ip "C_DCACHE_HIGHADDR"]
-		set icache_line_size [expr 4*[hsi::utils::get_ip_param_value $ip "C_ICACHE_LINE_LEN"]]
-		set dcache_line_size [expr 4*[hsi::utils::get_ip_param_value $ip "C_DCACHE_LINE_LEN"]]
+		set icache_size [get_ip_param_value $ip "C_CACHE_BYTE_SIZE"]
+		set icache_base [get_ip_param_value $ip "C_ICACHE_BASEADDR"]
+		set icache_high [get_ip_param_value $ip "C_ICACHE_HIGHADDR"]
+		set dcache_size [get_ip_param_value $ip "C_DCACHE_BYTE_SIZE"]
+		set dcache_base [get_ip_param_value $ip "C_DCACHE_BASEADDR"]
+		set dcache_high [get_ip_param_value $ip "C_DCACHE_HIGHADDR"]
+		set icache_line_size [expr 4*[get_ip_param_value $ip "C_ICACHE_LINE_LEN"]]
+		set dcache_line_size [expr 4*[get_ip_param_value $ip "C_DCACHE_LINE_LEN"]]
 
 
 		if { [llength $icache_size] != 0 } {

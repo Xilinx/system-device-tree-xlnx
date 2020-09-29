@@ -17,7 +17,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval axi_cdma { 
+namespace eval ::tclapp::xilinx::devicetree::axi_cdma { 
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		global env
 		global dtsi_fname

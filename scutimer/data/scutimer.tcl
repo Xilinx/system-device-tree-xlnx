@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval scutimer {
+namespace eval ::tclapp::xilinx::devicetree::scutimer {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 proc generate {drv_handle} {
 }
 }

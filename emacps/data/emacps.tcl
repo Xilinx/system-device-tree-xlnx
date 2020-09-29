@@ -17,7 +17,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval emacps {
+namespace eval ::tclapp::xilinx::devicetree::emacps {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 ##############################################################################
 variable phy_count 0
 ##############################################################################
@@ -72,7 +73,7 @@ proc generate {drv_handle} {
     set node [get_node $drv_handle]
     set slave [hsi::get_cells -hier $drv_handle]
     set dts_file [set_drv_def_dts $drv_handle]
-    set phymode [hsi::utils::get_ip_param_value $slave "C_ETH_MODE"]
+    set phymode [get_ip_param_value $slave "C_ETH_MODE"]
     if { $phymode == 0 } {
 	add_prop $node "phy-mode" "gmii" string $dts_file
     } elseif { $phymode == 2 } {
@@ -81,7 +82,7 @@ proc generate {drv_handle} {
 	add_prop $node "phy-mode" "rgmii-id" string $dts_file
     }
 
-       set ps7_cortexa9_1x_clk [hsi::utils::get_ip_param_value [lindex [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}] 0] "C_CPU_1X_CLK_FREQ_HZ"]
+       set ps7_cortexa9_1x_clk [get_ip_param_value [lindex [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}] 0] "C_CPU_1X_CLK_FREQ_HZ"]
        add_prop $node "xlnx,ptp-enet-clock" "$ps7_cortexa9_1x_clk" hexint $dts_file
     ps7_reset_handle $drv_handle CONFIG.C_ENET_RESET CONFIG.enet-reset
 
@@ -151,14 +152,14 @@ proc generate {drv_handle} {
     }
 	set ip_name " "
 	if {[string match -nocase $proc_type "zynqmp"] || [string match -nocase $proc_type "zynquplus"]} {
-		set connected_ip [hsi::utils::get_connected_stream_ip $zynq_periph "MDIO_ENET0"]
+		set connected_ip [get_connected_stream_ip $zynq_periph "MDIO_ENET0"]
 		if {[llength $connected_ip]} {
 			set ip_name [get_property IP_NAME $connected_ip]
 		}
 	}
 	set is_pcspma [hsi::get_cells -hier -filter {IP_NAME == gig_ethernet_pcs_pma}]
 	if {[string match -nocase $ip_name "gig_ethernet_pcs_pma"]} {
-		set pin [hsi::utils::get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $is_pcspma] "phyaddr"]]
+		set pin [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $is_pcspma] "phyaddr"]]
 		if {[llength $pin]} {
 			set sink_periph [hsi::get_cells -of_objects $pin]
 		}

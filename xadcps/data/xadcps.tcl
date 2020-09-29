@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval xadcps {
-proc generate {drv_handle} {
-}
+namespace eval ::tclapp::xilinx::devicetree::xadcps {
+namespace import ::tclapp::xilinx::devicetree::common::\*
+	proc generate {drv_handle} {
+	}
 }

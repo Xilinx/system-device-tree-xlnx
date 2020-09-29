@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval dp {
+namespace eval ::tclapp::xilinx::devicetree::dp {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set node [get_node $drv_handle]
 		generate_dp_param $drv_handle $node

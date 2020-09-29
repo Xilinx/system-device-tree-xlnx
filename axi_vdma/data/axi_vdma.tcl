@@ -17,7 +17,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval axi_vdma {
+namespace eval ::tclapp::xilinx::devicetree::axi_vdma {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 
 	    set node [get_node $drv_handle]
@@ -47,10 +48,10 @@ namespace eval axi_vdma {
 		# C_ENABLE_DEBUG_INFO_14 - Enable S2MM Delay Counter Interrupt bit
 		# C_ENABLE_DEBUG_INFO_7 - Enable MM2S Frame Count Interrupt bit
 		# C_ENABLE_DEBUG_INFO_6 - Enable MM2S Delay Counter Interrupt bit
-		set dbg15 [hsi::utils::get_ip_param_value $dma_ip C_ENABLE_DEBUG_INFO_15]
-		set dbg14 [hsi::utils::get_ip_param_value $dma_ip C_ENABLE_DEBUG_INFO_14]
-		set dbg07 [hsi::utils::get_ip_param_value $dma_ip C_ENABLE_DEBUG_INFO_7]
-		set dbg06 [hsi::utils::get_ip_param_value $dma_ip C_ENABLE_DEBUG_INFO_6]
+		set dbg15 [get_ip_param_value $dma_ip C_ENABLE_DEBUG_INFO_15]
+		set dbg14 [get_ip_param_value $dma_ip C_ENABLE_DEBUG_INFO_14]
+		set dbg07 [get_ip_param_value $dma_ip C_ENABLE_DEBUG_INFO_7]
+		set dbg06 [get_ip_param_value $dma_ip C_ENABLE_DEBUG_INFO_6]
 
 		if { $dbg15 != 1 || $dbg14 != 1 || $dbg07 != 1 || $dbg06 != 1 } {
 			puts "ERROR: Failed to generate AXI VDMA node,"
@@ -90,9 +91,9 @@ namespace eval axi_vdma {
 		set_drv_conf_prop $drv_handle C_ENABLE_DEBUG_ALL xlnx,enable-debug-all
 
 		set baseaddr [get_baseaddr $dma_ip no_prefix]
-		set tx_chan [hsi::utils::get_ip_param_value $dma_ip C_INCLUDE_MM2S]
+		set tx_chan [get_ip_param_value $dma_ip C_INCLUDE_MM2S]
 		if { $tx_chan == 1 } {
-			set connected_ip [hsi::utils::get_connected_stream_ip $dma_ip "M_AXIS_MM2S"]
+			set connected_ip [get_connected_stream_ip $dma_ip "M_AXIS_MM2S"]
 			set tx_chan_node [add_dma_channel $drv_handle $node "axi-vdma" $baseaddr "MM2S" $vdma_count ]
 			set intr_info [get_intr_id $drv_handle "mm2s_introut"]
 			if { [llength $intr_info] && ![string match -nocase $intr_info "-1"] } {
@@ -101,9 +102,9 @@ namespace eval axi_vdma {
 				dtg_warning "ERROR: ${drv_handle}: mm2s_introut port is not connected"
 			}
 		}
-		set rx_chan [hsi::utils::get_ip_param_value $dma_ip C_INCLUDE_S2MM]
+		set rx_chan [get_ip_param_value $dma_ip C_INCLUDE_S2MM]
 		if { $rx_chan ==1 } {
-			set connected_ip [hsi::utils::get_connected_stream_ip $dma_ip "S_AXIS_S2MM"]
+			set connected_ip [get_connected_stream_ip $dma_ip "S_AXIS_S2MM"]
 			set rx_bassaddr [format %08x [expr 0x$baseaddr + 0x30]]
 			set rx_chan_node [add_dma_channel $drv_handle $node "axi-vdma" $rx_bassaddr "S2MM" $vdma_count]
 			set intr_info [get_intr_id $drv_handle "s2mm_introut"]
@@ -145,7 +146,7 @@ namespace eval axi_vdma {
 		add_prop $dma_channel "compatible" [format "xlnx,%s-%s-channel" $xdma $modellow] stringlist $dts_file
 		add_prop $dma_channel "xlnx,device-id" $devid hexint $dts_file
 		if {[string match -nocase $mode "S2MM"]} {
-			set vert_flip  [hsi::utils::get_ip_param_value $ip C_ENABLE_VERT_FLIP]
+			set vert_flip  [get_ip_param_value $ip C_ENABLE_VERT_FLIP]
 			if {$vert_flip == 1} {
 				add_prop $dma_channel "xlnx,enable-vert-flip" boolean $dts_file
 			}

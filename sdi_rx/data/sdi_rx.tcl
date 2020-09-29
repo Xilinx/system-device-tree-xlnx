@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval sdi_rx {
+namespace eval ::tclapp::xilinx::devicetree::sdi_rx {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set node [get_node $drv_handle]
 		set dts_file [set_drv_def_dts $drv_handle]
@@ -29,7 +30,7 @@ namespace eval sdi_rx {
 		add_prop "$port_node" "xlnx,video-width" 10 int $dts_file
 		add_prop "$port_node" "reg" 0 int $dts_file
 
-		set sdirxip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "VIDEO_OUT"]
+		set sdirxip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "VIDEO_OUT"]
 		foreach ip $sdirxip {
 		if {[llength $ip]} {
                         if {[string match -nocase [get_property IP_NAME $ip] "system_ila"]} {

@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval pl310ps {
+namespace eval ::tclapp::xilinx::devicetree::pl310ps {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 proc generate {drv_handle} {
 }
 }

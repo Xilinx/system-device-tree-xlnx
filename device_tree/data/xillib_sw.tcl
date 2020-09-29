@@ -2,12 +2,9 @@
 ##############################################################################
 # Copyright 2013 Xilinx Inc. All rights reserved
 ##############################################################################
-namespace eval hsi::utils {
-}
-namespace eval hsi::utils {
-}
-
-proc hsi::utils::get_exact_arg_list { args } {
+namespace eval ::tclapp::xilinx::devicetree::hsi::utils {
+namespace export *
+proc get_exact_arg_list { args } {
     lappend argList
     foreach arg $args {
         set subargs [regexp -all -inline {\S+} "$arg"]
@@ -23,20 +20,234 @@ proc hsi::utils::get_exact_arg_list { args } {
 #
 # Open file in the include directory
 #
-proc hsi::utils::open_include_file {file_name} {
+proc open_include_file {file_name} {
     set filename [file join "../../include" $file_name]
     set config_inc [open $filename a]
     if {![file exists $filename]} {
-        hsi::utils::write_c_header $config_inc "Driver parameters"
+        write_c_header $config_inc "Driver parameters"
     }
     return $config_inc
+}
+
+proc get_drivers_sw args {
+	set driverlist [dict create]
+	dict set driverlist RM driver RM
+	dict set driverlist ai_engine driver ai_engine
+	dict set driverlist psu_ams driver ams
+	dict set driverlist psu_apm driver apmps
+	dict set driverlist psv_apm driver apmps
+	dict set driverlist v_uhdsdi_audio driver audio_embed
+	dict set driverlist audio_formatter driver audio_spdif
+	dict set driverlist spdif driver audio_spdif
+	dict set driverlist axi_bram_ctrl driver axi_bram
+	dict set driverlist lmb_bram_if_cntlr driver axi_bram
+	dict set driverlist can driver axi_can
+	dict set driverlist canfd driver axi_can
+	dict set driverlist axi_cdma driver axi_cdma
+	dict set driverlist clk_wiz driver axi_clk_wiz
+	dict set driverlist axi_dma driver axi_dma
+	dict set driverlist axi_emc driver axi_emc
+	dict set driverlist axi_ethernet driver axi_ethernet
+	dict set driverlist axi_ethernet_buffer  driver axi_ethernet
+	dict set driverlist axi_10g_ethernet driver axi_ethernet
+	dict set driverlist xxv_ethernet driver axi_ethernet
+	dict set driverlist usxgmii driver axi_ethernet
+	dict set driverlist axi_gpio driver axi_gpio
+	dict set driverlist axi_iic driver axi_iic
+	dict set driverlist axi_mcdma driver axi_mcdma
+	dict set driverlist axi_pcie driver axi_pcie
+	dict set driverlist axi_pcie3 driver axi_pcie
+	dict set driverlist xdma driver axi_pcie
+	dict set driverlist pcie_dma_versal driver axi_pcie
+	dict set driverlist axi_perf_mon driver axi_perf_mon
+	dict set driverlist axi_quad_spi driver axi_qspi
+	dict set driverlist axi_sysace driver axi_sysace
+	dict set driverlist axi_tft driver axi_tft
+	dict set driverlist axi_timebase_wdt driver axi_timebase_wdt
+	dict set driverlist axi_traffic_gen driver axi_traffic_gen
+	dict set driverlist axi_usb2_device driver axi_usb2_device
+	dict set driverlist vcu driver axi_vcu
+	dict set driverlist axi_vdma driver axi_vdma
+	dict set driverlist xadc_wiz driver axi_xadc
+	dict set driverlist psu_canfd driver canfdps
+	dict set driverlist psv_canfd driver canfdps
+	dict set driverlist ps7_can driver canps
+	dict set driverlist psu_can driver canps
+	dict set driverlist psv_can driver canps
+	dict set driverlist microblaze driver cpu
+	dict set driverlist psu_cortexa53 driver cpu_cortexa53
+	dict set driverlist psv_cortexa72 driver cpu_cortexa72
+	dict set driverlist ps7_cortexa9 driver cpu_cortexa9
+	dict set driverlist psu_cortexr5 driver cpu_cortexr5
+	dict set driverlist psv_cortexr5 driver cpu_cortexr5
+	dict set driverlist psu_crl_apb driver crl_apb
+	dict set driverlist ps7_ddrc driver ddrcps
+	dict set driverlist psu_ddrc driver ddrcps
+	dict set driverlist psv_ddrc driver ddrcps
+	dict set driverlist ps7_ddr driver ddrcps
+	dict set driverlist psu_ddr driver ddrps
+	dict set driverlist psv_ddr driver ddrps
+	dict set driverlist axi_noc driver ddrpsv
+	dict set driverlist noc_mc_ddr4 driver ddrpsv
+	dict set driverlist debug_bridge driver debug_bridge
+	dict set driverlist v_demosaic driver demosaic
+	dict set driverlist ps7_dev_cfg driver devcfg
+	dict set driverlist ps7_dma driver dmaps
+	dict set driverlist psu_gdma driver dmaps
+	dict set driverlist psu_csudma driver dmaps
+	dict set driverlist psv_adma driver dmaps
+	dict set driverlist psv_gdma driver dmaps
+	dict set driverlist psv_csudma driver dmaps
+	dict set driverlist psu_dp driver dp
+	dict set driverlist psv_dp driver dp
+	dict set driverlist dpu_eu driver dpu_eu
+	dict set driverlist axi_ethernetlite driver emaclite
+	dict set driverlist ps7_ethernet driver emacps
+	dict set driverlist psu_ethernet driver emacps
+	dict set driverlist psv_ethernet driver emacps
+	dict set driverlist ernic driver ernic
+	dict set driverlist v_frmbuf_rd driver framebuf_rd
+	dict set driverlist v_frmbuf_wr driver framebuf_wr
+	dict set driverlist v_gamma_lut driver gamma_lut
+	dict set driverlist ps7_globaltimer driver globaltimerps
+	dict set driverlist ps7_gpio driver gpiops
+	dict set driverlist psu_gpio driver gpiops
+	dict set driverlist psv_gpio driver gpiops
+	dict set driverlist hdmi_acr_ctlr driver hdmi_ctrl
+	dict set driverlist hdmi_gt_controller driver hdmi_gt_ctrl
+	dict set driverlist v_hdmi_rx_ss driver hdmi_rx_ss
+	dict set driverlist v_hdmi_tx_ss driver hdmi_tx_ss
+	dict set driverlist i2s_receiver driver i2s_receiver
+	dict set driverlist i2s_transmitter driver i2s_transmitter
+	dict set driverlist ps7_i2c driver iicps
+	dict set driverlist psu_i2c driver iicps
+	dict set driverlist psv_i2c driver iicps
+	dict set driverlist axi_intc driver intc
+	dict set driverlist iomodule driver iomodule
+	dict set driverlist psu_ipi driver ipipsu
+	dict set driverlist psv_ipi driver ipipsu
+	dict set driverlist mig_7series driver mig_7series
+	dict set driverlist dd4 driver mig_7series
+	dict set driverlist ddr3 driver mig_7series
+	dict set driverlist mipi_csi2_rx_subsystem driver mipi_csi2_rx
+	dict set driverlist mipi_csi2_tx_subsystem driver mipi_csi2_tx
+	dict set driverlist v_mix driver mixer
+	dict set driverlist v_multi_scaler driver multi_scaler
+	dict set driverlist ps7_nand driver nandps
+	dict set driverlist psu_nand driver nandps
+	dict set driverlist ps7_sram driver norps
+	dict set driverlist nvme_subsystem driver nvme_aggr
+	dict set driverlist ps7_ocmc driver ocmcps
+	dict set driverlist psu_ocmc driver ocmcps
+	dict set driverlist psv_ocmc driver ocmcps
+	dict set driverlist ps7_pl310 driver pl310ps
+	dict set driverlist ps7_pmu driver pmups
+	dict set driverlist psu_pmu driver pmups
+	dict set driverlist psv_pmc driver pmups
+	dict set driverlist psv_psm driver pmups
+	dict set driverlist pr_decoupler driver pr_decoupler
+	dict set driverlist prc driver prc
+	dict set driverlist dfx_controller driver prc
+	dict set driverlist psu_ocm_ram_0 driver psu_ocm
+	dict set driverlist psv_ocm_ram_0 driver psu_ocm
+	dict set driverlist ps7_ram driver ramps
+	dict set driverlist usp_rf_data_converter driver rfdc
+	dict set driverlist v_scenechange driver scene_change_detector
+	dict set driverlist ps7_scugic driver scugic
+	dict set driverlist psu_acpu_gic driver scugic
+	dict set driverlist psv_acpu_gic driver scugic
+	dict set driverlist ps7_scutimer driver scutimer
+	dict set driverlist ps7_scuwdt driver scuwdt
+	dict set driverlist psu_wdt driver scuwdt
+	dict set driverlist psv_wdt driver scuwdt
+	dict set driverlist sd_fec driver sdfec
+	dict set driverlist v_smpte_uhdsdi_rx_ss driver sdi_rx
+	dict set driverlist v_smpte_uhdsdi_tx_ss driver sdi_tx
+	dict set driverlist ps7_sdioi driver sdps
+	dict set driverlist psu_sd driver sdps
+	dict set driverlist psv_pmc_sd driver sdps
+	dict set driverlist ps7_slcr driver slcrps
+	dict set driverlist ps7_smcc driver smccps
+	dict set driverlist ps7_spi driver spips
+	dict set driverlist psu_qspi driver spips
+	dict set driverlist psv_pmc_qspi driver qspips
+	dict set driverlist psu_qspi driver qspips
+	dict set driverlist ps7_qspi driver qspips
+	dict set driverlist psv_spi driver spips
+	dict set driverlist sync_ip driver sync_ip
+	dict set driverlist axi_timer driver tmrctr
+	dict set driverlist v_tpg driver tpg
+	dict set driverlist tsn_endpoint_ethernet_mac driver tsn
+	dict set driverlist ps7_ttc driver ttcps
+	dict set driverlist psu_ttc driver ttcps
+	dict set driverlist psv_ttc driver ttcps
+	dict set driverlist mdm driver uartlite
+	dict set driverlist axi_uartlite driver uartlite
+	dict set driverlist axi_uart16550 driver uartns
+	dict set driverlist ps7_uart driver uartps
+	dict set driverlist psu_uart driver uartps
+	dict set driverlist psu_sbsauart driver uartps
+	dict set driverlist psv_uart driver uartps
+	dict set driverlist psv_sbsauart driver uartps
+	dict set driverlist ps7_usb driver usbps
+	dict set driverlist psu_usb_xhci driver usbps
+	dict set driverlist psv_usb_xhci driver usbps
+	dict set driverlist vid_phy_controller driver vid_phy_ctrl
+	dict set driverlist v_proc_ss driver vproc_ss
+	dict set driverlist v_tc driver vtc
+	dict set driverlist ps7_wdt driver wdtps
+	dict set driverlist psu_wdt driver wdtps
+	dict set driverlist psv_wdt driver wdtps
+	dict set driverlist ps7_xadc driver xadcps
+	dict set driverlist psv_pmc_sysmon driver sysmonpsv
+	set val [lindex $args 0]
+	if {[string match -nocase $val "1"]} {
+		set drivers ""
+		foreach drv_handle [hsi::get_cells -hier] {
+			set ipname [get_property IP_NAME $drv_handle]
+			set val [hsi::get_mem_ranges $drv_handle]
+			if {[string match -nocase [get_property IP_TYPE [hsi::get_cells -hier $drv_handle]] "processor"]} {
+				if {[string match -nocase $ipname "psv_cortexa72"] || [string match -nocase $ipname "psu_cortexa53"]} {
+					set index [string index $drv_handle end]
+					if {$index == 0} {
+						continue
+					}
+				}
+			} else {
+				if {[string_is_empty $val]} {
+					continue
+				}
+			}
+			if {[catch {set tmp [dict get $driverlist $ipname]} msg]} {
+					continue
+			}
+			if {[string match -nocase $drivers ""]} {
+				set drivers $drv_handle
+			} else {
+				lappend drivers $drv_handle
+			}
+		}
+		
+		if {[string match -nocase $drivers ""]} {
+			set drivers "generic"
+		}
+		return $drivers
+	} else {
+		set ipname [get_property IP_NAME [hsi::get_cells -hier $val]]
+		if {[catch {set tmp [dict get $driverlist $ipname]} msg]} {
+			set drivers "generic"
+			return "generic"
+		}
+		regsub "driver " $tmp "" tmp
+		return $tmp
+	}
 }
 
 #
 # Create a parameter name based on the format of Xilinx device drivers
 # Use peripheral name to form the parameter name
 #
-proc hsi::utils::get_ip_param_name {periph_handle param} {
+proc get_ip_param_name {periph_handle param} {
    set name [common::get_property NAME $periph_handle ]
    set name [string toupper $name]
    set name [string map { "/" "_" } $name]
@@ -54,7 +265,7 @@ proc hsi::utils::get_ip_param_name {periph_handle param} {
 # Create a parameter name based on the format of Xilinx device drivers.
 # Use driver name to form the parameter name
 #
-proc hsi::utils::get_driver_param_name {driver_name param} {
+proc get_driver_param_name {driver_name param} {
    set name [string toupper $driver_name]
    set name [string map { "/" "_" } $name]
    set name [format "XPAR_%s_" $name]
@@ -72,13 +283,13 @@ proc hsi::utils::get_driver_param_name {driver_name param} {
 # DEVICE_ID
 # Will not work for a processor.
 #
-proc hsi::utils::define_include_file {drv_handle file_name drv_string args} {
-    set args [hsi::utils::get_exact_arg_list $args]
+proc define_include_file {drv_handle file_name drv_string args} {
+    set args [get_exact_arg_list $args]
     # Open include file
-    set file_handle [hsi::utils::open_include_file $file_name]
+    set file_handle [open_include_file $file_name]
 
     # Get all peripherals connected to this driver
-    set periphs [hsi::utils::get_common_driver_ips $drv_handle] 
+    set periphs [get_common_driver_ips $drv_handle] 
 
     # Handle special cases
     set arg "NUM_INSTANCES"
@@ -86,7 +297,7 @@ proc hsi::utils::define_include_file {drv_handle file_name drv_string args} {
     if {$posn > -1} {
         puts $file_handle "/* Definitions for driver [string toupper [common::get_property name $drv_handle]] */"
         # Define NUM_INSTANCES
-        puts $file_handle "#define [hsi::utils::get_driver_param_name $drv_string $arg] [llength $periphs]"
+        puts $file_handle "#define [get_driver_param_name $drv_string $arg] [llength $periphs]"
         set args [lreplace $args $posn $posn]
     }
 
@@ -97,7 +308,7 @@ proc hsi::utils::define_include_file {drv_handle file_name drv_string args} {
         if {[llength $value] == 0} {
             lappend newargs $arg
         } else {
-            puts $file_handle "#define [hsi::utils::get_driver_param_name $drv_string $arg] [common::get_property $arg $drv_handle]"
+            puts $file_handle "#define [get_driver_param_name $drv_string $arg] [common::get_property $arg $drv_handle]"
         }
     }
     set args $newargs
@@ -117,11 +328,11 @@ proc hsi::utils::define_include_file {drv_handle file_name drv_string args} {
             if {[llength $value] == 0} {
                 set value 0
             }
-            set value [hsi::utils::format_addr_string $value $arg]
+            set value [format_addr_string $value $arg]
             if {[string compare -nocase "HW_VER" $arg] == 0} {
-                puts $file_handle "#define [hsi::utils::get_ip_param_name $periph $arg] \"$value\""
+                puts $file_handle "#define [get_ip_param_name $periph $arg] \"$value\""
             } else {
-                puts $file_handle "#define [hsi::utils::get_ip_param_name $periph $arg] $value"
+                puts $file_handle "#define [get_ip_param_name $periph $arg] $value"
             }
         }
         puts $file_handle ""
@@ -135,13 +346,13 @@ proc hsi::utils::define_include_file {drv_handle file_name drv_string args} {
 # Similar to proc define_include_file, except that uses regsub
 # to replace "S_AXI_" with "".
 #
-proc hsi::utils::define_zynq_include_file {drv_handle file_name drv_string args} {
-    set args [hsi::utils::get_exact_arg_list $args]
+proc define_zynq_include_file {drv_handle file_name drv_string args} {
+    set args [get_exact_arg_list $args]
    # Open include file
-   set file_handle [hsi::utils::open_include_file $file_name]
+   set file_handle [open_include_file $file_name]
 
    # Get all peripherals connected to this driver
-   set periphs [hsi::utils::get_common_driver_ips $drv_handle] 
+   set periphs [get_common_driver_ips $drv_handle] 
 
    # Handle special cases
    set arg "NUM_INSTANCES"
@@ -149,7 +360,7 @@ proc hsi::utils::define_zynq_include_file {drv_handle file_name drv_string args}
    if {$posn > -1} {
        puts $file_handle "/* Definitions for driver [string toupper [common::get_property name $drv_handle]] */"
        # Define NUM_INSTANCES
-       puts $file_handle "#define [hsi::utils::get_driver_param_name $drv_string $arg] [llength $periphs]"
+       puts $file_handle "#define [get_driver_param_name $drv_string $arg] [llength $periphs]"
        set args [lreplace $args $posn $posn]
    }
 
@@ -160,7 +371,7 @@ proc hsi::utils::define_zynq_include_file {drv_handle file_name drv_string args}
        if {[llength $value] == 0} {
            lappend newargs $arg
        } else {
-           puts $file_handle "#define [hsi::utils::get_driver_param_name $drv_string $arg] [common::get_property CONFIG.$arg $drv_handle ]"
+           puts $file_handle "#define [get_driver_param_name $drv_string $arg] [common::get_property CONFIG.$arg $drv_handle ]"
        }
    }
    set args $newargs
@@ -180,8 +391,8 @@ proc hsi::utils::define_zynq_include_file {drv_handle file_name drv_string args}
            if {[llength $value] == 0} {
                set value 0
            }
-           set value [hsi::utils::format_addr_string $value $arg]
-           set arg_name [hsi::utils::get_ip_param_name $periph $arg]
+           set value [format_addr_string $value $arg]
+           set arg_name [get_ip_param_name $periph $arg]
            regsub "S_AXI_" $arg_name "" arg_name
            if {[string compare -nocase "HW_VER" $arg] == 0} {
                puts $file_handle "#define $arg_name \"$value\""
@@ -198,26 +409,26 @@ proc hsi::utils::define_zynq_include_file {drv_handle file_name drv_string args}
 #
 # Define parameter only if all peripherals have this parameter defined.
 #
-proc hsi::utils::define_if_all {drv_handle file_name drv_string args} {
-    set args [hsi::utils::get_exact_arg_list $args]
+proc define_if_all {drv_handle file_name drv_string args} {
+    set args [get_exact_arg_list $args]
    # Open include file
-   set file_handle [hsi::utils::open_include_file $file_name]
+   set file_handle [open_include_file $file_name]
 
    # Get all peripherals connected to this driver
-   set periphs [hsi::utils::get_common_driver_ips $drv_handle] 
+   set periphs [get_common_driver_ips $drv_handle] 
 
    # Check all parameters for all peripherals
    foreach arg $args {
        set value 1
        foreach periph $periphs {
-           set thisvalue [hsi::utils::get_param_value $periph $arg]
+           set thisvalue [get_param_value $periph $arg]
            if {$thisvalue != 1} {
                set value 0
                break
            }
        }
        if {$value == 1} {
-           puts $file_handle "#define [hsi::utils::get_driver_param_name $drv_string $arg] $value"
+           puts $file_handle "#define [get_driver_param_name $drv_string $arg] $value"
        }
    }		
    close $file_handle
@@ -226,17 +437,17 @@ proc hsi::utils::define_if_all {drv_handle file_name drv_string args} {
 #
 # Define parameter as the maxm value for all connected peripherals
 #
-proc hsi::utils::define_max {drv_handle file_name define_name arg} {
+proc define_max {drv_handle file_name define_name arg} {
    # Open include file
-   set file_handle [hsi::utils::open_include_file $file_name]
+   set file_handle [open_include_file $file_name]
 
    # Get all peripherals connected to this driver
-   set periphs [hsi::utils::get_common_driver_ips $drv_handle] 
+   set periphs [get_common_driver_ips $drv_handle] 
 
    # Check all parameters for all peripherals
    set value 0
    foreach periph $periphs {
-       set thisvalue [hsi::utils::get_param_value $periph $arg]
+       set thisvalue [get_param_value $periph $arg]
        if {$thisvalue > $value} {
            set value $thisvalue
        }
@@ -248,29 +459,29 @@ proc hsi::utils::define_max {drv_handle file_name define_name arg} {
 #
 # Create configuration C file as required by Xilinx  drivers
 #
-proc hsi::utils::define_config_file {drv_handle file_name drv_string args} {
-    set args [hsi::utils::get_exact_arg_list $args]
+proc define_config_file {drv_handle file_name drv_string args} {
+    set args [get_exact_arg_list $args]
     set filename [file join "src" $file_name] 
     #Fix for CR 784758
     #file delete $filename
     set config_file [open $filename w]
-    hsi::utils::write_c_header $config_file "Driver configuration"    
+    write_c_header $config_file "Driver configuration"    
     puts $config_file "#include \"xparameters.h\""
     puts $config_file "#include \"[string tolower $drv_string].h\""
     puts $config_file "\n/*"
     puts $config_file "* The configuration table for devices"
     puts $config_file "*/\n"
-    set num_insts [hsi::utils::get_driver_param_name $drv_string "NUM_INSTANCES"]
+    set num_insts [get_driver_param_name $drv_string "NUM_INSTANCES"]
     puts $config_file [format "%s_Config %s_ConfigTable\[%s\] =" $drv_string $drv_string $num_insts]
     puts $config_file "\{"
-    set periphs [hsi::utils::get_common_driver_ips $drv_handle]     
+    set periphs [get_common_driver_ips $drv_handle]     
     set start_comma ""
     foreach periph $periphs {
         puts $config_file [format "%s\t\{" $start_comma]
         set comma ""
         foreach arg $args {
             if {[string compare -nocase "DEVICE_ID" $arg] == 0} {
-                puts -nonewline $config_file [format "%s\t\t%s,\n" $comma [hsi::utils::get_ip_param_name $periph $arg]]
+                puts -nonewline $config_file [format "%s\t\t%s,\n" $comma [get_ip_param_name $periph $arg]]
                 continue
             }
             # Check if this is a driver parameter or a peripheral parameter
@@ -281,17 +492,17 @@ proc hsi::utils::define_config_file {drv_handle file_name drv_string args} {
                 # peripheral), we will (for some obscure and ancient reason)
                 # look in peripherals connected via point to point links
                 if { [string compare -nocase $local_value ""] == 0} { 
-                    set p2p_name [hsi::utils::get_p2p_name $periph $arg]
+                    set p2p_name [get_p2p_name $periph $arg]
                     if { [string compare -nocase $p2p_name ""] == 0} {
-                        puts -nonewline $config_file [format "%s\t\t%s" $comma [hsi::utils::get_ip_param_name $periph $arg]]
+                        puts -nonewline $config_file [format "%s\t\t%s" $comma [get_ip_param_name $periph $arg]]
                     } else {
                         puts -nonewline $config_file [format "%s\t\t%s" $comma $p2p_name]
                     }
                 } else {
-                    puts -nonewline $config_file [format "%s\t\t%s" $comma [hsi::utils::get_ip_param_name $periph $arg]]
+                    puts -nonewline $config_file [format "%s\t\t%s" $comma [get_ip_param_name $periph $arg]]
                 }
             } else {
-                puts -nonewline $config_file [format "%s\t\t%s" $comma [hsi::utils::get_driver_param_name $drv_string $arg]]
+                puts -nonewline $config_file [format "%s\t\t%s" $comma [get_driver_param_name $drv_string $arg]]
             }
             set comma ",\n"
         }
@@ -310,22 +521,22 @@ proc hsi::utils::define_config_file {drv_handle file_name drv_string args} {
 # Similar to proc define_config_file, except that uses regsub
 # to replace "S_AXI_" with ""
 #
-proc hsi::utils::define_zynq_config_file {drv_handle file_name drv_string args} {
-    set args [hsi::utils::get_exact_arg_list $args]
+proc define_zynq_config_file {drv_handle file_name drv_string args} {
+    set args [get_exact_arg_list $args]
    set filename [file join "src" $file_name] 
    #Fix for CR 784758
    #file delete $filename
    set config_file [open $filename w]
-   hsi::utils::write_c_header $config_file "Driver configuration"    
+   write_c_header $config_file "Driver configuration"    
    puts $config_file "#include \"xparameters.h\""
    puts $config_file "#include \"[string tolower $drv_string].h\""
    puts $config_file "\n/*"
    puts $config_file "* The configuration table for devices"
    puts $config_file "*/\n"
-   set num_insts [hsi::utils::get_driver_param_name $drv_string "NUM_INSTANCES"]
+   set num_insts [get_driver_param_name $drv_string "NUM_INSTANCES"]
    puts $config_file [format "%s_Config %s_ConfigTable\[%s\] =" $drv_string $drv_string $num_insts]
    puts $config_file "\{"
-   set periphs [hsi::utils::get_common_driver_ips $drv_handle]     
+   set periphs [get_common_driver_ips $drv_handle]     
    set start_comma ""
    foreach periph $periphs {
        puts $config_file [format "%s\t\{" $start_comma]
@@ -339,9 +550,9 @@ proc hsi::utils::define_zynq_config_file {drv_handle file_name drv_string args} 
             # peripheral), we will (for some obscure and ancient reason)
             # look in peripherals connected via point to point links
             if { [string compare -nocase $local_value ""] == 0} { 
-               set p2p_name [hsi::utils::get_p2p_name $periph $arg]
+               set p2p_name [get_p2p_name $periph $arg]
                if { [string compare -nocase $p2p_name ""] == 0} {
-                   set arg_name [hsi::utils::get_ip_param_name $periph $arg]
+                   set arg_name [get_ip_param_name $periph $arg]
                    regsub "S_AXI_" $arg_name "" arg_name
                    puts -nonewline $config_file [format "%s\t\t%s" $comma $arg_name]
                } else {
@@ -349,12 +560,12 @@ proc hsi::utils::define_zynq_config_file {drv_handle file_name drv_string args} 
                    puts -nonewline $config_file [format "%s\t\t%s" $comma $p2p_name]
                }
            } else {
-               set arg_name [hsi::utils::get_ip_param_name $periph $arg]
+               set arg_name [get_ip_param_name $periph $arg]
                regsub "S_AXI_" $arg_name "" arg_name
                puts -nonewline $config_file [format "%s\t\t%s" $comma $arg_name]
                    }
            } else {
-               set arg_name [hsi::utils::get_driver_param_name $drv_string $arg]
+               set arg_name [get_driver_param_name $drv_string $arg]
                regsub "S_AXI_" $arg_name "" arg_name
                puts -nonewline $config_file [format "%s\t\t%s" $comma $arg_name]
            }
@@ -373,14 +584,14 @@ proc hsi::utils::define_zynq_config_file {drv_handle file_name drv_string args} 
 #
 # Add definitions in an include file.  Args must be name value pairs
 #
-proc hsi::utils::define_with_names {drv_handle periph_handle file_name args} {
-   set args [hsi::utils::get_exact_arg_list $args]
+proc define_with_names {drv_handle periph_handle file_name args} {
+   set args [get_exact_arg_list $args]
    # Open include file
-   set file_handle [hsi::utils::open_include_file $file_name]
+   set file_handle [open_include_file $file_name]
 
    foreach {lhs rhs} $args {
-       set value [hsi::utils::get_param_value $periph_handle $rhs]
-       set value [hsi::utils::format_addr_string $value $rhs]
+       set value [get_param_value $periph_handle $rhs]
+       set value [format_addr_string $value $rhs]
        puts $file_handle "#define $lhs $value"
    }		
    close $file_handle
@@ -390,7 +601,7 @@ proc hsi::utils::define_with_names {drv_handle periph_handle file_name args} {
 # Generate a C structure from an array
 # "args" is variable no - fields of the array 
 #
-#proc hsi::utils::xadd_struct {file_handle lib_handle struct_type struct_name array_name args} { 
+#proc xadd_struct {file_handle lib_handle struct_type struct_name array_name args} { 
 #
 #   set arrhandle [xget_handle $lib_handle "ARRAY" $array_name] 
 #   set elements [xget_handle $arrhandle "ELEMENTS" "*"] 
@@ -428,11 +639,11 @@ proc hsi::utils::define_with_names {drv_handle periph_handle file_name args} {
 # XPAR_MYEMC_MEM0_BASEADDR, XPAR_MYEMC_MEM1_HIGHADDR definitions in xparameters.h file
 # Handles MHS/MPD parameters 
 #---------------------------------------------------------------------------------------------
-proc hsi::utils::define_include_file_membank {drv_handle file_name args} {
-   set args [hsi::utils::get_exact_arg_list $args]
+proc define_include_file_membank {drv_handle file_name args} {
+   set args [get_exact_arg_list $args]
 
    # Get all peripherals connected to this driver
-   set periphs [hsi::utils::get_common_driver_ips $drv_handle] 
+   set periphs [get_common_driver_ips $drv_handle] 
    
    foreach periph $periphs {
         
@@ -447,7 +658,7 @@ proc hsi::utils::define_include_file_membank {drv_handle file_name args} {
            set baseval [string map {_ ""} $baseval]
            # Check to see if value starts with 0b or 0x
            if {[string match -nocase 0b* $baseval]} {
-            set baseval [hsi::utils::convert_binary_to_hex $baseval]
+            set baseval [convert_binary_to_hex $baseval]
            } else {
             set baseval [format "0x%08X" $baseval]
            }
@@ -455,7 +666,7 @@ proc hsi::utils::define_include_file_membank {drv_handle file_name args} {
            set highval [string map {_ ""} $highval]
            # Check to see if value starts with 0b or 0x
            if {[string match -nocase 0b* $highval]} {
-            set highval [hsi::utils::convert_binary_to_hex $highval]
+            set highval [convert_binary_to_hex $highval]
            } else {
             set highval [format "0x%08X" $highval]
            }
@@ -466,7 +677,7 @@ proc hsi::utils::define_include_file_membank {drv_handle file_name args} {
             lappend newargs $high
            }	
        }
-       hsi::utils::define_membank $periph $file_name $newargs
+       define_membank $periph $file_name $newargs
        set newargs ""
    }
 }
@@ -475,19 +686,19 @@ proc hsi::utils::define_include_file_membank {drv_handle file_name args} {
 # Generates the defn for a memory bank
 # The prev fn takes in a list of memory bank args
 #---------------------------------------------------
-proc hsi::utils::define_membank { periph file_name args } {
-   set args [hsi::utils::get_exact_arg_list $args]
+proc define_membank { periph file_name args } {
+   set args [get_exact_arg_list $args]
    set newargs [lindex $args 0]
    
    # Open include file
-   set file_handle [hsi::utils::open_include_file $file_name]
+   set file_handle [open_include_file $file_name]
 
    puts $file_handle "/* Definitions for peripheral [string toupper [common::get_property NAME $periph]] */"
    
    foreach arg $newargs {
        set value [common::get_property CONFIG.$arg $periph]
-       set value [hsi::utils::format_addr_string $value $arg]
-       puts $file_handle "#define [hsi::utils::get_ip_param_name $periph $arg] $value"
+       set value [format_addr_string $value $arg]
+       puts $file_handle "#define [get_ip_param_name $periph $arg] $value"
    }
 
    puts $file_handle "\n/******************************************************************/\n"
@@ -499,7 +710,7 @@ proc hsi::utils::define_membank { periph file_name args } {
 # Find all possible address params for the
 # given peripheral "periph"
 #----------------------------------------------------
-proc hsi::utils::find_addr_params {periph} {
+proc find_addr_params {periph} {
   
    set addr_params [list]
 
@@ -531,15 +742,15 @@ proc hsi::utils::find_addr_params {periph} {
 # Defines all possible address params in the filename
 # for all periphs that use this driver
 #----------------------------------------------------
-proc hsi::utils::define_addr_params {drv_handle file_name} {
+proc define_addr_params {drv_handle file_name} {
    
    set addr_params [list]
 
    # Open include file
-   set file_handle [hsi::utils::open_include_file $file_name]
+   set file_handle [open_include_file $file_name]
 
    # Get all peripherals connected to this driver
-   set periphs [hsi::utils::get_common_driver_ips $drv_handle] 
+   set periphs [get_common_driver_ips $drv_handle] 
 
    # Print all parameters for all peripherals
    foreach periph $periphs {
@@ -547,13 +758,13 @@ proc hsi::utils::define_addr_params {drv_handle file_name} {
    puts $file_handle "/* Definitions for peripheral [string toupper [common::get_property NAME $periph]] */"
 
    set addr_params ""
-   set addr_params [hsi::utils::find_addr_params $periph]
+   set addr_params [find_addr_params $periph]
 
    foreach arg $addr_params {
-       set value [hsi::utils::get_param_value $periph $arg]
+       set value [get_param_value $periph $arg]
        if {$value != ""} {
-           set value [hsi::utils::format_addr_string $value $arg]
-           puts $file_handle "#define [hsi::utils::get_ip_param_name $periph $arg] $value"
+           set value [format_addr_string $value $arg]
+           puts $file_handle "#define [get_ip_param_name $periph $arg] $value"
        }
    }
    puts $file_handle ""
@@ -566,16 +777,16 @@ proc hsi::utils::define_addr_params {drv_handle file_name} {
 # Defines all non-reserved params in the filename
 # for all periphs that use this driver
 #----------------------------------------------------
-proc hsi::utils::define_all_params {drv_handle file_name} {
+proc define_all_params {drv_handle file_name} {
    
    set params [list]
    lappend reserved_param_list "C_DEVICE" "C_PACKAGE" "C_SPEEDGRADE" "C_FAMILY" "C_INSTANCE" "C_KIND_OF_EDGE" "C_KIND_OF_LVL" "C_KIND_OF_INTR" "C_NUM_INTR_INPUTS" "C_MASK" "C_NUM_MASTERS" "C_NUM_SLAVES" "C_LMB_AWIDTH" "C_LMB_DWIDTH" "C_LMB_MASK" "C_LMB_NUM_SLAVES" "INSTANCE" "HW_VER"
 
    # Open include file
-   set file_handle [hsi::utils::open_include_file $file_name]
+   set file_handle [open_include_file $file_name]
 
    # Get all peripherals connected to this driver
-   set periphs [hsi::utils::get_common_driver_ips $drv_handle] 
+   set periphs [get_common_driver_ips $drv_handle] 
   
    # Print all parameters for all peripherals
    foreach periph $periphs {
@@ -589,8 +800,8 @@ proc hsi::utils::define_all_params {drv_handle file_name} {
            if {$posn == -1 } {
                set param_value [common::get_property $param $periph]
                 if {$param_value != ""} {
-                    set param_value [hsi::utils::format_addr_string $param_value $param_name]
-                    puts $file_handle "#define [hsi::utils::get_ip_param_name $periph $param_name] $param_value"
+                    set param_value [format_addr_string $param_value $param_name]
+                    puts $file_handle "#define [get_ip_param_name $periph $param_name] $param_value"
                 }
            }
        }
@@ -604,13 +815,13 @@ proc hsi::utils::define_all_params {drv_handle file_name} {
 # Given a list of arguments, define each as a canonical constant name, using
 # the driver name, in an include file.
 #
-proc hsi::utils::define_canonical_xpars {drv_handle file_name drv_string args} {
-    set args [hsi::utils::get_exact_arg_list $args]
+proc define_canonical_xpars {drv_handle file_name drv_string args} {
+    set args [get_exact_arg_list $args]
    # Open include file
-   set file_handle [hsi::utils::open_include_file $file_name]
+   set file_handle [open_include_file $file_name]
 
    # Get all the peripherals connected to this driver
-   set periphs [hsi::utils::get_common_driver_ips $drv_handle]
+   set periphs [get_common_driver_ips $drv_handle]
 
    # Get the names of all the peripherals connected to this driver
    foreach periph $periphs {
@@ -645,16 +856,16 @@ proc hsi::utils::define_canonical_xpars {drv_handle file_name drv_string args} {
            set canonical_name [format "%s_%s" $drv_string [lindex $indices $i]]
 
            foreach arg $args {
-               set lvalue [hsi::utils::get_driver_param_name $canonical_name $arg]
+               set lvalue [get_driver_param_name $canonical_name $arg]
 
                # The commented out rvalue is the name of the instance-specific constant
-               # set rvalue [hsi::utils::get_ip_param_name $periph $arg]
+               # set rvalue [get_ip_param_name $periph $arg]
                # The rvalue set below is the actual value of the parameter
-               set rvalue [hsi::utils::get_param_value $periph $arg]
+               set rvalue [get_param_value $periph $arg]
                if {[llength $rvalue] == 0} {
                    set rvalue 0
                }
-               set rvalue [hsi::utils::format_addr_string $rvalue $arg]
+               set rvalue [format_addr_string $rvalue $arg]
    
                puts $file_handle "#define $lvalue $rvalue"
 
@@ -673,13 +884,13 @@ proc hsi::utils::define_canonical_xpars {drv_handle file_name drv_string args} {
 # Similar to proc define_config_file, except that uses regsub to replace "S_AXI_"
 # with "".
 #-----------------------------------------------------------------------------
-proc hsi::utils::define_zynq_canonical_xpars {drv_handle file_name drv_string args} {
-    set args [hsi::utils::get_exact_arg_list $args]
+proc define_zynq_canonical_xpars {drv_handle file_name drv_string args} {
+    set args [get_exact_arg_list $args]
    # Open include file
-   set file_handle [hsi::utils::open_include_file $file_name]
+   set file_handle [open_include_file $file_name]
 
    # Get all the peripherals connected to this driver
-   set periphs [hsi::utils::get_common_driver_ips $drv_handle]
+   set periphs [get_common_driver_ips $drv_handle]
 
    # Get the names of all the peripherals connected to this driver
    foreach periph $periphs {
@@ -714,17 +925,17 @@ proc hsi::utils::define_zynq_canonical_xpars {drv_handle file_name drv_string ar
            set canonical_name [format "%s_%s" $drv_string [lindex $indices $i]]
 
            foreach arg $args {
-               set lvalue [hsi::utils::get_driver_param_name $canonical_name $arg]
+               set lvalue [get_driver_param_name $canonical_name $arg]
                regsub "S_AXI_" $lvalue "" lvalue
 
                # The commented out rvalue is the name of the instance-specific constant
-               # set rvalue [hsi::utils::get_ip_param_name $periph $arg]
+               # set rvalue [get_ip_param_name $periph $arg]
                # The rvalue set below is the actual value of the parameter
-               set rvalue [hsi::utils::get_param_value $periph $arg]
+               set rvalue [get_param_value $periph $arg]
                if {[llength $rvalue] == 0} {
                    set rvalue 0
                }
-               set rvalue [hsi::utils::format_addr_string $rvalue $arg]
+               set rvalue [format_addr_string $rvalue $arg]
    
                puts $file_handle "#define $lvalue $rvalue"
 
@@ -741,7 +952,7 @@ proc hsi::utils::define_zynq_canonical_xpars {drv_handle file_name drv_string ar
 #----------------------------------------------------
 # Define processor params using IP type
 #----------------------------------------------------
-proc hsi::utils::define_processor_params {drv_handle file_name} {
+proc define_processor_params {drv_handle file_name} {
    set sw_proc_handle [hsi::get_sw_processor]
    set proc_name [common::get_property hw_instance $sw_proc_handle]
    set hw_proc_handle [hsi::get_cells -hier $proc_name ]
@@ -752,10 +963,10 @@ proc hsi::utils::define_processor_params {drv_handle file_name} {
    lappend reserved_param_list "C_DEVICE" "C_PACKAGE" "C_SPEEDGRADE" "C_FAMILY" "C_INSTANCE" "C_KIND_OF_EDGE" "C_KIND_OF_LVL" "C_KIND_OF_INTR" "C_NUM_INTR_INPUTS" "C_MASK" "C_NUM_MASTERS" "C_NUM_SLAVES" "C_DCR_AWIDTH" "C_DCR_DWIDTH" "C_DCR_NUM_SLAVES" "C_LMB_AWIDTH" "C_LMB_DWIDTH" "C_LMB_MASK" "C_LMB_NUM_SLAVES" "C_OPB_AWIDTH" "C_OPB_DWIDTH" "C_OPB_NUM_MASTERS" "C_OPB_NUM_SLAVES" "C_PLB_AWIDTH" "C_PLB_DWIDTH" "C_PLB_MID_WIDTH" "C_PLB_NUM_MASTERS" "C_PLB_NUM_SLAVES" "INSTANCE"
    
    # Open include file
-   set file_handle [hsi::utils::open_include_file $file_name]
+   set file_handle [open_include_file $file_name]
    
    # Get all peripherals connected to this driver
-   set periphs [hsi::utils::get_common_driver_ips $drv_handle] 
+   set periphs [get_common_driver_ips $drv_handle] 
    # Print all parameters for all peripherals
    foreach periph $periphs {
    
@@ -785,7 +996,7 @@ proc hsi::utils::define_processor_params {drv_handle file_name} {
         set param_value [common::get_property  $param $periph]
        
         if {$param_value != ""} {
-            set param_value [hsi::utils::format_addr_string $param_value $param_name]
+            set param_value [format_addr_string $param_value $param_name]
             set name [common::get_property IP_NAME $periph]
             set name [string toupper $name]
             set name [format "XPAR_%s_" $name]
@@ -812,7 +1023,7 @@ proc hsi::utils::define_processor_params {drv_handle file_name} {
 #
 # Get the memory range of IP for current processor
 #
-proc hsi::utils::get_ip_mem_ranges {periph} {
+proc get_ip_mem_ranges {periph} {
 	puts "ipmem ranges"
     set sw_proc_handle [hsi::get_sw_processor]
     set hw_proc_handle [hsi::get_cells -hier [common::get_property hw_instance $sw_proc_handle]]
@@ -825,7 +1036,7 @@ proc hsi::utils::get_ip_mem_ranges {periph} {
 #
 # Handle the stdin parameter of a processor
 #
-proc hsi::utils::handle_stdin {drv_handle} {
+proc handle_stdin_proc {drv_handle} {
 
    set stdin [common::get_property CONFIG.stdin $drv_handle]
    set sw_proc_handle [hsi::get_sw_processor]
@@ -866,7 +1077,7 @@ proc hsi::utils::handle_stdin {drv_handle} {
        puts $config_file [format "\t return %s(STDIN_BASEADDRESS);" $inbyte_name]
        puts $config_file "}"
        close $config_file
-       set config_file [hsi::utils::open_include_file "xparameters.h"]
+       set config_file [open_include_file "xparameters.h"]
        set stdin_mem_range [hsi::get_mem_ranges -of_objects $hw_proc_handle -filter "INSTANCE==$stdin && IS_DATA==1"]
        #check ifstdin_mem_range is empty, if so give error 
        #set stdin_mem_range [hsi::get_mem_ranges -of_objects $hw_proc_handle -filter "INSTANCE==$stdin"]
@@ -879,7 +1090,7 @@ proc hsi::utils::handle_stdin {drv_handle} {
        }
        set base_name [common::get_property BASE_NAME $stdin_mem_range]
        set base_value [lindex [common::get_property BASE_VALUE $stdin_mem_range] 0]
-       puts $config_file "\#define STDIN_BASEADDRESS [hsi::utils::format_addr_string $base_value $base_name]"
+       puts $config_file "\#define STDIN_BASEADDRESS [format_addr_string $base_value $base_name]"
        close $config_file
    }
 }
@@ -888,7 +1099,7 @@ proc hsi::utils::handle_stdin {drv_handle} {
 #
 # Handle the stdout parameter of a processor
 #
-proc hsi::utils::handle_stdout {drv_handle} {
+proc handle_stdout {drv_handle} {
    set stdout [common::get_property CONFIG.stdout $drv_handle]
    set sw_proc_handle [hsi::get_sw_processor]
    set hw_proc_handle [hsi::get_cells -hier [common::get_property hw_instance $sw_proc_handle]]
@@ -927,7 +1138,7 @@ proc hsi::utils::handle_stdout {drv_handle} {
        puts $config_file [format "\t %s(STDOUT_BASEADDRESS, c);" $outbyte_name]
        puts $config_file "}"
        close $config_file
-       set config_file [hsi::utils::open_include_file "xparameters.h"]
+       set config_file [open_include_file "xparameters.h"]
        set stdout_mem_range [hsi::get_mem_ranges -of_objects $hw_proc_handle -filter "INSTANCE==$stdout && IS_DATA==1" ]
        #Check if stdout_mem_range is empty, if so give error
        if { [llength $stdout_mem_range] > 1 } {
@@ -939,12 +1150,12 @@ proc hsi::utils::handle_stdout {drv_handle} {
        }
        set base_name [common::get_property BASE_NAME $stdout_mem_range]
        set base_value [lindex [common::get_property BASE_VALUE $stdout_mem_range] 0]
-       puts $config_file "\#define STDOUT_BASEADDRESS [hsi::utils::format_addr_string $base_value $base_name]"
+       puts $config_file "\#define STDOUT_BASEADDRESS [format_addr_string $base_value $base_name]"
        close $config_file
    }
 }
 
-proc hsi::utils::get_common_driver_ips {driver_handle} {
+proc get_common_driver_ips {driver_handle} {
 	puts "inside"
   set retlist ""
   set drs { }
@@ -955,7 +1166,7 @@ proc hsi::utils::get_common_driver_ips {driver_handle} {
   } else {
       set driver_name [common::get_property NAME $driver_handle]
 	  if { [llength $driver_name] != 0 } {
-      set drs [get_drivers -filter "NAME==$driver_name"]
+      set drs [get_drivers_sw -filter "NAME==$driver_name"]
       foreach driver $drs {
            set hw_instance [common::get_property hw_instance $driver]
            set cell [hsi::get_cells -hier $hw_instance]
@@ -969,7 +1180,7 @@ proc hsi::utils::get_common_driver_ips {driver_handle} {
 #
 # this API return true if it is interrupting the current processor
 #
-proc hsi::utils::is_pin_interrupting_current_proc { periph_name intr_pin_name} {
+proc is_pin_interrupting_current_proc { periph_name intr_pin_name} {
     set ret 0
     set periph [hsi::get_cells -hier "$periph_name"] 
     if { [llength $periph] != 1 } {
@@ -977,10 +1188,10 @@ proc hsi::utils::is_pin_interrupting_current_proc { periph_name intr_pin_name} {
     }
     #get the list of connected 
 	puts "is"
-    set intr_cntrls [hsi::utils::get_connected_intr_cntrl "$periph_name" "$intr_pin_name"]
+    set intr_cntrls [get_connected_intr_cntrl "$periph_name" "$intr_pin_name"]
 	puts "is1"
     foreach intr_cntrl $intr_cntrls {
-        if { [hsi::utils::is_ip_interrupting_current_proc $intr_cntrl] == 1} {
+        if { [is_ip_interrupting_current_proc $intr_cntrl] == 1} {
             return 1
         }
     }
@@ -992,13 +1203,13 @@ proc hsi::utils::is_pin_interrupting_current_proc { periph_name intr_pin_name} {
 # this API return true if any interrupt controller is connected to processor 
 #and is available processor memory map
 #
-proc hsi::utils::get_current_proc_intr_cntrl { } {
+proc get_current_proc_intr_cntrl { } {
     set current_proc [common::get_property HW_INSTANCE [hsi::get_sw_processor] ]
     set proc_handle [hsi::get_cells -hier $current_proc]
-    set proc_ips [hsi::utils::get_proc_slave_periphs $proc_handle]
+    set proc_ips [get_proc_slave_periphs $proc_handle]
     foreach ip $proc_ips {
-        if {  [hsi::utils::is_intr_cntrl $ip] == 1  
-            && [hsi::utils::is_ip_interrupting_current_proc $ip]} {
+        if {  [is_intr_cntrl $ip] == 1  
+            && [is_ip_interrupting_current_proc $ip]} {
             return $ip
         }
     }
@@ -1009,16 +1220,15 @@ proc hsi::utils::get_current_proc_intr_cntrl { } {
 # this API return true if any at least one interrupt port of IP is reaching 
 # to current processor
 #
-proc hsi::utils::is_ip_interrupting_current_proc { periph_name} {
-	proc_called_by
+proc is_ip_interrupting_current_proc { periph_name} {
    set ret 0 
    set periph [hsi::get_cells -hier "$periph_name"]
    if { [llength $periph] != 1}  {
        return $ret
    }
-   if { [hsi::utils::is_intr_cntrl $periph_name] == 1} {
+   if { [is_intr_cntrl $periph_name] == 1} {
 
-        set cntrl_driver [get_drivers $periph_name]
+        set cntrl_driver [get_drivers_sw $periph_name]
 	if {[string match -nocase $cntrl_driver "generic"]} {
 		set cntrl_driver ""
 	}
@@ -1033,7 +1243,7 @@ proc hsi::utils::is_ip_interrupting_current_proc { periph_name} {
 #	set current_proc [get_hw_family]
         set intr_pin [hsi::get_pins -of_objects $periph "Irq"]
         if { [llength $intr_pin] != 0} {
-            set sink_pins [hsi::utils::get_sink_pins $intr_pin]
+            set sink_pins [get_sink_pins $intr_pin]
             foreach sink_pin $sink_pins {
                 set connected_ip [hsi::get_cells -of_objects $sink_pin]
                 #Connected interface should be IP Instance
@@ -1046,7 +1256,7 @@ proc hsi::utils::is_ip_interrupting_current_proc { periph_name} {
         } else {
             #special handling for iomodule interrupt as currently we do not have
             #vlnv property into interface object
-            set connected_intf [hsi::utils::get_connected_intf $periph "INTC_Irq"]
+            set connected_intf [get_connected_intf $periph "INTC_Irq"]
             if { [llength $connected_intf] != 0 } {
                 set connected_ip [hsi::get_cells -of_objects $connected_intf] 
                 #Connected interface should be IP Instance
@@ -1061,7 +1271,7 @@ proc hsi::utils::is_ip_interrupting_current_proc { periph_name} {
 	        set intr_pin [hsi::get_pins -of_objects $periph -filter "TYPE==INTERRUPT&&DIRECTION==O"]
         }
         if { [llength $intr_pin] != 0} {
-            set sink_pins [hsi::utils::get_sink_pins $intr_pin]
+            set sink_pins [get_sink_pins $intr_pin]
             foreach sink_pin $sink_pins {
                 set connected_ip [hsi::get_cells -of_objects $sink_pin]
                 #Connected interface should be IP Instance
@@ -1077,7 +1287,7 @@ proc hsi::utils::is_ip_interrupting_current_proc { periph_name} {
        set intrs [hsi::get_pins -of_objects $periph -filter "TYPE==INTERRUPT&&DIRECTION==O"]
        foreach intr $intrs {
            set intr_name [common::get_property NAME $intr]
-           set flag [hsi::utils::is_pin_interrupting_current_proc "$periph_name" "$intr_name"]
+           set flag [is_pin_interrupting_current_proc "$periph_name" "$intr_name"]
            if { $flag } {
                return 1
            }
@@ -1091,7 +1301,7 @@ proc hsi::utils::is_ip_interrupting_current_proc { periph_name} {
 ## DTS Related common utils
 ################################################################################
 
-proc hsi::utils::add_new_child_node { parent node_name } {
+proc add_new_child_node { parent node_name } {
     set node [hsi::get_nodes -of_objects $parent $node_name]
     if { [llength $node] } {
         hsi::delete_objs $node
@@ -1099,13 +1309,13 @@ proc hsi::utils::add_new_child_node { parent node_name } {
     set node [hsi::create_node  $node_name $parent]
     return $node
 }
-proc hsi::utils::add_new_property { node  property type value } {
+proc add_new_property { node  property type value } {
     set prop [hsi::create_comp_param $property $value $node]
     common::set_property CONFIG.TYPE $type $prop
     return $prop
 }
 
-proc hsi::utils::add_new_dts_param { node  param_name param_value param_type {param_decription ""} } {
+proc add_new_dts_param { node  param_name param_value param_type {param_decription ""} } {
 	if { $param_type != "boolean" && $param_type != "comment" && [llength $param_value] == 0 } {
 		error "param_value can only be empty if the param_type is boolean, value is must for other data types"
 	}
@@ -1119,17 +1329,17 @@ proc hsi::utils::add_new_dts_param { node  param_name param_value param_type {pa
     return $param
 }
 
-proc hsi::utils::add_driver_properties { node driver } {
+proc add_driver_properties { node driver } {
 	set props [hsi::get_comp_params -of_objects $driver]
 	foreach prop $props {
 	    set name [common::get_property NAME $prop]
 	    set value [common::get_property VALUE $prop]
 	    set type [common::get_property CONFIG.TYPE $prop]
-	    hsi::utils::add_new_dts_param $node "$name" "$value" "$type"
+	    add_new_dts_param $node "$name" "$value" "$type"
 	}
 }
 
-proc hsi::utils::get_os_parameter_value { param_name } {
+proc get_os_parameter_value { param_name } {
     set value ""
     set global_params_node [hsi::get_nodes -of_objects [::hsi::get_os] "global_params"]
     if { [llength $global_params_node] } {
@@ -1137,14 +1347,14 @@ proc hsi::utils::get_os_parameter_value { param_name } {
     }
     return $value
 }
-proc hsi::utils::set_os_parameter_value { param_name param_value } {
+proc set_os_parameter_value { param_name param_value } {
     set global_params_node [hsi::get_nodes -of_objects [::hsi::get_os] "global_params"]
     if { [llength $global_params_node] == 0 } {
-        set global_params_node [hsi::utils::add_new_child_node [hsi::get_os] "global_params"]
+        set global_params_node [add_new_child_node [hsi::get_os] "global_params"]
     }
     common::set_property CONFIG.$param_name "$param_value" $global_params_node
 }
-proc hsi::utils::get_or_create_child_node { parent node_name } {
+proc get_or_create_child_node { parent node_name } {
     set node [hsi::get_nodes -of_objects $parent $node_name]
     if { [llength $node] == 0 } {
         set node [hsi::create_node $node_name $parent]
@@ -1152,21 +1362,21 @@ proc hsi::utils::get_or_create_child_node { parent node_name } {
     return $node
 }
 
-proc hsi::utils::get_dtg_interrupt_info { ip_name intr_port_name } {
+proc get_dtg_interrupt_info { ip_name intr_port_name } {
     set intr_info ""
     set ip [hsi::get_cells -hier $ip_name]
     if { [llength $ip] == 0} {
         return $intr_info
     }
-    if { [hsi::utils::is_pin_interrupting_current_proc $ip_name "$intr_port_name" ] != 1 }  {
+    if { [is_pin_interrupting_current_proc $ip_name "$intr_port_name" ] != 1 }  {
         return $intr_info
     }
-    set intr_id [hsi::utils::get_interrupt_id $ip_name $intr_port_name]
+    set intr_id [get_interrupt_id $ip_name $intr_port_name]
     if { $intr_id  == -1 } {
         return $intr_info
     }
-    set intc [hsi::utils::get_connected_intr_cntrl $ip_name $intr_port_name]
-    set intr_type [hsi::utils::get_dtg_interrupt_type $intc $ip $intr_port_name] 
+    set intc [get_connected_intr_cntrl $ip_name $intr_port_name]
+    set intr_type [get_dtg_interrupt_type $intc $ip $intr_port_name] 
     if { [string match "[common::get_property IP_NAME $intc]" "ps7_scugic"] } {
         if { $intr_id > 32 } {
             set intr_id [expr $intr_id -32]
@@ -1178,7 +1388,7 @@ proc hsi::utils::get_dtg_interrupt_info { ip_name intr_port_name } {
     return $intr_info
 }
 
-proc hsi::utils::get_dtg_interrupt_type { intc_name ip_name port_name } {
+proc get_dtg_interrupt_type { intc_name ip_name port_name } {
     set intc [hsi::get_cells -hier $intc_name]
     set ip [hsi::get_cells -hier $ip_name]
     if {[llength $intc] == 0 && [llength $ip] == 0} {
@@ -1215,12 +1425,12 @@ proc hsi::utils::get_dtg_interrupt_type { intc_name ip_name port_name } {
 	}
     return -1
 }
-proc hsi::utils::get_interrupt_parent {  ip_name port_name } {
-    set intc [hsi::utils::get_connected_intr_cntrl $ip_name $port_name]
+proc get_interrupt_parent_proc {  ip_name port_name } {
+    set intc [get_connected_intr_cntrl $ip_name $port_name]
     return $intc
 }
 
-proc hsi::utils::get_connected_stream_ip { ip_name intf_name } {
+proc get_connected_stream_ip { ip_name intf_name } {
     set ip [hsi::get_cells -hier $ip_name]
     if { [llength $ip] == 0 } {
         return ""
@@ -1235,8 +1445,8 @@ proc hsi::utils::get_connected_stream_ip { ip_name intf_name } {
     if { [llength $intf_net] == 0 } {
         return ""
     }
-    set connected_intf_pins [hsi::utils::get_other_intf_pin $intf_net $intf] 
-    set connected_intf_pin [hsi::utils::get_intf_pin_oftype $connected_intf_pins $intf_type 0]
+    set connected_intf_pins [get_other_intf_pin $intf_net $intf] 
+    set connected_intf_pin [get_intf_pin_oftype $connected_intf_pins $intf_type 0]
     
     if { [llength $connected_intf_pin] } {
         set connected_ip [hsi::get_cells -of_objects $connected_intf_pin]
@@ -1248,7 +1458,7 @@ proc hsi::utils::get_connected_stream_ip { ip_name intf_name } {
 # This API returns the interrupt ID of a IP Pin
 # Usecase: to get the ID of a top level interrupt port, provide empty string for ip_name
 # Usecase: If port width port than 1 bit, then it will return multiple interrupts ID with ":" seperated
-proc hsi::utils::get_interrupt_id { ip_name port_name } {
+proc get_interrupt_id { ip_name port_name } {
     set ret -1
     set periph ""
     set intr_pin ""
@@ -1282,7 +1492,7 @@ proc hsi::utils::get_interrupt_id { ip_name port_name } {
         }
     }
 
-    set intc_periph [hsi::utils::get_connected_intr_cntrl $ip_name $port_name]
+    set intc_periph [get_connected_intr_cntrl $ip_name $port_name]
     if { [llength $intc_periph]  ==  0 } {
         return $ret
     }
@@ -1299,14 +1509,14 @@ proc hsi::utils::get_interrupt_id { ip_name port_name } {
         set ip_param [common::get_property CONFIG.C_IRQ_F2P_MODE $intc_periph]
         set ip_intr_pin [hsi::get_pins -of_objects $intc_periph "IRQ_F2P"]
         if { [string match -nocase "$ip_param" "REVERSE"] } {
-            set intc_src_ports [lreverse [hsi::utils::get_intr_src_pins $ip_intr_pin]]
+            set intc_src_ports [lreverse [get_intr_src_pins $ip_intr_pin]]
         } else {
-            set intc_src_ports [hsi::utils::get_intr_src_pins $ip_intr_pin]
+            set intc_src_ports [get_intr_src_pins $ip_intr_pin]
         }
         set total_intr_count -1
         foreach intc_src_port $intc_src_ports {
             set intr_periph [hsi::get_cells -of_objects $intc_src_port]
-            set intr_width [hsi::utils::get_port_width $intc_src_port]
+            set intr_width [get_port_width $intc_src_port]
             if { [llength $intr_periph] } {
                 #case where an a pin of IP is interrupt
                 if {[common::get_property IS_PL $intr_periph] == 0} {
@@ -1316,7 +1526,7 @@ proc hsi::utils::get_interrupt_id { ip_name port_name } {
             set total_intr_count [expr $total_intr_count + $intr_width]
         }
     } else  {
-        set intc_src_ports [hsi::utils::get_interrupt_sources $intc_periph]
+        set intc_src_ports [get_interrupt_sources $intc_periph]
     }
 
     #Special Handling for cascading case of axi_intc Interrupt controller
@@ -1332,7 +1542,7 @@ proc hsi::utils::get_interrupt_id { ip_name port_name } {
             incr i
             continue
         }
-        set intr_width [hsi::utils::get_port_width $intc_src_port]
+        set intr_width [get_port_width $intc_src_port]
         set intr_periph [hsi::get_cells -of_objects $intc_src_port]
         if { [string match -nocase $intc_type "ps7_scugic"] && [llength $intr_periph]} {
             if {[common::get_property IS_PL $intr_periph] == 0 } {
@@ -1352,7 +1562,7 @@ proc hsi::utils::get_interrupt_id { ip_name port_name } {
     # interrupt source not found, this could be case where IP interrupt is connected
     # to core0/core1 nFIQ nIRQ of scugic 
     if { $found == 0 && [string match -nocase $intc_type "ps7_scugic"]} {
-        set sink_pins [hsi::utils::get_sink_pins $intr_pin]
+        set sink_pins [get_sink_pins $intr_pin]
         lappend intr_pin_name;
         foreach sink_pin $sink_pins {
             set connected_ip [hsi::get_cells -of_objects $sink_pin]
@@ -1368,7 +1578,7 @@ proc hsi::utils::get_interrupt_id { ip_name port_name } {
         }
     }
 
-    set port_width [hsi::utils::get_port_width $intr_pin]
+    set port_width [get_port_width $intr_pin]
     set tempret $ret
     set lastadded 0
     set ps7_scugic_flow 0
@@ -1421,7 +1631,7 @@ proc hsi::utils::get_interrupt_id { ip_name port_name } {
     return $ret
 }
 
-proc hsi::utils::get_connected_bus { periph_name intfs_pin} {
+proc get_connected_bus { periph_name intfs_pin} {
 	set bus ""
 	if { [llength [hsi::get_cells -hier $periph_name]] == 0 } {
 		return ""
@@ -1477,7 +1687,7 @@ proc hsi::utils::get_connected_bus { periph_name intfs_pin} {
 	return $bus
 }
 
-proc hsi::utils::get_rp_rm_for_drv { drv_handle } {
+proc get_rp_rm_for_drv { drv_handle } {
 
 	if { [llength $drv_handle ] == 0 } {
 		return ""
@@ -1525,6 +1735,6 @@ proc hsi::utils::get_rp_rm_for_drv { drv_handle } {
         return ""
 
 }
-
+}
 
 

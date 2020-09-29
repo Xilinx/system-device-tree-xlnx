@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval ernic {
+namespace eval ::tclapp::xilinx::devicetree::ernic {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set node [get_node $drv_handle]
 		if {$node == 0} {
@@ -34,7 +35,7 @@ namespace eval ernic {
 		if {[string_is_empty ${intf}]} {
 			return 0
 		}
-		set connected_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $intf]
+		set connected_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $intf]
 		if {[string_is_empty ${connected_ip}]} {
 			dtg_warning "$drv_handle connected ip is NULL for the pin $intf"
 			return 0

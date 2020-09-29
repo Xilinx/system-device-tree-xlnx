@@ -1,14 +1,14 @@
 ##############################################################################
 # Copyright 2013 Xilinx Inc. All rights reserved
 ##############################################################################
-namespace eval hsi::utils {
-}
+namespace eval ::tclapp::xilinx::devicetree::hsi::utils {
+namespace export *
 
 #
 # It will retrun the connected interface to and IP interface
 #
 
-proc hsi::utils::get_connected_intf { periph_name intf_name} {
+proc get_connected_intf { periph_name intf_name} {
     set ret ""
     set periph [hsi::get_cells -hier "$periph_name"]
     if { [llength $periph] == 0} {
@@ -24,15 +24,15 @@ proc hsi::utils::get_connected_intf { periph_name intf_name} {
     }
     # set connected_intf [hsi::get_intf_pins -of_objects $intf_net -filter "TYPE!=[common::get_property TYPE $intf_pin]"]
     
-    set connected_intf [hsi::utils::get_other_intf_pin $intf_net $intf_pin ] 
+    set connected_intf [get_other_intf_pin $intf_net $intf_pin ] 
     set intf_type [common::get_property TYPE $intf_pin]
-    set conn_busif_handle [hsi::utils::get_intf_pin_oftype $connected_intf $intf_type 0]
+    set conn_busif_handle [get_intf_pin_oftype $connected_intf $intf_type 0]
     return $conn_busif_handle
 }
 # 
 # it will return the net name connected to ip pin
 #
-proc hsi::utils::get_net_name {ip_inst ip_pin} {
+proc get_net_name {ip_inst ip_pin} {
     set ret ""
     if { [llength $ip_pin] != 0 } {
     set port [hsi::get_pins -of_objects $ip_inst -filter "NAME==$ip_pin"]
@@ -47,7 +47,7 @@ proc hsi::utils::get_net_name {ip_inst ip_pin} {
 #
 # It will return the interface net name connected to IP interface.
 #
-proc hsi::utils::get_intfnet_name {ip_inst ip_busif} {
+proc get_intfnet_name {ip_inst ip_busif} {
     set ret ""
     if { [llength $ip_busif] != 0 } {
     set bus_if [hsi::get_intf_pins -of_objects $ip_inst -filter "NAME==$ip_busif"]
@@ -63,7 +63,7 @@ proc hsi::utils::get_intfnet_name {ip_inst ip_busif} {
 # 
 # It will return all the peripheral objects which are connected to processor
 #
-proc hsi::utils::get_proc_slave_periphs {proc_handle} {
+proc get_proc_slave_periphs {proc_handle} {
    set periphlist [common::get_property slaves $proc_handle]
    if { $periphlist != "" } {
        foreach periph $periphlist {
@@ -80,7 +80,7 @@ proc hsi::utils::get_proc_slave_periphs {proc_handle} {
 # It will return the clock frequency value of IP clock port.
 # it will first check the requested pin should be be clock type.
 #
-proc hsi::utils::get_clk_pin_freq { cell_obj clk_port} {
+proc get_clk_pin_freq { cell_obj clk_port} {
     set clk_port_obj [hsi::get_pins $clk_port -of_objects $cell_obj]
     if {$clk_port_obj ne "" } {
         set port_type [common::get_property TYPE $clk_port_obj]
@@ -108,7 +108,7 @@ proc hsi::utils::get_clk_pin_freq { cell_obj clk_port} {
 # It will check the pin object is external or not. If pin_object is 
 # associated to a cell then it is internal otherise it is external
 #
-proc hsi::utils::is_external_pin { pin_obj } {
+proc is_external_pin { pin_obj } {
     set pin_class [common::get_property CLASS $pin_obj]
     if { [string compare -nocase "$pin_class" port] == 0 } {
         set ip [hsi::get_cells -of_objects $pin_obj]
@@ -125,7 +125,7 @@ proc hsi::utils::is_external_pin { pin_obj } {
 # Get the width of port object. It will return width equal to 1 when
 # port does not have width property
 #
-proc hsi::utils::get_port_width { port_handle} {
+proc get_port_width { port_handle} {
     set left [common::get_property LEFT $port_handle]
     set right [common::get_property RIGHT $port_handle]
     if {[llength $left] == 0 && [llength $right] == 0} {
@@ -143,7 +143,7 @@ proc hsi::utils::get_port_width { port_handle} {
 #
 # Remove the pin specified from the list of pins
 #
-proc hsi::utils::remove_pin_from_list { pinList pin } {
+proc remove_pin_from_list { pinList pin } {
     lappend returnList
     
     foreach pinInList $pinList {
@@ -165,7 +165,7 @@ proc hsi::utils::remove_pin_from_list { pinList pin } {
 # Given an interface pin and one of the interface net, this functions   
 # returns the net which is on the other side of the boundary 
 #
-proc hsi::utils::get_other_intf_net { intf_pin given_intf_net} {
+proc get_other_intf_net { intf_pin given_intf_net} {
     if { [llength $intf_pin] == 0 } {
         return ""
     }
@@ -189,7 +189,7 @@ proc hsi::utils::get_other_intf_net { intf_pin given_intf_net} {
 # Given an interface net and one of the interface pins, this functions recursively traverses block containers  
 # to return the interface pin which is on the other end of the net 
 #
-proc hsi::utils::get_other_intf_pin { intf_net given_intf_pin} {
+proc get_other_intf_pin { intf_net given_intf_pin} {
     lappend return_pin_list
     if { [llength $intf_net] == 0 } {
         return ""
@@ -203,7 +203,7 @@ proc hsi::utils::get_other_intf_pin { intf_net given_intf_pin} {
     if { [llength $intf_pins_list] == 0 } {
         return ""
     }
-    set other_intf_pins [hsi::utils::remove_pin_from_list $intf_pins_list $given_intf_pin]
+    set other_intf_pins [remove_pin_from_list $intf_pins_list $given_intf_pin]
     if { [llength $other_intf_pins] == 0 } {
         return ""
     }
@@ -217,11 +217,11 @@ proc hsi::utils::get_other_intf_pin { intf_net given_intf_pin} {
         #set cell_type [common::get_property IP_NAME $other_cell]
         set cell_type [common::get_property BD_TYPE $other_cell]
         if { [ string match -nocase $cell_type "block_container" ] } {
-            set other_bdry_intf_net [hsi::utils::get_other_intf_net $other_intf_pin $intf_net]
+            set other_bdry_intf_net [get_other_intf_net $other_intf_pin $intf_net]
             if { [llength $other_bdry_intf_net] == 0 } {
                 continue
             }
-            set result_pins [hsi::utils::get_other_intf_pin $other_bdry_intf_net $other_intf_pin]
+            set result_pins [get_other_intf_pin $other_bdry_intf_net $other_intf_pin]
             if { [llength $result_pins] == 0 } {
                 continue
             }
@@ -242,7 +242,7 @@ proc hsi::utils::get_other_intf_pin { intf_net given_intf_pin} {
 # isOf takes bool value. If isOf is true, the proc returns all the pins of the type given
 # If isOF is false, the proc returns all the pins that not the type given
 #
-proc hsi::utils::get_intf_pin_oftype { given_intf_pins type isOf} {
+proc get_intf_pin_oftype { given_intf_pins type isOf} {
     if { [llength $given_intf_pins] == 0 } {
         return $given_intf_pins
     }
@@ -268,7 +268,7 @@ proc hsi::utils::get_intf_pin_oftype { given_intf_pins type isOf} {
     return $return_pin_list
 }
 
-proc hsi::utils::prepend { src_list dest_list } {
+proc prepend { src_list dest_list } {
     set temp_list $dest_list
     set dest_list {}
     foreach itr $src_list {
@@ -283,12 +283,12 @@ proc hsi::utils::prepend { src_list dest_list } {
 #
 # Get handles for all ports driving the interrupt pin of a peripheral
 #
-proc hsi::utils::get_interrupt_sources {periph_handle } {
+proc get_interrupt_sources {periph_handle } {
    lappend interrupt_sources
    lappend interrupt_pins
    set interrupt_pins [hsi::get_pins -of_objects $periph_handle -filter {TYPE==INTERRUPT && DIRECTION==I}]
    foreach interrupt_pin $interrupt_pins {
-       set source_pins [hsi::utils::get_intr_src_pins $interrupt_pin]
+       set source_pins [get_intr_src_pins $interrupt_pin]
        foreach source_pin $source_pins {
            lappend interrupt_sources $source_pin 
        }
@@ -298,9 +298,9 @@ proc hsi::utils::get_interrupt_sources {periph_handle } {
 #
 # Get the interrupt source pins of a periph pin object
 #
-proc hsi::utils::get_intr_src_pins {interrupt_pin} {
+proc get_intr_src_pins {interrupt_pin} {
     lappend interrupt_sources
-    set source_pins [hsi::utils::get_source_pins $interrupt_pin]
+    set source_pins [get_source_pins $interrupt_pin]
     foreach source_pin $source_pins {
         set source_cell [hsi::get_cells -of_objects $source_pin]
         if { [llength $source_cell ] } {
@@ -324,7 +324,7 @@ proc hsi::utils::get_intr_src_pins {interrupt_pin} {
 #
 # Get the source pins of a periph pin object
 #
-proc hsi::utils::get_source_pins {periph_pin} {
+proc get_source_pins {periph_pin} {
    set net [hsi::get_nets -of_objects $periph_pin]
    set cell [hsi::get_cells -of_objects $periph_pin]
    if { [llength $net] == 0} {
@@ -355,9 +355,9 @@ proc hsi::utils::get_source_pins {periph_pin} {
 
               set all_pins [hsi::get_pins -of_objects $sig_net ]
               foreach pin $all_pins {
-                set real_source_pin [hsi::utils::get_real_source_pin_traverse_out $pin]
+                set real_source_pin [get_real_source_pin_traverse_out $pin]
                 if { [ llength $real_source_pin] != 0 } {
-		    set real_source_pins [hsi::utils::prepend $real_source_pin $real_source_pins]
+		    set real_source_pins [prepend $real_source_pin $real_source_pins]
                 }
               }
         if { [llength $real_source_pins] != 0 } {
@@ -366,9 +366,9 @@ proc hsi::utils::get_source_pins {periph_pin} {
             } else {
 
                 foreach source_pin $source_pins {
-                    set real_source_pin [hsi::utils::get_real_source_pin_traverse_in $source_pin]
+                    set real_source_pin [get_real_source_pin_traverse_in $source_pin]
                     if { [ llength $real_source_pin] != 0 } {
-		    set real_source_pins [hsi::utils::prepend $real_source_pin $real_source_pins]
+		    set real_source_pins [prepend $real_source_pin $real_source_pins]
                     }
                 }
         if { [llength $real_source_pins] != 0 } {
@@ -395,7 +395,7 @@ proc hsi::utils::get_source_pins {periph_pin} {
     }
 }
 
-proc hsi::utils::get_real_source_pin_traverse_out { pin } {
+proc get_real_source_pin_traverse_out { pin } {
 
     lappend source_pins
       set lower_net [hsi::get_nets -boundary_type lower -of_objects $pin]
@@ -405,11 +405,11 @@ proc hsi::utils::get_real_source_pin_traverse_out { pin } {
 
           set real_source_pin [hsi::get_pins -of_objects $upper_net -filter "DIRECTION==O" ]
           # removing the pin from where the traversal started or from where the funtion is called 
-          set real_source_pin [hsi::utils::remove_pin_from_list $real_source_pin $pin]
+          set real_source_pin [remove_pin_from_list $real_source_pin $pin]
           
           set real_source_port [hsi::get_ports -of_objects $upper_net -filter "DIRECTION==I" ]
           # removing the pin from where the traversal started or from where the funtion is called
-          set real_source_port [hsi::utils::remove_pin_from_list $real_source_port $pin]
+          set real_source_port [remove_pin_from_list $real_source_port $pin]
           
           if { [ llength $real_source_pin] != 0 } {
               set source_pins [linsert $source_pins 0 $real_source_pin ]
@@ -418,13 +418,13 @@ proc hsi::utils::get_real_source_pin_traverse_out { pin } {
               set source_pins [linsert $source_pins 0 $real_source_port]
           }
           #if { [ llength $source_pins] != 0 } {
-          #       return [hsi::utils::get_real_source_pin_traverse_out $source_pins]
+          #       return [get_real_source_pin_traverse_out $source_pins]
           #}
       }
     return $source_pins
 }
 
-proc hsi::utils::get_real_source_pin_traverse_in { pin } {
+proc get_real_source_pin_traverse_in { pin } {
 
     lappend source_pins
     
@@ -445,11 +445,11 @@ proc hsi::utils::get_real_source_pin_traverse_in { pin } {
             set real_source_pin [hsi::get_pins -of_objects $lower_net -filter "DIRECTION==O" ]
 
             # removing the pin from where the traversal started or from where the funtion is called 
-            set real_source_pin [hsi::utils::remove_pin_from_list $real_source_pin $pin]
+            set real_source_pin [remove_pin_from_list $real_source_pin $pin]
 
             set real_source_port [hsi::get_ports -of_objects $lower_net -filter "DIRECTION==I" ]
             # removing the pin from where the traversal started or from where the funtion is called 
-            set real_source_port [hsi::utils::remove_pin_from_list $real_source_port $pin]
+            set real_source_port [remove_pin_from_list $real_source_port $pin]
 
             if { [ llength $real_source_pin] != 0 } {
                 set source_pins [linsert $source_pins 0 $real_source_pin ]
@@ -458,7 +458,7 @@ proc hsi::utils::get_real_source_pin_traverse_in { pin } {
                 set source_pins [linsert $source_pins 0 $real_source_port]
             }
             #if { [ llength $source_pins] != 0 } {
-            #       return [hsi::utils::get_real_source_pin_traverse_in $source_pins]
+            #       return [get_real_source_pin_traverse_in $source_pins]
             #}
         } 
     }
@@ -473,7 +473,7 @@ proc hsi::utils::get_real_source_pin_traverse_in { pin } {
 #
 # Find net of a peripheral pin object
 #
-proc hsi::utils::get_net_of_perifh_pin {periph_pin sig_nets} {
+proc get_net_of_perifh_pin {periph_pin sig_nets} {
     
     if { [ llength $sig_nets ] == 1 } {
         set got_net [lindex $sig_nets 0]
@@ -505,7 +505,7 @@ proc hsi::utils::get_net_of_perifh_pin {periph_pin sig_nets} {
 #
 # Get the sink pins of a peripheral pin object
 #
-proc hsi::utils::get_sink_pins {periph_pin} {
+proc get_sink_pins {periph_pin} {
    set net [hsi::get_nets -of_objects $periph_pin]
    set cell [hsi::get_cells -of_objects $periph_pin]
    if { [llength $net] == 0} {
@@ -539,7 +539,7 @@ proc hsi::utils::get_sink_pins {periph_pin} {
            lappend real_sink_pins
            if { [ llength $source_pins] != 0 } {
                foreach test_pin $source_pins {
-                    set real_sink_pin [hsi::utils::get_real_sink_pins_traverse_in $test_pin]
+                    set real_sink_pin [get_real_sink_pins_traverse_in $test_pin]
                     if { [ llength $real_sink_pin] != 0 } {
                         foreach real_pin $real_sink_pin {
                           set real_sink_pins [linsert $real_sink_pins end $real_pin]
@@ -547,7 +547,7 @@ proc hsi::utils::get_sink_pins {periph_pin} {
                     }
                }
             }
-            set real_sink_pin [hsi::utils::get_real_sink_pins_traverse_out $periph_pin]
+            set real_sink_pin [get_real_sink_pins_traverse_out $periph_pin]
             if { [ llength $real_sink_pin] != 0 } {
                 foreach real_pin $real_sink_pin {
                   set real_sink_pins [linsert $real_sink_pins end $real_pin]
@@ -583,7 +583,7 @@ proc hsi::utils::get_sink_pins {periph_pin} {
    }
 }
 
-proc hsi::utils::get_real_sink_pins_traverse_in { test_pin } {
+proc get_real_sink_pins_traverse_in { test_pin } {
 
     lappend source_pins
     set hasCells [hsi::get_cells -of_objects $test_pin]
@@ -601,7 +601,7 @@ proc hsi::utils::get_real_sink_pins_traverse_in { test_pin } {
          
             set real_sink_pins [hsi::get_pins -of_objects $lower_net -filter "DIRECTION==I" ]
             # removing the pin form where the traversal started or from where the funtion is called 
-            set real_sink_pins [hsi::utils::remove_pin_from_list $real_sink_pins $test_pin]
+            set real_sink_pins [remove_pin_from_list $real_sink_pins $test_pin]
             
             if { [ llength $real_sink_pins] != 0 } {
                 foreach source_pin $real_sink_pins { 
@@ -611,7 +611,7 @@ proc hsi::utils::get_real_sink_pins_traverse_in { test_pin } {
             
             set real_sink_ports [hsi::get_ports -of_objects $lower_net -filter "DIRECTION==O" ]
             # removing the pin form where the traversal started or from where the funtion is called 
-            set real_sink_ports [hsi::utils::remove_pin_from_list $real_sink_ports $test_pin]
+            set real_sink_ports [remove_pin_from_list $real_sink_ports $test_pin]
             
             if { [llength $real_sink_ports] != 0 } {
                 foreach source_port $real_sink_ports { 
@@ -626,7 +626,7 @@ proc hsi::utils::get_real_sink_pins_traverse_in { test_pin } {
     return $source_pins
 }
 
-proc hsi::utils::get_real_sink_pins_traverse_out { periph_pin } {
+proc get_real_sink_pins_traverse_out { periph_pin } {
 
     #InDirect out pins
     lappend source_pins
@@ -661,7 +661,7 @@ proc hsi::utils::get_real_sink_pins_traverse_out { periph_pin } {
                   
                    set real_sink_pins [hsi::get_pins -of_objects $upper_net -filter "DIRECTION==I" ]
                    # removing the pin from where the traversal started or from where the funtion is called 
-                   set real_sink_pins [hsi::utils::remove_pin_from_list $real_sink_pins $test_pin]
+                   set real_sink_pins [remove_pin_from_list $real_sink_pins $test_pin]
                    if { [ llength $real_sink_pins] != 0 } {
                        foreach source_pin $real_sink_pins { 
                            set sink_pins [linsert $sink_pins 0 $source_pin ]
@@ -670,7 +670,7 @@ proc hsi::utils::get_real_sink_pins_traverse_out { periph_pin } {
                
                    set real_sink_ports [hsi::get_ports -of_objects $upper_net -filter "DIRECTION==O" ]
                    # removing the pin from where the traversal started or from where the funtion is called 
-                   set real_sink_ports [hsi::utils::remove_pin_from_list $real_sink_ports $test_pin]
+                   set real_sink_ports [remove_pin_from_list $real_sink_ports $test_pin]
                    if { [llength $real_sink_ports] != 0 } {
                        foreach source_port $real_sink_ports { 
                            set sink_pins [linsert $sink_pins 0 $source_port]
@@ -689,7 +689,7 @@ proc hsi::utils::get_real_sink_pins_traverse_out { periph_pin } {
 #
 # get the pin count which are connected to peripheral pin
 #
-proc hsi::utils::get_connected_pin_count { periph_pin } {
+proc get_connected_pin_count { periph_pin } {
     set total_width 0
     set cell [hsi::get_cells -of_objects $periph_pin]
     set connected_nets [hsi::get_nets -of_objects $periph_pin]
@@ -706,17 +706,17 @@ proc hsi::utils::get_connected_pin_count { periph_pin } {
       set got_net [get_net_of_perifh_pin $periph_pin $sig_nets]
       set source_port [hsi::get_ports -of_objects $got_net]
         if {[llength $source_port] != 0 } {
-            set width [hsi::utils::get_port_width $source_port]
+            set width [get_port_width $source_port]
         } else {
             set source_pin [hsi::get_pins -of_objects $got_net -filter {DIRECTION==O}]
             if { [llength $source_pin] ==0 } {
                 # handling team BD case 
-                set source_pin [hsi::utils::get_source_pins $periph_pin]
+                set source_pin [get_source_pins $periph_pin]
                 if { [llength $source_pin] ==0 } {
                     continue
                 }
             }
-            set width [hsi::utils::get_port_width $source_pin]
+            set width [get_port_width $source_pin]
         }
         set total_width [expr {$total_width + $width}]
      }
@@ -732,13 +732,13 @@ proc hsi::utils::get_connected_pin_count { periph_pin } {
       set got_net [get_net_of_perifh_pin $periph_pin $sig_nets]
       set source_port [hsi::get_ports -of_objects $got_net]
         if {[llength $source_port] != 0 } {
-            set width [hsi::utils::get_port_width $source_port]
+            set width [get_port_width $source_port]
         } else {
             set source_pin [hsi::get_pins -of_objects $got_net -filter {DIRECTION==O}]
             if { [llength $source_pin] ==0 } {
                 continue
             }
-            set width [hsi::utils::get_port_width $source_pin]
+            set width [get_port_width $source_pin]
         }
         set total_width [expr {$total_width + $width}]
      }
@@ -749,10 +749,10 @@ proc hsi::utils::get_connected_pin_count { periph_pin } {
 #
 # get the parameter value. It has special handling for DEVICE_ID parameter name
 #
-proc hsi::utils::get_param_value {periph_handle param_name} {
+proc get_param_value {periph_handle param_name} {
         if {[string compare -nocase "DEVICE_ID" $param_name] == 0} {
             # return the name pattern used in printing the device_id for the device_id parameter
-            return [hsi::utils::get_ip_param_name $periph_handle $param_name]
+            return [get_ip_param_name $periph_handle $param_name]
         } else {
             set value [common::get_property CONFIG.$param_name $periph_handle]
             set value [string map {_ ""} $value]
@@ -763,7 +763,7 @@ proc hsi::utils::get_param_value {periph_handle param_name} {
 # 
 # Returns name of the p2p peripheral if arg is present
 # 
-proc hsi::utils::get_p2p_name {periph arg} {
+proc get_p2p_name {periph arg} {
    set p2p_name ""
    
    # Get all point2point buses for periph 
@@ -775,14 +775,14 @@ proc hsi::utils::get_p2p_name {periph arg} {
        if { $intf_net ne "" } {
            # set conn_busif_handle [hsi::get_intf_pins -of_objects $intf_net -filter "TYPE==TARGET"]
            set intf_type "TARGET"
-           set conn_busif_handles [hsi::utils::get_other_intf_pin $intf_net $p2p_busif]
-           set conn_busif_handle [hsi::utils::get_intf_pin_oftype $conn_busif_handles $intf_type 1]
+           set conn_busif_handles [get_other_intf_pin $intf_net $p2p_busif]
+           set conn_busif_handle [get_intf_pin_oftype $conn_busif_handles $intf_type 1]
            if { [string compare -nocase $conn_busif_handle ""] != 0} { 
                set p2p_periph [hsi::get_cells -of_objects $conn_busif_handle]
                if { $p2p_periph ne "" } {
                    set value [common::get_property $arg $p2p_periph]
                    if { [string compare -nocase $value ""] != 0} { 
-                       return [hsi::utils::get_ip_param_name $p2p_periph $arg]
+                       return [get_ip_param_name $p2p_periph $arg]
                    }
                }
            }
@@ -795,20 +795,20 @@ proc hsi::utils::get_p2p_name {periph arg} {
 #
 # it returns all the processor instance object in design
 #
-proc hsi::utils::get_procs { } {
+proc get_procs { } {
    return [hsi::get_cells  -hier -filter { IP_TYPE==PROCESSOR}]
 }
 
 #
 # Get the interrupt ID of a peripheral interrupt port
 #
-proc hsi::utils::get_port_intr_id { periph_name intr_port_name } {
-    return [hsi::utils::get_interrupt_id $periph_name $intr_port_name]
+proc get_port_intr_id { periph_name intr_port_name } {
+    return [get_interrupt_id $periph_name $intr_port_name]
 }
 #
 # It will check the is peripheral is interrupt controller or not
 #
-proc hsi::utils::is_intr_cntrl { periph_name } {
+proc is_intr_cntrl { periph_name } {
     set ret 0
     if { [llength $periph_name] != 0 } {
     set periph [hsi::get_cells -hier -filter "NAME==$periph_name"]
@@ -830,7 +830,7 @@ proc hsi::utils::is_intr_cntrl { periph_name } {
 # interrupt controller
 # for External interrupt port, IP name should be empty
 #
-proc hsi::utils::get_connected_intr_cntrl { periph_name intr_pin_name } {
+proc get_connected_intr_cntrl { periph_name intr_pin_name } {
     lappend intr_cntrl
     if { [llength $intr_pin_name] == 0 } {
         return $intr_cntrl
@@ -862,20 +862,20 @@ proc hsi::utils::get_connected_intr_cntrl { periph_name intr_pin_name } {
         }
     }
 
-    set intr_sink_pins [hsi::utils::get_sink_pins $intr_pin]
+    set intr_sink_pins [get_sink_pins $intr_pin]
     foreach intr_sink $intr_sink_pins {
         #changes made to fix CR 933826
         set sink_periph [lindex [hsi::get_cells -of_objects $intr_sink] 0]
-        if { [llength $sink_periph ] && [hsi::utils::is_intr_cntrl $sink_periph] == 1 } {
+        if { [llength $sink_periph ] && [is_intr_cntrl $sink_periph] == 1 } {
             lappend intr_cntrl $sink_periph
         } elseif { [llength $sink_periph] && [string match -nocase [common::get_property IP_NAME $sink_periph] "xlconcat"] } {
             #this the case where interrupt port is connected to XLConcat IP.
             #changes made to fix CR 933826 
-            set intr_cntrl [list {*}$intr_cntrl {*}[hsi::utils::get_connected_intr_cntrl $sink_periph "dout"]]
+            set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "dout"]]
         } elseif { [llength $sink_periph] && [string match -nocase [common::get_property IP_NAME $sink_periph] "xlslice"] } {
-            set intr_cntrl [list {*}$intr_cntrl {*}[hsi::utils::get_connected_intr_cntrl $sink_periph "Dout"]]
+            set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "Dout"]]
         } elseif { [llength $sink_periph] && [string match -nocase [common::get_property IP_NAME $sink_periph] "util_reduced_logic"] } {
-            set intr_cntrl [list {*}$intr_cntrl {*}[hsi::utils::get_connected_intr_cntrl $sink_periph "Res"]]
+            set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "Res"]]
         }
     }
     return $intr_cntrl
@@ -884,7 +884,7 @@ proc hsi::utils::get_connected_intr_cntrl { periph_name intr_pin_name } {
 #
 # It will get the version information from IP VLNV property 
 #
-proc hsi::utils::get_ip_version { ip_name } {
+proc get_ip_version { ip_name } {
     set version ""
     set ip_handle [hsi::get_cells -hier $ip_name]
     if { [llength $ip_handle] == 0 } {
@@ -905,7 +905,7 @@ proc hsi::utils::get_ip_version { ip_name } {
 #
 # It will return IP param value
 #
-proc hsi::utils::get_ip_param_value { ip param} {
+proc get_ip_param_value { ip param} {
     set value [common::get_property $param $ip]
     if {[llength $value] != 0} {
         return $value
@@ -919,7 +919,7 @@ proc hsi::utils::get_ip_param_value { ip param} {
 #
 # It will return board name
 #
-proc hsi::utils::get_board_name { } {
+proc get_board_name { } {
     global board_name
     set board_name [common::get_property BOARD [hsi::current_hw_design] ]
      if { [llength $board_name] == 0 } {
@@ -928,7 +928,7 @@ proc hsi::utils::get_board_name { } {
     return $board_name
 }
 
-proc hsi::utils::get_trimmed_param_name { param } {
+proc get_trimmed_param_name { param } {
     set param_name $param
     regsub -nocase ^CONFIG. $param_name "" param_name
     regsub -nocase ^C_ $param_name "" param_name
@@ -937,7 +937,7 @@ proc hsi::utils::get_trimmed_param_name { param } {
 #
 # It returns the ip subtype. First its check for special type of EDK_SPECIAL parameter
 #
-proc hsi::utils::get_ip_sub_type { ip_inst_object} {
+proc get_ip_sub_type { ip_inst_object} {
     if { [string compare -nocase cell [common::get_property CLASS $ip_inst_object]] != 0 } {
         error "get_mem_type API expect only mem_range type object whereas $class type object is passed"
     }
@@ -970,7 +970,7 @@ proc hsi::utils::get_ip_sub_type { ip_inst_object} {
      return $ip_type
 }
 
-proc hsi::utils::generate_psinit { } {
+proc generate_psinit { } {
     set obj [hsi::get_cells -hier -filter {CONFIGURABLE == 1}]
     if { [llength $obj] == 0 } {
       set xmlpath [common::get_property PATH [hsi::current_hw_design]]
@@ -993,3 +993,4 @@ proc hsi::utils::generate_psinit { } {
 
 
 
+}

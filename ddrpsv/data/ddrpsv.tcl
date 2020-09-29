@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval ddrpsv {
+namespace eval ::tclapp::xilinx::devicetree::ddrpsv {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set a72 0
 		set r5 0

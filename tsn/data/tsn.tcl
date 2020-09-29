@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval tsn {
+namespace eval ::tclapp::xilinx::devicetree::tsn {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set proc_type [get_hw_family]
 		set node [get_node $drv_handle]
@@ -35,18 +36,18 @@ namespace eval tsn {
 		set end1 ""
 		set connectrx_ip ""
 		set connecttx_ip ""
-		set connected_ip [hsi::utils::get_connected_stream_ip $eth_ip "tx_axis_be"]
+		set connected_ip [get_connected_stream_ip $eth_ip "tx_axis_be"]
 		if {[llength $connected_ip] != 0} {
-			set end1_ip [hsi::utils::get_connected_stream_ip $connected_ip "S00_AXIS"]
+			set end1_ip [get_connected_stream_ip $connected_ip "S00_AXIS"]
 			if {[llength $end1_ip] != 0} {
 				set end1 [lappend end1 $end1_ip]
 			} else {
 				set connecttx_ip [lappend connecttx_ip $connected_ip]
 			}
 		}
-		set connect_ip [hsi::utils::get_connected_stream_ip $eth_ip "rx_axis_be"]
+		set connect_ip [get_connected_stream_ip $eth_ip "rx_axis_be"]
 		if {[llength $connect_ip] != 0} {
-			set end_ip [hsi::utils::get_connected_stream_ip $connect_ip "M00_AXIS"]
+			set end_ip [get_connected_stream_ip $connect_ip "M00_AXIS"]
 			if {[llength $end_ip]!= 0} {
 				set end_point_ip [lappend end_point_ip $end_ip]
 			} else {
@@ -82,18 +83,18 @@ namespace eval tsn {
 		set inhex [format %x $queue]
 		append queues "/bits/ 16 <0x$inhex>"
 
-		set connected_ip [hsi::utils::get_connected_stream_ip $eth_ip "tx_axis_res"]
+		set connected_ip [get_connected_stream_ip $eth_ip "tx_axis_res"]
 		if {[llength $connected_ip] != 0} {
-			set end1_ip [hsi::utils::get_connected_stream_ip $connected_ip "S00_AXIS"]
+			set end1_ip [get_connected_stream_ip $connected_ip "S00_AXIS"]
 			if {[llength $end1_ip] != 0} {
 				set end1 [lappend end1 $end1_ip]
 			} else {
 				set connecttx_ip [lappend connecttx_ip $connected_ip]
 			}
 		}
-		set connect_ip [hsi::utils::get_connected_stream_ip $eth_ip "rx_axis_res"]
+		set connect_ip [get_connected_stream_ip $eth_ip "rx_axis_res"]
 		if {[llength $connect_ip] != 0} {
-			set end_ip [hsi::utils::get_connected_stream_ip $connect_ip "M00_AXIS"]
+			set end_ip [get_connected_stream_ip $connect_ip "M00_AXIS"]
 			if {[llength $end_ip] != 0} {
 				set end_point_ip [lappend end_point_ip $end_ip]
 			} else {
@@ -101,18 +102,18 @@ namespace eval tsn {
 			}
 		}
 
-		set connected_ip [hsi::utils::get_connected_stream_ip $eth_ip "tx_axis_st"]
+		set connected_ip [get_connected_stream_ip $eth_ip "tx_axis_st"]
 		if {[llength $connected_ip] != 0} {
-			set end1_ip [hsi::utils::get_connected_stream_ip $connected_ip "S00_AXIS"]
+			set end1_ip [get_connected_stream_ip $connected_ip "S00_AXIS"]
 			if {[llength $end1_ip] != 0} {
 				set end1 [lappend end1 $end1_ip]
 			} else {
 				set connecttx_ip [lappend connecttx_ip $connected_ip]
 			}
 		}
-		set connect_ip [hsi::utils::get_connected_stream_ip $eth_ip "rx_axis_st"]
+		set connect_ip [get_connected_stream_ip $eth_ip "rx_axis_st"]
 		if {[llength $connect_ip] != 0} {
-			set end_ip [hsi::utils::get_connected_stream_ip $connect_ip "M00_AXIS"]
+			set end_ip [get_connected_stream_ip $connect_ip "M00_AXIS"]
 			if {[llength $end_ip] != 0} {
 				set end_point_ip [lappend end_point_ip $end_ip]
 			} else {
@@ -243,7 +244,7 @@ namespace eval tsn {
 
 	proc pcspma_phy_node {slave tsn_inst_name} {
 		set phyaddr [get_property CONFIG.PHYADDR $slave]
-		set phyaddr [::hsi::utils::convert_binary_to_decimal $phyaddr]
+		set phyaddr [convert_binary_to_decimal $phyaddr]
 		if {[string match -nocase $slave "${tsn_inst_name}_tsn_temac_2"]} {
 			set phyaddr "2"
 		} else {

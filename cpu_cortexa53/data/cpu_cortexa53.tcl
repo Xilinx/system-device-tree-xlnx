@@ -12,17 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval cpu_cortexa53 {
-	if {[catch {set tmp [::struct::tree psdt]} msg]} {
-	}
-	if {[catch {set tmp [::struct::tree pldt]} msg]} {
-	}
-	if {[catch {set tmp [::struct::tree pcwdt]} msg]} {
-	}
-	if {[catch {set tmp [::struct::tree systemdt]} msg]} {
-	}
-	if {[catch {set tmp [::struct::tree clkdt]} msg]} {
-	}
+namespace eval ::tclapp::xilinx::devicetree::cpu_cortexa53 {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		global dtsi_fname
 		global env
@@ -42,9 +33,4 @@ namespace eval cpu_cortexa53 {
 		set master_root_node [gen_root_node $drv_handle]
 		set nodes [gen_cpu_nodes $drv_handle]
 	}
-	namespace export psdt
-	namespace export systemdt
-	namespace export pldt
-	namespace export pcwdt
-	namespace export clkdt
 }

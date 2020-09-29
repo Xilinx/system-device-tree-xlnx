@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval sync_ip {
+namespace eval ::tclapp::xilinx::devicetree::sync_ip {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 
 		set node [gen_peripheral_nodes $drv_handle]

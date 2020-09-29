@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval sysmonpsv {
+namespace eval ::tclapp::xilinx::devicetree::sysmonpsv {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 proc generate {drv_handle} {
 	global env
 	global dtsi_fname

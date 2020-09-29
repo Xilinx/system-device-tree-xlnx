@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval scene_change_detector {
+namespace eval ::tclapp::xilinx::devicetree::scene_change_detector {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set node [get_node $drv_handle]
 		set dts_file [set_drv_def_dts $drv_handle]
@@ -71,7 +72,7 @@ namespace eval scene_change_detector {
 			set scd_ports_node [create_node -n "scd" -l scd_ports$drv_handle -p $node -d $dts_file]
 			add_prop "$scd_ports_node" "#address-cells" 1 int $dts_file
 			add_prop "$scd_ports_node" "#size-cells" 0 int $dts_file
-			set connect_out_ip [hsi::utils::get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "M_AXIS_VIDEO"]
+			set connect_out_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "M_AXIS_VIDEO"]
 			if {![llength $connect_out_ip]} {
 				dtg_warning "$drv_handle pin M_AXIS_VIDEO is not connected... check your design"
 			}

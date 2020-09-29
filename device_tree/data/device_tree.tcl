@@ -19,9 +19,11 @@
 package require Tcl 8.5.14
 package require yaml
 package require struct
-#namespace import cpu_cortexa72::*
+#namespace export *
+#namespace export get_dt_param
+namespace eval ::tclapp::xilinx::devicetree::utils {
 # load yaml file into dict
-proc get_yaml_dict { config_file } {
+proc get_yaml_dict1 { config_file } {
         set data ""
         if {[file exists $config_file]} {
                 set fd [open $config_file r]
@@ -33,7 +35,7 @@ proc get_yaml_dict { config_file } {
     return [yaml::yaml2dict $data]
 }
 
-proc set_dt_param args {
+proc set_dt_param_1 args {
        global env
        set param [lindex $args 0]
        set val [lindex $args 1]
@@ -57,7 +59,7 @@ proc set_dt_param args {
 
 }
 
-proc get_dt_param args {
+proc get_dt_param_1 args {
        global env
        set param [lindex $args 0]
        set val ""
@@ -90,7 +92,7 @@ proc inc_os_prop {drv_handle os_conf_dev_var var_name conf_prop} {
         set ip_check "True"
     }
 
-    set count [hsi::utils::get_os_parameter_value $var_name]
+    set count [get_os_parameter_value $var_name]
     if {[llength $count] == 0} {
         if {[string match -nocase "True" $ip_check]} {
             set count 1
@@ -110,7 +112,7 @@ proc inc_os_prop {drv_handle os_conf_dev_var var_name conf_prop} {
 
     set_property $conf_prop $count $drv_handle
     incr count
-    ::hsi::utils::set_os_parameter_value $var_name $count
+    set_os_parameter_value $var_name $count
 }
 
 proc gen_count_prop {drv_handle data_dict} {
@@ -128,7 +130,7 @@ proc gen_count_prop {drv_handle data_dict} {
 
         set irq_chk [dict get $data_dict $dev_type "irq_chk"]
         if {![string match -nocase "false" $irq_chk]} {
-            set irq_id [::hsi::utils::get_interrupt_id $slave $irq_chk]
+            set irq_id [get_interrupt_id $slave $irq_chk]
             if {[llength $irq_id] < 0} {
                 dtg_warning "Fail to located interrupt pin - $irq_chk. The $drv_conf is not set for $dev_type"
                 continue
@@ -184,7 +186,7 @@ proc bsp_drc {os_handle} {
 # If standalone purpose
 proc device_tree_drc {os_handle} {
     bsp_drc $os_handle
-    hsi::utils::add_new_child_node $os_handle "global_params"
+    add_new_child_node $os_handle "global_params"
 }
 
 proc extract_dts_name {override value} {
@@ -328,9 +330,9 @@ proc gen_ext_axi_interface {}  {
 			}
 			regsub -all {^0x} $base {} base
 			set ext_int_node [add_or_get_dt_node -n $drv_handle -l $drv_handle -u $base -d $default_dts -p $bus_node]
-			hsi::utils::add_new_dts_param $ext_int_node "reg" "$reg" intlist
+			add_new_dts_param $ext_int_node "reg" "$reg" intlist
 			if {$version >= 2018} {
-				hsi::utils::add_new_dts_param "${ext_int_node}" "/* This is a external AXI interface, user may need to update the entries */" "" comment
+				add_new_dts_param "${ext_int_node}" "/* This is a external AXI interface, user may need to update the entries */" "" comment
 			}
 		}
 	}
@@ -537,23 +539,27 @@ proc gen_versal_clk {} {
 
 proc generate {} {
 
+	puts "gen1"
 	global env
 	set path $env(REPO)
 	if {[string match -nocase $path ""]} {
 		error "please set repo path"
 		return
 	}
+	puts "gen2"
 	set list_offiles {}
-	lappend list_offiles "$path/device_tree/data/common_proc.tcl"
+
 	lappend list_offiles "$path/device_tree/data/xillib_hw.tcl"
 	lappend list_offiles "$path/device_tree/data/xillib_sw.tcl"
-	lappend list_offiles "$path/device_tree/data/xillib_internal.tcl"
+#	lappend list_offiles "$path/device_tree/data/xillib_internal.tcl"
+	lappend list_offiles "$path/device_tree/data/common_proc.tcl"
 	foreach file $list_offiles {
 		if {[file exists $file]} {
 		        source -notrace $file
 		}
 	}
-
+        namespace import ::tclapp::xilinx::devicetree::common::\*
+	puts "inside generate"
 	set val_proclist "psv_cortexa72 psu_cortexa53 ps7_cortexa9"
 	set peri_list [hsi::get_cells -hier]
 	set proclist [hsi::get_cells -filter {IP_TYPE==PROCESSOR}]
@@ -565,8 +571,10 @@ proc generate {} {
 			set drvname [get_drivers $procc]
 			set proc_file "$path/${drvname}/data/${drvname}.tcl"
 			source -notrace $proc_file
-			namespace import ::${drvname}::\*
-		        ::${drvname}::generate $procc
+			namespace import ::tclapp::xilinx::devicetree::${drvname}::\*
+	                ::tclapp::xilinx::devicetree::${drvname}::generate $procc
+			#namespace import ::${drvname}::\*
+		        #::${drvname}::generate $procc
     			add_skeleton
 			set non_val_list "versal_cips noc_nmu noc_nsu ila"
 			set non_val_ip_types "MONITOR BUS PROCESSOR"
@@ -580,11 +588,17 @@ proc generate {} {
 				if {[lsearch -nocase $non_val_ip_types $ip_type] >= 0} {
 					continue
 				}
+				puts "genpr"
  	       			gen_peripheral_nodes $drv_handle "create_node_only"
+				puts "reg"
 	        		gen_reg_property $drv_handle
+				puts "comp"
 	        		gen_compatible_property $drv_handle
+				puts "ip"
 	        		gen_drv_prop_from_ip $drv_handle
+				puts "intr"
 	       			gen_interrupt_property $drv_handle
+				puts "clk"
 	       			gen_clk_property $drv_handle
 
 				set driver_name [get_drivers $drv_handle]
@@ -603,8 +617,10 @@ proc generate {} {
 				set drvname [get_drivers $drv_handle]
 				set drv_file "$path/${drvname}/data/${drvname}.tcl"
 				source -notrace $drv_file
-				namespace import ::${drvname}::\*
-				::${drvname}::generate $drv_handle
+				namespace import ::tclapp::xilinx::devicetree::${drvname}::\*
+		                ::tclapp::xilinx::devicetree::${drvname}::generate $drv_handle
+#				namespace import ::${drvname}::\*
+#				::${drvname}::generate $drv_handle
 			}
 			foreach drv_handle $peri_list {
 				update_endpoints $drv_handle
@@ -1632,7 +1648,7 @@ proc remove_main_memory_node {} {
 		}
 		if {[string match -nocase $ip "ddr4"]} {
 			set slave [get_cells -hier ${drv_handle}]
-			set ip_mem_handles [hsi::utils::get_ip_mem_ranges $slave]
+			set ip_mem_handles [get_ip_mem_ranges $slave]
 			if {[llength $ip_mem_handles] > 1} {
 				return
 			}
@@ -1649,4 +1665,5 @@ proc remove_main_memory_node {} {
             }
         }
     }
+}
 }

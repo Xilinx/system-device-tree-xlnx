@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval mig_7series {
+namespace eval ::tclapp::xilinx::devicetree::mig_7series {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 	 	set r5 0
                 set a53 0

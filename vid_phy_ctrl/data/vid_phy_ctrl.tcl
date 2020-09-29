@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval vid_phy_ctrl { 
+namespace eval ::tclapp::xilinx::devicetree::vid_phy_ctrl { 
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set node [get_node $drv_handle]
 		if {$node == 0} {

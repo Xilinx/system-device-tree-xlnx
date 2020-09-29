@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval norps {
+namespace eval ::tclapp::xilinx::devicetree::norps {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 	  
 	    # TODO: if addr25 is used, should we consider set the reg size to 64MB?

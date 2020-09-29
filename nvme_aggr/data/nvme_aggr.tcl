@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval nvme_aggr {
+namespace eval ::tclapp::xilinx::devicetree::nvme_aggr {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set proc_type [get_hw_family]
 		set node [get_node $drv_handle]

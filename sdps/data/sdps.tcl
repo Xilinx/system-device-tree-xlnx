@@ -12,12 +12,13 @@
 # GNU General Public License for more details.
 #
 
-namespace eval sdps {
+namespace eval ::tclapp::xilinx::devicetree::sdps {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 	    set ip [hsi::get_cells -hier $drv_handle]
 	    set node [get_node $drv_handle]
 	    set dts_file [set_drv_def_dts $drv_handle]
-	    set clk_freq [hsi::utils::get_ip_param_value $ip C_SDIO_CLK_FREQ_HZ]
+	    set clk_freq [get_ip_param_value $ip C_SDIO_CLK_FREQ_HZ]
 	    add_prop $node "clock-frequency" $clk_freq hexint $dts_file
 	    set_drv_conf_prop $drv_handle C_MIO_BANK xlnx,mio-bank hexint
 	    set_drv_conf_prop $drv_handle C_HAS_CD xlnx,card-detect int

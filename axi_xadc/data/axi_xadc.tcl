@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval axi_xadc {
+namespace eval ::tclapp::xilinx::devicetree::axi_xadc {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		gen_xadc_driver_prop $drv_handle
 	}

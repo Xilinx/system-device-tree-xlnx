@@ -12,7 +12,8 @@
 # GNU General Public License for more details.
 #
 
-namespace eval rfdc {
+namespace eval ::tclapp::xilinx::devicetree::rfdc {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 proc generate {drv_handle} {
 	set node [get_node $drv_handle]
 	set dts_file [set_drv_def_dts $drv_handle]
@@ -24,7 +25,7 @@ proc generate {drv_handle} {
 		}
 	}
 	add_prop $node "num-insts" $count hexlist $dts_file
-	hsi::utils::add_new_property $drv_handle "num-insts" hexlist $instances
+	add_new_property $drv_handle "num-insts" hexlist $instances
 	add_param_list_property $drv_handle "DEVICE_ID" "C_BASEADDR" "C_High_Speed_ADC" "C_Sysref_Master" "C_Sysref_Master" "C_Sysref_Source" "C_Sysref_Source" "C_IP_Type" "C_Silicon_Revision" "C_DAC0_Enable" "C_DAC0_PLL_Enable" "C_DAC0_Sampling_Rate" "C_DAC0_Refclk_Freq" "C_DAC0_Fabric_Freq" "C_DAC0_FBDIV" "C_DAC0_OutDiv" "C_DAC0_Refclk_Div" "C_DAC0_Band" "C_DAC0_Fs_Max" "C_DAC0_Slices" "C_DAC_Slice00_Enable" "C_DAC_Invsinc_Ctrl00" "C_DAC_Mixer_Mode00" "C_DAC_Decoder_Mode00" "C_DAC_Slice01_Enable" "C_DAC_Invsinc_Ctrl01" "C_DAC_Mixer_Mode01" "C_DAC_Decoder_Mode01" "C_DAC_Slice02_Enable" "C_DAC_Invsinc_Ctrl02" "C_DAC_Mixer_Mode02" "C_DAC_Decoder_Mode02" "C_DAC_Slice03_Enable" "C_DAC_Invsinc_Ctrl03" "C_DAC_Mixer_Mode03" "C_DAC_Decoder_Mode03" "C_DAC_Data_Type00" "C_DAC_Data_Width00" "C_DAC_Interpolation_Mode00" "C_DAC_Fifo00_Enable" "C_DAC_Adder00_Enable" "C_DAC_Mixer_Type00" "C_DAC_Data_Type01" "C_DAC_Data_Width01" "C_DAC_Interpolation_Mode01" "C_DAC_Fifo01_Enable" \
 	"C_DAC_Adder01_Enable" "C_DAC_Mixer_Type01" "C_DAC_Data_Type02" "C_DAC_Data_Width02" "C_DAC_Interpolation_Mode02" "C_DAC_Fifo02_Enable" "C_DAC_Adder02_Enable" "C_DAC_Mixer_Type02" "C_DAC_Data_Type03" "C_DAC_Data_Width03" "C_DAC_Interpolation_Mode03" "C_DAC_Fifo03_Enable" "C_DAC_Adder03_Enable" "C_DAC_Mixer_Type03" "C_DAC1_Enable" "C_DAC1_PLL_Enable" "C_DAC1_Sampling_Rate" "C_DAC1_Refclk_Freq" "C_DAC1_Fabric_Freq" "C_DAC1_FBDIV" "C_DAC1_OutDiv" "C_DAC1_Refclk_Div" "C_DAC1_Band" "C_DAC1_Fs_Max" "C_DAC1_Slices" "C_DAC_Slice10_Enable" "C_DAC_Invsinc_Ctrl10" "C_DAC_Mixer_Mode10" "C_DAC_Decoder_Mode10" "C_DAC_Slice11_Enable" "C_DAC_Invsinc_Ctrl11" "C_DAC_Mixer_Mode11" "C_DAC_Decoder_Mode11" "C_DAC_Slice12_Enable" "C_DAC_Invsinc_Ctrl12" "C_DAC_Mixer_Mode12" "C_DAC_Decoder_Mode12" "C_DAC_Slice13_Enable" "C_DAC_Invsinc_Ctrl13" "C_DAC_Mixer_Mode13" "C_DAC_Decoder_Mode13" "C_DAC_Data_Type10" "C_DAC_Data_Width10" "C_DAC_Interpolation_Mode10" \
 	"C_DAC_Fifo10_Enable" "C_DAC_Adder10_Enable" "C_DAC_Mixer_Type10" "C_DAC_Data_Type11" "C_DAC_Data_Width11" "C_DAC_Interpolation_Mode11" "C_DAC_Fifo11_Enable" "C_DAC_Adder11_Enable" "C_DAC_Mixer_Type11" "C_DAC_Data_Type12" "C_DAC_Data_Width12" "C_DAC_Interpolation_Mode12" "C_DAC_Fifo12_Enable" "C_DAC_Adder12_Enable" "C_DAC_Mixer_Type12" "C_DAC_Data_Type13" "C_DAC_Data_Width13" "C_DAC_Interpolation_Mode13" "C_DAC_Fifo13_Enable" "C_DAC_Adder13_Enable" "C_DAC_Mixer_Type13" "C_DAC2_Enable" "C_DAC2_PLL_Enable" "C_DAC2_Sampling_Rate" "C_DAC2_Refclk_Freq" "C_DAC2_Fabric_Freq" "C_DAC2_FBDIV" "C_DAC2_OutDiv" "C_DAC2_Refclk_Div" "C_DAC2_Band" "C_DAC2_Fs_Max" "C_DAC2_Slices" "C_DAC_Slice20_Enable" "C_DAC_Invsinc_Ctrl20" "C_DAC_Mixer_Mode20" "C_DAC_Decoder_Mode20" "C_DAC_Slice21_Enable" "C_DAC_Invsinc_Ctrl21" "C_DAC_Mixer_Mode21" "C_DAC_Decoder_Mode21" "C_DAC_Slice22_Enable" "C_DAC_Invsinc_Ctrl22" "C_DAC_Mixer_Mode22" "C_DAC_Decoder_Mode22" \
@@ -59,10 +60,10 @@ proc convert_int_to_le_byte_code_format {var} {
 # in byte code format
 #
 proc add_param_list_property {drv_handle args} {
-	set args [hsi::utils::get_exact_arg_list $args]
+	set args [get_exact_arg_list $args]
 
 	# Get all peripherals connected to this driver
-	set periphs [hsi::utils::get_common_driver_ips $drv_handle]
+	set periphs [get_common_driver_ips $drv_handle]
 	set device_id 0
 	foreach periph $periphs {
 		if {[string compare -nocase $periph $drv_handle] == 0} {
@@ -100,6 +101,6 @@ proc add_param_list_property {drv_handle args} {
 			append data " " [convert_int_to_le_byte_code_format $value]
 		}
 	}
-	hsi::utils::add_new_property $drv_handle "param-list" bytelist $data
+	add_new_property $drv_handle "param-list" bytelist $data
 }
 }
