@@ -152,34 +152,121 @@ proc generate {drv_handle} {
     }
 	set ip_name " "
 	if {[string match -nocase $proc_type "zynqmp"] || [string match -nocase $proc_type "zynquplus"]} {
-		set connected_ip [get_connected_stream_ip $zynq_periph "MDIO_ENET0"]
-		if {[llength $connected_ip]} {
-			set ip_name [get_property IP_NAME $connected_ip]
+		      if {[string match -nocase $node "&gem0"]} {
+	      set connected_ip [get_connected_stream_ip $zynq_periph "MDIO_ENET0"]
+	      if {[llength $connected_ip]} {
+		      set ip_name [get_property IP_NAME $connected_ip]
+	      }
+	      if {[string match -nocase $ip_name "gig_ethernet_pcs_pma"]} {
+		      set pin [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $connected_ip] "phyaddr"]]
+		      if {[llength $pin]} {
+			      set sink_periph [hsi::get_cells -of_objects $pin]
+		      }
+		      if {[llength $sink_periph]} {
+			      set val [get_property CONFIG.CONST_VAL $sink_periph]
+			      set inhex [format %x $val]
+			      set_drv_prop $drv_handle phy-handle "phy$inhex" reference
+			      set pcspma_phy_node [create_node -l phy$inhex -n phy -u $inhex -p $node -d $dts_file]
+			      add_prop "${pcspma_phy_node}" "reg" $val int $dts_fle
+			      set phy_type [get_property CONFIG.Standard $connected_ip]
+			      set is_sgmii [get_property CONFIG.c_is_sgmii $connected_ip]
+			      if {$phy_type == "1000BASEX"} {
+				      add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x5 int $dts_fle
+			      } elseif { $is_sgmii == "true"} {
+				      add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x4 int $dts_fle
+			      } else {
+				      dtg_warning "unsupported phytype:$phy_type"
+			      }
+		      }
+	      }
 		}
+			if {[string match -nocase $node "&gem1"]} {
+	       set connected_ip [get_connected_stream_ip $zynq_periph "MDIO_ENET1"]
+	       if {[llength $connected_ip]} {
+		       set ip_name [get_property IP_NAME $connected_ip]
+	       }
+	       if {[string match -nocase $ip_name "gig_ethernet_pcs_pma"]} {
+		       set pin [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $connected_ip] "phyaddr"]]
+		       if {[llength $pin]} {
+			       set sink_periph [hsi::get_cells -of_objects $pin]
+		       }
+		       if {[llength $sink_periph]} {
+			       set val [get_property CONFIG.CONST_VAL $sink_periph]
+			       set inhex [format %x $val]
+			       set_drv_prop $drv_handle phy-handle "phy$inhex" reference
+			       set pcspma_phy_node [create_node -l phy$inhex -n phy -u $inhex -p $node -d $dts_file]
+			       add_prop "${pcspma_phy_node}" "reg" $val int $dts_fil
+			       set phy_type [get_property CONFIG.Standard $connected_ip]
+			       set is_sgmii [get_property CONFIG.c_is_sgmii $connected_ip]
+			       if {$phy_type == "1000BASEX"} {
+				       add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x5 int $dts_fil
+			       } elseif { $is_sgmii == "true"} {
+				       add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x4 int $dts_fil
+			       } else {
+				       dtg_warning "unsupported phytype:$phy_type"
+			       }
+		       }
+	       }
+		}
+			               if {[string match -nocase $node "&gem2"]} {
+	                       set connected_ip [get_connected_stream_ip $zynq_periph "MDIO_ENET2"]
+	                       if {[llength $connected_ip]} {
+	                               set ip_name [get_property IP_NAME $connected_ip]
+	                       }
+	                       if {[string match -nocase $ip_name "gig_ethernet_pcs_pma"]} {
+	                               set pin [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $connected_ip] "phyaddr"]]
+		       if {[llength $pin]} {
+			       set sink_periph [hsi::get_cells -of_objects $pin]
+		       }
+		       if {[llength $sink_periph]} {
+			       set val [get_property CONFIG.CONST_VAL $sink_periph]
+			       set inhex [format %x $val]
+			       set_drv_prop $drv_handle phy-handle "phy$inhex" reference
+			       set pcspma_phy_node [create_node -l phy$inhex -n phy -u $inhex -p $node -d $dts_file]
+			       add_prop "${pcspma_phy_node}" "reg" $val int $dts_file
+			       set phy_type [get_property CONFIG.Standard $connected_ip]
+			       set is_sgmii [get_property CONFIG.c_is_sgmii $connected_ip]
+			       if {$phy_type == "1000BASEX"} {
+				       add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x5 int $dts_file
+			       } elseif { $is_sgmii == "true"} {
+				       add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x4 int $dts_file
+			       } else {
+				       dtg_warning "unsupported phytype:$phy_type"
+			       }
+		       }
+	       }
 	}
-	set is_pcspma [hsi::get_cells -hier -filter {IP_NAME == gig_ethernet_pcs_pma}]
-	if {[string match -nocase $ip_name "gig_ethernet_pcs_pma"]} {
-		set pin [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $is_pcspma] "phyaddr"]]
-		if {[llength $pin]} {
-			set sink_periph [hsi::get_cells -of_objects $pin]
-		}
-		if {[llength $sink_periph]} {
-			set val [get_property CONFIG.CONST_VAL $sink_periph]
-			set inhex [format %x $val]
-			set_drv_prop $drv_handle phy-handle "phy$inhex" reference
-			set pcspma_phy_node [create_node -l phy$inhex -n phy -u $inhex -p $node -d $dts_file]
-			add_prop "${pcspma_phy_node}" "reg" $val int $dts_file
-			set phy_type [get_property CONFIG.Standard $is_pcspma]
-			set is_sgmii [get_property CONFIG.c_is_sgmii $is_pcspma]
-			if {$phy_type == "1000BASEX"} {
-				add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x5 int $dts_file
-			} elseif { $is_sgmii == "true"} {
-				add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x4 int $dts_file
-			} else {
-				dtg_warning "unsupported phytype:$phy_type"
+	if {[string match -nocase $node "&gem3"]} {
+	       set connected_ip [get_connected_stream_ip $zynq_periph "MDIO_ENET3"]
+	       if {[llength $connected_ip]} {
+		       set ip_name [get_property IP_NAME $connected_ip]
+	       }
+	       if {[string match -nocase $ip_name "gig_ethernet_pcs_pma"]} {
+		       set pin [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $connected_ip] "phyaddr"]]
+		       if {[llength $pin]} {
+			       set sink_periph [hsi::get_cells -of_objects $pin]
+		       }
+		       if {[llength $sink_periph]} {
+			       set val [get_property CONFIG.CONST_VAL $sink_periph]
+			       set inhex [format %x $val]
+			       set_drv_prop $drv_handle phy-handle "phy$inhex" reference
+			       set pcspma_phy_node [create_node -l phy$inhex -n phy -u $inhex -p $node -d $dts_file]
+			       add_prop "${pcspma_phy_node}" "reg" $val int $dts_file
+			       set phy_type [get_property CONFIG.Standard $connected_ip]
+			       set is_sgmii [get_property CONFIG.c_is_sgmii $connected_ip]
+			       if {$phy_type == "1000BASEX"} {
+				       add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x5 int $dts_file
+			       } elseif { $is_sgmii == "true"} {
+				       add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x4 int $dts_file
+				} else {
+				      dtg_warning "unsupported phytype:$phy_type"
+			      }
+		      }
+
 			}
 		}
 	}
+	set is_pcspma [hsi::get_cells -hier -filter {IP_NAME == gig_ethernet_pcs_pma}]
 	if {![string_is_empty ${is_pcspma}] && $phymode == 2} {
 		# if eth mode is sgmii and no external pcs/pma found
 		add_prop $node "is-internal-pcspma" boolean $dts_file
