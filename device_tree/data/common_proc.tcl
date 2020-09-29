@@ -1556,6 +1556,8 @@ proc get_drivers args {
 	dict set driverlist axi_bram_ctrl driver axi_bram
 	dict set driverlist lmb_bram_if_cntlr driver axi_bram
 	dict set driverlist can driver axi_can
+	dict set driverlist v_dp_txss1 driver dp_tx
+	dict set driverlist v_dp_rxss1 driver dp_rx
 	dict set driverlist canfd driver axi_can
 	dict set driverlist axi_cdma driver axi_cdma
 	dict set driverlist clk_wiz driver axi_clk_wiz
@@ -1714,6 +1716,7 @@ proc get_drivers args {
 	dict set driverlist psv_wdt driver wdtps
 	dict set driverlist ps7_xadc driver xadcps
 	dict set driverlist psv_pmc_sysmon driver sysmonpsv
+	dict set driverlist mrmac driver mrmac
 	set val [lindex $args 0]
 	if {[string match -nocase $val "1"]} {
 		set drivers ""
@@ -3363,6 +3366,8 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping f0800000 label "coresight: coresight"
 		dict set def_ps_mapping f11c0000 label "dma0: pmcdma"
 		dict set def_ps_mapping f11d0000 label "dma1: pmcdma"
+		dict set def_ps_mapping f0920000 label "apm: performance-monitor"
+		dict set def_ps_mapping f1270000 label "sysmon: sysmon"
 	} elseif {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
 		dict set def_ps_mapping f9010000 label "gic_a53: interrupt-controller"
 		dict set def_ps_mapping f9000000 label "gic_r5: interrupt-controller"
