@@ -43,6 +43,10 @@ set rxethmem 0
 	    pldt append $node compatible "\ \, \"xlnx,axi-ethernet-1.00.a\""
 	    #adding stream connectivity
 	    set eth_ip [hsi::get_cells -hier $drv_handle]
+	    set ip_mem_handles [hsi::get_mem_ranges $eth_ip]
+	    if {[llength $ip_mem_handles] == 0} {
+		return
+	    }
 	    # search for a valid bus interface name
 	    # This is required to work with Vivado 2015.1 due to IP PIN naming change
 	    set hasbuf [get_property CONFIG.processor_mode $eth_ip]

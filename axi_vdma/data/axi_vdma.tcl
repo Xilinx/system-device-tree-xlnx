@@ -116,7 +116,8 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		}
 	#	incr vdma_count
 		if {[string match -nocase $mainline_ker "none"]} {
-			set proc_type [get_sw_proc_prop IP_NAME]
+			#set proc_type [get_sw_proc_prop IP_NAME]
+			set proc_type [get_hw_family]
 			set clocknames "s_axi_lite_aclk"
 			if { $tx_chan ==1 } {
 				append clocknames " " "m_axi_mm2s_aclk"
@@ -141,8 +142,8 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		set ip [hsi::get_cells -hier $drv_handle]
 		set modellow [string tolower $mode]
 		set modeIndex [string index $mode 0]
-		set dma_channel [create_node -n "dma-channel" -u $addr -p $parent_node]
 		set dts_file [set_drv_def_dts $drv_handle]
+		set dma_channel [create_node -n "dma-channel" -u $addr -p $parent_node -d $dts_file]
 		add_prop $dma_channel "compatible" [format "xlnx,%s-%s-channel" $xdma $modellow] stringlist $dts_file
 		add_prop $dma_channel "xlnx,device-id" $devid hexint $dts_file
 		if {[string match -nocase $mode "S2MM"]} {

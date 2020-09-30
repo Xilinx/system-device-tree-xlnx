@@ -588,7 +588,6 @@ proc generate {} {
 	        		gen_drv_prop_from_ip $drv_handle
 	       			gen_interrupt_property $drv_handle
 	       			gen_clk_property $drv_handle
-
 				set driver_name [get_drivers $drv_handle]
     			}
 			set non_val_list "psv_cortexa72 psu_cortexa53 ps7_cortexa9 versal_cips noc_nmu noc_nsu ila"
@@ -717,7 +716,10 @@ proc proc_mapping {} {
 					continue
 				}
 			}
-			set ipname [get_property IP_NAME [hsi::get_cells -hier $periph]]
+			if {[catch {set ipname [get_property IP_NAME [hsi::get_cells -hier $periph]]} msg]} {
+				set ipname ""
+				continue
+			}
 			if {[string match -nocase $ipname "psv_ipi"]} {
 				continue
 			}
