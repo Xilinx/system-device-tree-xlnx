@@ -66,6 +66,77 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
                         }
                 }
         }
+	set link_data1 [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "LINK_DATA1_IN"]
+	if {[llength $link_data1]} {
+		set ip_mem_handles [hsi::get_mem_ranges $link_data1]
+		if {[llength $ip_mem_handles]} {
+			set link_data1 [get_property IP_NAME $link_data1]
+			if {[string match -nocase $link_data1 "vid_phy_controller"] || [string match -nocase $link_data1 "hdmi_gt_controller"]} {
+				append phy_names " " "hdmi-phy1"
+				append phys  "vphy_lane1 0 1 1 0>,"
+			}
+		}
+	} else {
+		dtg_warning "Connected stream of LINK_DATA1_IN is NULL...check the design"
+	}
+	set link_data2 [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "LINK_DATA2_IN"]
+	if {[llength $link_data2]} {
+		set ip_mem_handles [hsi::get_mem_ranges $link_data2]
+		if {[llength $ip_mem_handles]} {
+			set link_data2 [get_property IP_NAME $link_data2]
+			if {[string match -nocase $link_data2 "vid_phy_controller"] || [string match -nocase $link_data2 "hdmi_gt_controller"]} {
+				append phy_names " " "hdmi-phy2"
+				append phys " <&vphy_lane2 0 1 1 0"
+			}
+		}
+	} else {
+		dtg_warning "Connected stream of LINK_DATA2_IN is NULL...check the design"
+	}
+	set link_data3 [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "LINK_DATA3_IN"]
+	if {[llength $link_data3]} {
+		set ip_mem_handles [hsi::get_mem_ranges $link_data3]
+		if {[llength $ip_mem_handles]} {
+			set link_data3 [get_property IP_NAME $link_data3]
+			if {[string match -nocase $link_data3 "vid_phy_controller"] || [string match -nocase $link_data3 "hdmi_gt_controller"]} {
+				append phy_names " " "hdmi-phy3"
+				append phys " <&vphy_lane3 0 1 1 0"
+			}
+		}
+	} else {
+		dtg_warning "Connected stream of LINK_DATA3_IN is NULL...check the design"
+	}
+	if {![string match -nocase $phy_names ""]} {
+		add_prop "$node" "phy-names" $phy_names stringlist $dts_file
+	}
+	if {![string match -nocase $phys ""]} {
+		add_prop "$node" "phys" $phys reference $dts_file
+	}
+	set edid_ram_size [get_property CONFIG.C_EDID_RAM_SIZE [hsi::get_cells -hier $drv_handle]]
+	add_prop "${node}" "xlnx,edid-ram-size" $edid_ram_size hexint $dts_file
+	set include_hdcp_1_4 [get_property CONFIG.C_INCLUDE_HDCP_1_4 [hsi::get_cells -hier $drv_handle]]
+	if {[string match -nocase $include_hdcp_1_4 "true"]} {
+		add_prop "${node}" "xlnx,include-hdcp-1-4" "" boolean $dts_file
+	}
+	set include_hdcp_2_2 [get_property CONFIG.C_INCLUDE_HDCP_2_2 [hsi::get_cells -hier $drv_handle]]
+	if {[string match -nocase $include_hdcp_2_2 "true"]} {
+		add_prop "${node}" "xlnx,include-hdcp-2-2" "" boolean $dts_file
+	}
+	set audio_out_connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "AUDIO_OUT"]
+	if {[llength $audio_out_connect_ip] != 0} {
+		set audio_out_connect_ip_type [get_property IP_NAME $audio_out_connect_ip]
+		if {[string match -nocase $audio_out_connect_ip_type "axis_switch"]} {
+			 set connected_ip [get_connected_stream_ip $audio_out_connect_ip "M00_AXIS"]
+                        if {[llength $connected_ip] != 0} {
+                                add_prop "$node" "xlnx,snd-pcm" $connected_ip reference $dts_file
+				add_prop "${node}" "xlnx,audio-enabled" "" boolean $dts_file
+                        }
+		} elseif {[string match -nocase $audio_out_connect_ip_type "audio_formatter"]} {
+			add_prop "$node" "xlnx,snd-pcm" $audio_out_connect_ip reference $dts_file
+			add_prop "${node}" "xlnx,audio-enabled" "" boolean $dts_file
+		}
+	} else {
+		dtg_warning "$drv_handle pin AUDIO_OUT is not connected... check your design"
+	}
 
 	}
 }
