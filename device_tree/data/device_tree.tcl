@@ -582,17 +582,11 @@ proc generate {} {
 				if {[lsearch -nocase $non_val_ip_types $ip_type] >= 0} {
 					continue
 				}
-				puts "genpr"
  	       			gen_peripheral_nodes $drv_handle "create_node_only"
-				puts "reg"
 	        		gen_reg_property $drv_handle
-				puts "comp"
 	        		gen_compatible_property $drv_handle
-				puts "ip"
 	        		gen_drv_prop_from_ip $drv_handle
-				puts "intr"
 	       			gen_interrupt_property $drv_handle
-				puts "clk"
 	       			gen_clk_property $drv_handle
 
 				set driver_name [get_drivers $drv_handle]
