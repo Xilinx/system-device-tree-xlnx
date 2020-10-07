@@ -3368,6 +3368,8 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping f11d0000 label "dma1: pmcdma"
 		dict set def_ps_mapping f0920000 label "apm: performance-monitor"
 		dict set def_ps_mapping f1270000 label "sysmon: sysmon"
+		dict set def_ps_mapping ff990000 label "lpd_xppu: xppu"
+		dict set def_ps_mapping f1310000 label "pmc_xppu: xppu"
 	} elseif {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
 		dict set def_ps_mapping f9010000 label "gic_a53: interrupt-controller"
 		dict set def_ps_mapping f9000000 label "gic_r5: interrupt-controller"
@@ -5730,6 +5732,13 @@ proc detect_bus_name {ip_drv} {
 		if {[string match -nocase $ip_drv "psu_rcpu_gic"] || [string match -nocase $ip_drv "psv_rcpu_gic"]} {
                         return "amba_rpu: amba_rpu"
                 }
+		set ipname ""
+		if {[catch {set ipname [get_property IP_NAME [hsi::get_cells -hier $ip_drv]]} msg]} {
+		}
+		set valid_xppu "psv_lpd_xppu psv_pmc_xppu psv_pmc_xppu_npi"
+		if {[lsearch $valid_xppu $ipname] >= 0} {
+			return "amba_xppu: indirect-bus@1"
+		}
 		return "amba: amba"
 }
 

@@ -1409,4 +1409,21 @@
 
 	};
 
+	amba_xppu: indirect-bus@1 {
+		compatible = "indirect-bus";
+		#address-cells = <0x2>;
+		#size-cells = <0x2>;
+		lpd_xppu: xppu@ff990000 {
+			compatible = "xlnx,xppu"
+			#firewall-cells = <0x0>;
+			reg = <0x0 0xff990000 0x0 0x1000>;
+			status = "disabled"
+		};
+		pmc_xppu: xppu@f1310000 {
+			compatible = "xlnx,xppu"
+			#firewall-cells = <0x0>;
+			reg = <0x0 0xf1310000 0x0 0x1000>;
+			status = "disabled"
+		};
+	}
 };
