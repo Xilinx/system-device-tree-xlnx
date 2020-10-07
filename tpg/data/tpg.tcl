@@ -40,10 +40,6 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		set max_rows [get_property CONFIG.MAX_ROWS [hsi::get_cells -hier $drv_handle]]
 		add_prop "${node}" "xlnx,max-height" $max_rows int $dts_file
 		set proctype [get_hw_family]
-		if {[string match -nocase $proctype "zynq"]} {
-	                # Workaround for issue (TBF)
-			return
-        	}
 		set ports_node [create_node -n "ports" -l tpg_ports$drv_handle -p $node -d $dts_file]
                 add_prop "$ports_node" "#address-cells" 1 int $dts_file
                 add_prop "$ports_node" "#size-cells" 0 int $dts_file
