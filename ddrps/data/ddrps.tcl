@@ -15,6 +15,7 @@
 # workaround for ps7 ddrc has none zero start address
 
 namespace eval ::tclapp::xilinx::devicetree::ddrps {
+namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc gen_ps7_ddr_reg_property {drv_handle system_node} {
 	    proc_called_by
 	    set regprop [get_count "regp"]

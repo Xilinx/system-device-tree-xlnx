@@ -307,11 +307,11 @@ proc get_intr_src_pins {interrupt_pin} {
             #For concat IP, we need to bring pin source for other end
             set ip_name [common::get_property IP_NAME $source_cell]
             if { [string match -nocase $ip_name "xlconcat" ] } {
-                set interrupt_sources [list {*}$interrupt_sources {*}[hsi::__internal::get_concat_interrupt_sources $source_cell]]
+                set interrupt_sources [list {*}$interrupt_sources {*}[get_concat_interrupt_sources $source_cell]]
             } elseif { [string match -nocase $ip_name "xlslice"] } {
-                set interrupt_sources [list {*}$interrupt_sources {*}[hsi::__internal::get_slice_interrupt_sources $source_cell]]
+                set interrupt_sources [list {*}$interrupt_sources {*}[get_slice_interrupt_sources $source_cell]]
             } elseif { [string match -nocase $ip_name "util_reduced_logic"] } {
-                set interrupt_sources [list {*}$interrupt_sources {*}[hsi::__internal::get_util_reduced_logic_interrupt_sources $source_cell]]
+                set interrupt_sources [list {*}$interrupt_sources {*}[get_util_reduced_logic_interrupt_sources $source_cell]]
             } else {
                 lappend interrupt_sources $source_pin 
             }

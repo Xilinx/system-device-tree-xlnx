@@ -1196,7 +1196,7 @@ proc is_pin_interrupting_current_proc { periph_name intr_pin_name} {
         }
     }
 	puts "is3"
-   return [hsi::__internal::special_handling_for_ps7_interrupt $periph_name]
+   return [special_handling_for_ps7_interrupt $periph_name]
 }
 
 #
@@ -1294,7 +1294,7 @@ proc is_ip_interrupting_current_proc { periph_name} {
        }
    }
    #TODO: Special hard coding for ps7 internal
-   return [hsi::__internal::special_handling_for_ps7_interrupt $periph_name]
+   return [special_handling_for_ps7_interrupt $periph_name]
 }
 
 ################################################################################
@@ -1532,7 +1532,7 @@ proc get_interrupt_id { ip_name port_name } {
     #Special Handling for cascading case of axi_intc Interrupt controller
     set cascade_id 0
     if { [string match -nocase "$intc_type" "axi_intc"] } {
-        set cascade_id [hsi::__internal::get_intc_cascade_id_offset $intc_periph]
+        set cascade_id [get_intc_cascade_id_offset $intc_periph]
     }
 
     set i $cascade_id

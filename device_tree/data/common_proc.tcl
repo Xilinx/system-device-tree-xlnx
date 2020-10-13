@@ -3445,6 +3445,7 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping ffa50000 label "xilinx_ams: ams"
 		dict set def_ps_mapping ffa50800 label "ams_ps: ams_ps"
 		dict set def_ps_mapping ffa50c00 label "ams_pl: ams_pl"
+		dict set def_ps_mapping ff980000 label "lpd_xppu: xppu"
 #		dict set def_ps_mapping fd1a0000 label crfapb
 #		dict set def_ps_mapping ff5e0000 label crlapb
 #		dict set def_ps_mapping ffcc0000 label efuse
@@ -4807,9 +4808,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 	}
 	# TODO: consolidation with get_intr_id proc
 	foreach pin ${intr_port_name} {
-		puts "1"
 		set connected_intc [get_intr_cntrl_name $drv_handle $pin]
-		puts "2"
 		if {[llength $connected_intc] == 0 || [string match $connected_intc "{}"] } {
 			if {![string match -nocase [common::get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "axi_intc"]} {
 				dtg_warning "Interrupt pin \"$pin\" of IP block: \"$drv_handle\" is not connected to any interrupt controller\n\r"
@@ -4821,11 +4820,8 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 		set valid_cascade_proc "kintex7 zynq zynqmp zynquplus versal"
 		# check whether intc is gpio or other
 		if {[lsearch  -nocase $valid_gpio_list $connected_intc_name] >= 0} {
-		puts "3"
 			generate_gpio_intr_info $connected_intc $drv_handle $pin
-		puts "4"
 		} else {
-		puts "5"
 			set intc [get_interrupt_parent $drv_handle $pin]
 			if { [string match -nocase [common::get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "axi_intc"] && [lsearch -nocase $valid_cascade_proc $proctype] >= 0 } {
 				set pins [hsi::get_pins -of_objects [::hsi::get_cells -hier -filter "NAME==$drv_handle"] -filter "NAME==irq"]
@@ -5735,7 +5731,7 @@ proc detect_bus_name {ip_drv} {
 		set ipname ""
 		if {[catch {set ipname [get_property IP_NAME [hsi::get_cells -hier $ip_drv]]} msg]} {
 		}
-		set valid_xppu "psv_lpd_xppu psv_pmc_xppu psv_pmc_xppu_npi"
+		set valid_xppu "psv_lpd_xppu psv_pmc_xppu psv_pmc_xppu_npi psu_lpd_xppu"
 		if {[lsearch $valid_xppu $ipname] >= 0} {
 			return "amba_xppu: indirect-bus@1"
 		}

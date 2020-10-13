@@ -596,7 +596,6 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		set logo_height [get_property CONFIG.MAX_LOGO_ROWS [hsi::get_cells -hier $drv_handle]]
 		add_prop "$mixer_node1" "xlnx,logo-height" $logo_height int $dts_file
 	}
-}
 
 proc gen_video_format {num node drv_handle max_data_width dts_file} {
         set vid_formats ""
@@ -694,4 +693,5 @@ proc gen_video_format {num node drv_handle max_data_width dts_file} {
         if {![string match -nocase $vid_formats ""]} {
                 add_prop "$node" "xlnx,vformat" $vid_formats stringlist $dts_file
         }
+}
 }

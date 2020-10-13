@@ -1702,4 +1702,15 @@
                         xlnx,ipi-bitmask = <0x80000>;
                 };
         };
+        amba_xppu: indirect-bus@1 {
+                compatible = "indirect-bus";
+                #address-cells = <0x2>;
+                #size-cells = <0x2>;
+                lpd_xppu: xppu@ff980000 {
+                        compatible = "xlnx,xppu";
+                        #firewall-cells = <0x0>;
+                        reg = <0x0 0xff980000 0x0 0x1000>;
+                        status = "disabled";
+                };
+        };
 };

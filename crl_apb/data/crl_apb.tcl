@@ -1,4 +1,3 @@
-o#
 # (C) Copyright 2020 Xilinx, Inc.
 #
 # This program is free software; you can redistribute it and/or

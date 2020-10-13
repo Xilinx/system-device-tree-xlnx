@@ -112,7 +112,7 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		add_prop "$node" "phys" $phys reference $dts_file
 	}
 	set edid_ram_size [get_property CONFIG.C_EDID_RAM_SIZE [hsi::get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,edid-ram-size" $edid_ram_size hexint $dts_file
+	#add_prop "${node}" "xlnx,edid-ram-size" $edid_ram_size hexint $dts_file
 	set include_hdcp_1_4 [get_property CONFIG.C_INCLUDE_HDCP_1_4 [hsi::get_cells -hier $drv_handle]]
 	if {[string match -nocase $include_hdcp_1_4 "true"]} {
 		add_prop "${node}" "xlnx,include-hdcp-1-4" "" boolean $dts_file

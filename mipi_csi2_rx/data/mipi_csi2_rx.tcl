@@ -108,7 +108,6 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
         }
 
 	}
-}
 proc gen_frmbuf_node {outip drv_handle dts_file} {
 #        set dt_overlay [get_property CONFIG.dt_overlay [get_os]]
 	set bus_node [detect_bus_name $drv_handle]
@@ -124,4 +123,5 @@ proc gen_frmbuf_node {outip drv_handle dts_file} {
 	add_prop "$vcap_port_node" "direction" input string $dts_file
 	set vcap_in_node [create_node -n "endpoint" -l $outip$drv_handle -p $vcap_port_node -d $dts_file]
 	add_prop "$vcap_in_node" "remote-endpoint" mipi_csirx_out$drv_handle reference $dts_file
+}
 }

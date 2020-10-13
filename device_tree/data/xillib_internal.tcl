@@ -1,8 +1,9 @@
 
-namespace eval hsi::__internal {
-}
+namespace eval ::tclapp::xilinx::devicetree::hsi::utils {
+namespace export *
 
-proc hsi::__internal::dep_msg { older_proc new_proc args } {
+proc dep_msg { older_proc new_proc args } {
+	puts "# [lindex [info level -1] 0] #>> called by [lindex [info level -2] 0]"
     puts "INFO:\[hsi-utils-101\] \"$older_proc\" tcl procedure is deprecated, use \"$new_proc $args\" instead"
     #error "ERROR:\[hsi-utils-101\] \"$older_proc\" tcl procedure is deprecated, use \"$new_proc $args\" instead"
 }
@@ -12,7 +13,7 @@ proc hsi::__internal::dep_msg { older_proc new_proc args } {
 # internal IPs so for the time being, this hard coding is placed. It will be removed
 # once the internal interrupt connectivy is exposed in exported xml file.
 #
-proc hsi::__internal::special_handling_for_ps7_interrupt { periph_name} {
+proc special_handling_for_ps7_interrupt { periph_name} {
 
     set periph [hsi::get_cells -hier "$periph_name"]
     if { [llength $periph] != 1}  {
@@ -45,7 +46,7 @@ proc hsi::__internal::special_handling_for_ps7_interrupt { periph_name} {
 }
 
 #It assume that XLCONCAT IP cell object is passed to this function
-proc hsi::__internal::get_concat_interrupt_sources { concat_ip_obj {lsb -1} {msb -1} } {
+proc get_concat_interrupt_sources { concat_ip_obj {lsb -1} {msb -1} } {
     lappend source_pins
     if {$lsb == -1 } {
         set i 0
@@ -63,11 +64,11 @@ proc hsi::__internal::get_concat_interrupt_sources { concat_ip_obj {lsb -1} {msb
                 set ip_name [common::get_property IP_NAME $source_cell]
                 #Cascading case of concat IP
                 if { [string match -nocase $ip_name "xlconcat"] } {
-                    set source_pins [list {*}$source_pins {*}[hsi::__internal::get_concat_interrupt_sources $source_cell]]
+                    set source_pins [list {*}$source_pins {*}[get_concat_interrupt_sources $source_cell]]
                 } elseif { [string match -nocase $ip_name "xlslice"] } {
-                    set source_pins [list {*}$source_pins {*}[hsi::__internal::get_slice_interrupt_sources $source_cell]]
+                    set source_pins [list {*}$source_pins {*}[get_slice_interrupt_sources $source_cell]]
                 } elseif { [string match -nocase $ip_name "util_reduced_logic"] } {
-                    set source_pins [list {*}$source_pins {*}[hsi::__internal::get_util_reduced_logic_interrupt_sources $source_cell]]
+                    set source_pins [list {*}$source_pins {*}[get_util_reduced_logic_interrupt_sources $source_cell]]
                 } else {
                     lappend source_pins $pin
                 }
@@ -80,7 +81,7 @@ proc hsi::__internal::get_concat_interrupt_sources { concat_ip_obj {lsb -1} {msb
     return $source_pins
 }
 
-proc hsi::__internal::get_slice_interrupt_sources { slice_ip_obj } {
+proc get_slice_interrupt_sources { slice_ip_obj } {
     lappend source_pins
     set in_pin [hsi::get_pins -of_objects $slice_ip_obj "Din"]
     set pins [get_source_pins $in_pin]
@@ -90,16 +91,16 @@ proc hsi::__internal::get_slice_interrupt_sources { slice_ip_obj } {
             set ip_name [common::get_property IP_NAME $source_cell]
             #Cascading case of xlslice IP
             if { [string match -nocase $ip_name "xlslice"] } {
-                set source_pins [list {*}$source_pins {*}[hsi::__internal::get_slice_interrupt_sources $source_cell]]
+                set source_pins [list {*}$source_pins {*}[get_slice_interrupt_sources $source_cell]]
             } elseif { [string match -nocase $ip_name "xlconcat"] } {
                 set from [::common::get_property CONFIG.DIN_FROM $slice_ip_obj]
                 set to [::common::get_property CONFIG.DIN_TO $slice_ip_obj]
                 set lsb [expr $from < $to ? $from : $to]
                 set msb [expr $from > $to ? $from : $to]
                 incr msb
-                set source_pins [list {*}$source_pins {*}[hsi::__internal::get_concat_interrupt_sources $source_cell $lsb $msb]]
+                set source_pins [list {*}$source_pins {*}[get_concat_interrupt_sources $source_cell $lsb $msb]]
             } elseif { [string match -nocase $ip_name "util_reduced_logic"] } {
-                    set source_pins [list {*}$source_pins {*}[hsi::__internal::get_util_reduced_logic_interrupt_sources $source_cell]]
+                    set source_pins [list {*}$source_pins {*}[get_util_reduced_logic_interrupt_sources $source_cell]]
             } else {
                 lappend source_pins $pin
             }
@@ -111,7 +112,7 @@ proc hsi::__internal::get_slice_interrupt_sources { slice_ip_obj } {
     return $source_pins
 }
 
-proc hsi::__internal::get_util_reduced_logic_interrupt_sources { url_ip_obj } {
+proc get_util_reduced_logic_interrupt_sources { url_ip_obj } {
     lappend source_pins
     set in_pin [hsi::get_pins -of_objects $url_ip_obj "Op1"]
     set pins [get_source_pins $in_pin]
@@ -121,12 +122,12 @@ proc hsi::__internal::get_util_reduced_logic_interrupt_sources { url_ip_obj } {
             set ip_name [common::get_property IP_NAME $source_cell]
             
             if { [string match -nocase $ip_name "xlslice"] } {
-                set source_pins [list {*}$source_pins {*}[hsi::__internal::get_slice_interrupt_sources $source_cell]]
+                set source_pins [list {*}$source_pins {*}[get_slice_interrupt_sources $source_cell]]
             } elseif { [string match -nocase $ip_name "xlconcat"] } {
-                set source_pins [list {*}$source_pins {*}[hsi::__internal::get_concat_interrupt_sources $source_cell]]
+                set source_pins [list {*}$source_pins {*}[get_concat_interrupt_sources $source_cell]]
             } elseif { [string match -nocase $ip_name "util_reduced_logic"] } {
 		    #Cascading case of util_reduced_logic IP
-                    set source_pins [list {*}$source_pins {*}[hsi::__internal::get_util_reduced_logic_interrupt_sources $source_cell]]
+                    set source_pins [list {*}$source_pins {*}[get_util_reduced_logic_interrupt_sources $source_cell]]
             } else {
                 lappend source_pins $pin
             }
@@ -138,7 +139,7 @@ proc hsi::__internal::get_util_reduced_logic_interrupt_sources { url_ip_obj } {
     return $source_pins
 }
 
-proc hsi::__internal::get_intc_cascade_id_offset { intc } {
+proc get_intc_cascade_id_offset { intc } {
 #proc get_intc_cascade_id_offset { intc } 
     set cascade_offset 0
     set cascade 0
@@ -163,7 +164,7 @@ proc hsi::__internal::get_intc_cascade_id_offset { intc } {
             set total_intr_count [expr $total_intr_count + $intr_width]
         }
         if { $cascade } {
-            set cascade_offset [expr $total_intr_count + [hsi::__internal::get_intc_cascade_id_offset $other_intc_periph] ]
+            set cascade_offset [expr $total_intr_count + [get_intc_cascade_id_offset $other_intc_periph] ]
             #set cascade_offset [expr $total_intr_count + [get_intc_cascade_id_offset $other_intc_periph] ]
             break;
         }
@@ -177,92 +178,96 @@ proc hsi::__internal::get_intc_cascade_id_offset { intc } {
 # Deprecated TCL procs for backward compatibility
 #############################################################################
 proc xget_connected_intf { periph_name intf_name} {
-    hsi::__internal::dep_msg xget_connected_intf get_connected_intf $periph_name $intf_name
+    dep_msg xget_connected_intf get_connected_intf $periph_name $intf_name
     return [get_connected_intf $periph_name $intf_name]
 }
 proc xget_hw_port_value {ip_inst ip_pin} {
-    hsi::__internal::dep_msg xget_hw_port_value get_net_name $ip_inst $ip_pin
+    dep_msg xget_hw_port_value get_net_name $ip_inst $ip_pin
     return [get_net_name $ip_inst $ip_pin]
 }
 proc xget_hw_busif_value {ip_inst ip_busif} {
-    hsi::__internal::dep_msg xget_hw_busif_value get_intfnet_name $ip_inst $ip_busif
+    dep_msg xget_hw_busif_value get_intfnet_name $ip_inst $ip_busif
     return [get_intfnet_name $ip_inst $ip_busif]
 }
 proc xget_hw_proc_slave_periphs {proc_handle} {
-    hsi::__internal::dep_msg xget_hw_proc_slave_periphs get_proc_slave_periphs $proc_handle
+    dep_msg xget_hw_proc_slave_periphs get_proc_slave_periphs $proc_handle
     return [get_proc_slave_periphs $proc_handle]
 }
 proc xget_ip_clk_pin_freq { cell_obj clk_port} {
-    hsi::__internal::dep_msg xget_ip_clk_pin_freq get_clk_pin_freq $cell_obj $clk_port
+    dep_msg xget_ip_clk_pin_freq get_clk_pin_freq $cell_obj $clk_port
     return [get_clk_pin_freq $cell_obj $clk_port]
 }
+if {0} {
 proc is_external_pin { pin_obj } {
-    hsi::__internal::dep_msg is_external_pin is_external_pin $pin_obj
+    dep_msg is_external_pin is_external_pin $pin_obj
     return [is_external_pin $pin_obj]
 }
+}
 proc xget_port_width { port_handle} {
-    hsi::__internal::dep_msg xget_port_width get_port_width $port_handle
+    dep_msg xget_port_width get_port_width $port_handle
     return [get_port_width $port_handle]
 }
 proc xget_interrupt_sources {periph_handle} {
-    hsi::__internal::dep_msg xget_interrupt_sources get_interrupt_sources $periph_handle
+    dep_msg xget_interrupt_sources get_interrupt_sources $periph_handle
     return [get_interrupt_sources $periph_handle]
 }
 proc xget_source_pins {periph_pin} {
-    hsi::__internal::dep_msg xget_source_pins get_source_pins $periph_pin
+    dep_msg xget_source_pins get_source_pins $periph_pin
     return [get_source_pins $periph_pin]
 }
 proc xget_sink_pins {periph_pin} {
-    hsi::__internal::dep_msg xget_sink_pins get_sink_pins $periph_pin
+    dep_msg xget_sink_pins get_sink_pins $periph_pin
     return [get_sink_pins $periph_pin]
 }
 proc xget_connected_pin_count { periph_pin } {
-    hsi::__internal::dep_msg xget_connected_pin_count get_connected_pin_count $periph_pin
+    dep_msg xget_connected_pin_count get_connected_pin_count $periph_pin
     return [get_connected_pin_count $periph_pin]
 }
 proc xget_param_value {periph_handle param_name} {
-    hsi::__internal::dep_msg xget_param_value get_param_value $periph_handle $param_name
+    dep_msg xget_param_value get_param_value $periph_handle $param_name
     return [get_param_value $periph_handle $param_name]
 }
 proc xget_p2p_name {periph arg} {
-    hsi::__internal::dep_msg xget_p2p_name get_p2p_name $periph $arg
+    dep_msg xget_p2p_name get_p2p_name $periph $arg
     return [get_p2p_name $periph $arg]
 }
 proc xget_procs { } {
-    hsi::__internal::dep_msg xget_procs get_procs
+    dep_msg xget_procs get_procs
     return [get_procs]
 }
 proc xget_port_interrupt_id { periph_name intr_port_name } {
-    hsi::__internal::dep_msg xget_port_interrupt_id get_port_intr_id $periph_name $intr_port_name
+    dep_msg xget_port_interrupt_id get_port_intr_id $periph_name $intr_port_name
     return [get_port_intr_id $periph_name $intr_port_name]
 }
 proc is_interrupt_controller { periph_name } {
-    hsi::__internal::dep_msg is_interrupt_controller is_intr_cntrl $periph_name
+    dep_msg is_interrupt_controller is_intr_cntrl $periph_name
     return [is_intr_cntrl $periph_name]
 }
 proc get_connected_interrupt_controller { periph_name intr_pin_name } {
-    hsi::__internal::dep_msg get_connected_interrupt_controller get_connected_intr_cntrl $periph_name $intr_pin_name
+    dep_msg get_connected_interrupt_controller get_connected_intr_cntrl $periph_name $intr_pin_name
     return [get_connected_intr_cntrl $periph_name $intr_pin_name]
 }
+if {0} {
 proc get_ip_version { ip_name } {
-    hsi::__internal::dep_msg get_ip_version get_ip_version $ip_name
+    dep_msg get_ip_version get_ip_version $ip_name
     return [get_ip_version $ip_name]
 }
 proc get_ip_param_value { ip param} {
-    hsi::__internal::dep_msg  get_ip_param_value get_ip_param_value $ip $param
+    dep_msg  get_ip_param_value get_ip_param_value $ip $param
     return [get_ip_param_value $ip $param]
 }
 proc get_board_name { } {
-    hsi::__internal::dep_msg get_board_name get_board_name
+    dep_msg get_board_name get_board_name
     return [get_board_name]
 }
 proc get_trimmed_param_name { param } {
-    hsi::__internal::dep_msg get_trimmed_param_name get_trimmed_param_name $param
+    dep_msg get_trimmed_param_name get_trimmed_param_name $param
     return [get_trimmed_param_name $param]
 }
 proc get_ip_sub_type { ip_inst_object} {
-    hsi::__internal::dep_msg get_ip_sub_type get_ip_sub_type $ip_inst_object
+    dep_msg get_ip_sub_type get_ip_sub_type $ip_inst_object
     return [get_ip_sub_type $ip_inst_object]
+}
 }
 
 #############################################################################
@@ -275,108 +280,110 @@ proc is_it_in_pl_1 {ip} {
 	}
 	return -1
 }
+if {0} {
 proc get_exact_arg_list { args } {
-    hsi::__internal::dep_msg get_exact_arg_list get_exact_arg_list $args
+    dep_msg get_exact_arg_list get_exact_arg_list $args
     return [get_exact_arg_list $args]
 }
+}
 proc xopen_include_file {file_name} {
-    hsi::__internal::dep_msg xopen_include_file open_include_file $file_name
+    dep_msg xopen_include_file open_include_file $file_name
     return [open_include_file $file_name]
 }
 proc xget_name {periph_handle param} {
-    hsi::__internal::dep_msg xget_name get_ip_param_name $periph_handle $param
+    dep_msg xget_name get_ip_param_name $periph_handle $param
     return [get_ip_param_name $periph_handle $param]
 }
 proc xget_dname {driver_name param} {
-    hsi::__internal::dep_msg xget_dname get_driver_param_name $driver_name $param
+    dep_msg xget_dname get_driver_param_name $driver_name $param
     return [get_driver_param_name $driver_name $param]
 }
 proc xdefine_include_file {drv_handle file_name drv_string args} {
-    #hsi::__internal::dep_msg xdefine_include_file define_include_file $drv_handle $file_name $drv_string $args
+    #dep_msg xdefine_include_file define_include_file $drv_handle $file_name $drv_string $args
     return [define_include_file $drv_handle $file_name $drv_string $args]
 }
 proc xdefine_zynq_include_file {drv_handle file_name drv_string args} {
-    #hsi::__internal::dep_msg xdefine_zynq_include_file define_zynq_include_file $drv_handle $file_name $drv_string $args
+    #dep_msg xdefine_zynq_include_file define_zynq_include_file $drv_handle $file_name $drv_string $args
     return [define_zynq_include_file $drv_handle $file_name $drv_string $args]
 }
 proc xdefine_if_all {drv_handle file_name drv_string args} {
-    hsi::__internal::dep_msg xdefine_if_all define_if_all $drv_handle $file_name $drv_string $args
+    dep_msg xdefine_if_all define_if_all $drv_handle $file_name $drv_string $args
     return [define_if_all $drv_handle $file_name $drv_string $args]
 }
 proc xdefine_max {drv_handle file_name define_name arg} {
-    hsi::__internal::dep_msg xdefine_max define_max $drv_handle $file_name $define_name $arg
+    dep_msg xdefine_max define_max $drv_handle $file_name $define_name $arg
     return [define_max $drv_handle $file_name $define_name $arg]
 }
 proc xdefine_config_file {drv_handle file_name drv_string args} {
-    #hsi::__internal::dep_msg xdefine_config_file define_config_file $drv_handle $file_name $drv_string $args
+    #dep_msg xdefine_config_file define_config_file $drv_handle $file_name $drv_string $args
     return [define_config_file $drv_handle $file_name $drv_string $args]
 }
 proc xdefine_zynq_config_file {drv_handle file_name drv_string args} {
-    #hsi::__internal::dep_msg xdefine_zynq_config_file define_zynq_config_file $drv_handle $file_name $drv_string $args
+    #dep_msg xdefine_zynq_config_file define_zynq_config_file $drv_handle $file_name $drv_string $args
     return [define_zynq_config_file $drv_handle $file_name $drv_string $args]
 }
 proc xdefine_with_names {drv_handle periph_handle file_name args} {
-    hsi::__internal::dep_msg xdefine_with_names define_with_names $drv_handle $periph_handle $file_name $args
+    dep_msg xdefine_with_names define_with_names $drv_handle $periph_handle $file_name $args
     return [define_with_names $drv_handle $periph_handle $file_name $args]
 }
 proc xdefine_include_file_membank {drv_handle file_name args} {
-    hsi::__internal::dep_msg xdefine_include_file_membank define_include_file_membank $drv_handle $file_name $args
+    dep_msg xdefine_include_file_membank define_include_file_membank $drv_handle $file_name $args
     return [define_include_file_membank $drv_handle $file_name $args]
 }
 proc xdefine_membank { periph file_name args } {
-    hsi::__internal::dep_msg xdefine_membank define_membank $periph $file_name $args
+    dep_msg xdefine_membank define_membank $periph $file_name $args
     return [define_membank $periph $file_name $args]
 }
 proc xfind_addr_params {periph} {
-    hsi::__internal::dep_msg xfind_addr_params find_addr_params $periph
+    dep_msg xfind_addr_params find_addr_params $periph
     return [find_addr_params $periph]
 }
 proc xdefine_addr_params {drv_handle file_name} {
-    hsi::__internal::dep_msg xdefine_addr_params define_addr_params $drv_handle $file_name
+    dep_msg xdefine_addr_params define_addr_params $drv_handle $file_name
     return [define_addr_params $drv_handle $file_name]
 }
 proc xdefine_all_params {drv_handle file_name} {
-    hsi::__internal::dep_msg xdefine_all_params define_all_params $drv_handle $file_name
+    dep_msg xdefine_all_params define_all_params $drv_handle $file_name
     return [define_all_params $drv_handle $file_name]
 }
 proc xdefine_canonical_xpars {drv_handle file_name drv_string args} {
-    #hsi::__internal::dep_msg xdefine_canonical_xpars define_canonical_xpars $drv_handle $file_name $drv_string $args
+    #dep_msg xdefine_canonical_xpars define_canonical_xpars $drv_handle $file_name $drv_string $args
     return [define_canonical_xpars $drv_handle $file_name $drv_string $args]
 }
 proc xdefine_zynq_canonical_xpars {drv_handle file_name drv_string args} {
-    #hsi::__internal::dep_msg xdefine_zynq_canonical_xpars define_zynq_canonical_xpars $drv_handle $file_name $drv_string $args
+    #dep_msg xdefine_zynq_canonical_xpars define_zynq_canonical_xpars $drv_handle $file_name $drv_string $args
     return [define_zynq_canonical_xpars $drv_handle $file_name $drv_string $args]
 }
 proc xdefine_processor_params {drv_handle file_name} {
-    hsi::__internal::dep_msg xdefine_processor_params define_processor_params $drv_handle $file_name
+    dep_msg xdefine_processor_params define_processor_params $drv_handle $file_name
     return [define_processor_params $drv_handle $file_name]
 }
 proc xget_ip_mem_ranges {periph} {
-    hsi::__internal::dep_msg xget_ip_mem_ranges get_ip_mem_ranges $periph
+    dep_msg xget_ip_mem_ranges get_ip_mem_ranges $periph
     return [get_ip_mem_ranges $periph]
 }
 proc handle_stdin {drv_handle} {
-    hsi::__internal::dep_msg handle_stdin handle_stdin $drv_handle
+    dep_msg handle_stdin handle_stdin $drv_handle
     return [handle_stdin $drv_handle]
 }
 proc handle_stdout {drv_handle} {
-    hsi::__internal::dep_msg handle_stdout handle_stdout $drv_handle
+    dep_msg handle_stdout handle_stdout $drv_handle
     return [handle_stdout $drv_handle]
 }
 proc xget_sw_iplist_for_driver {driver_handle} {
-    hsi::__internal::dep_msg xget_sw_iplist_for_driver get_common_driver_ips $driver_handle
+    dep_msg xget_sw_iplist_for_driver get_common_driver_ips $driver_handle
     return [get_common_driver_ips $driver_handle]
 }
 proc is_interrupting_current_processor { periph_name intr_pin_name} {
-    hsi::__internal::dep_msg is_interrupting_current_processor is_pin_interrupting_current_proc  $periph_name $intr_pin_name
+    dep_msg is_interrupting_current_processor is_pin_interrupting_current_proc  $periph_name $intr_pin_name
     return [is_pin_interrupting_current_proc $periph_name $intr_pin_name]
 }
 proc get_current_processor_interrupt_controller { } {
-    hsi::__internal::dep_msg get_current_processor_interrupt_controller get_current_proc_intr_cntrl]
+    dep_msg get_current_processor_interrupt_controller get_current_proc_intr_cntrl]
     return [get_current_proc_intr_cntrl]
 }
 proc is_ip_interrupting_current_processor { periph_name} {
-    hsi::__internal::dep_msg is_ip_interrupting_current_processor is_ip_interrupting_current_proc $periph_name
+    dep_msg is_ip_interrupting_current_processor is_ip_interrupting_current_proc $periph_name
     return [is_ip_interrupting_current_proc $periph_name]
 }
 
@@ -384,84 +391,86 @@ proc is_ip_interrupting_current_processor { periph_name} {
 # Deprecated TCL procs for backward compatibility
 #############################################################################
 proc xget_swverandbld { } {
-    hsi::__internal::dep_msg xget_swverandbld get_sw_build_version
+    dep_msg xget_swverandbld get_sw_build_version
     return [get_sw_build_version]
 }
 proc xget_copyrightstr { } {
-    hsi::__internal::dep_msg xget_copyrightstr get_copyright_msg
+    dep_msg xget_copyrightstr get_copyright_msg
     return [get_copyright_msg]
 }
 proc xprint_generated_header {file_handle  desc} {
-    hsi::__internal::dep_msg xprint_generated_header write_c_header
+    dep_msg xprint_generated_header write_c_header
     return [write_c_header $file_handle  $desc]
 }
 proc xprint_generated_header_tcl {file_handle  desc} {
-    hsi::__internal::dep_msg xprint_generated_header_tcl write_tcl_header $file_handle  $desc]
+    dep_msg xprint_generated_header_tcl write_tcl_header $file_handle  $desc]
     return [write_tcl_header $file_handle  $desc]
 }
 proc xformat_addr_string {value param_name} {
-    hsi::__internal::dep_msg xformat_addr_string format_addr_string $value $param_name
+    dep_msg xformat_addr_string format_addr_string $value $param_name
     return [format_addr_string $value $param_name]
 }
 proc xformat_address_string {value} {
-    hsi::__internal::dep_msg xformat_address_string format_address_string $value
+    dep_msg xformat_address_string format_address_string $value
     return [format_address_string $value]
 }
 proc xconvert_binary_to_hex {value} {
-    hsi::__internal::dep_msg xconvert_binary_to_hex convert_binary_to_hex $value]
+    dep_msg xconvert_binary_to_hex convert_binary_to_hex $value]
     return [convert_binary_to_hex $value]
 }
 proc xconvert_binary_to_decimal { value } {
-    hsi::__internal::dep_msg xconvert_binary_to_decimal convert_binary_to_decimal $value
+    dep_msg xconvert_binary_to_decimal convert_binary_to_decimal $value
     return [convert_binary_to_decimal $value]
 }
 proc xconvert_num_to_binary {value length} {
-    hsi::__internal::dep_msg  xconvert_num_to_binary convert_num_to_binary $value $length
+    dep_msg  xconvert_num_to_binary convert_num_to_binary $value $length
     return [convert_num_to_binary $value $length]
 }
 proc compare_unsigned_addr_strings {base_addr base_param high_addr high_param} {
-    hsi::__internal::dep_msg compare_unsigned_addr_strings compare_unsigned_addresses $base_addr $base_param $high_addr $high_param
+    dep_msg compare_unsigned_addr_strings compare_unsigned_addresses $base_addr $base_param $high_addr $high_param
     return [compare_unsigned_addresses $base_addr $base_param $high_addr $high_param]
 }
+if {0} {
 proc compare_unsigned_int_values {int_base int_high} {
-    hsi::__internal::dep_msg  compare_unsigned_int_values compare_unsigned_int_values $int_base $int_high
+    dep_msg  compare_unsigned_int_values compare_unsigned_int_values $int_base $int_high
     return [compare_unsigned_int_values $int_base $int_high]
 }
+}
 proc xformat_tohex {value bitwidth direction} {
-    hsi::__internal::dep_msg xformat_tohex format_to_hex $value $bitwidth $direction
+    dep_msg xformat_tohex format_to_hex $value $bitwidth $direction
     return [format_to_hex $value $bitwidth $direction]
 }
 proc xformat_tobin {value bitwidth direction} {
-    hsi::__internal::dep_msg xformat_tobin format_to_bin $value $bitwidth $direction
+    dep_msg xformat_tobin format_to_bin $value $bitwidth $direction
     return [format_to_bin $value $bitwidth $direction]
 }
 proc xget_nameofexecutable { } {
-    hsi::__internal::dep_msg xget_nameofexecutable get_nameofexecutable
+    dep_msg xget_nameofexecutable get_nameofexecutable
     return [get_nameofexecutable]
 }
 proc xget_hostos_platform { } {
-    hsi::__internal::dep_msg xget_hostos_platform get_hostos_platform
+    dep_msg xget_hostos_platform get_hostos_platform
     return [get_hostos_platform]
 }
 proc xget_hostos_exec_suffix { } {
-    hsi::__internal::dep_msg xget_hostos_exec_suffix get_hostos_exec_suffix
+    dep_msg xget_hostos_exec_suffix get_hostos_exec_suffix
     return [get_hostos_exec_suffix]
 }
 proc xget_hostos_sharedlib_suffix { } {
-    hsi::__internal::dep_msg xget_hostos_sharedlib_suffix get_hostos_sharedlib_suffix
+    dep_msg xget_hostos_sharedlib_suffix get_hostos_sharedlib_suffix
     return [get_hostos_sharedlib_suffix]
 }
 proc xfind_file_in_dirs { dirlist relative_filepath } {
-    hsi::__internal::dep_msg xfind_file_in_dirs find_file_in_dirs $dirlist $relative_filepath
+    dep_msg xfind_file_in_dirs find_file_in_dirs $dirlist $relative_filepath
     return [find_file_in_dirs $dirlist $relative_filepath]
 }
 proc xfind_file_in_xilinx_install { relative_filepath } {
-    hsi::__internal::dep_msg xfind_file_in_xilinx_install find_file_in_xilinx_install $relative_filepath
+    dep_msg xfind_file_in_xilinx_install find_file_in_xilinx_install $relative_filepath
     return [find_file_in_xilinx_install $relative_filepath]
 }
 proc xload_xilinx_library { libname } {
-    hsi::__internal::dep_msg xload_xilinx_library load_xilinx_library $libname
+    dep_msg xload_xilinx_library load_xilinx_library $libname
     return [load_xilinx_library $libname]
 }
-
+}
 

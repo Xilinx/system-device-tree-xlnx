@@ -22,9 +22,9 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		}
 		pldt append $node compatible "\ \, \"xlnx,v-hdmi-tx-ss-3.1\""
 		set input_pixels_per_clock [get_property CONFIG.C_INPUT_PIXELS_PER_CLOCK [hsi::get_cells -hier $drv_handle]]
-		add_prop "${node}" "xlnx,input-pixels-per-clock" $input_pixels_per_clock int $dts_file
+		#add_prop "${node}" "xlnx,input-pixels-per-clock" $input_pixels_per_clock int $dts_file
 		set max_bits_per_component [get_property CONFIG.C_MAX_BITS_PER_COMPONENT [hsi::get_cells -hier $drv_handle]]
-		add_prop "${node}" "xlnx,max-bits-per-component" $max_bits_per_component int $dts_file
+		#add_prop "${node}" "xlnx,max-bits-per-component" $max_bits_per_component int $dts_file
 		set phy_names ""
 		set phys ""
 		set link_data0 [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "LINK_DATA0_OUT"]
