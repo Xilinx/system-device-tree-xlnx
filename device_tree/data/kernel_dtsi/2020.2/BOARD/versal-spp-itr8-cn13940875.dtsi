@@ -12,18 +12,18 @@
 	model = "Xilinx Versal SPP ITR8 HW 4.0";
 	
 	aliases {
-		serial0 = &psv_sbsauart_0;
-		ethernet0 = &psv_ethernet_0;
-		ethernet1 = &psv_ethernet_1;
-		spi0 = &psv_pmc_qspi_0;
-		spi1 = &psv_pmc_ospi_0;
-		spi2 = &psv_spi_0;
-		spi3 = &psv_spi_1;
-		i2c0 = &psv_i2c_0;
-		i2c1 = &psv_i2c_1;
-		mmc0 = &psv_pmc_sd_0;
-		mmc1 = &psv_pmc_sd_1;
-		usb0 = &psv_usb_xhci_0;
+		serial0 = &serial0;
+		ethernet0 = &gem0;
+		ethernet1 = &gem1;
+		spi0 = &qspi;
+		spi1 = &ospi;
+		spi2 = &spi0;
+		spi3 = &spi1;
+		i2c0 = &i2c0;
+		i2c1 = &i2c1;
+		mmc0 = &sdhci0;
+		mmc1 = &sdhci1;
+		usb0 = &usb0;
 	};
 	
 	memory@0 {
@@ -65,52 +65,52 @@
 	clock-frequency = <2720000>;
 };
 
-&psv_sbsauart_0 {
+&serial0 {
 	status = "okay";
 	clocks = <&clk25 &clk25>;
 };
 
-&psv_adma_0 {
+&lpd_dma_chan0 {
 	status = "okay";
 	clocks = <&clk100 &clk100>;
 };
 
-&psv_adma_1 {
+&lpd_dma_chan1 {
 	status = "okay";
 	clocks = <&clk100 &clk100>;
 };
 
-&psv_adma_2 {
+&lpd_dma_chan2 {
 	status = "okay";
 	clocks = <&clk100 &clk100>;
 };
 
-&psv_adma_3 {
+&lpd_dma_chan3 {
 	status = "okay";
 	clocks = <&clk100 &clk100>;
 };
 
-&psv_adma_4 {
+&lpd_dma_chan4 {
 	status = "okay";
 	clocks = <&clk100 &clk100>;
 };
 
-&psv_adma_5 {
+&lpd_dma_chan5 {
 	status = "okay";
 	clocks = <&clk100 &clk100>;
 };
 
-&psv_adma_6 {
+&lpd_dma_chan6 {
 	status = "okay";
 	clocks = <&clk100 &clk100>;
 };
 
-&psv_adma_7 {
+&lpd_dma_chan7 {
 	status = "okay";
 	clocks = <&clk100 &clk100>;
 };
 
-&psv_usb_xhci_0 {
+&usb0 {
 	status = "okay";
 	clocks = <&clk125 &clk125>;
 };
@@ -123,7 +123,7 @@
 	maximum-speed = "high-speed";
 };
 
-&psv_ethernet_0 {
+&gem0 {
 	status = "okay";
 	clocks = <&clk125 &clk125 &clk125 &clk125>;
 	phy-handle = <&phy0>;
@@ -138,7 +138,7 @@
 	};
 };
 
-&psv_ethernet_1 {
+&gem1 {
 	status = "okay";
 	clocks = <&clk125 &clk125 &clk125 &clk125>;
 	phy-handle = <&phy1>;
@@ -153,19 +153,19 @@
 	};
 };
 
-&psv_pmc_sd_0 {
+&sdhci0 {
 	status = "okay";
 	clocks = <&clk25 &clk25>;
 	xlnx,mio_bank = <0>;
 };
 
-&psv_pmc_sd_1 {
+&sdhci1 {
 	status = "okay";
 	clocks = <&clk25 &clk25>;
 	xlnx,mio_bank = <0>;
 };
 
-&psv_pmc_qspi_0 {
+&qspi {
 	status = "okay";
 	num-cs = <0x1>;
 	reg = <0x0 0xf1030000 0x0 0x1000>;
@@ -209,7 +209,7 @@
 	};
 };
 
-&psv_pmc_ospi_0 {
+&ospi {
 	status = "disabled";
 	clocks = <&clk125 &clk125>;
 	bus-num = <2>;
@@ -251,7 +251,7 @@
 	};
 };
 
-&psv_spi_0 {
+&spi0 {
 	status = "okay";
 	clocks = <&clk125 &clk125>;
 	num-cs = <1>;
@@ -274,7 +274,7 @@
 	};
 };
 
-&psv_spi_1 {
+&spi1 {
 	status = "okay";
 	clocks = <&clk125 &clk125>;
 	num-cs = <3>;
@@ -297,12 +297,12 @@
 	};
 };
 
-&psv_i2c_0 {
+&i2c0 {
 	status = "okay";
 	clocks = <&clk100 &clk100>;
 };
 
-&psv_i2c_1 {
+&i2c1 {
 	status = "okay";
 	clocks = <&clk100 &clk100>;
 };

@@ -18,22 +18,22 @@
 	};
 
 	aliases {
-		serial0 = &psv_sbsaurt_0;
-		ethernet0 = &psv_ethernet_0;
-		ethernet1 = &psv_ethernet_1;
-		i2c0 = &psv_i2c_0;
-		i2c1 = &psv_i2c_1;
-		mmc0 = &psv_pmc_sd_1;
-		spi0 = &psv_pmc_qspi_0;
-		usb0 = &psv_usb_xhci_0;
-		rtc0 = &psv_pmc_rtc_0;
+		serial0 = &serial0;
+		ethernet0 = &gem0;
+		ethernet1 = &gem1;
+		i2c0 = &i2c0;
+		i2c1 = &i2c1;
+		mmc0 = &sdhci1;
+		spi0 = &qspi;
+		usb0 = &usb0;
+		rtc0 = &rtc;
 	};
 };
 
 /* PMC_MIO 0 -12 - configuration header QSPI/OSPI/EMMC */
 /* FIXME PMC_MIO37 ZU4_TRIGGER/PMC_MIO37/38 PCIE */
 
-&psv_canfd_1 { /* MIO40-41 */
+&can1 { /* MIO40-41 */
 	status = "okay";
 };
 
@@ -41,23 +41,23 @@
 	status = "okay";
 };
 
-&psv_pmc_rtc_0 {
+&rtc {
 	status = "okay";
 };
 
-&psv_gpio_0 {
+&gpio0 {
 	status = "okay";
 };
 
-&psv_gpio_0 {
+&gpio0 {
 	status = "okay";
 };
 
-&psv_wwdt_0 {
+&watchdog {
 	status = "okay";
 };
 
-&psv_pmc_sd_1 { /* emmc MIO 0-13 - MTFC8GAKAJCN */
+&sdhci1 { /* emmc MIO 0-13 - MTFC8GAKAJCN */
 	non-removable;
 	disable-wp;
 	bus-width = <8>;
@@ -65,11 +65,11 @@
 	no-1-8-v;
 };
 
-&psv_sbsaurt_0 { /* PMC_MIO42/43 */
+&serial0 { /* PMC_MIO42/43 */
 	status = "okay";
 };
 
-&psv_ethernet_0 { /* PMC_MIO_48, LPD_MIO0-11/24/25 */
+&gem0 { /* PMC_MIO_48, LPD_MIO0-11/24/25 */
 	status = "okay";
 	phy-handle = <&phy1>; /* u128 */
 	phy-mode = "rgmii-id";
@@ -89,23 +89,23 @@
 	};
 };
 
-&psv_ethernet_1 { /* PMC_MIO_49, LPD_MIO12-23 */
+&gem1 { /* PMC_MIO_49, LPD_MIO12-23 */
 	status = "okay";
 	phy-handle = <&phy2>; /* u134 */
 	phy-mode = "rgmii-id";
 };
 
-&psv_i2c_0 { /* PMC_MIO46/47 */
+&i2c0 { /* PMC_MIO46/47 */
 	status = "okay";
 	clock-frequency = <400000>;
 };
 
-&psv_i2c_1 { /* PMC_MIO44/45 */
+&i2c1 { /* PMC_MIO44/45 */
 	status = "okay";
 	clock-frequency = <400000>;
 };
 
-&psv_usb_xhci_0 { /* PMC_MIO13_500 - PMC_MIO25 USB 2.0 */
+&usb0 { /* PMC_MIO13_500 - PMC_MIO25 USB 2.0 */
 	status = "okay";
 	xlnx,usb-polarity = <0x0>;
 	xlnx,usb-reset-mode = <0x0>;
@@ -120,7 +120,7 @@
 	snps,usb3_lpm_capable;
 };
 
-&psv_pmc_sd_0 {
+&sdhci0 {
 	/* emmc MIO 0-13 - MTFC8GAKAJCN */
 	non-removable;
 	disable-wp;

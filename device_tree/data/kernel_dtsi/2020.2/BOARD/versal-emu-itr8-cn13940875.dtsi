@@ -5,9 +5,9 @@
 	model = "Xilinx Versal EMU ITR8 HW 4.0";
 
 	aliases {
-		serial0 = &psv_sbsaurt_0;
-		mmc0 = &psv_pmc_sd_0;
-		mmc1 = &psv_pmc_sd_1;
+		serial0 = &serial0;
+		mmc0 = &sdhci0;
+		mmc1 = &sdhci1;
 	};
 
 	chosen {
@@ -39,59 +39,59 @@
         clock-frequency = <440000>;
 };
 
-&psv_sbsaurt_0 {
+&serial0 {
         status = "okay";
         clocks = <&clk0212 &clk0212>;
 	current-speed = <9600>;
 };
 
-&psv_adma_0 {
+&lpd_dma_chan0 {
 	status = "okay";
 	clocks = <&clk0212 &clk0212>;
 };
 
-&psv_adma_1 {
+&lpd_dma_chan1 {
 	status = "okay";
 	clocks = <&clk0212 &clk0212>;
 };
 
-&psv_adma_2 {
+&lpd_dma_chan2 {
 	status = "okay";
 	clocks = <&clk0212 &clk0212>;
 };
 
-&psv_adma_3 {
+&lpd_dma_chan3 {
 	status = "okay";
 	clocks = <&clk0212 &clk0212>;
 };
 
-&psv_adma_4 {
+&lpd_dma_chan4 {
 	status = "okay";
 	clocks = <&clk0212 &clk0212>;
 };
 
-&psv_adma_5 {
+&lpd_dma_chan5 {
 	status = "okay";
 	clocks = <&clk0212 &clk0212>;
 };
 
-&psv_adma_6 {
+&lpd_dma_chan6 {
 	status = "okay";
 	clocks = <&clk0212 &clk0212>;
 };
 
-&psv_adma_7 {
+&lpd_dma_chan7 {
 	status = "okay";
 	clocks = <&clk0212 &clk0212>;
 };
 
-&psv_pmc_sd_0 {
+&sdhci0 {
 	status = "okay";
 	clocks = <&clk25 &clk25>;
 	xlnx,mio_bank = <0>;
 };
 
-&psv_pmc_sd_1 {
+&sdhci1 {
 	status = "okay";
 	clocks = <&clk25 &clk25>;
 	xlnx,mio_bank = <0>;

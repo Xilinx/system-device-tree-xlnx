@@ -94,7 +94,7 @@
 		#size-cells = <0x2>;
 		ranges;
 
-		psv_sbsauart_0: serial@ff000000 {
+		serial0: serial@ff000000 {
 			compatible = "arm,pl011", "arm,sbsa-uart";
 			status = "okay";
 			interrupt-parent = <&gic>;
@@ -105,7 +105,7 @@
 			current-speed = <115200>;
 		};
 
-		psv_adma_1: dma@ffa80000 {
+		lpd_dma_chan1: dma@ffa80000 {
 			status = "okay";
 			compatible = "xlnx,zynqmp-dma-1.0";
 			clock-names = "clk_main", "clk_apb";
@@ -118,7 +118,7 @@
 			clocks = <&clk100 &clk100>;
 		};
 
-		psv_adma_2: dma@ffa90000 {
+		lpd_dma_chan2: dma@ffa90000 {
 			status = "okay";
 			compatible = "xlnx,zynqmp-dma-1.0";
 			clock-names = "clk_main", "clk_apb";
@@ -131,7 +131,7 @@
 			clocks = <&clk100 &clk100>;
 		};
 
-		psv_adma_3: dma@ffaa0000 {
+		lpd_dma_chan3: dma@ffaa0000 {
 			status = "okay";
 			compatible = "xlnx,zynqmp-dma-1.0";
 			clock-names = "clk_main", "clk_apb";
@@ -144,7 +144,7 @@
 			clocks = <&clk100 &clk100>;
 		};
 
-		psv_canfd_0: can@ff060000 {
+		can0: can@ff060000 {
 			compatible = "xlnx,canfd-2.0";
 			status = "okay";
 			clock-names = "can_clk", "s_axi_aclk";
@@ -156,7 +156,7 @@
 			rx-fifo-depth = <0x40>;
 		};
 
-		psv_canfd_1: can@ff070000 {
+		can1: can@ff070000 {
 			compatible = "xlnx,canfd-2.0";
 			status = "okay";
 			clock-names = "can_clk", "s_axi_aclk";
@@ -168,7 +168,7 @@
 			rx-fifo-depth = <0x40>;
 		};
 
-		psv_i2c_0: i2c@ff020000 {
+		i2c0: i2c@ff020000 {
 			compatible = "cdns,i2c-r1p14", "cdns,i2c-r1p10";
 			status = "okay";
 			clock-frequency = <400000>;
@@ -186,7 +186,7 @@
 			};
 		};
 
-		psv_i2c_1: i2c@ff030000 {
+		i2c1: i2c@ff030000 {
 			compatible = "cdns,i2c-r1p14", "cdns,i2c-r1p10";
 			status = "okay";
 			clock-frequency = <400000>;
@@ -204,7 +204,7 @@
 			};
 		};
 
-		psv_gpio_0: gpio@ff0b0000 {
+		gpio0: gpio@ff0b0000 {
 			compatible = "xlnx,versal-gpio-1.0";
 			status = "okay";
 			#gpio-cells = <0x2>;
@@ -218,7 +218,7 @@
 		};
 
 
-		psv_adma_4: dma@ffab0000 {
+		lpd_dma_chan4: dma@ffab0000 {
 			status = "okay";
 			compatible = "xlnx,zynqmp-dma-1.0";
 			clock-names = "clk_main", "clk_apb";
@@ -231,7 +231,7 @@
 			clocks = <&clk100 &clk100>;
 		};
 
-		psv_adma_5: dma@ffac0000 {
+		lpd_dma_chan5: dma@ffac0000 {
 			status = "okay";
 			compatible = "xlnx,zynqmp-dma-1.0";
 			clock-names = "clk_main", "clk_apb";
@@ -244,7 +244,7 @@
 			clocks = <&clk100 &clk100>;
 		};
 
-		psv_adma_6: dma@ffad0000 {
+		lpd_dma_chan6: dma@ffad0000 {
 			status = "okay";
 			compatible = "xlnx,zynqmp-dma-1.0";
 			clock-names = "clk_main", "clk_apb";
@@ -257,7 +257,7 @@
 			clocks = <&clk100 &clk100>;
 		};
 
-		psv_adma_7: dma@ffae0000 {
+		lpd_dma_chan7: dma@ffae0000 {
 			status = "okay";
 			compatible = "xlnx,zynqmp-dma-1.0";
 			clock-names = "clk_main", "clk_apb";
@@ -270,7 +270,7 @@
 			clocks = <&clk100 &clk100>;
 		};
 
-		psv_adma_8: dma@ffaf0000 {
+		lpd_dma_chan8: dma@ffaf0000 {
 			status = "okay";
 			compatible = "xlnx,zynqmp-dma-1.0";
 			clock-names = "clk_main", "clk_apb";
@@ -283,7 +283,7 @@
 			clocks = <&clk100 &clk100>;
 		};
 
-		psv_ethernet_0: ethernet@ff0c0000 {
+		gem0: ethernet@ff0c0000 {
 			compatible = "cdns,zynqmp-gem";
 			status = "okay";
 			interrupt-parent = <&gic>;
@@ -309,7 +309,7 @@
 			};
 		};
 
-		psv_ethernet_1: ethernet@ff0d0000 {
+		gem1: ethernet@ff0d0000 {
 			compatible = "cdns,zynqmp-gem";
 			status = "okay";
 			interrupt-parent = <&gic>;
@@ -354,7 +354,7 @@
 				     <0 107 4>, <0 107 4>, <0 107 4>, <0 107 4>;
 		};
 
-		psv_pmc_rtc_0: rtc@f12a0000 {
+		rtc: rtc@f12a0000 {
 			compatible = "xlnx,zynqmp-rtc";
 			status = "okay";
 			reg = <0x0 0xf12a0000 0x0 0x100>;
@@ -364,7 +364,7 @@
 			calibration = <0x8000>;
 		};
 
-		psv_pmc_qspi_0: spi@f1030000 {
+		qspi: spi@f1030000 {
 			compatible = "xlnx,versal-qspi-1.0";
 			status = "okay";
 			clock-names = "ref_clk", "pclk";
@@ -413,7 +413,7 @@
 			};
 		};
 
-		psv_spi_0: spi@ff040000 {
+		spi0: spi@ff040000 {
 			compatible = "cdns,spi-r1p6";
 			status = "okay";
 			interrupt-parent = <&gic>;
@@ -444,7 +444,7 @@
 			};
 		};
 
-		psv_spi_1: spi@ff050000 {
+		spi1: spi@ff050000 {
 			compatible = "cdns,spi-r1p6";
 			status = "okay";
 			interrupt-parent = <&gic>;
@@ -475,7 +475,7 @@
 		};
 
 
-		psv_pmc_sd_0: sdhci@f1040000 {
+		sdhci0: sdhci@f1040000 {
 			compatible = "xlnx,versal-8.9a", "arasan,sdhci-8.9a";
 			status = "okay";
 			interrupt-parent = <&gic>;
@@ -489,7 +489,7 @@
 			/* iommus = <&smmu 0x242>; */
 		};
 
-		psv_pmc_sd_1: sdhci@f1050000 {
+		sdhci1: sdhci@f1050000 {
 			compatible = "xlnx,versal-8.9a", "arasan,sdhci-8.9a";
 			status = "okay";
 			interrupt-parent = <&gic>;
@@ -503,7 +503,7 @@
 			/* iommus = <&smmu 0x243>; */
 		};
 
-		psv_usb_xhci_0: usb0@ff9d0000 {
+		usb0: usb0@ff9d0000 {
 			compatible = "xlnx,versal-dwc3";
 			#address-cells = <0x2>;
 			#size-cells = <0x2>;
@@ -530,14 +530,14 @@
 	};
 
 	aliases {
-		serial0 = &psv_sbsauart_0;
-		ethernet0 = &psv_ethernet_0;
-		ethernet1 = &psv_ethernet_1;
-		qspi = &psv_pmc_qspi_0;
-		spi0 = &psv_spi_0;
-		spi1 = &psv_spi_1;
-		mmc0 = &psv_pmc_sd_0;
-		mmc1 = &psv_pmc_sd_1;
+		serial0 = &serial0;
+		ethernet0 = &gem0;
+		ethernet1 = &gem1;
+		qspi = &qspi;
+		spi0 = &spi0;
+		spi1 = &spi1;
+		mmc0 = &sdhci0;
+		mmc1 = &sdhci1;
 	};
 
 	chosen {
