@@ -8060,6 +8060,11 @@ proc update_endpoints {drv_handle} {
 				return
 			}
 			set label $ip
+			set ip_type [get_property IP_TYPE $ip]
+                        if {[string match -nocase $ip_type "BUS"]} {
+                               break
+                        }
+
 			set bus_node [detect_bus_name $ip]
 			set dts_file [set_drv_def_dts $ip]
 			 set rt_node [create_node -n "axis_broadcaster$ip" -l ${label} -u 0 -d ${dts_file} -p $bus_node]
