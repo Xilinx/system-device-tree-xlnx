@@ -31,6 +31,8 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		set cmn_vc [get_property CONFIG.CMN_VC [hsi::get_cells -hier $drv_handle]]
 		if {$en_csi_v2_0 == true && $en_vcx == true && [string match -nocase $cmn_vc "ALL"]} {
 			add_prop "${node}" "xlnx,vc" 16  int $dts_file
+		} elseif {$en_csi_v2_0 == true && $en_vcx == false && [string match -nocase $cmn_vc "ALL"]} {
+			add_prop "${node}" "xlnx,vc" 4  int $dts_file
 		} elseif {$en_csi_v2_0 == false && [string match -nocase $cmn_vc "ALL"]} {
 			add_prop "${node}" "xlnx,vc" 4  int $dts_file
 		}
