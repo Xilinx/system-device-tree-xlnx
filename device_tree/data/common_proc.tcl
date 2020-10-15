@@ -59,15 +59,15 @@ global set broad_port6_remo_mappings [dict create]
 
 namespace eval ::tclapp::xilinx::devicetree::common {
 if {[catch {set tmp [::struct::tree psdt]} msg]} {
-        }
-        if {[catch {set tmp [::struct::tree pldt]} msg]} {
-        }
-        if {[catch {set tmp [::struct::tree pcwdt]} msg]} {
-        }
-        if {[catch {set tmp [::struct::tree systemdt]} msg]} {
-        }
-        if {[catch {set tmp [::struct::tree clkdt]} msg]} {
-        }
+}
+if {[catch {set tmp [::struct::tree pldt]} msg]} {
+}
+if {[catch {set tmp [::struct::tree pcwdt]} msg]} {
+}
+if {[catch {set tmp [::struct::tree systemdt]} msg]} {
+}
+if {[catch {set tmp [::struct::tree clkdt]} msg]} {
+}
 
 #namespace export get_drivers
 #namespace export gen_root_node
@@ -139,6 +139,13 @@ dict with driver_param alias {
 	lappend items psu_sbsauart serial
 	lappend items psv_uart serial
 	lappend items psv_sbsauart serial
+}
+
+proc destroy_tree {} {
+	pldt destroy
+	psdt destroy
+	pcwdt destroy
+	systemdt destroy
 }
 
 proc get_type args {

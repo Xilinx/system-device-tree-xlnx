@@ -663,6 +663,7 @@ proc generate {} {
 		write_dt systemdt root "$dir/system-top.dts"
 		write_dt pldt root "$dir/pl.dtsi"
 	}
+	destroy_tree
 }
 
 proc delete_tree {dttree head} {
@@ -1279,8 +1280,8 @@ proc gen_cpu_cluster {os_handle} {
     	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
         	set cpu_node [create_node -n "cpus_a53"  -d ${default_dts} -p root]
 		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
-		add_prop $cpu_node "range-size-cells" "0x2" hexint $default_dts
-		add_prop $cpu_node "range-address-cells" "0x2" hexint $default_dts
+		add_prop $cpu_node "#ranges-size-cells" "0x2" hexint $default_dts
+		add_prop $cpu_node "#ranges-address-cells" "0x2" hexint $default_dts
 		global memmap
 		set values [dict keys $memmap]
 		set list_values "0x0 0xf0000000 &amba 0x0 0xf0000000>, \n\t\t\t      <0x0 0xffe00000 &tcm_bus 0x0 0x0 0x0 0x10000>, \n\t\t\t      <0x0 0xf9000000 &amba_apu 0x0 0xf9000000 0x0 0x80000"
@@ -1306,8 +1307,8 @@ proc gen_cpu_cluster {os_handle} {
     	} elseif {[string match -nocase $proctype "versal"] } {
         	set cpu_node [create_node -n "cpus_a72"  -d ${default_dts} -p root]
 		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
-		add_prop $cpu_node "range-size-cells" "0x2" hexint $default_dts
-		add_prop $cpu_node "range-address-cells" "0x2" hexint $default_dts
+		add_prop $cpu_node "#ranges-size-cells" "0x2" hexint $default_dts
+		add_prop $cpu_node "#ranges-address-cells" "0x2" hexint $default_dts
 		global memmap
 		set cnt 0
 		set values [dict keys $memmap]
@@ -1331,8 +1332,8 @@ proc gen_cpu_cluster {os_handle} {
 
 	set cpu_node [create_node -n "cpus_r5" -d ${default_dts} -p root]
 	add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
-	add_prop $cpu_node "range-size-cells" "0x1" hexint $default_dts
-	add_prop $cpu_node "range-address-cells" "0x1" hexint $default_dts
+	add_prop $cpu_node "#ranges-size-cells" "0x1" hexint $default_dts
+	add_prop $cpu_node "#ranges-address-cells" "0x1" hexint $default_dts
 	global memmap
 	set values [dict keys $memmap]
 	set list_values "0xf0000000 &amba 0xf0000000 0x10000000>, \n\t\t\t      <0x0 &tcm_bus 0xffe00000 0x100000>, \n\t\t\t      <0xf9000000 &amba_rpu 0xf9000000 0x3000"
@@ -1361,13 +1362,13 @@ proc gen_cpu_cluster {os_handle} {
     	if {[string match -nocase $proctype "versal"]} {
 		set cpu_node [create_node -l "microblaze1" -n "cpus-cluster" -u 1 -d ${default_dts} -p root]
 		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
-		add_prop $cpu_node "range-size-cells" "0x1" hexint $default_dts
-	        add_prop "${cpu_node}" "range-address-cells" "0x1" hexint $default_dts
+		add_prop $cpu_node "#ranges-size-cells" "0x1" hexint $default_dts
+	        add_prop "${cpu_node}" "#ranges-address-cells" "0x1" hexint $default_dts
 	} else {
         	set microblaze_node [create_node -n "cpus_microblaze" -d ${default_dts} -p root]
 	        add_prop "${microblaze_node}" "compatible" "cpus,cluster" string $default_dts
-       		add_prop "${microblaze_node}" "range-size-cells" "0x1" hexint $default_dts
-       	 	add_prop "${microblaze_node}" "range-address-cells" "0x1" hexint $default_dts
+       		add_prop "${microblaze_node}" "#ranges-size-cells" "0x1" hexint $default_dts
+       	 	add_prop "${microblaze_node}" "#ranges-address-cells" "0x1" hexint $default_dts
 	}
 	global memmap
 	set values [dict keys $memmap]
@@ -1387,15 +1388,6 @@ proc gen_cpu_cluster {os_handle} {
 			set list_values [append list_values ">, \n\t\t\t      " "<$addr &${val} $addr $size"]
 		}
 	}
-	foreach val $ipi_list {
-		set cpu [get_property CONFIG.C_CPU_NAME [hsi::get_cells -hier $val]]
-		if {[string match -nocase $cpu "PMC"]} {
-			set base [get_baseaddr $val]
-			set high [get_highaddr $val]
-                        set size [format 0x%x [expr {${high} - ${base} + 1}]]
-			set list_values [append list_values ">, \n\t\t\t      " "<$base &${val} $base $size"]
-		}
-	}
     	if {[string match -nocase $proctype "versal"]} {
 		add_prop $cpu_node "address-map" $list_values special $default_dts
 	} else {
@@ -1404,8 +1396,8 @@ proc gen_cpu_cluster {os_handle} {
 	if {[string match -nocase $proctype "versal"]} {
 		set cpu_node [create_node -l "microblaze2" -n "cpus-cluster" -u 2 -d ${default_dts} -p root]
 		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
-		add_prop $cpu_node "range-size-cells" "0x1" hexint $default_dts
-	        add_prop "${cpu_node}" "range-address-cells" "0x1" hexint $default_dts
+		add_prop $cpu_node "#ranges-size-cells" "0x1" hexint $default_dts
+	        add_prop "${cpu_node}" "#ranges-address-cells" "0x1" hexint $default_dts
 		global memmap
 		set values [dict keys $memmap]
 		set list_values "0xf0000000 &amba 0xf0000000 0x10000000"
@@ -1418,15 +1410,6 @@ proc gen_cpu_cluster {os_handle} {
 				set addr [string trimright $addr ">"]
 				set size [string trimright $size ">"]
 				set list_values [append list_values ">, \n\t\t\t      " "<$addr &${val} $addr $size"]
-			}
-		}
-		foreach val $ipi_list {
-			set cpu [get_property CONFIG.C_CPU_NAME [hsi::get_cells -hier $val]]
-			if {[string match -nocase $cpu "PSM"]} {
-				set base [get_baseaddr $val]
-				set high [get_highaddr $val]
-				set size [format 0x%x [expr {${high} - ${base} + 1}]]
-				set list_values [append list_values ">, \n\t\t\t      " "<$base &${val} $base $size"]
 			}
 		}
 		add_prop $cpu_node "address-map" $list_values special $default_dts
