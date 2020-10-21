@@ -1303,7 +1303,7 @@ proc gen_cpu_cluster {os_handle} {
 			}
 		}
 		add_prop $cpu_node "address-map" $list_values special $default_dts
-		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x0> , <&lpd_xppu 0x1> , <&lpd_xppu 0x2>, <&lpd_xppu 0x3" hexlist $default_dts
+		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x80" hexlist $default_dts
     	} elseif {[string match -nocase $proctype "versal"] } {
         	set cpu_node [create_node -n "cpus_a72"  -d ${default_dts} -p root]
 		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
@@ -1356,7 +1356,7 @@ proc gen_cpu_cluster {os_handle} {
     	if {[string match -nocase $proctype "versal"] } {
 		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x0> , <&pmc_xppu 0x0> , <&lpd_xppu 0x1>, <&pmc_xppu 0x1" hexlist $default_dts
 	} elseif {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
-		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x0> , <&lpd_xppu 0x1" hexlist $default_dts
+		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x0> , <&lpd_xppu 0x10" hexlist $default_dts
 	}
 
     	if {[string match -nocase $proctype "versal"]} {
@@ -1364,11 +1364,13 @@ proc gen_cpu_cluster {os_handle} {
 		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
 		add_prop $cpu_node "#ranges-size-cells" "0x1" hexint $default_dts
 	        add_prop "${cpu_node}" "#ranges-address-cells" "0x1" hexint $default_dts
+		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x247> , <&pmc_xppu 0x247" hexlist $default_dts
 	} else {
         	set microblaze_node [create_node -n "cpus_microblaze" -d ${default_dts} -p root]
 	        add_prop "${microblaze_node}" "compatible" "cpus,cluster" string $default_dts
        		add_prop "${microblaze_node}" "#ranges-size-cells" "0x1" hexint $default_dts
        	 	add_prop "${microblaze_node}" "#ranges-address-cells" "0x1" hexint $default_dts
+		add_prop $microblaze_node "bus-master-id" "&lpd_xppu 0x40" hexlist $default_dts
 	}
 	global memmap
 	set values [dict keys $memmap]
@@ -1413,6 +1415,7 @@ proc gen_cpu_cluster {os_handle} {
 			}
 		}
 		add_prop $cpu_node "address-map" $list_values special $default_dts
+		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x238> , <&pmc_xppu 0x238" hexlist $default_dts
 	}
 }
 
