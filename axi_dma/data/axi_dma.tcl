@@ -71,7 +71,7 @@ set connected_ip 0
 		    set tx_chan_node [add_dma_channel $drv_handle $node "axi-dma" $baseaddr "MM2S" $dma_count ]
 		    set intr_info [get_intr_id $drv_handle "mm2s_introut"]
 		    if { [llength $intr_info] && ![string match -nocase $intr_info "-1"] } {
-				add_prop $tx_chan_node "interrupts" $intr_info intlist "pl.dtsi"
+				add_prop $tx_chan_node "interrupts" $intr_info hexlist "pl.dtsi"
 		    } else {
 			    dtg_warning "ERROR: ${drv_handle}: mm2s_introut port is not connected"
 		    }
@@ -84,7 +84,7 @@ set connected_ip 0
 		    set rx_chan_node [add_dma_channel $drv_handle $node "axi-dma" $rx_bassaddr "S2MM" $dma_count]
 		    set intr_info [get_intr_id $drv_handle "s2mm_introut"]
 		    if { [llength $intr_info] && ![string match -nocase $intr_info "-1"] } {
-				add_prop $tx_chan_node "interrupts" $intr_info intlist "pl.dtsi"
+				add_prop $tx_chan_node "interrupts" $intr_info hexlist "pl.dtsi"
 		    } else {
 			    dtg_warning "ERROR: ${drv_handle}: s2mm_introut port is not connected"
 		    }

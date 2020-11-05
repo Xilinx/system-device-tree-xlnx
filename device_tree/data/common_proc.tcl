@@ -319,7 +319,6 @@ proc get_user_config args {
        		set cfg [get_yaml_dict $config_file]
 	        set user [dict get $cfg dict_devicetree]
 	        set overlay [dict get $user dt_overlay]
-        	set board_dts [dict get $user board_dts]
         	set mainline_kernel [dict get $user mainline_kernel]
         	set kernel_ver [dict get $user kernel_ver]
         	set dir [dict get $user output_dir]
@@ -332,7 +331,7 @@ proc get_user_config args {
                 	} -config_dts {
                         	set param $config_dts
                 	} -board_dts {
-                        	set param $board_dts
+                        	set param ""
                 	} -dt_overlay {
                         	set param $overlay
                 	} -pl_only {

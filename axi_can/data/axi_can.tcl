@@ -29,9 +29,11 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		    set version [string tolower [common::get_property VLNV $drv_handle]]
 		    if {[string match -nocase $ip_name "canfd"]} {
 			if {[string compare -nocase "xilinx.com:ip:canfd:1.0" $version] == 0} {
-				add_prop $node "compatible" "xlnx,canfd-1.0" stringlist "pl.dtsi"
+				set keyval [pldt append $node compatible "\ \, \"xlnx,canfd-1.0\""]
+			#	add_prop $node "compatible" "\ \, \"xlnx,canfd-1.0" stringlist "pl.dtsi"
 			} else {
-				add_prop $node "compatible" "xlnx,axi-canfd-2.0" stringlist "pl.dtsi"
+				set keyval [pldt append $node compatible " \, \"xlnx,canfd-2.0\""]
+			#	add_prop $node "compatible" "\ \, \"xlnx,axi-canfd-2.0" stringlist "pl.dtsi"
 			}
 			set_drv_conf_prop $drv_handle NUM_OF_TX_BUF tx-mailbox-count hexint
 			set_drv_conf_prop $drv_handle NUM_OF_TX_BUF rx-fifo-depth hexint
