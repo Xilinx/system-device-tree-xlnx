@@ -6797,6 +6797,10 @@ proc generate_gpio_intr_info {connected_intc drv_handle pin} {
 	set sinkpin [get_sink_pins [get_pins -of [hsi::get_cells -hier $drv_handle] -filter {TYPE==INTERRUPT}]]
 	set dual [get_property CONFIG.C_IS_DUAL $connected_intc]
 	regsub -all {[^0-9]} $sinkpin "" gpio_pin_count
+	set gpio_cho_pin_lcnt [get_property LEFT [hsi::get_pins -of_objects [hsi::get_cells -hier $connected_intc] gpio_io_i]]
+	set gpio_cho_pin_rcnt [get_property RIGHT [hsi::get_pins -of_objects [hsi::get_cells -hier $connected_intc] gpio_io_i]]
+	set gpio_cho_pin_rcnt [expr $gpio_cho_pin_rcnt + 1]
+	set gpio_ch0_pin_cnt [expr {$gpio_cho_pin_lcnt + $gpio_cho_pin_rcnt}]
 	if {[string match $channel_nr "0"]} {
 		# Check for ps7_gpio else check for axi_gpio
 		if {[string match $sinkpin "GPIO_I"]} {
@@ -6817,7 +6821,7 @@ proc generate_gpio_intr_info {connected_intc drv_handle pin} {
 				# if channel width is more than one
 				set intr_pin [hsi::get_pins -of_objects $connected_intc -filter "NAME==$pin"]
 				set gpio_channel [get_sink_pins $intr_pin]
-				set intr_id [expr $gpio_pin_count + 32]
+				set intr_id [expr $gpio_pin_count + $gpio_ch0_pin_cnt]
 				set intr_info "$intr_id $intr_type"
 			}
 		}
