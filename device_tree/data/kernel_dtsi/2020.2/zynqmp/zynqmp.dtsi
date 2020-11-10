@@ -128,6 +128,29 @@
 		};
 	};
 
+	zynqmp_ipi {
+		u-boot,dm-pre-reloc;
+		compatible = "xlnx,zynqmp-ipi-mailbox";
+		interrupt-parent = <&imux>;
+		interrupts = <0 35 4>;
+		xlnx,ipi-id = <0>;
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		ipi_mailbox_pmu1: mailbox@ff990400 {
+			u-boot,dm-pre-reloc;
+			reg = <0x0 0xff9905c0 0x0 0x20>,
+			      <0x0 0xff9905e0 0x0 0x20>,
+			      <0x0 0xff990e80 0x0 0x20>,
+			      <0x0 0xff990ea0 0x0 0x20>;
+			reg-names = "local_request_region", "local_response_region",
+				    "remote_request_region", "remote_response_region";
+			#mbox-cells = <1>;
+			xlnx,ipi-id = <4>;
+		};
+	};
+
 	dcc: dcc {
 		compatible = "arm,dcc";
 		status = "disabled";
@@ -272,7 +295,7 @@
 		compatible = "xlnx,zynqmp-aes";
 	};
 
-	amba_apu: amba-apu@0 {
+	amba_apu: amba_apu {
 		compatible = "simple-bus";
 		#address-cells = <2>;
 		#size-cells = <1>;
@@ -292,15 +315,20 @@
 		};
 	};
 
-	gic_r5: interrupt-controller@f9000000 {
-		compatible = "arm,gic-400";
-		#interrupt-cells = <3>;
-		reg = <0x0 0xf9000000 0x10000>,
-		      <0x0 0xf9001000 0x10000>;
-		interrupt-controller;
-		interrupt-parent = <&gic_r5>;
-		interrupts = <1 9 0xf04>;
-		status = "disabled";
+	amba_rpu: amba_rpu {
+		compatible = "simple-bus";
+		#address-cells = <2>;
+		#size-cells = <1>;
+		gic_r5: interrupt-controller@f9000000 {
+			compatible = "arm,gic-400";
+			#interrupt-cells = <3>;
+			reg = <0x0 0xf9000000 0x10000>,
+			      <0x0 0xf9001000 0x10000>;
+			interrupt-controller;
+			interrupt-parent = <&gic_r5>;
+			interrupts = <1 9 0xf04>;
+			status = "disabled";
+		};
 	};
 
 	smmu: smmu@fd800000 {
