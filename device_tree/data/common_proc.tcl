@@ -6200,7 +6200,7 @@ proc gen_root_node {drv_handle} {
 			add_prop "${root_node}" "#address-cells" 2 int $default_dts
 			add_prop "${root_node}" "#size-cells" 2 int $default_dts
 			# no root_node required as zynqmp.dtsi
-			set board_name [generate_board_compatible $root_node]
+			# set board_name [generate_board_compatible $root_node]
 			return 0
 		}
 		"psv_cortexa72" {
@@ -6231,7 +6231,7 @@ proc gen_root_node {drv_handle} {
 			} else {
 				update_system_dts_include "versal-clk.dtsi"
 			}
-			set board_name [generate_board_compatible $root_node]
+			#set board_name [generate_board_compatible $root_node]
 			add_prop $root_node "model" "xlnx,versal" string $default_dts
 			add_prop $root_node "#address-cells" 2 int $default_dts
 			add_prop $root_node "#size-cells" 2 int $default_dts
