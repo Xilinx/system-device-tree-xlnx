@@ -64,20 +64,20 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 
 
 	}
+	proc gen_frmbuf_wr_node {outip drv_handle dts_file} {
+		set bus_node [detect_bus_name $drv_handle]
+		set vcap [create_node -n "vcap_sdirx$drv_handle" -p $bus_node -d $dts_file]
+		add_prop $vcap "compatible" "xlnx,video" string $dts_file
+		add_prop $vcap "dmas" "$outip 0" reference $dts_file
+		add_prop $vcap "dma-names" "port0" string $dts_file
+		set vcap_ports_node [create_node -n "ports" -l vcap_ports$drv_handle -p $vcap -d $dts_file]
+		add_prop "$vcap_ports_node" "#address-cells" 1 int $dts_file
+		add_prop "$vcap_ports_node" "#size-cells" 0 int $dts_file
+		set vcap_port_node [create_node -n "port" -l vcap_port$drv_handle -u 0 -p $vcap_ports_node -d $dts_file]
+		add_prop "$vcap_port_node" "reg" 0 int $dts_file
+		add_prop "$vcap_port_node" "direction" input string $dts_file
+		set vcap_in_node [create_node -n "endpoint" -l $outip$drv_handle -p $vcap_port_node -d $dts_file]
+		add_prop "$vcap_in_node" "remote-endpoint" sdirx_out$drv_handle reference $dts_file
+	}
 }
 
-proc gen_frmbuf_wr_node {outip drv_handle dts_file} {
-	set bus_node [detect_bus_name $drv_handle]
-	set vcap [create_node -n "vcap_sdirx$drv_handle" -p $bus_node -d $dts_file]
-	add_prop $vcap "compatible" "xlnx,video" string $dts_file
-	add_prop $vcap "dmas" "$outip 0" reference $dts_file
-	add_prop $vcap "dma-names" "port0" string $dts_file
-	set vcap_ports_node [create_node -n "ports" -l vcap_ports$drv_handle -p $vcap -d $dts_file]
-	add_prop "$vcap_ports_node" "#address-cells" 1 int $dts_file
-	add_prop "$vcap_ports_node" "#size-cells" 0 int $dts_file
-	set vcap_port_node [create_node -n "port" -l vcap_port$drv_handle -u 0 -p $vcap_ports_node -d $dts_file]
-	add_prop "$vcap_port_node" "reg" 0 int $dts_file
-	add_prop "$vcap_port_node" "direction" input string $dts_file
-	set vcap_in_node [create_node -n "endpoint" -l $outip$drv_handle -p $vcap_port_node -d $dts_file]
-	add_prop "$vcap_in_node" "remote-endpoint" sdirx_out$drv_handle reference $dts_file
-}

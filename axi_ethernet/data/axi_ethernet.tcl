@@ -36,11 +36,15 @@ set rxethmem 0
         		set board [split [get_property BOARD $hw_design] ":"]
         		set board_name [lindex $board 1]
     		}
+		global env
+		set path $env(REPO)
+		set common_file "$path/device_tree/data/config.yaml"
+		set dt_overlay [get_user_config $common_file -dt_overlay]
+		set bus_node [detect_bus_name $drv_handle]
 	    global rxethmem
 	    set rxethmem 0
 	    set dts_file [set_drv_def_dts $drv_handle]
 	    update_eth_mac_addr $drv_handle
-	    pldt append $node compatible "\ \, \"xlnx,axi-ethernet-1.00.a\""
 	    #adding stream connectivity
 	    set eth_ip [hsi::get_cells -hier $drv_handle]
 	    set ip_mem_handles [hsi::get_mem_ranges $eth_ip]
@@ -51,6 +55,9 @@ set rxethmem 0
 	    # This is required to work with Vivado 2015.1 due to IP PIN naming change
 	    set hasbuf [get_property CONFIG.processor_mode $eth_ip]
 	    set ip_name [get_property IP_NAME $eth_ip]
+	    if {$ip_name == "axi_ethernet"} {
+		pldt append $node compatible "\ \, \"xlnx,axi-ethernet-1.00.a\""
+            }
 	    set num_cores 1
 	    if {$ip_name == "xxv_ethernet"} {
 		set ip_mem_handles [hsi::get_mem_ranges [hsi::get_cells -hier $drv_handle]]
@@ -63,12 +70,11 @@ set rxethmem 0
 	    set connected_ip ""
 	    for {set core 0} {$core < $num_cores} {incr core} {
 		  if {$ip_name == "xxv_ethernet"  && $core != 0} {
-#		       set dt_overlay [get_property CONFIG.dt_overlay [get_os]]
-#		       if {$dt_overlay} {
-#			     set bus_node "overlay2"
-#		       } else {
-			    set bus_node "amba_pl: amba_pl"
-#		       }
+	#	       if {$dt_overlay} {
+	#		     set bus_node "overlay2"
+	#	       } else {
+	#		    set bus_node "amba_pl: amba_pl"
+	#	       }
 		#       set dts_file [current_dt_tree]
 			set dts_file "pl.dtsi"
 		       set base_addr [string tolower [get_property BASE_VALUE [lindex $ip_mem_handles $core]]]
@@ -94,9 +100,9 @@ set rxethmem 0
 			
 			if {[llength $connected_ip]} {
 #				set_property axistream-connected "$connected_ip" $drv_handle
-				add_prop $node axistream-connected "$connected_ip" reference $dts_file
+				add_prop $node axistream-connected "$connected_ip" reference $dts_file 1
 #				set_property axistream-control-connected "$connected_ip" $drv_handle
-				add_prop $node axistream-control-connected "$connected_ip" reference $dts_file
+				add_prop $node axistream-control-connected "$connected_ip" reference $dts_file 1
 				set ip_prop CONFIG.c_include_mm2s_dre
 				add_cross_property $connected_ip $ip_prop $drv_handle "xlnx,include-dre" boolean
 			} else {
@@ -151,9 +157,9 @@ set rxethmem 0
 		set_drv_prop $drv_handle axififo-connected "$tx_tsip" reference
 	    }
 	    if {![string_is_empty $connected_ip]} {
-		add_prop $node axistream-connected "$connected_ip" reference $dts_file
+		add_prop $node axistream-connected "$connected_ip" reference $dts_file 1
 #		set_property axistream-control-connected "$connected_ip" $drv_handle
-		add_prop $node axistream-control-connected "$connected_ip" reference $dts_file
+		add_prop $node axistream-control-connected "$connected_ip" reference $dts_file 1
 	     # set_property axistream-connected "$connected_ip" $drv_handle
 	     # set_property axistream-control-connected "$connected_ip" $drv_handle
 	      set ip_prop CONFIG.c_include_mm2s_dre
@@ -170,7 +176,7 @@ set rxethmem 0
 			      add_prop $eth_node "axistream-control-connected" "$connected_ip" reference "pl.dtsi"
 			}
 			add_prop $eth_node "xlnx,include-dre" boolean "pl.dtsi"
-			add_prop $eth_node "xlnx,rxmem" "$rxethmem" hex "pl.dtsi"
+			#add_prop $eth_node "xlnx,rxmem" "$rxethmem" hex "pl.dtsi"
 		 }
 	      }
 	   }
@@ -183,14 +189,17 @@ set rxethmem 0
 		set phytype [get_property CONFIG.PHY_TYPE $eth_ip]
 		set phytype [get_phytype $phytype]
 		set phyaddr [get_property CONFIG.PHYADDR $eth_ip]
-		set phyaddr [convert_binary_to_decimal $phyaddr]
+		#set phyaddr [convert_binary_to_decimal $phyaddr]
 		set rxmem [get_property CONFIG.RXMEM $eth_ip]
 		set rxmem [get_memrange $rxmem]
-		add_prop $node "xlnx,txcsum" $txcsum hex $dts_file
-		add_prop $node "xlnx,rxcsum" $txcsum hex $dts_file
-		add_prop $node "xlnx,phy-type" $txcsum hex $dts_file
-		add_prop $node "xlnx,phyaddr" $txcsum hex $dts_file
-		add_prop $node "xlnx,rxmem" $txcsum hex $dts_file
+		if {0} {
+		add_prop $node "xlnx,txcsum" $txcsum hex "pl.dtsi"
+		add_prop $node "xlnx,rxcsum" $rxcsum hex "pl.dtsi"
+		#add_prop $node "xlnx,rxcsum" $rxcsum hex $dts_file
+		add_prop $node "xlnx,phy-type" $phytype hex "pl.dtsi"
+		add_prop $node "xlnx,phyaddr" $phyaddr hex "pl.dtsi"
+		add_prop $node "xlnx,rxmem" $rxmem hex "pl.dtsi"
+		}
 	    }
 
 	    set is_nobuf 0
@@ -204,18 +213,17 @@ set rxethmem 0
 		    }
 		}
 	    }
-
 	    if { $hasbuf == "false" && $is_nobuf == 0} {
 		    set ip_prop CONFIG.processor_mode
 		    add_cross_property $eth_ip $ip_prop $drv_handle "xlnx,eth-hasnobuf" boolean
 	    }
-
 	    #adding clock frequency
 	    set clk [hsi::get_pins -of_objects $eth_ip "S_AXI_ACLK"]
 	    if {[llength $clk] } {
 		set freq [get_property CLK_FREQ $clk]
 #		set_property clock-frequency "$freq" $drv_handle
-		add_prop $node clock-frequency "$freq" int $dts_file
+		add_prop $node clock-frequency "$freq" int "pl.dtsi"
+		#add_prop $node clock-frequency "$freq" int $dts_file
 		if {$ip_name == "xxv_ethernet"} {
 			add_prop $eth_node "clock-frequency" "$freq" int "pl.dtsi"
 		}
@@ -223,7 +231,7 @@ set rxethmem 0
 
 	    # node must be created before child node
 	    if {$ip_name == "axi_ethernet"} {
-		set hier_params [gen_hierip_params $drv_handle]
+		#set hier_params [gen_hierip_params $drv_handle]
 	    }
 	    set mdio_node [gen_mdio_node $drv_handle $node]
 
@@ -234,12 +242,14 @@ set rxethmem 0
     	    }
 #	    set_property phy-mode "$phytype" $drv_handle
 	    if {![string match -nocase $phytype ""]} {
-	    add_prop $node phy-mode "$phytype" string $dts_file
+		add_prop $node phy-mode "$phytype" string "pl.dtsi"
+		#add_prop $node phy-mode "$phytype" string $dts_file
 	    }
 	    if {$phytype == "sgmii" || $phytype == "1000basex"} {
 		  set phytype "sgmii"
 	      #set_property phy-mode "$phytype" $drv_handle
-	      add_prop $node phy-mode "$phytype" string $dts_file
+	      add_prop $node phy-mode "$phytype" string "pl.dtsi"
+	      #add_prop $node phy-mode "$phytype" string $dts_file
 		  set phynode [pcspma_phy_node $eth_ip]
 		  set phya [lindex $phynode 0]
 		  if { $phya != "-1"} {
@@ -258,17 +268,19 @@ set rxethmem 0
 	    if {$ip_name == "axi_10g_ethernet"} {
 	       set phytype [string tolower [get_property CONFIG.base_kr $eth_ip]]
 	       #set_property phy-mode "$phytype" $drv_handle
-	       add_prop $node phy-mode "$phytype" string $dts_file
-	       add_prop $node "phy-mode" $phytype string $dts_file 
+	       add_prop $node phy-mode "$phytype" string "pl.dtsi"
+	       #add_prop $node phy-mode "$phytype" string $dts_file
+               add_prop $node "phy-mode" $phytype string "pl.dtsi"
+               #add_prop $node "phy-mode" $phytype string $dts_file 
 	       pldt append $node compatible "\ \, \"xlnx,ten-gig-eth-mac\""
 	    }
 	    if {$ip_name == "xxv_ethernet"} {
 	       set phytype [string tolower [get_property CONFIG.BASE_R_KR $eth_ip]]
 	       #set_property phy-mode "$phytype" $drv_handle
 	       add_prop $node phy-mode "$phytype" string $dts_file
-	       pldt append $node compatible "\ \, \"xlnx,xxv-ethernet-1.0\""
+	       #pldt append $node compatible "\ \, \"xlnx,xxv-ethernet-1.0\""
 	       if { $core!= 0} {
-		   add_prop $eth_node "compatible" $compatible stringlist "pl.dtsi"
+                  #add_prop $eth_node "compatible" $compatible stringlist "pl.dtsi"
 		   add_prop $eth_node "phy-mode" $phytype string "pl.dtsi"
 	       }
 	    }
@@ -292,7 +304,8 @@ set rxethmem 0
 		    set num_queues [get_property CONFIG.c_num_mm2s_channels $connected_ip]
 		    set inhex [format %x $num_queues]
 		    set numqueues "/bits/ 16 <0x$inhex>"
-		    add_prop $node "xlnx,num-queues" $numqueues stringlist $dts_file
+		    add_prop $node "xlnx,num-queues" $numqueues stringlist "pl.dtsi"
+		    #add_prop $node "xlnx,num-queues" $numqueues stringlist $dts_file
 		    if {$version < 2018} {
 			dtg_warning "quotes to be removed or use 2018.1 version for $node param xlnx,num-queues"
 		    }
@@ -303,21 +316,25 @@ set rxethmem 0
 			append id ",\"" $i
 			set i [expr 0x$i]
 		   }
-		    add_prop $node "xlnx,channel-ids" $id intlist $dts_file
+		    add_prop $node "xlnx,channel-ids" $id intlist "pl.dtsi"
+		    #add_prop $node "xlnx,channel-ids" $id intlist $dts_file
 		    if {$ip_name == "xxv_ethernet"  && $core!= 0} {
 			  add_prop $eth_node "xlnx,num-queues" $numqueues stringlist $dts_file
 			  add_prop $eth_node "xlnx,channel-ids" $id stringlist $dts_file
 		    }
 		    set ipnode [get_node $target_handle]
-		    set intr_val [pldt get $ipnode interrupts]
-		    set intr_val [string trimright $intr_val ">"]
-		    set intr_val [string trimleft $intr_val "<"]
-		    set intr_parent [pldt get $ipnode interrupt-parent]
-		    set intr_parent [string trimright $intr_parent ">"]
-		    set intr_parent [string trimleft $intr_parent "<"]
-		    set intr_parent [string trimleft $intr_parent "&"]
-#		    set intr_parent [get_property CONFIG.interrupt-parent $target_handle]
-		    set int_names  [pldt get $ipnode interrupt-names]
+		     set values [pldt getall $ipnode]
+		     if {[regexp "interrupt*" $values match]} {
+			    set intr_val [pldt get $ipnode interrupts]
+			    set intr_val [string trimright $intr_val ">"]
+			    set intr_val [string trimleft $intr_val "<"]
+			    set intr_parent [pldt get $ipnode interrupt-parent]
+			    set intr_parent [string trimright $intr_parent ">"]
+			    set intr_parent [string trimleft $intr_parent "<"]
+			    set intr_parent [string trimleft $intr_parent "&"]
+#		            set intr_parent [get_property CONFIG.interrupt-parent $target_handle]
+		            set int_names  [pldt get $ipnode interrupt-names]
+		    }
 		    if { $hasbuf == "true" && $ip_name == "axi_ethernet"} {
 			set intr_val1 [pldt get $node interrupts]
 			lappend intr_val1 $intr_val
@@ -340,7 +357,7 @@ set rxethmem 0
 #			add_prop $node "interrupt-parent" $intr_parent reference "pcw.dtsi"
 #			add_prop $node "interrupt-names" $intr_names stringlist "pcw.dtsi"
 			if {$ip_name == "xxv_ethernet"  && $core!= 0} {
-			     ad_prop "${eth_node}" "interrupts" $intr_val int $dts_file
+			     add_prop "${eth_node}" "interrupts" $intr_val int $dts_file
 			     add_prop "${eth_node}" "interrupt-parent" $intr_parent reference $dts_file
 			     add_prop "${eth_node}" "interrupt-names" $intr_names stringlist $dts_file
 			} else {
@@ -486,7 +503,7 @@ set rxethmem 0
 
 	proc pcspma_phy_node {slave} {
 		set phyaddr [get_property CONFIG.PHYADDR $slave]
-		set phyaddr [convert_binary_to_decimal $phyaddr]
+		#set phyaddr [convert_binary_to_decimal $phyaddr]
 		set phymode "phy$phyaddr"
 
 		return "$phyaddr $phymode"
@@ -589,7 +606,7 @@ set rxethmem 0
 	    set phya [lindex $args 2]
 	    set drv  [lindex $args 3]
 
-	    set phy_node [create_node -l $drv$phy_name -n phy -u $phya -p $mdio_node]
+	    set phy_node [create_node -l $drv$phy_name -n phy -u $phya -p $mdio_node -d "pl.dtsi"]
 	    add_prop "${phy_node}" "reg" $phya int "pl.dtsi"
 	    add_prop "${phy_node}" "device_type" "ethernet-phy" string "pl.dtsi"
 
@@ -764,7 +781,8 @@ set rxethmem 0
 	       } else {
 		       set reg "$base $size"
 	       }
-	       add_prop $node "reg" $reg hexlist "pl.dtsi"
+	       add_prop $node "reg" $reg hexint "pl.dtsi"
+	       #add_prop $node "reg" $reg hexlist "pl.dtsi"
 	#       add_new_dts_param "${node}" "reg" $reg inthexlist
 	}
 
@@ -783,7 +801,8 @@ set rxethmem 0
 		set value [get_property ${ip_prop_name} [hsi::get_cells -hier $drv_handle]]
 		if {[llength $value]} {
 		       if {$value != "-1" && [llength $value] !=0} {
-			     set type "hex"
+			     #set type "hex"
+				set type "hexint"
 			     if {[string equal -nocase $type "boolean"]} {
 				     if {[expr $value < 1]} {
 					    return 0
@@ -794,7 +813,7 @@ set rxethmem 0
 				     regsub -all {"} $value "" value
 			     }
 			     set node [get_node $drv_handle]
-			     add_prop $node "$drv_prop_name" $value $type "pl.dtsi"
+			     add_prop $ip_name "$drv_prop_name" $value $type "pl.dtsi"
 	#                     add_new_dts_param "$ip_name" "$drv_prop_name" $value $type
 			     return 0
 		       }

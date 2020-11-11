@@ -191,32 +191,32 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 					add_prop "${memory_node}" "reg" $reg_val hexlist $dts_file 1
 				}
 				}
-				if {[string match -nocase [get_property IP_NAME $procc] "psv_cortexr5"]} {
-					set val [get_count "psv_cortexr5"]
-					if {$val == 0} {
-						set_memmap "${drv_handle}_memory" r5 $reg_val
+				if {$len} {
+					if {[string match -nocase [get_property IP_NAME $procc] "psv_cortexr5"]} {
+						set val [get_count "psv_cortexr5"]
+						if {$val == 0} {
+							set_memmap "${drv_handle}_memory" r5 $reg_val
+						}
+					}
+					if {[string match -nocase [get_property IP_NAME $procc] "psv_cortexa72"] } {
+						set val [get_count "psv_cortexa72"]
+						if {$val == 0} {
+							set_memmap "${drv_handle}_memory" a53 $reg_val
+						}
+					}
+					if {[string match -nocase [get_property IP_NAME $procc] "psv_pmc"] } {
+						set val [get_count "psv_pmc"]
+						if {$val == 0} {
+							set_memmap "${drv_handle}_memory" pmc $reg_val
+						}
+					}
+					if {[string match -nocase [get_property IP_NAME $procc] "psv_psm"] } {
+						set val [get_count "psv_psm"]
+						if {$val == 0} {
+							set_memmap "${drv_handle}_memory" psm $reg_val
+						}
 					}
 				}
-				if {[string match -nocase [get_property IP_NAME $procc] "psv_cortexa72"] } {
-					set val [get_count "psv_cortexa72"]
-					if {$val == 0} {
-						set_memmap "${drv_handle}_memory" a53 $reg_val
-					}
-				}
-				if {[string match -nocase [get_property IP_NAME $procc] "psv_pmc"] } {
-					set val [get_count "psv_pmc"]
-					if {$val == 0} {
-				       		set_memmap "${drv_handle}_memory" pmc $reg_val
-					}
-				}
-				if {[string match -nocase [get_property IP_NAME $procc] "psv_psm"] } {
-					set val [get_count "psv_psm"]
-					if {$val == 0} {
-				      		set_memmap "${drv_handle}_memory" psm $reg_val
-					}
-			       }
-
-			
 		}
 	}
 
