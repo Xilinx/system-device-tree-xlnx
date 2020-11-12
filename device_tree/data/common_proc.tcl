@@ -1237,6 +1237,10 @@ proc write_dt args {
 	if {[catch {set rt [exec touch $file]} msg]} {
 #		error "file creation error"
 	}
+	global env
+	set path $env(REPO)
+	set common_file "$path/device_tree/data/config.yaml"
+	set dt_overlay [get_user_config $common_file -dt_overlay]
 	set fd [open $file w]
 	if {[string match -nocase $dt "systemdt"]} {
 		puts $fd "\/dts-v1\/\;"
@@ -1245,6 +1249,9 @@ proc write_dt args {
 		foreach val $includelist {
 			puts $fd "#include \"$val\""
 		}
+	}
+	if {[string match -nocase $dt "pldt"] && $dt_overlay} {
+		puts $fd "\/dts-v1\/\n\/plugin\/;"
 	}
 	set dtcheck [string match -nocase $dt "pcwdt"]
 	if {$dtcheck != 1} {
@@ -2423,391 +2430,32 @@ proc set_drv_def_dts {drv_handle} {
 	set family [get_hw_family]
 	global bus_clk_list
 	if {[is_pl_ip $drv_handle]} {
-		#set default_dts [get_dts_include]
 		set default_dts "pl.dtsi"
-		update_system_dts_include $default_dts
-                #set RpRm [get_rp_rm_for_drv $drv_handle]
-                #regsub -all { } $RpRm "" RpRm
-                #if {[llength $RpRm]} {
-                #        set default_dts "$RpRm.dtsi"
-                #} else {
-                #        set default_dts "pl.dtsi"
-                #}
+		if {!$dt_overlay} {
+			update_system_dts_include $default_dts
+		}
 	} else {
 		# PS IP, read pcw_dts property
 		set default_dts "pcw.dtsi"
 		update_system_dts_include $default_dts
 	}
-	if {0} {
-	set default_dts [set_cur_working_dts $default_dts]
-	if {$dt_overlay } {
-               set RpRm [get_rp_rm_for_drv $drv_handle]
-               if {[llength $RpRm]} {
-                       if {$partial_image} {
-                               regsub -all { } $RpRm "" RpRm
-                               set partial_imag imag
-                               append RpRm1 $RpRm $partial_imag
-                               set defaultdts1 "$RpRm1.dtsi"
-                               set defdt [create_dt_tree -dts_file $defaultdts1]
-                               set proctype [get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]]
-                               set_property DTS_VERSION "/dts-v1/;\n/plugin/" $defdt
-                               set root_node [add_or_get_dt_node -n / -d ${defdt}]
-                               set fpga_node [add_or_get_dt_node -n "fragment@0" -d ${defdt} -p ${root_node}]
-                               set child_name "__overlay__"
-                               set child_node1 [add_or_get_dt_node -l "overlay0$RpRm1" -n $child_name -d $defdt -p $fpga_node]
-                               if {[string match -nocase $proctype "psv_cortexa72"]} {
-                                       set targets "fpga"
-                               } else {
-                                       set targets "fpga_full"
-                               }
-                               add_new_dts_param $fpga_node target "$targets" reference
-			       set child_node2 [add_or_get_dt_node -l "overlay0$RpRm" -n $child_name -d $default_dts -p $fpga_node]
-                               set pr_regions [hsi::get_cells -hier -filter BD_TYPE==BLOCK_CONTAINER]
-                               if {[llength $pr_regions]} {
-                                       set pr_len [llength $pr_regions]
-                                       for {set pr 0} {$pr < $pr_len} {incr pr} {
-                                               set pr1 [lindex $pr_regions $pr]
-                                               if {[regexp $pr1 $RpRm match]} {
-                                                       set targets "fpga_PR$pr"
-                                                       add_new_dts_param $fpga_node target "$targets" reference
-                                                       break
-                                               }
-                                       }
-                               }
-                               set proctype [get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]]
-                               add_new_dts_param "${child_node1}" "#address-cells" 2 int
-                               add_new_dts_param "${child_node1}" "#size-cells" 2 int
-                               if {[string match -nocase $proctype "psu_cortexa53"]} {
-                                       set hw_name [::hsi::get_hw_files -filter "TYPE == partial_bit"]
-                               } else {
-                                       set hw_name [::hsi::get_hw_files -filter "TYPE == partial_pdi"]
-                               }
-                               add_new_dts_param "${child_node1}" "firmware-name" "$hw_name.bin" string
-			                                      if {[string match -nocase $default_dts "$RpRm.dtsi"]} {
-			                                              set_property DTS_VERSION "/dts-v1/;\n/plugin/" $default_dts
-			                                              set child_node " "
-			                                      }
-			                              }
-			                      }
-			       
-			              if {![llength $RpRm]} {
-			                      set proctype [get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]]
-			                      set default_dt "pl.dtsi"
-			                      set defaultdts [set_cur_working_dts $default_dt]
-			                      set master_dts [get_dt_trees ${defaultdts}]
-			                      set_property DTS_VERSION "/dts-v1/;\n/plugin/" $master_dts
-			                      set root_node [add_or_get_dt_node -n / -d ${defaultdts}]
-			                      set fpga_node [add_or_get_dt_node -n "fragment@0" -d ${defaultdts} -p ${root_node}]
-			                      set child_name "__overlay__"
-			                      set child_node [add_or_get_dt_node -l "overlay0" -n $child_name -p $fpga_node]
-			                      if {[string match -nocase $proctype "psv_cortexa72"]} {
-			                              set targets "fpga"
-			                      } else {
-			                              set targets "fpga_full"
-			                      }
-			                      add_new_dts_param $fpga_node target "$targets" reference
-						add_new_dts_param $fpga_node target "$targets" reference
-set ips [hsi::get_cells -hier -filter {IP_NAME == "dfx_decoupler"}]
-set dfx_node ""
-foreach ip $ips {
-if {[llength $ip]} {
-	set dfx_ip [get_property IP_NAME $ip]
-	set unit_addr [get_baseaddr ${ip} no_prefix]
-	if { [string equal $unit_addr "-1"] } {
-		break
-	}
-	set label $ip
-	set dev_type [get_property IP_NAME [get_cell -hier [hsi::get_cells -hier $ip]]]
-	set dfx_node [add_or_get_dt_node -n ${dev_type} -l ${label} -u $unit_addr -d ${defaultdts} -p $child_node -auto_ref_parent]
-	set compatible [get_comp_str $ip]
-	add_new_dts_param "$dfx_node" "compatible" "$compatible" string
-	set xdevice_family [get_property CONFIG.C_XDEVICEFAMILY [hsi::get_cells -hier $ip]]
-	add_new_dts_param "$dfx_node" "xlnx,xdevicefamily" $xdevice_family string
-	gen_dfx_reg_property $ip $dfx_node
-        gen_dfx_clk_property $ip $defaultdts $child_node $dfx_node
-	set intf [::hsi::get_intf_pins -of_objects $ip "rp_intf_0"]
-	set intf_net [::hsi::get_intf_pins -of_objects [::hsi::get_intf_nets -of_objects $intf]]
-	set pr [hsi::get_cells -of_objects [lindex $intf_net 1]]
-	set pr_type [get_property BD_TYPE [hsi::get_cells -hier $pr]]
-	set pr_regions [hsi::get_cells -hier -filter BD_TYPE==BLOCK_CONTAINER]
-	if {[llength $pr_regions]} {
-		set prlen [llength $pr_regions]
-		for {set dfx 0} {$dfx < $prlen} {incr dfx} {
-			if {[string match -nocase "[lindex $pr_regions $dfx]" "$pr"]} {
-				set prnode [add_or_get_dt_node -l "fpga_PR$dfx" -n "fpga-PR$dfx" -p $dfx_node]
-				add_new_dts_param  "${prnode}" "compatible"  "fpga-region" string
-				add_new_dts_param "${prnode}" "#address-cells" 2 int
-				add_new_dts_param "${prnode}" "#size-cells" 2 int
-				add_new_dts_param "${prnode}" "ranges" "" boolean
-			}
-		}
-	}
-}
-}
-				               set ips [hsi::get_cells -hier -filter {IP_NAME == "dfx_axi_shutdown_manager"}]
-               set dfx_sm_node ""
-               foreach ip $ips {
-                       if {[llength $ip]} {
-                               set dfx_sm_ip [get_property IP_NAME $ip]
-                               set unit_addr [get_baseaddr ${ip} no_prefix]
-                               if { [string equal $unit_addr "-1"] } {
-                                       break
-                               }
-                               set label $ip
-                               set dev_type [get_property IP_NAME [get_cell -hier [hsi::get_cells -hier $ip]]]
-                               set dfx_sm_node [add_or_get_dt_node -n ${dev_type} -l ${label} -u $unit_addr -d ${defaultdts} -p $child_node -auto_ref_parent]
-                               set compatible [get_comp_str $ip]
-                               add_new_dts_param "$dfx_sm_node" "compatible" "$compatible" string
-                               set ctrl_addr_width [get_property CONFIG.C_CTRL_ADDR_WIDTH [hsi::get_cells -hier $ip]]
-                               add_new_dts_param "$dfx_sm_node" "xlnx,ctrl-addr-width" $ctrl_addr_width int
-                               set ctrl_data_width [get_property CONFIG.C_CTRL_DATA_WIDTH [hsi::get_cells -hier $ip]]
-                               add_new_dts_param "$dfx_sm_node" "xlnx,ctrl-data-width" $ctrl_data_width int
-                               set ctrl_interface_type [get_property CONFIG.C_CTRL_INTERFACE_TYPE [hsi::get_cells -hier $ip]]
-                               add_new_dts_param "$dfx_sm_node" "xlnx,ctrl-interface-type" $ctrl_interface_type int
-                               set dp_axi_addr_width [get_property CONFIG.C_DP_AXI_ADDR_WIDTH [hsi::get_cells -hier $ip]]
-                               add_new_dts_param "$dfx_sm_node" "xlnx,dp-axi-addr-width" $dp_axi_addr_width int
-                               set dp_axi_aruser_width [get_property CONFIG.C_DP_AXI_ARUSER_WIDTH [hsi::get_cells -hier $ip]]
-                               add_new_dts_param "$dfx_sm_node" "xlnx,dp-axi-aruser-width" $dp_axi_aruser_width int
-                               set dp_axi_awuser_width [get_property CONFIG.C_DP_AXI_AWUSER_WIDTH [hsi::get_cells -hier $ip]]
-                               add_new_dts_param "$dfx_sm_node" "xlnx,dp-axi-awuser-width" $dp_axi_awuser_width int
-                               set dp_axi_buser_width [get_property CONFIG.C_DP_AXI_BUSER_WIDTH [hsi::get_cells -hier $ip]]
-                               add_new_dts_param "$dfx_sm_node" "xlnx,dp-axi-buser-width" $dp_axi_buser_width int
-                               set dp_axi_data_width [get_property CONFIG.C_DP_AXI_DATA_WIDTH [hsi::get_cells -hier $ip]]
-                               add_new_dts_param "$dfx_sm_node" "xlnx,dp-axi-data-width" $dp_axi_data_width int
-                               set dp_axi_id_width [get_property CONFIG.C_DP_AXI_ID_WIDTH [hsi::get_cells -hier $ip]]
-                               add_new_dts_param "$dfx_sm_node" "xlnx,dp-axi-id-width" $dp_axi_id_width int
-                               set dp_axi_resp [get_property CONFIG.C_DP_AXI_RESP [hsi::get_cells -hier $ip]]
-                               add_new_dts_param "$dfx_sm_node" "xlnx,dp-axi-resp" $dp_axi_resp int
-                               set dp_axi_ruser_width [get_property CONFIG.C_DP_AXI_RUSER_WIDTH [hsi::get_cells -hier $ip]]
-                               add_new_dts_param "$dfx_sm_node" "xlnx,dp-axi-ruser-width" $dp_axi_ruser_width int
-                               set dp_axi_wuser_width [get_property CONFIG.C_DP_AXI_WUSER_WIDTH [hsi::get_cells -hier $ip]]
-                               add_new_dts_param "$dfx_sm_node" "xlnx,dp-axi-wuser-width" $dp_axi_wuser_width int
-                               set dp_protocol [get_property CONFIG.C_DP_PROTOCOL [hsi::get_cells -hier $ip]]
-                               add_new_dts_param "$dfx_sm_node" "xlnx,dp-protocol" $dp_protocol string
-                               set reset_active_level [get_property CONFIG.C_RESET_ACTIVE_LEVEL [hsi::get_cells -hier $ip]]
-                               add_new_dts_param "$dfx_sm_node" "xlnx,reset-active-level" $reset_active_level int
-                               set rp_is_master [get_property CONFIG.C_RP_IS_MASTER [hsi::get_cells -hier $ip]]
-                               add_new_dts_param "$dfx_sm_node" "xlnx,rp-is-master" $rp_is_master int
-                               set family [get_property CONFIG.C_FAMILY [hsi::get_cells -hier $ip]]
-                               add_new_dts_param "$dfx_sm_node" "xlnx,family" $family string
-                               gen_dfx_reg_property $ip $dfx_sm_node
-                               gen_dfx_clk_property $ip $defaultdts $child_node $dfx_sm_node
-                               set intf [::hsi::get_intf_pins -of_objects $ip "M_AXI"]
-                               set intf_net [::hsi::get_intf_pins -of_objects [::hsi::get_intf_nets -of_objects $intf]]
-                               set pr [hsi::get_cells -of_objects [lindex $intf_net 1]]
-                               set pr_type [get_property BD_TYPE [hsi::get_cells -hier $pr]]
-                               set pr_regions [hsi::get_cells -hier -filter BD_TYPE==BLOCK_CONTAINER]
-                               if {[llength $pr_regions]} {
-                                        set prlen [llength $pr_regions]
-                                       for {set dfx 0} {$dfx < $prlen} {incr dfx} {
-                                               if {[string match -nocase "[lindex $pr_regions $dfx]" "$pr"]} {
-                                                       set prnode [add_or_get_dt_node -l "fpga_PR$dfx" -n "fpga-PR$dfx" -p $dfx_sm_node]
-                                                       add_new_dts_param  "${prnode}" "compatible"  "fpga-region" string
-                                                       add_new_dts_param "${prnode}" "#address-cells" 2 int
-                                                       add_new_dts_param "${prnode}" "#size-cells" 2 int
-                                                       add_new_dts_param "${prnode}" "ranges" "" boolean
-                                               }
-                                       }
-                               }
-                       }
-               }
-
-               if {![llength $dfx_node] && ![llength $dfx_sm_node]} {
-			                      set pr_regions [hsi::get_cells -hier -filter BD_TYPE==BLOCK_CONTAINER]
-			                      if {[llength $pr_regions]} {
-			                              set pr_len [llength $pr_regions]
-			                              for {set pr 0} {$pr < $pr_len} {incr pr} {
-			                                      set pr_node [add_or_get_dt_node -l "fpga_PR$pr" -n "fpga-PR$pr" -p $child_node]
-			                                      add_new_dts_param  "${pr_node}" "compatible"  "fpga-region" string
-			                                      add_new_dts_param "${pr_node}" "#address-cells" 2 int
-			                                      add_new_dts_param "${pr_node}" "#size-cells" 2 int
-			                                      add_new_dts_param "${pr_node}" "ranges" "" boolean
-			                              }
-			                      }
-}
-			                      add_new_dts_param "${child_node}" "#address-cells" 2 int
-			                      add_new_dts_param "${child_node}" "#size-cells" 2 int
-					      if {[string match -nocase $proctype "psu_cortexa53"] || [string match -nocase $proctype "ps7_cortexa9"]} {
-				                      set hw_name [get_property CONFIG.firmware_name [get_os]]
-				                      if {![llength $hw_name]} {
-				                               set hw_name [::hsi::get_hw_files -filter "TYPE == bit"]
-				                       }
-			                              add_new_dts_param "${child_node}" "firmware-name" "$hw_name.bin" string
-			                      } else {
-							set hw_name [get_property CONFIG.firmware_name [get_os]]
-				                       if {![llength $hw_name]} {
-				                               set hw_name [::hsi::get_hw_files -filter "TYPE == pdi"]
-				                       }
-				                       add_new_dts_param "${child_node}" "firmware-name" "$hw_name.pdi" string
-               				     }
-              				}
-	}
 	if {[is_pl_ip $drv_handle] && $dt_overlay} {
-		if {0} {
-		set master_dts_obj [get_dt_trees ${default_dts}]
-		set_property DTS_VERSION "/dts-v1/;\n/plugin/" $master_dts_obj
-		set root_node [add_or_get_dt_node -n / -d ${default_dts}]
-		set fpga_node [add_or_get_dt_node -n "fragment@0" -d ${default_dts} -p ${root_node}]
+		set fpga_node [create_node -n "fragment" -u 0 -d ${default_dts} -p root]
 		set pl_file $default_dts
 		set targets "fpga_full"
-		add_new_dts_param $fpga_node target "$targets" reference
-		}
+		add_prop $fpga_node target "$targets" reference $default_dts 1
 		set child_name "__overlay__"
-		#set child_node [add_or_get_dt_node -l "overlay0" -n $child_name -p $fpga_node]
-		#set RpRm [get_rp_rm_for_drv $drv_handle]
-               	#regsub -all { } $RpRm "" RpRm
-               	if {[llength $RpRm]} {
-		if {$partial_image} {
-                                puts "frag0 ret"
-                       } else {
-				set proctype [get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]]
-                               set default_dts "$RpRm.dtsi"
-                               set master_dts_obj [get_dt_trees ${default_dts}]
-                               set_property DTS_VERSION "/dts-v1/;\n/plugin/" $master_dts_obj
-                               set root_node [add_or_get_dt_node -n / -d ${default_dts}]
-                               set fpga_node [add_or_get_dt_node -n "fragment@0" -d ${default_dts} -p ${root_node}]
-                               set child_node [add_or_get_dt_node -l "overlay0_$RpRm" -n $child_name -p $fpga_node]
-                               set pr_regions [hsi::get_cells -hier -filter BD_TYPE==BLOCK_CONTAINER]
-                               if {[llength $pr_regions]} {
-                                       set pr_len [llength $pr_regions]
-                                       for {set pr 0} {$pr < $pr_len} {incr pr} {
-                                               set pr1 [lindex $pr_regions $pr]
-                                               if {[regexp $pr1 $RpRm match]} {
-                                                       set targets "fpga_PR$pr"
-                                                       add_new_dts_param $fpga_node target "$targets" reference
-                                                       break
-                                               }
-
-	      }
-       }
-		add_new_dts_param $child_node2 "partial-fpga-config" "" boolean
-	set hw_name [get_property CONFIG.firmware_name [get_os]]
-	set rprmpartial ""
-	if {![llength $hw_name]} {
-	       if {[string match -nocase $proctype "psu_cortexa53"]} {
-		       set hw_name [::hsi::get_hw_files -filter "TYPE == partial_bit"]
-	       } else {
-		       set hw_name [::hsi::get_hw_files -filter "TYPE == partial_pdi"]
-	       }
-	       set RpRm1 [get_rp_rm_for_drv $drv_handle]
-	       regsub -all { } $RpRm1 "_" RpRm
-	       if {[llength $RpRm]} {
-		       set bitfiles_len [llength $hw_name]
-		       for {set i 0} {$i < $bitfiles_len} {incr i} {
-			       set rprm_bit_file_name [lindex $hw_name $i]
-			       if {[regexp [lindex $RpRm1 1] $rprm_bit_file_name match]} {
-				       set rprmpartial [lindex $hw_name $i]
-				       break
-			       }
-		       }
-	       }
+		set child_node [create_node -l "overlay0" -n $child_name -p $fpga_node -d $default_dts]
+		add_prop "${child_node}" "#address-cells" 2 int $default_dts 1
+		add_prop "${child_node}" "#size-cells" 2 int $default_dts 1
+		if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"] || [string match -nocase $family "zynquplusRFSOC"]} {
+			set hw_name [::hsi::get_hw_files -filter "TYPE == bit"]
+			add_prop "${child_node}" "firmware-name" "$hw_name.bin" string  $default_dts 1
+		} elseif {[string match -nocase $family "versal"]} {
+			set hw_name [::hsi::get_hw_files -filter "TYPE == pdi"]
+			add_prop "${child_node}" "firmware-name" "$hw_name" string  $default_dts 1
+		}
 	}
-	if {[llength $rprmpartial]} {
-	       puts "rprmpartial:$rprmpartial"
-	       add_new_dts_param "${child_node2}" "firmware-name" "$rprmpartial.bin" string
-	}
-		}
-               	} else {
-                       set child_node [add_or_get_dt_node -l "overlay0" -n $child_name -p $fpga_node]
-			set targets "fpga_full"
-			add_new_dts_param $fpga_node target "$targets" reference
-			set pr_regions [hsi::get_cells -hier -filter BD_TYPE==BLOCK_CONTAINER]
-			if {[llength $pr_regions]} {
-			       set pr_len [llength $pr_regions]
-			       for {set pr 0} {$pr < $pr_len} {incr pr} {
-				       set pr_node [add_or_get_dt_node -l "fpga_PR$pr" -n "fpga-PR$pr" -p $child_node]
-				       add_new_dts_param  "${pr_node}" "compatible"  "fpga-region" string
-				       add_new_dts_param "${pr_node}" "#address-cells" 2 int
-				       add_new_dts_param "${pr_node}" "#size-cells" 2 int
-				       add_new_dts_param "${pr_node}" "ranges" "" boolean
-       				}
-			}
-
-		}                
-		set proctype [get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]]
-		if {[string match -nocase $proctype "psu_cortexa53"]} {
-			set zynq_periph [hsi::get_cells -hier -filter {IP_NAME == zynq_ultra_ps_e}]
-			set avail_param [list_property [hsi::get_cells -hier $zynq_periph]]
-			if {![llength $RpRm]} {
-				if {[lsearch -nocase $avail_param "CONFIG.PSU__USE__FABRIC__RST"] >= 0} {
-					set val [get_property CONFIG.PSU__USE__FABRIC__RST [hsi::get_cells -hier $zynq_periph]]
-					if {$val == 1} {
-						if {[lsearch -nocase $avail_param "CONFIG.C_NUM_FABRIC_RESETS"] >= 0} {
-							set val [get_property CONFIG.C_NUM_FABRIC_RESETS [hsi::get_cells -hier $zynq_periph]]
-							switch $val {
-								"1" {
-									set resets "zynqmp_reset 116"
-								} "2" {
-									set resets "zynqmp_reset 116>,<&zynqmp_reset 117"
-								} "3" {
-									set resets "zynqmp_reset 116>, <&zynqmp_reset 117>, <&zynqmp_reset 118"
-								} "4" {
-									set resets "zynqmp_reset 116>, <&zynqmp_reset 117>, <&zynqmp_reset 118>, <&zynqmp_reset 119"
-								}
-							}
-							if {$val != 0} {
-								add_new_dts_param "${child_node}" "resets" "$resets" reference
-							}
-						}
-					}
-				}
-			}
-		}
-		if {0} {
-		if {[string match -nocase $proctype "psu_cortexa53"]} {
-			add_new_dts_param "${child_node}" "#address-cells" 2 int
-			add_new_dts_param "${child_node}" "#size-cells" 2 int
-		} else {
-			add_new_dts_param "${child_node}" "#address-cells" 1 int
-			add_new_dts_param "${child_node}" "#size-cells" 1 int
-		}
-		}
-		set hw_name [get_property CONFIG.firmware_name [get_os]]
-#		set rprmpartial ""
-		if {![llength $hw_name]} {
-			if {[string match -nocase $proctype "psu_cortexa53"]} {
-                               set hw_name [::hsi::get_hw_files -filter "TYPE == partial_bit"]
-                       } else {
-                               set hw_name [::hsi::get_hw_files -filter "TYPE == partial_pdi"]
-                               puts "hw_name:$hw_name"
-                       }
-                        set RpRm1 [get_rp_rm_for_drv $drv_handle]
-                       regsub -all { } $RpRm1 "_" RpRm
-                       if {[llength $RpRm]} {
-                               set bitfiles_len [llength $hw_name]
-                               for {set i 0} {$i < $bitfiles_len} {incr i} {
-                                       set rprm_bit_file_name [lindex $hw_name $i]
-                                       if {[regexp [lindex $RpRm1 1] $rprm_bit_file_name match]} {
-                                               set rprmpartial [lindex $hw_name $i]
-                                               break
-                                       }
-                               }
-                       }
-               }
-               if {[llength $rprmpartial]} {
-                       add_new_dts_param "${child_node}" "firmware-name" "$rprmpartial.bin" string
-               }
-               if {![llength $RpRm]} {
-			if {[string match -nocase $proctype "psu_cortexa53"]} {
-                               set hw_name [::hsi::get_hw_files -filter "TYPE == bit"]
-                       } else {
-                               set hw_name [::hsi::get_hw_files -filter "TYPE == pdi"]
-                       }
-			add_new_dts_param "${child_node}" "firmware-name" "$hw_name.bin" string
-		}
-		}
-		#add_new_dts_param "${child_node}" "firmware-name" "$hw_name.bin" string
-		set overlay_custom_dts [get_property CONFIG.overlay_custom_dts [get_os]]
-		if {[llength $overlay_custom_dts]} {
-			update_overlay_custom_dts_include $default_dts
-			set dts_file pl-custom.dtsi
-			set root_node [add_or_get_dt_node -n / -d ${dts_file}]
-			update_overlay_custom_dts_include $dts_file
-		}
-	} else {
-		#update_system_dts_include $default_dts
-	}
-	
 	return $default_dts
 }
 
@@ -4217,7 +3865,7 @@ proc gen_clk_property {drv_handle} {
 				if {[llength $clk_pl]} {
 					set num [regexp -all -inline -- {[0-9]+} $clk_pl]
 				}
-				if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+				if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] || [string match -nocase $proctype "zynquplusRFSOC"]} {
 					switch $num {
 						"0" {
 							set def_dts "pcw.dtsi"
@@ -4329,6 +3977,7 @@ proc gen_clk_property {drv_handle} {
 		switch $proctype {
 			"zynqmp" - \
 			"zynquplus" - \
+			"zynquplusRFSOC" - \
 			"versal" {
 				set clklist "pl_clk0 pl_clk1 pl_clk2 pl_clk3"
 			}
@@ -4372,7 +4021,7 @@ proc gen_clk_property {drv_handle} {
 				}
 			}
 		}
-		if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+		if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] || [string match -nocase $proctype "zynquplusRFSOC"]} {
 			switch $pl_clk {
 				"pl_clk0" {
 						set pl_clk0 "zynqmp_clk 71"
@@ -4823,7 +4472,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 		}
 		set connected_intc_name [get_property IP_NAME $connected_intc]
 		set valid_gpio_list "ps7_gpio axi_gpio"
-		set valid_cascade_proc "kintex7 zynq zynqmp zynquplus versal"
+		set valid_cascade_proc "kintex7 zynq zynqmp zynquplus versal zynquplusRFSOC"
 		# check whether intc is gpio or other
 		if {[lsearch  -nocase $valid_gpio_list $connected_intc_name] >= 0} {
 			generate_gpio_intr_info $connected_intc $drv_handle $pin
@@ -4840,7 +4489,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 				continue
 			}
 			set ip_name $intc
-			if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "zynquplus"]} {
+			if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "zynquplus"] || [string match -nocase $proctype "zynquplusRFSOC"]} {
 				set intc [get_property IP_NAME $intc]
 				if {[llength $intc] > 1} {
 					foreach intr_cntr $intc {
@@ -4849,7 +4498,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 						}
 					}
 				}
-				if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] && [string match -nocase $intc "axi_intc"] } {
+				if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] || [string match -nocase $proctype "zynquplusRFSOC"] && [string match -nocase $intc "axi_intc"] } {
 					set intc [get_interrupt_parent $drv_handle $pin]
 				}
 				if {[string match -nocase $proctype "versal"] && [string match -nocase $intc "axi_intc"] } {
@@ -4857,7 +4506,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 				}
 			}
 
-			if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "zynquplus"]} {
+			if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "zynquplus"] || [string match -nocase $proctype "zynquplusRFSOC"]} {
 				if { [string match -nocase [common::get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "axi_intc"] } {
 					set intr_id [get_psu_interrupt_id $drv_handle "irq"]
 				} else {
@@ -4921,9 +4570,17 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 		return -1
 	}
 	set intc [ps_node_mapping $intc label]
-
-	if { [string match -nocase $intc "psu_acpu_gic"] || [string match -nocase $intc "psv_acpu_gic"]} {
-		set intc "gic"
+	set intc_len [llength $intc]
+	if {$intc_len > 1} {
+		foreach intc_ctr $intc { 
+			if { [string match -nocase $intc_ctr "psu_acpu_gic"] || [string match -nocase $intc_ctr "psv_acpu_gic"]} {
+				set intc "gic"
+			}
+		}
+	} else {
+		if { [string match -nocase $intc "psu_acpu_gic"] || [string match -nocase $intc "psv_acpu_gic"]} {
+			set intc "gic"
+		}
 	}
 	if {[string match -nocase $intc "gic"]} {
 		set intc "imux"
@@ -4970,7 +4627,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 		}
 	}
 	set ip_name  [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
-	if {$ip_name == "xxv_ethernet" || $ip_name == "ddr4" || $ip_name == "psu_acpu_gic" || $ip_name == "mrmac"} {
+	if {$ip_name == "xxv_ethernet" || $ip_name == "ddr4" || $ip_name == "psu_acpu_gic" || $ip_name == "mrmac" || $ip_name == "axi_noc"} {
 		return
 	}
 
@@ -5265,6 +4922,10 @@ proc gen_compatible_property {drv_handle} {
 	proc_called_by
 	set dts_file [set_drv_def_dts $drv_handle]
 	set ip [hsi::get_cells -hier $drv_handle]
+	set ip_name  [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+	if {[string match -nocase $ip_name "axi_noc"]} {
+		return
+	}
         # TODO: check if the base address is correct
         set unit_addr [get_baseaddr ${ip} no_prefix]
 	if {$unit_addr == "-1"} {
@@ -5512,7 +5173,6 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 		} {
 		return 0
 	}
-
 	set default_dts [set_drv_def_dts $drv_handle]
 	if {[string match -nocase $default_dts "pcw.dtsi"]} {
 		set treeobj "pcwdt"
@@ -5714,6 +5374,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 
 proc detect_bus_name {ip_drv} {
 	proc_called_by
+	#puts "# [lindex [info level -1] 0] #>> called by [lindex [info level -2] 0]"
 	# FIXME: currently use single bus assumption
 	# TODO: detect bus connection
 	# 	zynq: uses amba base zynq-7000.dtsi
@@ -5722,7 +5383,16 @@ proc detect_bus_name {ip_drv} {
 	set valid_buses [hsi::get_cells -hier -filter { IP_TYPE == "BUS" && IP_NAME != "axi_protocol_converter" && IP_NAME != "lmb_v10"}]
 
 	set valid_proc_list "ps7_cortexa9 psu_cortexa53 psv_cortexa72 psv_cortexr5 psv_pmc psu_pmu psu_cortexr5"
-		if {[is_pl_ip $ip_drv]} {
+	global env
+	set path $env(REPO)
+	set common_file "$path/device_tree/data/config.yaml"
+	set dt_overlay [get_user_config $common_file -dt_overlay]
+		if {[is_pl_ip $ip_drv] && $dt_overlay} {
+			# create the parent_node for pl.dtsi
+			set default_dts [set_drv_def_dts $ip_drv]
+			return "overlay2: __overlay__"
+		}
+		if {[is_pl_ip $ip_drv]}  {
 			# create the parent_node for pl.dtsi
 			set default_dts [set_drv_def_dts $ip_drv]
 			set root_node [create_node -n "amba_pl: amba_pl" -d ${default_dts} -p root]
@@ -5798,339 +5468,27 @@ proc add_or_get_bus_node {ip_drv dts_file} {
 	}
 	dtg_debug "bus_name: $bus_name"
 	dtg_debug "bus_label: $bus_name"
-	set dt_overlay 0
-	set proctype [get_hw_family]
-	if {$dt_overlay && [string match -nocase $dts_file "pl.dtsi"]} {
-		set proctype [get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]]
-		if {[string match -nocase $proctype "zynqmp"]|| [string match -nocase $proctype "zynquplus"]} {
-			set zynq_periph [hsi::get_cells -hier -filter {IP_NAME == zynq_ultra_ps_e}]
-			set avail_param [list_property [hsi::get_cells -hier $zynq_periph]]
-			set root_node [add_or_get_dt_node -n / -d ${dts_file}]
-			set fpga_node [add_or_get_dt_node -n "fragment@1" -d [get_dt_tree ${dts_file}] -p ${root_node}]
-			set targets "amba"
-			add_new_dts_param $fpga_node target "$targets" reference
-			set child_name "__overlay__"
-			set bus_node [add_or_get_dt_node -l "overlay1" -n $child_name -p $fpga_node]
-			set RpRm [get_rp_rm_for_drv $ip_drv]
-                        #regsub -all { } $RpRm "" RpRm
-                        #if {[llength $RpRm]} {
-                        #       set bus_node [add_or_get_dt_node -l "overlay1_$RpRm" -n $child_name -p $fpga_node]
-                        #} else {
-                        #       set bus_node [add_or_get_dt_node -l "overlay1" -n $child_name -p $fpga_node]
-                        #}
-			set afi_node [add_or_get_dt_node -n "afi0" -l "afi0" -p $bus_node]
-			add_new_dts_param "${afi_node}" "compatible" "xlnx,afi-fpga" string
-			set config_afi " "
-			if {[lsearch -nocase $avail_param "CONFIG.C_SAXIGP0_DATA_WIDTH"] >= 0} {
-				set val [get_property CONFIG.C_SAXIGP0_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
-				set afival [get_afi_val $val]
-				append config_afi "0 $afival>, <1 $afival>,"
-			}
-			if {[lsearch -nocase $avail_param "CONFIG.C_SAXIGP1_DATA_WIDTH"] >= 0} {
-				set val [get_property CONFIG.C_SAXIGP1_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
-				set afival [get_afi_val $val]
-				append config_afi " <2 $afival>, <3 $afival>,"
-			}
-			if {[lsearch -nocase $avail_param "CONFIG.C_SAXIGP2_DATA_WIDTH"] >= 0} {
-				set val [get_property CONFIG.C_SAXIGP2_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
-				set afival [get_afi_val $val]
-				append config_afi " <4 $afival>, <5 $afival>,"
-			}
-			if {[lsearch -nocase $avail_param "CONFIG.C_SAXIGP3_DATA_WIDTH"] >= 0} {
-				set val [get_property CONFIG.C_SAXIGP3_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
-				set afival [get_afi_val $val]
-				append config_afi " <6 $afival>, <7 $afival>,"
-			}
-			if {[lsearch -nocase $avail_param "CONFIG.C_SAXIGP4_DATA_WIDTH"] >= 0} {
-				set val [get_property CONFIG.C_SAXIGP4_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
-				set afival [get_afi_val $val]
-				append config_afi " <8 $afival>, <9 $afival>,"
-			}
-			if {[lsearch -nocase $avail_param "CONFIG.C_SAXIGP5_DATA_WIDTH"] >= 0} {
-				set val [get_property CONFIG.C_SAXIGP5_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
-				set afival [get_afi_val $val]
-				append config_afi " <10 $afival>, <11 $afival>,"
-			}
-			if {[lsearch -nocase $avail_param "CONFIG.C_SAXIGP6_DATA_WIDTH"] >= 0} {
-				set val [get_property CONFIG.C_SAXIGP6_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
-				set afival [get_afi_val $val]
-				append config_afi " <12 $afival>, <13 $afival>,"
-			}
-			if {[lsearch -nocase $avail_param "CONFIG.C_MAXIGP0_DATA_WIDTH"] >= 0} {
-				set val [get_property CONFIG.C_MAXIGP0_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
-				set afival0 [get_max_afi_val $val]
-			}
-			if {[lsearch -nocase $avail_param "CONFIG.C_MAXIGP1_DATA_WIDTH"] >= 0} {
-				set val [get_property CONFIG.C_MAXIGP1_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
-				set afival1 [get_max_afi_val $val]
-			}
-			set afi0 [expr $afival0 <<8]
-			set afi1 [expr $afival1 << 10]
-			set afival [expr {$afi0} | {$afi1}]
-			set afi_hex [format %x $afival]
-			append config_afi " <14 0x$afi_hex>,"
-			if {[lsearch -nocase $avail_param "CONFIG.C_MAXIGP2_DATA_WIDTH"] >= 0} {
-				set val [get_property CONFIG.C_MAXIGP2_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
-				switch $val {
-					"128" {
-						set afival 0x200
-					} "64" {
-						set afival 0x100
-					} "32" {
-						set afival 0x000
-					} default {
-						dtg_warning "invalid value:$val"
-					}
-				}
-				append config_afi " <15 $afival"
-			}
-			add_new_dts_param "${afi_node}" "config-afi" "$config_afi" int
-			if {[lsearch -nocase $avail_param "CONFIG.C_PL_CLK0_BUF"] >= 0} {
-				set val [get_property CONFIG.C_PL_CLK0_BUF [hsi::get_cells -hier $zynq_periph]]
-				if {[string match -nocase $val "true"]} {
-					set clocking_node [add_or_get_dt_node -n "clocking0" -l "clocking0" -p $bus_node]
-					add_new_dts_param "${clocking_node}" "compatible" "xlnx,fclk" string
-					add_new_dts_param "${clocking_node}" "clocks" "zynqmp_clk 71" reference
-					add_new_dts_param "${clocking_node}" "clock-output-names" "fabric_clk" string
-					add_new_dts_param "${clocking_node}" "#clock-cells" 0 int
-					add_new_dts_param "${clocking_node}" "assigned-clocks" "zynqmp_clk 71" reference
-					set freq [get_property CONFIG.PSU__CRL_APB__PL0_REF_CTRL__ACT_FREQMHZ [hsi::get_cells -hier $zynq_periph]]
-					add_new_dts_param "${clocking_node}" "assigned-clock-rates" [scan [expr $freq * 1000000] "%d"] int
-				}
-			}
-			if {[lsearch -nocase $avail_param "CONFIG.C_PL_CLK1_BUF"] >= 0} {
-				set val [get_property CONFIG.C_PL_CLK1_BUF [hsi::get_cells -hier $zynq_periph]]
-				if {[string match -nocase $val "true"]} {
-					set clocking_node [add_or_get_dt_node -n "clocking1" -l "clocking1" -p $bus_node]
-					add_new_dts_param "${clocking_node}" "compatible" "xlnx,fclk" string
-					add_new_dts_param "${clocking_node}" "clocks" "zynqmp_clk 72" reference
-					add_new_dts_param "${clocking_node}" "clock-output-names" "fabric_clk" string
-					add_new_dts_param "${clocking_node}" "#clock-cells" 0 int
-					add_new_dts_param "${clocking_node}" "assigned-clocks" "zynqmp_clk 72" reference
-					set freq [get_property CONFIG.PSU__CRL_APB__PL1_REF_CTRL__ACT_FREQMHZ [hsi::get_cells -hier $zynq_periph]]
-					add_new_dts_param "${clocking_node}" "assigned-clock-rates" [scan [expr $freq * 1000000] "%d"] int
-				}
-			}
-			if {[lsearch -nocase $avail_param "CONFIG.C_PL_CLK2_BUF"] >= 0} {
-				set val [get_property CONFIG.C_PL_CLK2_BUF [hsi::get_cells -hier $zynq_periph]]
-				if {[string match -nocase $val "true"]} {
-					set clocking_node [add_or_get_dt_node -n "clocking2" -l "clocking2" -p $bus_node]
-					add_new_dts_param "${clocking_node}" "compatible" "xlnx,fclk" string
-					add_new_dts_param "${clocking_node}" "clocks" "zynqmp_clk 73" reference
-					add_new_dts_param "${clocking_node}" "clock-output-names" "fabric_clk" string
-					add_new_dts_param "${clocking_node}" "#clock-cells" 0 int
-					add_new_dts_param "${clocking_node}" "assigned-clocks" "zynqmp_clk 73" reference
-					set freq [get_property CONFIG.PSU__CRL_APB__PL2_REF_CTRL__ACT_FREQMHZ [hsi::get_cells -hier $zynq_periph]]
-					add_new_dts_param "${clocking_node}" "assigned-clock-rates" [scan [expr $freq * 1000000] "%d"] int
-				}
-			}
-			if {[lsearch -nocase $avail_param "CONFIG.C_PL_CLK3_BUF"] >= 0} {
-				set val [get_property CONFIG.C_PL_CLK3_BUF [hsi::get_cells -hier $zynq_periph]]
-				if {[string match -nocase $val "true"]} {
-					set clocking_node [add_or_get_dt_node -n "clocking3" -l "clocking3" -p $bus_node]
-					add_new_dts_param "${clocking_node}" "compatible" "xlnx,fclk" string
-					add_new_dts_param "${clocking_node}" "clocks" "zynqmp_clk 74" reference
-					add_new_dts_param "${clocking_node}" "clock-output-names" "fabric_clk" string
-					add_new_dts_param "${clocking_node}" "#clock-cells" 0 int
-					add_new_dts_param "${clocking_node}" "assigned-clocks" "zynqmp_clk 74" reference
-					set freq [get_property CONFIG.PSU__CRL_APB__PL3_REF_CTRL__ACT_FREQMHZ [hsi::get_cells -hier $zynq_periph]]
-					add_new_dts_param "${clocking_node}" "assigned-clock-rates" [scan [expr $freq * 1000000] "%d"] int
-				}
-			}
-		}
-		if {[string match -nocase $proctype "zynq"]} {
-			set zynq_periph [hsi::get_cells -hier -filter {IP_NAME == processing_system7}]
-			set avail_param [list_property [hsi::get_cells -hier $zynq_periph]]
-			set root_node [add_or_get_dt_node -n / -d ${dts_file}]
-			set fpga_node [add_or_get_dt_node -n "fragment@1" -d [get_dt_tree ${dts_file}] -p ${root_node}]
-			set targets "amba"
-			add_new_dts_param $fpga_node target "$targets" reference
-			set child_name "__overlay__"
-			set bus_node [add_or_get_dt_node -l "overlay1" -n $child_name -p $fpga_node]
-			if {[lsearch -nocase $avail_param "CONFIG.C_USE_S_AXI_HP0"] >= 0} {
-				set val [get_property CONFIG.C_USE_S_AXI_HP0 [hsi::get_cells -hier $zynq_periph]]
-				if {$val == 1} {
-					set afi0 [hsi::get_cells -hier -filter {NAME == "ps7_afi_0"}]
-					set afi0_param [list_property [hsi::get_cells -hier $afi0]]
-					if {[lsearch -nocase $afi0_param "CONFIG.C_S_AXI_BASEADDR"] >= 0} {
-						set base_addr [get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $afi0]]
-					}
-					if {[lsearch -nocase $afi0_param "CONFIG.C_S_AXI_HIGHADDR"] >= 0} {
-						set high_addr [get_property CONFIG.C_S_AXI_HIGHADDR [hsi::get_cells -hier $afi0]]
-					}
-					set size [format 0x%x [expr {${high_addr} - ${base_addr} + 1}]]
-					set reg "$base_addr $size"
-					regsub -all {^0x} $base_addr {} addr
-					set addr [string tolower $addr]
-					set afi_node [add_or_get_dt_node -n "afi0" -l "afi0" -u $addr -p $bus_node]
-					add_new_dts_param "${afi_node}" "compatible" "xlnx,afi-fpga" string
-					add_new_dts_param "${afi_node}" "#address-cells" "1" int
-					add_new_dts_param "${afi_node}" "#size-cells" "0" int
-					add_new_dts_param "${afi_node}" "reg" "$reg" intlist
-					if {[lsearch -nocase $avail_param "CONFIG.C_S_AXI_HP0_DATA_WIDTH"] >= 0} {
-						set val [get_property CONFIG.C_S_AXI_HP0_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
-						set bus_width [get_axi_datawidth $val]
-						add_new_dts_param "${afi_node}" "xlnx,afi-width" "$bus_width" int
-					}
-				}
-			}
-			if {[lsearch -nocase $avail_param "CONFIG.C_USE_S_AXI_HP1"] >= 0} {
-				set val [get_property CONFIG.C_USE_S_AXI_HP1 [hsi::get_cells -hier $zynq_periph]]
-				if {$val == 1} {
-					set afi1 [hsi::get_cells -hier -filter {NAME == "ps7_afi_1"}]
-					set afi1_param [list_property [hsi::get_cells -hier $afi1]]
-					if {[lsearch -nocase $afi1_param "CONFIG.C_S_AXI_BASEADDR"] >= 0} {
-						set base_addr [get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $afi1]]
-					}
-					if {[lsearch -nocase $afi1_param "CONFIG.C_S_AXI_HIGHADDR"] >= 0} {
-						set high_addr [get_property CONFIG.C_S_AXI_HIGHADDR [hsi::get_cells -hier $afi1]]
-					}
-					set size [format 0x%x [expr {${high_addr} - ${base_addr} + 1}]]
-					set reg "$base_addr $size"
-					regsub -all {^0x} $base_addr {} addr
-					set addr [string tolower $addr]
-					set afi_node [add_or_get_dt_node -n "afi1" -l "afi1" -u $addr -p $bus_node]
-					add_new_dts_param "${afi_node}" "compatible" "xlnx,afi-fpga" string
-					add_new_dts_param "${afi_node}" "#address-cells" "1" int
-					add_new_dts_param "${afi_node}" "#size-cells" "0" int
-					add_new_dts_param "${afi_node}" "reg" "$reg" intlist
-					if {[lsearch -nocase $avail_param "CONFIG.C_S_AXI_HP1_DATA_WIDTH"] >= 0} {
-						set val [get_property CONFIG.C_S_AXI_HP1_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
-						set bus_width [get_axi_datawidth $val]
-						add_new_dts_param "${afi_node}" "xlnx,afi-width" "$bus_width" int
-					}
-				}
-			}
-			if {[lsearch -nocase $avail_param "CONFIG.C_USE_S_AXI_HP2"] >= 0} {
-				set val [get_property CONFIG.C_USE_S_AXI_HP2 [hsi::get_cells -hier $zynq_periph]]
-				if {$val == 1} {
-					set afi2 [hsi::get_cells -hier -filter {NAME == "ps7_afi_2"}]
-					set afi2_param [list_property [hsi::get_cells -hier $afi2]]
-					if {[lsearch -nocase $afi2_param "CONFIG.C_S_AXI_BASEADDR"] >= 0} {
-						set base_addr [get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $afi2]]
-					}
-					if {[lsearch -nocase $afi2_param "CONFIG.C_S_AXI_HIGHADDR"] >= 0} {
-						set high_addr [get_property CONFIG.C_S_AXI_HIGHADDR [hsi::get_cells -hier $afi2]]
-					}
-					set size [format 0x%x [expr {${high_addr} - ${base_addr} + 1}]]
-					set reg "$base_addr $size"
-					regsub -all {^0x} $base_addr {} addr
-					set addr [string tolower $addr]
-					set afi_node [add_or_get_dt_node -n "afi2" -l "afi2" -u $addr -p $bus_node]
-					add_new_dts_param "${afi_node}" "compatible" "xlnx,afi-fpga" string
-					add_new_dts_param "${afi_node}" "#address-cells" "1" int
-					add_new_dts_param "${afi_node}" "#size-cells" "0" int
-					add_new_dts_param "${afi_node}" "reg" "$reg" intlist
-					if {[lsearch -nocase $avail_param "CONFIG.C_S_AXI_HP2_DATA_WIDTH"] >= 0} {
-						set val [get_property CONFIG.C_S_AXI_HP2_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
-						set bus_width [get_axi_datawidth $val]
-						add_new_dts_param "${afi_node}" "xlnx,afi-width" "$bus_width" int
-					}
-				}
-			}
-			if {[lsearch -nocase $avail_param "CONFIG.C_USE_S_AXI_HP3"] >= 0} {
-				set val [get_property CONFIG.C_USE_S_AXI_HP3 [hsi::get_cells -hier $zynq_periph]]
-				if {$val == 1} {
-					set afi3 [hsi::get_cells -hier -filter {NAME == "ps7_afi_3"}]
-					set afi3_param [list_property [hsi::get_cells -hier $afi3]]
-					if {[lsearch -nocase $afi3_param "CONFIG.C_S_AXI_BASEADDR"] >= 0} {
-						set base_addr [get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $afi2]]
-					}
-					if {[lsearch -nocase $afi3_param "CONFIG.C_S_AXI_HIGHADDR"] >= 0} {
-						set high_addr [get_property CONFIG.C_S_AXI_HIGHADDR [hsi::get_cells -hier $afi2]]
-					}
-					set size [format 0x%x [expr {${high_addr} - ${base_addr} + 1}]]
-					set reg "$base_addr $size"
-					regsub -all {^0x} $base_addr {} addr
-					set addr [string tolower $addr]
-					set afi_node [add_or_get_dt_node -n "afi3" -l "afi3" -u $addr -p $bus_node]
-					add_new_dts_param "${afi_node}" "compatible" "xlnx,afi-fpga" string
-					add_new_dts_param "${afi_node}" "#address-cells" "1" int
-					add_new_dts_param "${afi_node}" "#size-cells" "0" int
-					add_new_dts_param "${afi_node}" "reg" "$reg" intlist
-					if {[lsearch -nocase $avail_param "CONFIG.C_S_AXI_HP3_DATA_WIDTH"] >= 0} {
-						set val [get_property CONFIG.C_S_AXI_HP3_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
-						set bus_width [get_axi_datawidth $val]
-						add_new_dts_param "${afi_node}" "xlnx,afi-width" "$bus_width" int
-					}
-				}
-			}
-			if {[lsearch -nocase $avail_param "CONFIG.PCW_FPGA_FCLK0_ENABLE"] >= 0} {
-				set val [get_property CONFIG.PCW_FPGA_FCLK0_ENABLE [hsi::get_cells -hier $zynq_periph]]
-				if {[string match -nocase $val "1"]} {
-					set clocking_node [add_or_get_dt_node -n "clocking0" -l "clocking0" -p $bus_node]
-					add_new_dts_param "${clocking_node}" "compatible" "xlnx,fclk" string
-					add_new_dts_param "${clocking_node}" "clocks" "clkc 15" reference
-					add_new_dts_param "${clocking_node}" "clock-output-names" "fabric_clk" string
-					add_new_dts_param "${clocking_node}" "#clock-cells" 0 int
-					add_new_dts_param "${clocking_node}" "assigned-clocks" "clkc 15" reference
-					set freq [get_property CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ [hsi::get_cells -hier $zynq_periph]]
-					add_new_dts_param "${clocking_node}" "assigned-clock-rates" [scan [expr $freq * 1000000] "%d"] int
-				}
-			}
-			if {[lsearch -nocase $avail_param "CONFIG.PCW_FPGA_FCLK1_ENABLE"] >= 0} {
-				set val [get_property CONFIG.PCW_FPGA_FCLK1_ENABLE [hsi::get_cells -hier $zynq_periph]]
-				if {[string match -nocase $val "1"]} {
-					set clocking_node [add_or_get_dt_node -n "clocking1" -l "clocking1" -p $bus_node]
-					add_new_dts_param "${clocking_node}" "compatible" "xlnx,fclk" string
-					add_new_dts_param "${clocking_node}" "clocks" "clkc 16" reference
-					add_new_dts_param "${clocking_node}" "clock-output-names" "fabric_clk" string
-					add_new_dts_param "${clocking_node}" "#clock-cells" 0 int
-					add_new_dts_param "${clocking_node}" "assigned-clocks" "clkc 16" reference
-					set freq [get_property CONFIG.PCW_FPGA1_PERIPHERAL_FREQMHZ [hsi::get_cells -hier $zynq_periph]]
-					add_new_dts_param "${clocking_node}" "assigned-clock-rates" [scan [expr $freq * 1000000] "%d"] int
-				}
-			}
-			if {[lsearch -nocase $avail_param "CONFIG.PCW_FPGA_FCLK2_ENABLE"] >= 0} {
-				set val [get_property CONFIG.PCW_FPGA_FCLK2_ENABLE [hsi::get_cells -hier $zynq_periph]]
-				if {[string match -nocase $val "1"]} {
-					set clocking_node [add_or_get_dt_node -n "clocking2" -l "clocking2" -p $bus_node]
-					add_new_dts_param "${clocking_node}" "compatible" "xlnx,fclk" string
-					add_new_dts_param "${clocking_node}" "clocks" "clkc 17" reference
-					add_new_dts_param "${clocking_node}" "clock-output-names" "fabric_clk" string
-					add_new_dts_param "${clocking_node}" "#clock-cells" 0 int
-					add_new_dts_param "${clocking_node}" "assigned-clocks" "clkc 17" reference
-					set freq [get_property CONFIG.PCW_FPGA2_PERIPHERAL_FREQMHZ [hsi::get_cells -hier $zynq_periph]]
-					add_new_dts_param "${clocking_node}" "assigned-clock-rates" [scan [expr $freq * 1000000] "%d"] int
-				}
-			}
-			if {[lsearch -nocase $avail_param "CONFIG.PCW_FPGA_FCLK3_ENABLE"] >= 0} {
-				set val [get_property CONFIG.PCW_FPGA_FCLK3_ENABLE [hsi::get_cells -hier $zynq_periph]]
-				if {[string match -nocase $val "1"]} {
-					set clocking_node [add_or_get_dt_node -n "clocking3" -l "clocking3" -p $bus_node]
-					add_new_dts_param "${clocking_node}" "compatible" "xlnx,fclk" string
-					add_new_dts_param "${clocking_node}" "clocks" "clkc 18" reference
-					add_new_dts_param "${clocking_node}" "clock-output-names" "fabric_clk" string
-					add_new_dts_param "${clocking_node}" "#clock-cells" 0 int
-					add_new_dts_param "${clocking_node}" "assigned-clocks" "clkc 18" reference
-					set freq [get_property CONFIG.PCW_FPGA3_PERIPHERAL_FREQMHZ [hsi::get_cells -hier $zynq_periph]]
-					add_new_dts_param "${clocking_node}" "assigned-clock-rates" [scan [expr $freq * 1000000] "%d"] int
-				}
-			}
-		}
+	global env
+	set path $env(REPO)
+	set common_file "$path/device_tree/data/config.yaml"
+	if {[file exists $common_file]} {
+		#error "file not found: $common_file"
 	}
+	set dt_overlay [get_user_config $common_file -dt_overlay]
+	set proctype [get_hw_family]
 	if {[is_pl_ip $ip_drv] && $dt_overlay} {
-		set root_node [add_or_get_dt_node -n / -d ${dts_file}]
-		set fpga_node [add_or_get_dt_node -n "fragment@2" -d [get_dt_tree ${dts_file}] -p ${root_node}]
+		set dts "pl.dtsi"
+		set fpga_node [create_node -n "fragment" -u 2 -d $dts -p root]
 		set targets "amba"
-		add_new_dts_param $fpga_node target "$targets" reference
+		add_prop $fpga_node target "$targets" reference $dts 1
 		set child_name "__overlay__"
-		set bus_node [add_or_get_dt_node -l "overlay2" -n $child_name -p $fpga_node]
-		set RpRm [get_rp_rm_for_drv $ip_drv]
-               #regsub -all { } $RpRm "" RpRm
-               #if {[llength $RpRm]} {
-                #       set default_dts "$RpRm.dtsi"
-                 #      set bus_node [add_or_get_dt_node -l "overlay2_$RpRm" -n $child_name -p $fpga_node]
-               #} else {
-                #       set bus_node [add_or_get_dt_node -l "overlay2" -n $child_name -p $fpga_node]
-               #}
-#		set proctype [get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]]
+		set bus_node [create_node -l "overlay2" -n $child_name -p $fpga_node -d $dts]
 		if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] || [string match -nocase $proctype "versal"]} {
-			add_new_dts_param "${bus_node}" "#address-cells" 2 int
-			add_new_dts_param "${bus_node}" "#size-cells" 2 int
+			add_prop "${bus_node}" "#address-cells" 2 int $dts 1
+			add_prop "${bus_node}" "#size-cells" 2 int $dts 1
 		} else {
-			add_new_dts_param "${bus_node}" "#address-cells" 1 int
-			add_new_dts_param "${bus_node}" "#size-cells" 1 int
+			add_prop "${bus_node}" "#address-cells" 1 int $dts 1
+			add_prop "${bus_node}" "#size-cells" 1 int $dts 1
 		}
 	} else {
 			set bus_node $bus_name
@@ -6794,7 +6152,7 @@ proc generate_gpio_intr_info {connected_intc drv_handle pin} {
 	if {[string match -nocase $intr_type "-1"]} {
 		return -1
 	}
-	set sinkpin [get_sink_pins [get_pins -of [hsi::get_cells -hier $drv_handle] -filter {TYPE==INTERRUPT}]]
+	set sinkpin [hsi::get_sink_pins [get_pins -of [hsi::get_cells -hier $drv_handle] -filter {TYPE==INTERRUPT}]]
 	set dual [get_property CONFIG.C_IS_DUAL $connected_intc]
 	regsub -all {[^0-9]} $sinkpin "" gpio_pin_count
 	set gpio_cho_pin_lcnt [get_property LEFT [hsi::get_pins -of_objects [hsi::get_cells -hier $connected_intc] gpio_io_i]]

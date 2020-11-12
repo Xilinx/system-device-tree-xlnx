@@ -1636,6 +1636,14 @@ proc remove_main_memory_node {} {
 }
 
 proc gen_xppu {drv_handle} {
+	global env
+	set path $env(REPO)
+	set common_file "$path/device_tree/data/config.yaml"
+	set dt_overlay [get_user_config $common_file -dt_overlay]
+	set ip [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+	if {[string match -nocase $ip "axi_noc"] && $dt_overlay} {
+		return
+	}
 	set node [get_node $drv_handle]
 	set baseaddr [get_baseaddr $drv_handle noprefix]
 	set xppu [dict create]
