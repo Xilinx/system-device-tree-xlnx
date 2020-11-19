@@ -1360,7 +1360,7 @@ proc gen_cpu_cluster {os_handle} {
 	}
 
     	if {[string match -nocase $proctype "versal"]} {
-		set cpu_node [create_node -l "cpus_microblaze1" -n "cpus-cluster" -u 1 -d ${default_dts} -p root]
+		set cpu_node [create_node -l "cpus_microblaze_1" -n "cpus_microblaze1" -d ${default_dts} -p root]
 		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
 		add_prop $cpu_node "#ranges-size-cells" "0x1" hexint $default_dts
 	        add_prop "${cpu_node}" "#ranges-address-cells" "0x1" hexint $default_dts
@@ -1396,7 +1396,7 @@ proc gen_cpu_cluster {os_handle} {
 		add_prop $microblaze_node "address-map" $list_values special $default_dts
 	}
 	if {[string match -nocase $proctype "versal"]} {
-		set cpu_node [create_node -l "cpus_microblaze2" -n "cpus-cluster" -u 2 -d ${default_dts} -p root]
+		set cpu_node [create_node -l "cpus_microblaze_2" -n "cpus_microblaze2" -d ${default_dts} -p root]
 		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
 		add_prop $cpu_node "#ranges-size-cells" "0x1" hexint $default_dts
 	        add_prop "${cpu_node}" "#ranges-address-cells" "0x1" hexint $default_dts
