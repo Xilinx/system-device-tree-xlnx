@@ -681,7 +681,7 @@ proc create_node args {
 		}
 		Pop args
 	}
-	set ignore_list "clk_wiz xlconcat xlconstant util_vector_logic xlslice util_ds_buf proc_sys_reset axis_data_fifo v_vid_in_axi4s bufg_gt axis_tdest_editor util_reduced_logic gt_quad_base noc_nsw"
+	set ignore_list "clk_wiz xlconcat xlconstant util_vector_logic xlslice util_ds_buf proc_sys_reset axis_data_fifo v_vid_in_axi4s bufg_gt axis_tdest_editor util_reduced_logic gt_quad_base noc_nsw blk_mem_gen"
 	set temp [lsearch $ignore_list $node_name]
 	if {[string match -nocase $node_unit_addr ""] && $temp >= 0} {
 		set val_lab [string match -nocase $node_label ""]
@@ -2175,11 +2175,21 @@ proc get_baseaddr {slave_ip {no_prefix ""}} {
 	if {[string match -nocase $slave_ip "psu_sata"]} {
 		set addr [string tolower [get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $slave_ip]]]
 	} else {
-	set ip_mem_handle [lindex [hsi::get_mem_ranges [hsi::get_cells -hier $slave_ip]] 0]
-	if { [string_is_empty $ip_mem_handle] } {
-		return ""
-	}
-	set addr [string tolower [get_property BASE_VALUE $ip_mem_handle]]
+		set ip_mem_handle [lindex [hsi::get_mem_ranges [hsi::get_cells -hier $slave_ip]] 0]
+		if { [string_is_empty $ip_mem_handle] } {
+			set avail_param [list_property [hsi::get_cells -hier $slave_ip]]
+			if {[lsearch -nocase $avail_param "CONFIG.C_BASEADDR"] >= 0 } {
+				set addr [string tolower [get_property CONFIG.C_BASEADDR [hsi::get_cells -hier $slave_ip]]]
+			} elseif {[lsearch -nocase $avail_param "CONFIG.C_S_AXI_BASEADDR"] >= 0} {
+				set addr [string tolower [get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $slave_ip]]]
+			} elseif {[lsearch -nocase $avail_param "CONFIG.C_S_AXI_CTRL_BASEADDR"] >= 0} {
+				set addr [string tolower [get_property CONFIG.C_S_AXI_CTRL_BASEADDR [hsi::get_cells -hier $slave_ip]]]
+			} else {
+				return ""
+			}
+		} else {
+			set addr [string tolower [get_property BASE_VALUE $ip_mem_handle]]
+		}
 	}
 	if {![string_is_empty $no_prefix]} {
 		regsub -all {^0x} $addr {} addr
@@ -4635,6 +4645,58 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 	#set ip_skip_list "ddr4_*"
 	set slave [hsi::get_cells -hier ${drv_handle}]
 	set ip_mem_handles [hsi::get_mem_ranges $slave]
+	if { [string_is_empty $ip_mem_handles] } {
+		set base ""
+		set proctype [get_hw_family]
+		set avail_param [list_property [hsi::get_cells -hier $slave]]
+		if {[lsearch -nocase $avail_param "CONFIG.C_BASEADDR"] >= 0 } {
+			set base [string tolower [get_property CONFIG.C_BASEADDR [hsi::get_cells -hier $slave]]]
+			set high [string tolower [get_property CONFIG.C_HIGHADDR [hsi::get_cells -hier $slave]]]
+			set size [format 0x%x [expr {${high} - ${base} + 1}]]
+		} elseif {[lsearch -nocase $avail_param "CONFIG.C_S_AXI_BASEADDR"] >= 0} {
+			set base [string tolower [get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $slave]]]
+			set high [string tolower [get_property CONFIG.C_S_AXI_HIGHADDR [hsi::get_cells -hier $slave]]]
+			set size [format 0x%x [expr {${high} - ${base} + 1}]]
+		} elseif {[lsearch -nocase $avail_param "CONFIG.C_S_AXI_CTRL_BASEADDR"] >= 0} {
+			set base [string tolower [get_property CONFIG.C_S_AXI_CTRL_BASEADDR [hsi::get_cells -hier $slave]]]
+			set high [string tolower [get_property CONFIG.C_S_AXI_CTRL_HIGHADDR [hsi::get_cells -hier $slave]]]
+			set size [format 0x%x [expr {${high} - ${base} + 1}]]
+		}
+		if {![string_is_empty $base]} {
+			if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_pmc"] || [string match -nocase $proctype "zynquplus"]} {
+				# check if base address is 64bit and split it as MSB and LSB
+				if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
+					set temp $base
+					set temp [string trimleft [string trimleft $temp 0] x]
+					set len [string length $temp]
+					set rem [expr {${len} - 8}]
+					set high_base "0x[string range $temp $rem $len]"
+					set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
+					set low_base [format 0x%08x $low_base]
+					if {[regexp -nocase {0x([0-9a-f]{9})} "$size" match]} {
+						set temp $size
+						set temp [string trimleft [string trimleft $temp 0] x]
+						set len [string length $temp]
+						set rem [expr {${len} - 8}]
+						set high_size "0x[string range $temp $rem $len]"
+						set low_size  "0x[string range $temp 0 [expr {${rem} - 1}]]"
+						set low_size [format 0x%08x $low_size]
+						set reg "$low_base $high_base $low_size $high_size"
+					} else {
+						set reg "$low_base $high_base 0x0 $size"
+					}
+				} else {
+					set reg "0x0 $base 0x0 $size"
+				}
+			} else {
+				set reg "$base $size"
+			}
+
+		set_drv_prop_if_empty $drv_handle reg $reg hexlist
+		}
+
+		return
+	}
 	foreach mem_handle ${ip_mem_handles} {
 		set proctype [get_hw_family]
 	#	if {![regexp $ip_skip_list $mem_handle match]} {

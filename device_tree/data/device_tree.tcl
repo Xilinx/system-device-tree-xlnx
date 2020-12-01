@@ -566,7 +566,7 @@ proc generate {} {
 			#namespace import ::${drvname}::\*
 		        #::${drvname}::generate $procc
     			add_skeleton
-			set non_val_list "versal_cips noc_nmu noc_nsu ila"
+			set non_val_list "versal_cips noc_nmu noc_nsu ila zynq_ultra_ps_e psu_iou_s"
 			set non_val_ip_types "MONITOR BUS PROCESSOR"
     			foreach drv_handle $peri_list {
 				
@@ -587,7 +587,7 @@ proc generate {} {
 				set driver_name [get_drivers $drv_handle]
 				gen_xppu $drv_handle
     			}
-			set non_val_list "psv_cortexa72 psu_cortexa53 ps7_cortexa9 versal_cips noc_nmu noc_nsu ila"
+			set non_val_list "psv_cortexa72 psu_cortexa53 ps7_cortexa9 versal_cips noc_nmu noc_nsu ila microblaze psu_iou_s"
 			set non_val_ip_types "MONITOR BUS"
 			foreach drv_handle $peri_list {
 				set ip_name [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
