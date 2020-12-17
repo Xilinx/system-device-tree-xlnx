@@ -22,6 +22,7 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		}
 		set dts_file [set_drv_def_dts $drv_handle]
 		set topology [get_property CONFIG.C_TOPOLOGY [hsi::get_cells -hier $drv_handle]]
+		add_hier_instances $drv_handle
 		if {$topology == 0} {
 		#scaler
 			set name [get_property NAME [hsi::get_cells -hier $drv_handle]]
@@ -228,6 +229,78 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		gen_endpoint $drv_handle "csc_out$drv_handle"
 		add_prop "$vcap_in_node" "remote-endpoint" csc_out$drv_handle reference $dts_file
 		gen_remoteendpoint $drv_handle "$outip$drv_handle"
+	}
+	proc add_hier_instances {drv_handle} {
+		set node [get_node $drv_handle]
+		set dts_file [set_drv_def_dts $drv_handle]
+		hsi::current_hw_instance $drv_handle
+		set gpios [hsi::get_cells -filter {IP_NAME==axi_gpio}]
+
+		foreach gpio $gpios {
+			set name [get_property NAME [hsi::get_cells $gpio]]
+			if {[regexp ".axis" $name match]} {
+				add_prop "$node" "rstaxis-connected" $gpio reference $dts_file
+			}
+			if {[regexp ".axi_mm" $name match]} {
+				add_prop "$node" "rstaximm-connected" $gpio reference $dts_file
+			}
+		}
+		set vdma [hsi::get_cells -filter {IP_NAME==axi_vdma}]
+		if {$vdma != ""} {
+			add_prop "$node" "vdma-connected" $vdma reference $dts_file
+		}
+		set sw [hsi::get_cells -filter {IP_NAME==axis_switch}]
+		if {$sw != ""} {
+			add_prop "$node" "router-connected" $sw reference $dts_file
+		}
+		set csc [hsi::get_cells -filter {IP_NAME==v_csc}]
+		if {$csc != ""} {
+			add_prop "$node" "csc-connected" $csc reference $dts_file
+		}
+		set deint [hsi::get_cells -filter {IP_NAME==v_deinterlacer}]
+		if {$deint != ""} {
+			add_prop "$node" "deint-connected" $deint reference $dts_file
+		}
+		set hcr [hsi::get_cells -hier -filter {IP_NAME==v_hcresampler}]
+		if {$hcr != ""} {
+			add_prop "$node" "hcrsmplr-connected" $hcr reference $dts_file
+		}
+		set hsr [hsi::get_cells  -filter {IP_NAME==v_hscaler}]
+		if {$hsr != ""} {
+			add_prop "$node" "hscale-connected" $hsr reference $dts_file
+		}
+		set letter [hsi::get_cells  -filter {IP_NAME==v_letterbox}]
+		if {$letter != ""} {
+			add_prop "$node" "lbox-connected" $letter reference $dts_file
+		}
+		set vcrs [hsi::get_cells  -filter {IP_NAME==v_vcresampler}]
+		foreach vcr $vcrs {
+			set name [get_property NAME [hsi::get_cells $vcr]]
+			if {[regexp "._o" $name match]} {
+				add_prop "$node" "vcrsmplrout-connected" $vcr reference $dts_file
+			}
+			if {[regexp "._i" $name match]} {
+				add_prop "$node" "vcrsmplrin-connected" $vcr reference $dts_file
+			}
+		}
+		set vsc [hsi::get_cells  -filter {IP_NAME==v_vscaler}]
+		if {$vsc != ""} {
+			add_prop "$node" "vscale-connected" $vsc reference $dts_file
+		}
+        	hsi::current_hw_instance
+		set tpg [hsi::get_cells  -filter {IP_NAME==v_tpg}]
+		if {$tpg != ""} {
+			add_prop "$node" "tpg-connected" $tpg reference $dts_file
+		}
+		set vtc [hsi::get_cells  -filter {IP_NAME==v_tc}]
+		if {$vtc != ""} {
+			add_prop "$node" "vtc-connected" $vtc reference $dts_file
+		}
+		set gpio [hsi::get_cells  -filter {IP_NAME==axi_gpio}]
+		if {$gpio != ""} {
+			add_prop "$node" "gpio-connected" $gpio reference $dts_file
+		}
+
 	}
 }
 
