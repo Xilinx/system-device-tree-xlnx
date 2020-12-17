@@ -30,6 +30,48 @@ global or_id
 global or_cnt
 global repo_path
 
+global driver_param
+set driver_param [dict create dev_type {items {}} alias {items {}}]
+dict with driver_param dev_type {
+	lappend items psv_cortexa72 cpu
+	lappend items psu_cortexa53 cpu
+	lappend items psv_cortexr5 cpu
+	lappend items psu_cortexr5 cpu
+	lappend items psu_pmu cpu
+	lappend items ps7_pmu cpu
+	lappend items psv_pmc cpu
+	lappend items microblaze cpu
+}
+
+dict with driver_param alias {
+	lappend items axi_ethernet ethernet
+	lappend items axi_ethernet_buffer ethernet
+	lappend items axi_10g_ethernet ethernet
+	lappend items xxv_ethernet ethernet
+	lappend items usxgmii ethernet
+	lappend items axi_iic i2c
+	lappend items axi_quad_spi spi
+	lappend items axi_ethernetlite ethernet
+	lappend items ps7_ethernet ethernet
+	lappend items psu_ethernet ethernet
+	lappend items psv_ethernet ethernet
+	lappend items ps7_i2c i2c
+	lappend items psu_i2c i2c
+	lappend items psv_i2c i2c
+	lappend items psu_ospi spi
+	lappend items psv_pmc_ospi spi
+	lappend items ps7_qspi spi
+	lappend items psu_qspi spi
+	lappend items psv_pmc_qspi spi
+	lappend items mdm serial
+	lappend items axi_uartlite serial
+	lappend items axi_uart16550 serial
+	lappend items ps7_uart serial
+	lappend items psu_uart serial
+	lappend items psu_sbsauart serial
+	lappend items psv_uart serial
+	lappend items psv_sbsauart serial
+}
 global set osmap [dict create]
 global set memmap [dict create]
 global set label_addr [dict create]
@@ -98,49 +140,6 @@ set pstree 0
 package require Tcl 8.5.14
 package require yaml
 
-global driver_param
-set driver_param {dev_type {items {}} alias {items {}}}
-dict with driver_param dev_type {
-	lappend items psv_cortexa72 cpu
-	lappend items psu_cortexa53 cpu
-	lappend items psv_cortexr5 cpu
-	lappend items psu_cortexr5 cpu
-	lappend items psu_pmu cpu
-	lappend items ps7_pmu cpu
-	lappend items psv_pmc cpu
-	lappend items microblaze cpu
-}
-
-dict with driver_param alias {
-	lappend items axi_ethernet ethernet
-	lappend items axi_ethernet_buffer ethernet
-	lappend items axi_10g_ethernet ethernet
-	lappend items xxv_ethernet ethernet
-	lappend items usxgmii ethernet
-	lappend items axi_iic i2c
-	lappend items axi_quad_spi spi
-	lappend items axi_ethernetlite ethernet
-	lappend items ps7_ethernet ethernet
-	lappend items psu_ethernet ethernet
-	lappend items psv_ethernet ethernet
-	lappend items ps7_i2c i2c
-	lappend items psu_i2c i2c
-	lappend items psv_i2c i2c
-	lappend items psu_ospi spi
-	lappend items psv_pmc_ospi spi
-	lappend items ps7_qspi spi
-	lappend items psu_qspi spi
-	lappend items psv_pmc_qspi spi
-	lappend items mdm serial
-	lappend items axi_uartlite serial
-	lappend items axi_uart16550 serial
-	lappend items ps7_uart serial
-	lappend items psu_uart serial
-	lappend items psu_sbsauart serial
-	lappend items psv_uart serial
-	lappend items psv_sbsauart serial
-}
-
 proc destroy_tree {} {
 	pldt destroy
 	psdt destroy
@@ -149,26 +148,6 @@ proc destroy_tree {} {
 }
 
 proc get_type args {
-	if {0} {
-	set prop [lindex $args 1]
-	set handle [lindex $args 0]
-	report_property [hsi::get_cells -hier $handle] > values
-	set fd [open values]
-	set eachline [split [read $fd] "\n"]
-	close $fd;
-	set found 0
-	foreach line $eachline {
-	        set wordList [regexp -inline -all -- {\S+} $line]
-        	foreach val $wordList {
-			if {[string match -nocase $val $prop]} {
-				set found 1
-				continue
-			}
-			if {$found == 1} {
-				return $val
-			}
-        	}
-	}}
 	set prop [lindex $args 1]
 	set handle [lindex $args 0]
 	set value [get_property $prop [hsi::get_cells -hier $handle]]
@@ -188,14 +167,12 @@ proc get_type args {
 
 proc get_driver_param args {
 	global driver_param
-
 	set drv_handle [lindex $args 0]
 	set type [lindex $args 1]
 	set val ""
-	set ip_name [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]	
+	set ip_name [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
 	if {[catch {set val [dict get $driver_param $type items $ip_name]} msg]} {
 	}
-
 	return $val
 }
 
@@ -2199,7 +2176,20 @@ proc get_baseaddr {slave_ip {no_prefix ""}} {
 
 proc get_highaddr {slave_ip {no_prefix ""}} {
 	set ip_mem_handle [lindex [hsi::get_mem_ranges [hsi::get_cells -hier $slave_ip]] 0]
-	set addr [string tolower [get_property HIGH_VALUE $ip_mem_handle]]
+        if { [string_is_empty $ip_mem_handle] } {
+             set avail_param [list_property [hsi::get_cells -hier $slave_ip]]
+             if {[lsearch -nocase $avail_param "CONFIG.C_HIGHADDR"] >= 0 } {
+                    set addr [string tolower [get_property CONFIG.C_HIGHADDR [hsi::get_cells -hier $slave_ip]]]
+             } elseif {[lsearch -nocase $avail_param "CONFIG.C_S_AXI_HIGHADDR"] >= 0} {
+                    set addr [string tolower [get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $slave_ip]]]
+             } elseif {[lsearch -nocase $avail_param "CONFIG.C_S_AXI_CTRL_HIGHADDR"] >= 0} {
+                    set addr [string tolower [get_property CONFIG.C_S_AXI_CTRL_BASEADDR [hsi::get_cells -hier $slave_ip]]]
+             } else {
+                    return ""
+             }
+        } else {
+		set addr [string tolower [get_property HIGH_VALUE $ip_mem_handle]]
+	}
 	if {![string_is_empty $no_prefix]} {
 		regsub -all {^0x} $addr {} addr
 	}
@@ -5051,6 +5041,7 @@ proc ip2drv_prop {ip_name ip_prop_name} {
 	# remove CONFIG.C_
 	set drv_prop_name $ip_prop_name
 	regsub -all {CONFIG.C_} $drv_prop_name {xlnx,} drv_prop_name
+	regsub -all {CONFIG.} $drv_prop_name {xlnx,} drv_prop_name
 	regsub -all {_} $drv_prop_name {-} drv_prop_name
 	set drv_prop_name [string tolower $drv_prop_name]
 
@@ -5078,10 +5069,49 @@ proc gen_drv_prop_from_ip {drv_handle} {
 	}
 }
 
+proc remove_duplicates {ip_handle} {
+	set par_handles [get_ip_conf_prop_list $ip_handle "CONFIG.*"]
+	set dictval [dict create]
+	set values ""
+	foreach prop $par_handles {
+		set inner ""
+		if {[regexp "CONFIG.C_.*" $prop match]} {
+			set temp [regsub -all {CONFIG.C_} $prop $inner]
+			lappend values $temp
+			dict append dictval $temp $prop
+		}
+	}
+	foreach prop $par_handles {
+		set inner ""
+		set temp [regsub -all {^CONFIG.} $prop $inner]
+		set inner ""
+		set temp [regsub -all {^C_} $temp $inner]
+		lappend values $temp
+		if {[catch {set rt [dict get $dictval $temp]} msg]} {
+			dict append dictval $temp $prop
+		} else {
+			#puts "append for $temp prop $prop"
+			#dict append dictval $temp $prop
+		}
+
+	}
+	set valus [lsort -unique $values]
+	set tempvalues ""
+	foreach val $valus {
+		if {[catch {set rt [dict get $dictval $val]} msg]} {
+		} else {
+			lappend tempvalues $rt
+		}
+	}
+	return $tempvalues
+}
+
 # based on libgen dtg
 proc default_parameters {ip_handle {dont_generate ""}} {
 	proc_called_by
-	set par_handles [get_ip_conf_prop_list $ip_handle "CONFIG.C_.*"]
+	set par_handles [get_ip_conf_prop_list $ip_handle "CONFIG.*"]
+	set par_handles [remove_duplicates $ip_handle]
+#	set par_handles [lsort -unique $par_handles]
 	set valid_prop_names {}
 	foreach par $par_handles {
 		if {[is_ps_ip $ip_handle]} {
