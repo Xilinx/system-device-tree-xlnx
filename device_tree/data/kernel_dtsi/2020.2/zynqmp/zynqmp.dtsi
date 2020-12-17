@@ -1360,14 +1360,14 @@
 
 			vid-layer {
 				dma-names = "vid0", "vid1", "vid2";
-				dmas = <&psu_dpdma 0>,
-				       <&psu_dpdma 1>,
-				       <&psu_dpdma 2>;
+				dmas = <&xlnx_dpdma 0>,
+				       <&xlnx_dpdma 1>,
+				       <&xlnx_dpdma 2>;
 			};
 
 			gfx-layer {
 				dma-names = "gfx0";
-				dmas = <&psu_dpdma 3>;
+				dmas = <&xlnx_dpdma 3>;
 			};
 
 			/* dummy node to to indicate there's no child i2c device */
@@ -1381,13 +1381,13 @@
 
 			zynqmp_dp_snd_pcm0: zynqmp_dp_snd_pcm0 {
 				compatible = "xlnx,dp-snd-pcm";
-				dmas = <&psu_dpdma 4>;
+				dmas = <&xlnx_dpdma 4>;
 				dma-names = "tx";
 			};
 
 			zynqmp_dp_snd_pcm1: zynqmp_dp_snd_pcm1 {
 				compatible = "xlnx,dp-snd-pcm";
-				dmas = <&psu_dpdma 5>;
+				dmas = <&xlnx_dpdma 5>;
 				dma-names = "tx";
 			};
 

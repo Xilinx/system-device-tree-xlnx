@@ -681,6 +681,87 @@ proc delete_tree {dttree head} {
 	}
 }
 
+proc update_hier_mem {iptype} {
+	set periph_list [hsi::get_cells -hier]
+	foreach periph $periph_list {
+		if {[catch {set ipname [get_property IP_NAME [hsi::get_cells -hier $periph]]} msg]} {
+			set ipname ""
+			continue
+		}
+		set regprop ""
+		set addr_64 "0"
+		set size_64 "0"
+		set base [get_baseaddr $periph]
+		set high [get_highaddr $periph]
+		if {[string match -nocase $base ""] || [string match -nocase $high ""]} {
+			continue
+		}
+		set mem_size [format 0x%x [expr {${high} - ${base} + 1}]]
+		if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
+			set addr_64 "1"
+			set temp $base
+			set temp [string trimleft [string trimleft $temp 0] x]
+			set len [string length $temp]
+			set rem [expr {${len} - 8}]
+			set high_base "0x[string range $temp $rem $len]"
+			set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
+			set low_base [format 0x%08x $low_base]
+		}
+		if {[regexp -nocase {0x([0-9a-f]{9})} "$mem_size" match]} {
+			set size_64 "1"
+			set temp $mem_size
+			set temp [string trimleft [string trimleft $temp 0] x]
+			set len [string length $temp]
+			set rem [expr {${len} - 8}]
+			set high_size "0x[string range $temp $rem $len]"
+			set low_size "0x[string range $temp 0 [expr {${rem} - 1}]]"
+			set low_size [format 0x%08x $low_size]
+		}
+		if {[string match $regprop ""]} {
+			if {[string match $addr_64 "1"] && [string match $size_64 "1"]} {
+				set regprop "$low_base $high_base $low_size $high_size"
+			} elseif {[string match $addr_64 "1"] && [string match $size_64 "0"]} {
+				set regprop "${low_base} ${high_base} 0x0 ${mem_size}"
+			} elseif {[string match $addr_64 "0"] && [string match $size_64 "1"]} {
+				set regprop "0x0 ${base} 0x0 ${mem_size}"
+			} else {
+				set regprop "0x0 ${base} 0x0 ${mem_size}"
+			}
+		} else {
+			if {[string match $addr_64 "1"] && [string match $size_64 "1"]} {
+				append regprop ">, " "<$low_base $high_base $low_size $high_size"
+			} elseif {[string match $addr_64 "1"] && [string match $size_64 "0"]} {
+				append regprop ">, " "<${low_base} ${high_base} 0x0 ${mem_size}"
+			} elseif {[string match $addr_64 "0"] && [string match $size_64 "1"]} {
+				append regprop ">, " "<0x0 ${base} 0x0 ${mem_size}"
+			} else {
+				append regprop ">, " "<0x0 ${base} 0x0 ${mem_size}"
+			}
+		}
+		set temp [get_node $periph]
+		set temp [string trimleft $temp "&"]
+		set len [llength $temp]
+		if {$len > 1} {
+			set temp [split $temp ":"]
+			set temp [lindex $temp 0]
+		}
+		if {[string match -nocase $iptype "psv_cortexa72"] || [string match -nocase $iptype "psu_cortexa53"]} {
+			set_memmap $temp a53 $regprop
+		}
+		if {[string match -nocase $iptype "psv_cortexr5"] || [string match -nocase $iptype "psu_cortexr5"]} {
+			set_memmap $temp r5 $regprop
+		}
+		if {[string match -nocase $iptype "psv_pmc"]} {
+			set_memmap $temp pmc $regprop
+		}
+		if {[string match -nocase $iptype "psv_psm"]} {
+			set_memmap $temp psm $regprop
+		}
+		if {[string match -nocase $iptype "psu_pmu"]} {
+			set_memmap $temp pmu $regprop
+		}
+	}
+}
 proc proc_mapping {} {
 	set proctype [get_hw_family]
         set default_dts "system-top.dts"
@@ -709,6 +790,12 @@ proc proc_mapping {} {
 		set periph_list [hsi::get_mem_ranges -of_objects [hsi::get_cells -hier $val]]
 		set iptype [get_property IP_NAME [hsi::get_cells -hier $val]]
 		foreach periph $periph_list {
+			set hier_prop [get_property IS_HIERARCHICAL [hsi::get_cells -hier $periph]]
+			if {[string match -nocase $hier_prop "1"]} {
+				hsi::current_hw_instance $periph
+				update_hier_mem $iptype
+				hsi::current_hw_instance
+			}
 			if {[lsearch $periphs_list $periph] >= 0} {
 				if {![string match -nocase $iptype "psu_qspi_linear"]} {
 					continue
@@ -768,27 +855,6 @@ proc proc_mapping {} {
                                 append regprop ">, " "<0x0 ${base} 0x0 ${mem_size}"
                             }
                         }
-			if {0} {
-			if {[string match -nocase $periph "psv_acpu_gic"]} {
-				if {[string match -nocase $temp "gic_a72"] } {
-						set temp "psv_acpu_gic"
-				}
-			}
-			if {[string match -nocase $periph "psu_acpu_gic"]} {
-				if {[string match -nocase $temp "gic_a53"] } {
-					set temp "psu_acpu_gic"
-				}
-			}
-			if {[string match -nocase $periph "psv_rcpu_gic"]} {
-				if {[string match -nocase $temp "gic_r5"] } {
-					set temp "psv_rcpu_gic"
-				}
-			}
-			if {[string match -nocase $periph "psu_rcpu_gic"]} {
-				if {[string match -nocase $temp "gic_r5"] } {
-					set temp "psu_rcpu_gic"
-				}
-			}}
 			set temp [get_node $periph]
 			set temp [string trimleft $temp "&"]
 			set len [llength $temp]
@@ -797,38 +863,18 @@ proc proc_mapping {} {
 				set temp [lindex $temp 0]
 			}
 					if {[string match -nocase $iptype "psv_cortexa72"] || [string match -nocase $iptype "psu_cortexa53"]} {
-#						set node [get_node $listvar]
-				#		set reg [$dt get $listvar reg]
-#						set reg [string trimleft $reg "<"]
-#						set reg [string trimright $reg ">"]
 						set_memmap $temp a53 $regprop
 					}
 					if {[string match -nocase $iptype "psv_cortexr5"] || [string match -nocase $iptype "psu_cortexr5"]} {
-#						set node [get_node $listvar]
-				#		set reg [$dt get $listvar reg]
-#						set reg [string trimleft $reg "<"]
-#						set reg [string trimright $reg ">"]
 						set_memmap $temp r5 $regprop
 					}
 					if {[string match -nocase $iptype "psv_pmc"]} {
-#						set node [get_node $listvar]
-				#		set reg [$dt get $listvar reg]
-#						set reg [string trimleft $reg "<"]
-#						set reg [string trimright $reg ">"]
 						set_memmap $temp pmc $regprop
 					}
 					if {[string match -nocase $iptype "psv_psm"]} {
-#						set node [get_node $listvar]
-#						set reg [$dt get $listvar reg]
-#						set reg [string trimleft $reg "<"]
-#						set reg [string trimright $reg ">"]
 						set_memmap $temp psm $regprop
 					}
 					if {[string match -nocase $iptype "psu_pmu"]} {
-#						set node [get_node $listvar]
-				#		set reg [$dt get $listvar reg]
-#						set reg [string trimleft $reg "<"]
-#						set reg [string trimright $reg ">"]
 						set_memmap $temp pmu $regprop
 					}
 		}
@@ -1199,7 +1245,7 @@ proc add_skeleton {} {
 
 	set default_dts "system-top.dts"
 	set chosen_node [create_node -n "chosen" -p root -d $default_dts]
-	set chosen_node [create_node -n "aliases" -p root -d $default_dts]
+	#set chosen_node [create_node -n "aliases" -p root -d $default_dts]
 }
 
 proc update_chosen {os_handle} {
@@ -1284,7 +1330,7 @@ proc gen_cpu_cluster {os_handle} {
 		add_prop $cpu_node "#ranges-address-cells" "0x2" hexint $default_dts
 		global memmap
 		set values [dict keys $memmap]
-		set list_values "0x0 0xf0000000 &amba 0x0 0xf0000000 0x0 0x10000000>, \n\t\t\t      <0x0 0xffe00000 &tcm_bus 0x0 0x0 0x0 0x10000>, \n\t\t\t      <0x0 0xf9000000 &amba_apu 0x0 0xf9000000 0x0 0x80000"
+		set list_values "0x0 0xf0000000 &amba 0x0 0xf0000000 0x0 0x10000000>, \n\t\t\t      <0x0 0xffe00000 &tcm_bus 0x0 0x0 0x0 0x10000>, \n\t\t\t      <0x0 0xf9000000 &amba_apu 0x0 0xf9000000 0x0 0x80000>, \n\t\t\t      <0x0 0x0 &zynqmp_reset 0x0 0x0 0x0 0x0"
 		foreach val $values {
 			set temp [get_memmap $val a53]
 			set com_val [split $temp ","]
@@ -1576,7 +1622,6 @@ proc update_alias {os_handle} {
 			continue
 		}
 		set tmp [get_driver_config $drv_handle alias]
-
         	if {[string_is_empty $tmp]} {
             		continue
         	} else {
@@ -1591,8 +1636,11 @@ proc update_alias {os_handle} {
 			}
 			set ip_list "i2c spi serial"
             	# TODO: need to check if the label already exists in the current system
-		set alias_node [create_node -n "aliases" -p root -d "system-top.dts"]
-		add_prop $alias_node $conf_name $value aliasref $default_dts
+		set proctype [get_hw_family]
+	       # if {[regexp "kintex*" $proctype match]} {
+			set alias_node [create_node -n "aliases" -p root -d "system-top.dts"]
+			add_prop $alias_node $conf_name $value aliasref $default_dts
+	#	}
         }
     }
 }

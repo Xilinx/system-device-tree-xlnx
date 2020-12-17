@@ -25,11 +25,6 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		pldt append $node compatible "\ \, \"xlnx,xps-uartlite-1.00.a\""
 		set ip [hsi::get_cells -hier $drv_handle]
 		set ip_type [get_property IP_NAME $ip]
-		if { [string match -nocase $ip_type] } {
-		    set_count "console" "ttyUL0,115200"
-		} else {
-		    set count "console" "ttyUL0,[get_ip_param_value $ip C_BAUDRATE]"
-		}
 		set avail_param [list_property [hsi::get_cells -hier $drv_handle]]
 		# This check is needed because BAUDRATE parameter for psuart is available from
 		# 2017.1 onwards
@@ -48,7 +43,6 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 				}
 		}
 		add_prop $chosen_node "stdout-path" "serial0:${baud}n8" string "system-top.dts"
-
 		set_drv_conf_prop $drv_handle C_BAUDRATE current-speed int
 		if {[regexp "kintex*" $proctype match]} {
 			 gen_dev_ccf_binding $drv_handle "s_axi_aclk"
