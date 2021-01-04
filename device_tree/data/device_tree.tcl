@@ -638,6 +638,10 @@ proc generate {} {
 	proc_mapping
     	gen_cpu_cluster $drv_handle
 	set family [get_hw_family]
+	if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
+		set reset_node [create_node -n "&zynqmp_reset" -p root -d "pcw.dtsi"]
+		add_prop $reset_node "status" "okay" string "pcw.dtsi"
+	}
 	set dir [get_user_config $common_file -dir]
 	if [catch { set retstr [file mkdir $dir] } errmsg] {
 		error "cannot create directory"
