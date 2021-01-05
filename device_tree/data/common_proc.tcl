@@ -7184,8 +7184,6 @@ proc update_endpoints {drv_handle} {
 
                 set port_node [create_node -n "port" -l gamma_port0$drv_handle -u 0 -p $ports_node -d $dts_file]
                 add_prop "$port_node" "reg" 0 int $dts_file
-                set max_data_width [get_property CONFIG.MAX_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
-                add_prop "$port_node" "xlnx,video-width" $max_data_width int $dts_file
 		set max_data_width [get_property CONFIG.MAX_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
                 add_prop "$port_node" "xlnx,video-width" $max_data_width int $dts_file
 		set gamma_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video"]
