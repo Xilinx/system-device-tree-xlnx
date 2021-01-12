@@ -1387,6 +1387,10 @@ proc gen_cpu_cluster {os_handle} {
 	global memmap
 	set values [dict keys $memmap]
 	set list_values "0xf0000000 &amba 0xf0000000 0x10000000>, \n\t\t\t      <0x0 &tcm_bus 0xffe00000 0x100000>, \n\t\t\t      <0xf9000000 &amba_rpu 0xf9000000 0x3000"
+    	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+		set list_values "0xf0000000 &amba 0xf0000000 0x10000000>, \n\t\t\t      <0x0 &tcm_bus 0xffe00000 0x100000>, \n\t\t\t      <0xf9000000 &amba_rpu 0xf9000000 0x3000>, \n\t\t\t      <0x0 &zynqmp_reset 0x0 0x0"
+	}
+
 	foreach val $values {
 		set temp [get_memmap $val r5]
 		set com_val [split $temp ","]
@@ -1425,6 +1429,9 @@ proc gen_cpu_cluster {os_handle} {
 	global memmap
 	set values [dict keys $memmap]
 	set list_values "0xf0000000 &amba 0xf0000000 0x10000000"
+    	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+		set list_values "0xf0000000 &amba 0xf0000000 0x10000000>, \n\t\t\t      <0x0 &zynqmp_reset 0x0 0x0"
+	}
 	foreach val $values {
     		if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
 			set temp [get_memmap $val pmu]

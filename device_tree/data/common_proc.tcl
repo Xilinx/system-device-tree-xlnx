@@ -5043,9 +5043,7 @@ proc ip2drv_prop {ip_name ip_prop_name} {
 	set drv_prop_name $ip_prop_name
 	regsub -all {CONFIG.C_} $drv_prop_name {xlnx,} drv_prop_name
 	
-	if {![string match -nocase $emac "axi_noc"] || ![string match -nocase $emac "noc_mc_ddr4"]} {
 		regsub -all {^CONFIG.} $drv_prop_name {xlnx,} drv_prop_name
-	}
 	regsub -all {_} $drv_prop_name {-} drv_prop_name
 	set drv_prop_name [string tolower $drv_prop_name]
 
