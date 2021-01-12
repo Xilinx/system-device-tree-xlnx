@@ -5024,6 +5024,7 @@ proc ip2drv_prop {ip_name ip_prop_name} {
 	set drv_handle [get_ip_handler $ip_name]
 	set ip [hsi::get_cells -hier $ip_name]
 	set emac [get_property IP_NAME $ip]
+
 	if { $emac == "axi_ethernet"} {
 		# remove CONFIG.
 		set prop [get_property $ip_prop_name [hsi::get_cells -hier $ip_name]]
@@ -5041,7 +5042,10 @@ proc ip2drv_prop {ip_name ip_prop_name} {
 	# remove CONFIG.C_
 	set drv_prop_name $ip_prop_name
 	regsub -all {CONFIG.C_} $drv_prop_name {xlnx,} drv_prop_name
-	regsub -all {CONFIG.} $drv_prop_name {xlnx,} drv_prop_name
+	
+	if {![string match -nocase $emac "axi_noc"] || ![string match -nocase $emac "noc_mc_ddr4"]} {
+		regsub -all {^CONFIG.} $drv_prop_name {xlnx,} drv_prop_name
+	}
 	regsub -all {_} $drv_prop_name {-} drv_prop_name
 	set drv_prop_name [string tolower $drv_prop_name]
 
