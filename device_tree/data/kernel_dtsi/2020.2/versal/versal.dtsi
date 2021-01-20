@@ -701,6 +701,7 @@
 		       compatible = "xlnx,versal-sysmon";
 		       reg = <0x0 0xf1270000 0x0 0x4000>;
 		       interrupts = <0 144 4>;
+		       interrupt-parent = <&imux>;
 		       xlnx,numchannels = /bits/8 <0>;
 		       status = "disabled";
 	       	};
