@@ -842,7 +842,7 @@ proc create_node args {
 proc add_prop args {
 
 	proc_called_by
-
+	set keyval ""
 	set bypass 0
 	set incr 0
 	set overwrite 0
@@ -909,7 +909,10 @@ proc add_prop args {
 			if {[string match -nocase $type "hexlist"]} {
 				set val ", $val"
 			}
-			set keyval [$treeobj append $node $prop " $val"]
+			if {[string match -nocase $already_key $val]} {
+			} else {
+				set keyval [$treeobj append $node $prop " $val"]
+			}
 		}
 	}
 	if {$bypass == 0} {
@@ -5036,7 +5039,7 @@ proc ip2drv_prop {ip_name ip_prop_name} {
 		add_prop $node $ip_prop_name $drv_prop_name hexint
 		return
 	}
-	if {[string match -nocase $ip_prop_name "CONFIG.C_AXIS_SIGNAL_SET"]} {
+	if {[string match -nocase $ip_prop_name "CONFIG.C_AXIS_SIGNAL_SET"] || [string match -nocase $ip_prop_name "CONFIG.C_USE_BRAM_BLOCK"] || [string match -nocase $ip_prop_name "CONFIG.C_ALGORITHM"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_TYPE"] || [string match -nocase $ip_prop_name "CONFIG.C_INTERFACE_TYPE"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_SLAVE_TYPE"]} {
 		return
 	}
 	# remove CONFIG.C_
@@ -5060,6 +5063,7 @@ proc ip2drv_prop {ip_name ip_prop_name} {
 	} else {
 		set type "mixed"
 	}
+	
 	add_cross_property $ip $ip_prop_name $ip_name ${drv_prop_name} $type
 }
 
