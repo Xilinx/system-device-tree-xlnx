@@ -602,15 +602,38 @@ proc write_value {type value} {
 		} elseif {$type == "mixed"} {
                         set val ""
                         set first true
+			if {[catch {set t [expr int($value)]} msg]} {
+				set non_double 1
+			} else {
+				set non_double 0
+			}
 			if {[string is double $value]} {
-				set tmp [expr [lindex [split $value "."] 1] + 1]
+				set tmp [expr [scan [lindex [split $value "."] 1] %d] + 1]
 				if {$tmp == 1} {
 					set tmp [lindex [split $value "."] 0]
                         		set val "<[format %d $tmp]>"
 				} else {
 					set val [append val "<"]
-					set val [append val [scan [expr $value * 1000000] "%d"]]
-					set val [append val ">"]
+					#set val [append val [scan [expr $value * 1000000] "%d"]]
+					set tmp [scan [expr $value * 1000000] "%d"]
+					set base [format 0x%x $tmp]
+					set temp $base
+					set temp [string trimleft [string trimleft $temp 0] x]
+					set len [string length $temp]
+					set rem [expr {${len} - 8}]
+					set high_base "0x[string range $temp $rem $len]"
+					set low "[string range $temp 0 [expr {${rem} - 1}]]"
+					if {$low != ""} {
+						set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
+						set low_base [format 0x%08x $low_base]
+					}
+					set val "<"
+					if {$low != ""} {
+						append val "$low_base" " "
+		                        	set val [append val "$high_base>"]
+					} else {
+			                        set val "<$high_base>"
+					}
 				}
 			} else {
                         foreach element $value {
@@ -5063,7 +5086,6 @@ proc ip2drv_prop {ip_name ip_prop_name} {
 	} else {
 		set type "mixed"
 	}
-	
 	add_cross_property $ip $ip_prop_name $ip_name ${drv_prop_name} $type
 }
 
@@ -5081,7 +5103,7 @@ proc remove_duplicates {ip_handle} {
 	set values ""
 	foreach prop $par_handles {
 		set inner ""
-		if {[regexp "CONFIG.C_.*" $prop match]} {
+		if {[regexp -nocase "CONFIG.C_.*" $prop match]} {
 			set temp [regsub -all {CONFIG.C_} $prop $inner]
 			lappend values $temp
 			dict append dictval $temp $prop
@@ -5101,7 +5123,7 @@ proc remove_duplicates {ip_handle} {
 		}
 
 	}
-	set valus [lsort -unique $values]
+	set valus [lsort -nocase -unique $values]
 	set tempvalues ""
 	foreach val $valus {
 		if {[catch {set rt [dict get $dictval $val]} msg]} {
