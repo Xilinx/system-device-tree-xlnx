@@ -2442,13 +2442,11 @@ proc set_drv_def_dts {drv_handle} {
 	set path $env(REPO)
 
 	set drvname [get_drivers $drv_handle]
-
 	set common_file "$path/device_tree/data/config.yaml"
 	if {[file exists $common_file]} {
         	#error "file not found: $common_file"
     	}
 	set dt_overlay [get_user_config $common_file -dt_overlay]
-
 	# optional dts control by adding the following line in mdd file
 	# PARAMETER name = def_dts, default = ps.dtsi, type = string;
 	#set dt_overlay [get_property CONFIG.dt_overlay [get_os]]
@@ -4796,6 +4794,12 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 	#	}
 	}
 	set_drv_prop_if_empty $drv_handle reg $reg hexlist
+	set ip_name [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+	if {[string match -nocase $ip_name "psv_pciea_attrib"]} {
+		set node [get_node $drv_handle]
+		set ranges " 0x02000000 0x00000000 0xe0000000 0x0 0xe0000000 0x00000000 0x10000000>, \n\t\t\t      <0x43000000 0x00000080 0x00000000 0x00000080 0x00000000 0x00000000 0x80000000"
+		add_prop $node "ranges" $ranges hexlist "pcw.dtsi"
+	}
 }
 
 proc check_64_base {reg base size} {
@@ -5034,6 +5038,10 @@ proc gen_compatible_property {drv_handle} {
 	} else {
 		set comp_prop "xlnx,${name}-${ver}"
 	}
+	if {[string match -nocase $ip_name "psv_pciea_attrib"]} {
+		set index [string index $drv_handle end]
+		set comp_prop "${comp_prop}${index}"
+	}
 	regsub -all {_} $comp_prop {-} comp_prop
 	set_drv_prop_if_empty $drv_handle compatible $comp_prop stringlist
 
@@ -5062,15 +5070,29 @@ proc ip2drv_prop {ip_name ip_prop_name} {
 		add_prop $node $ip_prop_name $drv_prop_name hexint
 		return
 	}
-	if {[string match -nocase $ip_prop_name "CONFIG.C_AXIS_SIGNAL_SET"] || [string match -nocase $ip_prop_name "CONFIG.C_USE_BRAM_BLOCK"] || [string match -nocase $ip_prop_name "CONFIG.C_ALGORITHM"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_TYPE"] || [string match -nocase $ip_prop_name "CONFIG.C_INTERFACE_TYPE"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_SLAVE_TYPE"]} {
+	if {[string match -nocase $ip_prop_name "CONFIG.C_AXIS_SIGNAL_SET"] || [string match -nocase $ip_prop_name "CONFIG.C_USE_BRAM_BLOCK"] || [string match -nocase $ip_prop_name "CONFIG.C_ALGORITHM"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_TYPE"] || [string match -nocase $ip_prop_name "CONFIG.C_INTERFACE_TYPE"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_SLAVE_TYPE"] || [string match -nocase $ip_prop_name "CONFIG.device_port_type"]} {
 		return
 	}
-	# remove CONFIG.C_
 	set drv_prop_name $ip_prop_name
-	regsub -all {CONFIG.C_} $drv_prop_name {xlnx,} drv_prop_name
+	set pcieattrib_num "CONFIG.C_CPM_PCIE0_AXIBAR_NUM"
+	set pcieattrib "CONFIG.C_CPM_PCIE0_PF0_AXIBAR2PCIE_BASEADDR_0 CONFIG.C_CPM_PCIE0_PF0_AXIBAR2PCIE_BASEADDR_1 CONFIG.C_CPM_PCIE0_PF0_AXIBAR2PCIE_HIGHADDR_0 CONFIG.C_CPM_PCIE0_PF0_AXIBAR2PCIE_HIGHADDR_1"
+	if {[lsearch $pcieattrib_num $ip_prop_name] >= 0} {
+		set drv_prop_name "xlnx,axibar-num"
+		
+	} elseif {[lsearch $pcieattrib $ip_prop_name] >= 0} {
+		set index [string index $ip_prop_name end]
+		if {[string match -nocase $ip_prop_name "CONFIG.C_CPM_PCIE0_PF0_AXIBAR2PCIE_BASEADDR_0"] || [string match -nocase $ip_prop_name "CONFIG.C_CPM_PCIE0_PF0_AXIBAR2PCIE_BASEADDR_1"]} {
+			set drv_prop_name "xlnx,axibar-${index}"
+		} else {
+			set drv_prop_name "xlnx,axibar-highaddr-${index}"
+		}
+	} else {
+	# remove CONFIG.C_
+		regsub -all {CONFIG.C_} $drv_prop_name {xlnx,} drv_prop_name
 	
 		regsub -all {^CONFIG.} $drv_prop_name {xlnx,} drv_prop_name
-	regsub -all {_} $drv_prop_name {-} drv_prop_name
+		regsub -all {_} $drv_prop_name {-} drv_prop_name
+	}
 	set drv_prop_name [string tolower $drv_prop_name]
 
 	set prop [get_property $ip_prop_name [hsi::get_cells -hier $ip_name]]
@@ -5086,7 +5108,12 @@ proc ip2drv_prop {ip_name ip_prop_name} {
 	} else {
 		set type "mixed"
 	}
-	add_cross_property $ip $ip_prop_name $ip_name ${drv_prop_name} $type
+	if {[string match -nocase $emac "psv_pciea_attrib"] && [string match -nocase $ip_prop_name "CONFIG.C_CPM_PCIE0_PORT_TYPE"]} {
+		set node [get_node $ip_name]
+		add_prop $node "xlnx,device-port-type" $prop int [set_drv_def_dts $ip_name]
+	} else {
+		add_cross_property $ip $ip_prop_name $ip_name ${drv_prop_name} $type
+	}
 }
 
 proc gen_drv_prop_from_ip {drv_handle} {

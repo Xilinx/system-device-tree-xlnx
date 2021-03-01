@@ -199,5 +199,9 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		add_prop "${pcie_child_intc_node}" "interrupt-controller" boolean "pl.dtsi"
 		add_prop "${pcie_child_intc_node}" "#address-cells" 0 int "pl.dtsi"
 		add_prop "${pcie_child_intc_node}" "#interrupt-cells" 1 int "pl.dtsi"
+		set prop [get_property CONFIG.device_port_type [hsi::get_cells -hier $drv_handle]]
+		if {[string match -nocase $prop "Root_Port_of_PCI_Express_Root_Complex"]} {
+			add_prop $node "xlnx,device-port-type" 1 hexint "pl.dtsi"
+		}
 	}
 }
