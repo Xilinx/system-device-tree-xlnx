@@ -109,6 +109,7 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 			}
 
 		}
+		add_handles $drv_handle
 	}
 
 	proc generate_dmas {vcap_scd dmas dts_file} {
@@ -156,7 +157,22 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		}
 	}
 
-
+proc add_handles {drv_handle} {
+	set node [get_node $drv_handle]
+	set dts_file [set_drv_def_dts $drv_handle]
+	set prop [get_property CONFIG.MEMORY_BASED [hsi::get_cells -hier $drv_handle]]
+	if {$prop == 0} {
+		set tpg [hsi::get_cells -hier -filter {IP_NAME==v_tpg}]
+		if {$tpg != ""} {
+			add_prop "$node" "tpg-connected" $tpg reference $dts_file
+		}
+		set frmbufwr [hsi::get_cells -hier -filter {IP_NAME==v_frmbuf_wr}]
+		if {$frmbufwr != ""} {
+			add_prop "$node" "frmbuf-wr-connected" $frmbufwr reference $dts_file
+		}
+	}
+		
+}
 proc gen_frmbuf_node {ip drv_handle dts_file} {
 	set bus_node [detect_bus_name $drv_handle]
 	set vcap [create_node -n "vcap_sdirx$drv_handle" -p $bus_node -d $dts_file]
