@@ -115,7 +115,7 @@
 	};
 };
 
-&can1 {
+&can_1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_can1_default>;
 };

@@ -4522,7 +4522,8 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 						}
 					}
 				}
-				if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] || [string match -nocase $proctype "zynquplusRFSOC"] && [string match -nocase $intc "axi_intc"] } {
+				set proclist "zynqmp zynquplus zynquplusRFSOC"
+				if {[lsearch -nocase $proclist $proctype] >= 0 && [string match -nocase $intc "axi_intc"]} {
 					set intc [get_interrupt_parent $drv_handle $pin]
 				}
 				if {[string match -nocase $proctype "versal"] && [string match -nocase $intc "axi_intc"] } {
@@ -4573,7 +4574,6 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 					set cur_intr_info "$intr_id $intr_type"
 				}
 			} elseif {[string match -nocase $intc "psu_acpu_gic"] || [string match -nocase $intc "psv_acpu_gic"]} {
-
 			    set cur_intr_info "0 $intr_id $intr_type"
 			} else {
 				set cur_intr_info "$intr_id $intr_type"
