@@ -95,11 +95,11 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
                                         set ip_name [get_property IP_NAME $out_ip]
                                         set tpg_node [create_node -n "endpoint" -l tpg_out$drv_handle -p $port1_node -d $dts_file]
                                         gen_endpoint $drv_handle "tpg_out$drv_handle"
-                                        add_prop "$tpg_node" "remote-endpoint" $out_ip$drv_handle reference $dts_file
                                         gen_remoteendpoint $drv_handle "$out_ip$drv_handle"
                                         if {[string match -nocase $ip_name "v_mix"] || [string match -nocase $ip_name "v_tpg"]} {
                                                 continue
                                         }
+                                        add_prop "$tpg_node" "remote-endpoint" $out_ip$drv_handle reference $dts_file
                                         if {[string match -nocase [get_property IP_NAME $out_ip] "v_frmbuf_wr"] || [string match -nocase [get_property IP_NAME $out_ip] "axi_vdma"]} {
                                                 gen_frmbuf_node $out_ip $drv_handle $dts_file
                                         }
