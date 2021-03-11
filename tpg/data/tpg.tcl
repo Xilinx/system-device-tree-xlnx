@@ -93,7 +93,7 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
                                 set ip_mem_handles [hsi::get_mem_ranges $out_ip]
                                 if {[llength $ip_mem_handles]} {
                                         set ip_name [get_property IP_NAME $out_ip]
-                                        if {[string match -nocase $ip_name "v_mix"]} {
+                                        if {[string match -nocase $ip_name "v_mix"] || [string match -nocase $ip_name "v_tpg"]} {
                                                 continue
                                         }
                                         set tpg_node [create_node -n "endpoint" -l tpg_out$drv_handle -p $port1_node -d $dts_file]
