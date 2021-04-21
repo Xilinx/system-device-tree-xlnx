@@ -17,11 +17,11 @@
 	#address-cells = <2>;
 	#size-cells = <2>;
 
-	cpus_a53: cpus_a53 {
+	cpus_a53: cpus-a53@0 {
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		cpu0: cpu@0 {
+		a53_cpu0: cpu@0 {
 			compatible = "arm,cortex-a53";
 			device_type = "cpu";
 			enable-method = "psci";
@@ -30,7 +30,7 @@
 			cpu-idle-states = <&CPU_SLEEP_0>;
 		};
 
-		cpu1: cpu@1 {
+		a53_cpu1: cpu@1 {
 			compatible = "arm,cortex-a53";
 			device_type = "cpu";
 			enable-method = "psci";
@@ -39,7 +39,7 @@
 			cpu-idle-states = <&CPU_SLEEP_0>;
 		};
 
-		cpu2: cpu@2 {
+		a53_cpu2: cpu@2 {
 			compatible = "arm,cortex-a53";
 			device_type = "cpu";
 			enable-method = "psci";
@@ -48,7 +48,7 @@
 			cpu-idle-states = <&CPU_SLEEP_0>;
 		};
 
-		cpu3: cpu@3 {
+		a53_cpu3: cpu@3 {
 			compatible = "arm,cortex-a53";
 			device_type = "cpu";
 			enable-method = "psci";
@@ -71,30 +71,30 @@
 			};
 		};
 	};
-	cpus_r5: cpus_r5 {
+	cpus_r5: cpus-r5@1 {
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		cpu4: cpu@4 {
+		r5_cpu0: cpu@0 {
 			compatible = "arm,cortex-r5", "arm,armv8";
 			device_type = "cpu";
-			reg = <0x0>;
+			reg = <0x4>;
 		};
 
-		cpu5: cpu@5 {
+		r5_cpu1: cpu@1 {
 			compatible = "arm,cortex-r5", "arm,armv8";
 			device_type = "cpu";
-			reg = <0x1>;
+			reg = <0x5>;
 		};
 	};
-	cpus_microblaze: cpus_microblaze {
+	cpus_microblaze_1: cpus_microblaze@1 {
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		cpu6: cpu@6 {
+		ub1_cpu: cpu@0 {
 			compatible = "pmu-microblaze";
 			device_type = "cpu";
-			reg = <0x0>;
+			reg = <0x6>;
 			operating-points-v2 = <&cpu_opp_table>;
 		};
 	};
