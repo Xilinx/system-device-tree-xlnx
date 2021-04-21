@@ -296,10 +296,6 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		if {$vtc != ""} {
 			add_prop "$node" "vtc-connected" $vtc reference $dts_file
 		}
-		set gpio [hsi::get_cells  -filter {IP_NAME==axi_gpio}]
-		if {$gpio != ""} {
-			add_prop "$node" "gpio-connected" $gpio reference $dts_file
-		}
 
 	}
 }
