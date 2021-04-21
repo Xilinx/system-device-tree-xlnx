@@ -96,7 +96,7 @@
 	clocks = <&zynqmp_clk CAN1_REF>, <&zynqmp_clk LPD_LSBUS>;
 };
 
-&cpu0 {
+&a53_cpu0 {
 	clocks = <&zynqmp_clk ACPU>;
 };
 
