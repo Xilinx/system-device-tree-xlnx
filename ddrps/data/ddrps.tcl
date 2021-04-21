@@ -161,6 +161,9 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 			if {[string match -nocase [get_property IP_NAME $procc] "psu_pmu"]} {
 				set_memmap "${drv_handle}_memory" pmu $regprop
 			}
+			if {[string match -nocase [get_property IP_NAME $procc] "microblaze"]} {
+				set_memmap "${drv_handle}_memory" $procc $regprop
+			}
 
 		    }
 		    set addr_64 "0"
