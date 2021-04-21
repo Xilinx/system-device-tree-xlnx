@@ -59,9 +59,12 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 				} else {
 					dtg_warning "ERROR: ${drv_handle}: mm2s_introut port is not connected"
 				}
-				set intr_parent [pldt get $node "interrupt-parent"]
-				set intr_parent [string trimright $intr_parent ">"]
-				set intr_parent [string trimleft $intr_parent "<&"]
+				set intr_parent ""
+				if {[catch {set intr_parent [pldt get $node "interrupt-parent"]} msg]} {
+				} else {
+					set intr_parent [string trimright $intr_parent ">"]
+					set intr_parent [string trimleft $intr_parent "<&"]
+				}
 				if {[llength $intr_parent]} {
 					add_prop $tx_chan_node "interrupt-parent" $intr_parent reference "pl.dtsi"
 				}
@@ -77,10 +80,13 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 				} else {
 					dtg_warning "ERROR: ${drv_handle}: s2mm_introut port is not connected"
 				}
-				set intr_parent [pldt get $node "interrupt-parent"]
-				set intr_parent [pldt get $node "interrupt-parent"]
-				set intr_parent [string trimright $intr_parent ">"]
-				set intr_parent [string trimleft $intr_parent "<&"]
+				set intr_parent ""
+				if {[catch {set intr_parent [pldt get $node "interrupt-parent"]} msg]} {
+				} else {
+					set intr_parent [pldt get $node "interrupt-parent"]
+					set intr_parent [string trimright $intr_parent ">"]
+					set intr_parent [string trimleft $intr_parent "<&"]
+				}
 				if {[llength $intr_parent]} {
 					add_prop $rx_chan_node "interrupt-parent" $intr_parent reference "pl.dtsi"
 				}
