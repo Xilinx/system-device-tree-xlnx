@@ -795,7 +795,6 @@ proc create_node args {
 	if {[string match -nocase $treeobj "pcwdt"]} {
 	set ps_mapping [gen_ps_mapping]
 	if {[catch {set tmp [dict get $ps_mapping $node_unit_addr label]} msg]} {
-		
 	} else {
 		set new_name "&$node_name"
 	}
@@ -1931,6 +1930,7 @@ proc set_drv_conf_prop args {
 			}
 			regsub -all {^CONFIG.} $conf_prop {} conf_prop
 			set node [get_node $drv_handle]
+			set name [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
 			set dts_file [set_drv_def_dts $drv_handle]
 			if {[string match -nocase $dts_file "pcw.dtsi"]} {
 				set treeobj "pcwdt"
@@ -3118,6 +3118,10 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping ff320000 label "ipi0: mailbox"
 		dict set def_ps_mapping ff390000 label "ipi1: mailbox"
 		dict set def_ps_mapping ff310000 label "ipi2: mailbox"
+		dict set def_ps_mapping ff0e0000 label "ttc0: timer"
+		dict set def_ps_mapping ff0f0000 label "ttc1: timer"
+		dict set def_ps_mapping ff100000 label "ttc2: timer"
+		dict set def_ps_mapping ff110000 label "ttc3: timer"
 		dict set def_ps_mapping	f0280000 label "iomodule0: iomodule"
 		dict set def_ps_mapping	ff9d0000 label "usb0: usb"
 		dict set def_ps_mapping	fe200000 label "dwc3_0: dwc3"
@@ -5595,6 +5599,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 					if {[string match -nocase $dev_type "psv_fpd_smmutcu"]} {
 							set dev_type "psv_fpd_maincci"
 					}
+					set t [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
 					set rt_node [create_node -n ${dev_type} -l ${label} -u ${unit_addr} -d ${default_dts} -p $bus_node]
 				}
 			}
