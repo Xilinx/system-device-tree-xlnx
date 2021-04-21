@@ -1187,15 +1187,12 @@ proc is_pin_interrupting_current_proc { periph_name intr_pin_name} {
         return $ret
     }
     #get the list of connected 
-	puts "is"
     set intr_cntrls [get_connected_intr_cntrl "$periph_name" "$intr_pin_name"]
-	puts "is1"
     foreach intr_cntrl $intr_cntrls {
         if { [is_ip_interrupting_current_proc $intr_cntrl] == 1} {
             return 1
         }
     }
-	puts "is3"
    return [special_handling_for_ps7_interrupt $periph_name]
 }
 
@@ -1237,7 +1234,6 @@ proc is_ip_interrupting_current_proc { periph_name} {
             return 0
         }
         #set current_proc [common::get_property HW_INSTANCE [hsi::get_sw_processor]]
-	#SURESH
 	set proc_list "psv_cortexa72_0 psu_cortexa53_0 ps7_cortexa9_0"
 #        set current_proc "psv_cortexa72_0"
 #	set current_proc [get_hw_family]
