@@ -16,7 +16,7 @@
 	compatible = "xlnx,zynqmp-zcu104-revA", "xlnx,zynqmp-zcu104", "xlnx,zynqmp";
 };
 
-&can1 {
+&can_1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_can1_default>;
 };
