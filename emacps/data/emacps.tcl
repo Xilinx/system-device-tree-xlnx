@@ -167,13 +167,13 @@ proc generate {drv_handle} {
 			      set inhex [format %x $val]
 			      set_drv_prop $drv_handle phy-handle "phy$inhex" reference
 			      set pcspma_phy_node [create_node -l phy$inhex -n phy -u $inhex -p $node -d $dts_file]
-			      add_prop "${pcspma_phy_node}" "reg" $val int $dts_fle
+			      add_prop "${pcspma_phy_node}" "reg" $val int $dts_file
 			      set phy_type [get_property CONFIG.Standard $connected_ip]
 			      set is_sgmii [get_property CONFIG.c_is_sgmii $connected_ip]
 			      if {$phy_type == "1000BASEX"} {
-				      add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x5 int $dts_fle
+				      add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x5 int $dts_file
 			      } elseif { $is_sgmii == "true"} {
-				      add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x4 int $dts_fle
+				      add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x4 int $dts_file
 			      } else {
 				      dtg_warning "unsupported phytype:$phy_type"
 			      }
