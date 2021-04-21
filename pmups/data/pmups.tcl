@@ -18,11 +18,11 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		set dts_file [set_drv_def_dts $drv_handle]
 		set ip_name [get_property IP_NAME [hsi::get_cells $drv_handle]]
 		if {[string match -nocase $ip_name "psu_pmu"]} {
-			set node "&cpu6"
+			set node "&ub1_cpu"
 		} elseif {[string match -nocase $ip_name "psv_pmc"]} {
-			set node "&cpu2"
+			set node "&ub1_cpu"
 		} else {
-			set node "&cpu3"
+			set node "&ub2_cpu"
 		}
 		global env
 		set path $env(REPO)
