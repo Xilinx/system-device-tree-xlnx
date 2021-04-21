@@ -132,6 +132,9 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 				if {[string match -nocase [get_property IP_NAME $procc] "psv_psm"]} {
 					set_memmap "${drv_handle}_memory" psm $reg
 				}
+				if {[string match -nocase [get_property IP_NAME $procc] "microblaze"]} {
+					set_memmap "${drv_handle}_memory" $procc $reg
+				}
                 	}
                 	add_prop "${memory_node}" "reg" $reg hexlist "system-top.dts" 1
 		        set dev_type memory
