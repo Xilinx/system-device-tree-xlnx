@@ -20,47 +20,54 @@
 namespace eval ::tclapp::xilinx::devicetree::cpu {
 namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
-	    set node [get_node $drv_handle]
-	    set dts_file [set_drv_def_dts $drv_handle]
-	    set ip [hsi::get_cells -hier $drv_handle]
-	    set clk ""
-	    set clkhandle [hsi::get_pins -of_objects $ip "CLK"]
-	    if { [string compare -nocase $clkhandle ""] != 0 } {
+	set proctype [get_hw_family]
+	set bus_name [detect_bus_name $drv_handle]
+	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+		set node [create_node -n "cpus_microblaze" -l "cpus_microblaze_2" -u 2 -d "pl.dtsi" -p $bus_name]
+	} elseif {[string match -nocase $proctype "versal"]} {
+		set node [create_node -n "cpus_microblaze" -l "cpus_microblaze_3" -u 3 -d "pl.dtsi" -p $bus_name]
+	}
+	set node [create_node -n "cpu" -u 0 -d "pl.dtsi" -p $node]
+        set dts_file [set_drv_def_dts $drv_handle]
+	set ip [hsi::get_cells -hier $drv_handle]
+	set clk ""
+	set clkhandle [hsi::get_pins -of_objects $ip "CLK"]
+	if { [string compare -nocase $clkhandle ""] != 0 } {
 		set clk [get_property CLK_FREQ $clkhandle]
-	    }
-	    if { [llength $ip]  } {
-		add_prop $node "clock-frequency" $clk" int $dts_file
-		add_prop $node "timebase-frequency" int $dts_file
-	    }
+	}
+	if { [llength $ip]  } {
+		add_prop $node "clock-frequency" $clk int $dts_file
+		add_prop $node "timebase-frequency" $clk int $dts_file
+	}
+	set icache_size [get_ip_param_value $ip "C_CACHE_BYTE_SIZE"]
+	set icache_base [get_ip_param_value $ip "C_ICACHE_BASEADDR"]
+	set icache_high [get_ip_param_value $ip "C_ICACHE_HIGHADDR"]
+	set dcache_size [get_ip_param_value $ip "C_DCACHE_BYTE_SIZE"]
+	set dcache_base [get_ip_param_value $ip "C_DCACHE_BASEADDR"]
+	set dcache_high [get_ip_param_value $ip "C_DCACHE_HIGHADDR"]
+	set icache_line_size [expr 4*[get_ip_param_value $ip "C_ICACHE_LINE_LEN"]]
+	set dcache_line_size [expr 4*[get_ip_param_value $ip "C_DCACHE_LINE_LEN"]]
 
-	    set icache_size [get_ip_param_value $ip "C_CACHE_BYTE_SIZE"]
-	    set icache_base [get_ip_param_value $ip "C_ICACHE_BASEADDR"]
-	    set icache_high [get_ip_param_value $ip "C_ICACHE_HIGHADDR"]
-	    set dcache_size [get_ip_param_value $ip "C_DCACHE_BYTE_SIZE"]
-	    set dcache_base [get_ip_param_value $ip "C_DCACHE_BASEADDR"]
-	    set dcache_high [get_ip_param_value $ip "C_DCACHE_HIGHADDR"]
-	    set icache_line_size [expr 4*[get_ip_param_value $ip "C_ICACHE_LINE_LEN"]]
-	    set dcache_line_size [expr 4*[get_ip_param_value $ip "C_DCACHE_LINE_LEN"]]
 
-
-	    if { [llength $icache_size] != 0 } {
+	if { [llength $icache_size] != 0 } {
 		add_prop $node "i-cache-baseaddr"  "$icache_base" hexint $dts_file
 		add_prop $node "i-cache-highaddr" $icache_high hexint $dts_file
 		add_prop $node "i-cache-size" $icache_size int $dts_file
 		add_prop $node "i-cache-line-size" $icache_line_size int $dts_file
-	    }
-	    if { [llength $dcache_size] != 0 } {
+	}
+	if { [llength $dcache_size] != 0 } {
 		add_prop $node "d-cache-baseaddr"  "$dcache_base" hexint $dts_file
 		add_prop $node "d-cache-highaddr" $dcache_high hexint $dts_file
 		add_prop $node "d-cache-size" $dcache_size int $dts_file
 		add_prop $node "d-cache-line-size" $dcache_line_size int $dts_file
-
-	    }
-	    set model "[get_property IP_NAME $ip],[get_ip_version $ip]"
-	    add_prop $node "model" $model string $dts_file
-	    set_drv_conf_prop $drv_handle C_FAMILY "xlnx,family" string
-	    # create root node
-	    set master_root_node [gen_root_node $drv_handle]
-	    set nodes [gen_cpu_nodes $drv_handle]
 	}
+	set model "[get_property IP_NAME $ip],[get_ip_version $ip]"
+	add_prop $node "model" $model string $dts_file
+	#set_drv_conf_prop $drv_handle C_FAMILY "xlnx,family" string
+        set family [get_property C_FAMILY [hsi::get_cells -hier $drv_handle]]
+	add_prop $node "xlnx,family" $family string $dts_file
+	# create root node
+	set master_root_node [gen_root_node $drv_handle]
+	set nodes [gen_cpu_nodes $drv_handle]
+   }
 }

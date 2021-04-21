@@ -73,6 +73,8 @@ dict with driver_param alias {
 	lappend items psv_sbsauart serial
 }
 global set osmap [dict create]
+global set microblaze_map [dict create]
+global set mc_map [dict create]
 global set memmap [dict create]
 global set label_addr [dict create]
 global set label_type [dict create]
@@ -165,6 +167,45 @@ proc get_type args {
 	return $type
 }
 
+proc get_microblaze_nr {drv_handle} {
+	global microblaze_map
+	set proctype [get_hw_family]
+	set microblaze_proc [hsi::get_cells -hier -filter {IP_NAME==microblaze}]
+	set theValue 1
+	if {[llength $microblaze_proc] >= 0} {
+	if {[catch {set rt [dict get $microblaze_map $drv_handle]} msg]} {
+		if {[catch {set len [dict size $microblaze_map]} msg]} {
+			set theValue 0
+		}
+		if {$theValue != 0} {
+			foreach theKey [dict keys $microblaze_map] {
+				set theValue [dict get $microblaze_map $theKey]
+			}
+		}
+		if {[string match -nocase $proctype "versal"]} {
+			if {$theValue } {
+				set val [expr $theValue + 3]
+				dict set microblaze_map $drv_handle $val
+				return $val
+			} else {
+				dict set microblaze_map $drv_handle 3
+				return 3
+			}
+		} elseif {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+			if {$theValue } {
+				set val [expr $theValue + 2]
+				dict set microblaze_map $drv_handle $val
+				return $val
+			} else {
+				dict set microblaze_map $drv_handle 2
+				return 2
+			}
+		}
+	} else {
+		return $rt
+	}	
+	}
+}
 proc get_driver_param args {
 	global driver_param
 	set drv_handle [lindex $args 0]
@@ -189,6 +230,17 @@ proc get_count args {
 	}
 
 	return $value
+}
+
+proc get_mc_map args {
+	set param [lindex $args 0]
+	global mc_map
+	if {[catch {set rt [dict get $mc_map $param]} msg]} {
+		dict append mc_map $param
+		return 1
+	} else {
+		return 0
+	}
 }
 
 proc get_label_addr args {
@@ -382,6 +434,17 @@ proc get_node args {
 
 	proc_called_by
 	set handle [lindex $args 0]
+	set non_val_list "versal_cips noc_nmu noc_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect"
+	set non_val_ip_types "MONITOR BUS PROCESSOR"
+	set ip_name [get_property IP_NAME [hsi::get_cells -hier $handle]]
+	set ip_type [get_property IP_TYPE [hsi::get_cells -hier $handle]]
+	if {[lsearch -nocase $non_val_list $ip_name] >= 0} {
+		return ""
+	}
+	if {[lsearch -nocase $non_val_ip_types $ip_type] >= 0 } {
+		return ""
+	}
+
 	if {[is_ps_ip $handle]} {
 		set dts_file "versal.dtsi"
 	} else {
@@ -404,6 +467,7 @@ proc get_node args {
 		if {[string match -nocase $treeobj "pcwdt"]} {
 		set busname "&amba"
 		} else {
+
 			set busname [detect_bus_name $handle]
 		}
 	} elseif {[string match -nocase $ip_type "PROCESSOR"] || [string match -nocase $treeobj "pcwdt"]} {
@@ -415,6 +479,9 @@ proc get_node args {
 	foreach child $childs {
 	}
 	set dev_type [get_property IP_NAME [hsi::get_cells -hier $handle]]
+	if {[string match -nocase $dev_type "psv_fpd_smmutcu"]} {
+		set dev_type "psv_fpd_maincci"
+	}
 	if {[is_ps_ip $handle]} {
 		set ps_mapping [gen_ps_mapping]
 		if {[catch {set tmp [dict get $ps_mapping $addr label]} msg]} {
@@ -681,14 +748,21 @@ proc create_node args {
 		}
 		Pop args
 	}
-	set ignore_list "clk_wiz xlconcat xlconstant util_vector_logic xlslice util_ds_buf proc_sys_reset axis_data_fifo v_vid_in_axi4s bufg_gt axis_tdest_editor util_reduced_logic gt_quad_base noc_nsw blk_mem_gen"
+	set ignore_list "clk_wiz xlconcat xlconstant util_vector_logic xlslice util_ds_buf proc_sys_reset axis_data_fifo v_vid_in_axi4s bufg_gt axis_tdest_editor util_reduced_logic gt_quad_base noc_nsw blk_mem_gen emb_mem_gen lmb_bram_if_cntlr perf_axi_tg noc_mc_ddr4 c_counter_binary timer_sync_1588 oddr"
 	set temp [lsearch $ignore_list $node_name]
-	if {[string match -nocase $node_unit_addr ""] && $temp >= 0} {
+	if {[string match -nocase $node_unit_addr ""] && $temp >= 0 } {
 		set val_lab [string match -nocase $node_label ""]
 		set val_name [string match -nocase $node_name ""]
 		if {$val_lab != 1 && $val_name != 1} {
 			set node_unit_addr [get_label_addr $node_name $node_label]
 		}
+	}
+	if {[string match -nocase $node_name "lmb_bram_if_cntlr"]} {
+		set val_lab [string match -nocase $node_label ""]
+		set val_name [string match -nocase $node_name ""]
+		
+			set node_unit_addr [get_label_addr $node_name $node_label]
+		
 	}
 	if {[string match -nocase $node_name "aliases"]} {
 		set interconnect [systemdt insert root end aliases]
@@ -1923,36 +1997,42 @@ proc add_cross_property args {
 					set value "$low_base $high_base"
 				}
 
-				set valid_proclist "psv_cortexa72 psv_cortexr5 psu_cortexa53 psu_cortexr5 psu_pmu psv_pmc psv_psm"
+				set valid_proclist "psv_cortexa72 psv_cortexr5 psu_cortexa53 psu_cortexr5 psu_pmu psv_pmc psv_psm microblaze"
 				if {[string match -nocase $ipname "psv_rcpu_gic"]} {
 					set node [create_node -n "&gic_r5" -d "pcw.dtsi" -p root]
 				} elseif {[lsearch $valid_proclist $ipname] >= 0} {
 					switch $ipname {
 						"psv_cortexa72" {
 							set index [string index $src_handle end]
-							set node [create_node -n "&cpu${index}" -d "pcw.dtsi" -p root]
+							set node [create_node -n "&a72_cpu${index}" -d "pcw.dtsi" -p root]
 						} "psv_cortexr5" {
 							set index [string index $src_handle end]
-							set index [expr $index + 4]
-							set node [create_node -n "&cpu${index}" -d "pcw.dtsi" -p root]
+							set node [create_node -n "&r5_cpu${index}" -d "pcw.dtsi" -p root]
 						} "psv_pmc" {
-							set node [create_node -n "&cpu2" -d "pcw.dtsi" -p root]
+							set node [create_node -n "&ub1_cpu" -d "pcw.dtsi" -p root]
 						} "psv_psm" {
-							set node [create_node -n "&cpu3" -d "pcw.dtsi" -p root]
+							set node [create_node -n "&ub2_cpu" -d "pcw.dtsi" -p root]
 						} "psu_cortexa53" {
 							set index [string index $src_handle end]
-							set node [create_node -n "&cpu${index}" -d "pcw.dtsi" -p root] 
+							set node [create_node -n "&a53_cpu${index}" -d "pcw.dtsi" -p root] 
 						} "psu_cortexr5" {
 							set index [string index $src_handle end]
-							set index [expr $index + 4]
-							set node [create_node -n "&cpu${index}" -d "pcw.dtsi" -p root]
+							set node [create_node -n "&r5_cpu${index}" -d "pcw.dtsi" -p root]
 						} "psu_pmu" {
-							set node [create_node -n "&cpu6" -d "pcw.dtsi" -p root]
+							set node [create_node -n "&ub1_cpu" -d "pcw.dtsi" -p root]
+						} "microblaze" {
+								set node [create_node -n "cpu" -u 0 -d "pl.dtsi" -p root]
 						}
 					}
 				} else {
 					set node [get_node $dest_handle]
 				}
+				if {[string match -nocase $dest_prop "xlnx,s-axi-highaddr"] ||[string match -nocase $dest_prop "xlnx,s-axi-baseaddr"] } {
+					return 0
+				}
+				if {[string match -nocase $dest_prop "xlnx,intc-level-edge"]} {
+                                       set value [expr $value << 16 | 0x7fff]
+                                }
 				add_prop $node $dest_prop $value $type [set_drv_def_dts $dest_handle]
 				return 0
 			}
@@ -4404,15 +4484,28 @@ proc gen_mb_interrupt_property {cpu_handle {intr_port_name ""}} {
 	set intc ""
 
 	if {[string_is_empty $intr_port_name]} {
-		set intr_port_name [get_pins -of_objects $slave -filter {TYPE==INTERRUPT}]
+		set intr_port_name [hsi::get_pins -of_objects $slave -filter {TYPE==INTERRUPT}]
 	}
 	set cpin [get_interrupt_sources [hsi::get_cells -hier $cpu_handle]]
-	set intc [hsi::get_cells -of_objects $cpin]
+	if {![string_is_empty $cpin]} {
+		set intc [hsi::get_cells -of_objects $cpin]
+	}
 	if {[string_is_empty $intc]} {
-		error "no interrupt controller found"
+		dtg_warning "no interrupt controller found"
+		return
 	}
 
-	set_drv_prop $cpu_handle interrupt-handle $intc reference
+	set proctype [get_hw_family]
+	set bus_name [detect_bus_name $cpu_handle]
+	set count [get_microblaze_nr $cpu_handle]
+	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+		set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
+	} elseif {[string match -nocase $proctype "versal"]} {
+		set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
+	}
+	set cpu_node [create_node -n "cpu" -u 0 -d "pl.dtsi" -p $rt_node]
+	add_prop $cpu_node "interrupt-handle" $intc reference "pl.dtsi"
+	#set_drv_prop $cpu_handle interrupt-handle $intc reference
 }
 
 proc get_interrupt_parent {  periph_name intr_pin_name } {
@@ -5027,11 +5120,14 @@ proc gen_compatible_property {drv_handle} {
 	set reg ""
 	set slave [hsi::get_cells -hier ${drv_handle}]
 	set proctype [get_property IP_TYPE $slave]
-	if {[string match -nocase $proctype "processor"]} {
+	if {[string match -nocase $proctype "processor"] && ![string match -nocase $ip_name "microblaze"]} {
 		return 0
 	}
 	set vlnv [split [get_property VLNV $slave] ":"]
 	set name [lindex $vlnv 2]
+	if {[string match -nocase $name "psv_fpd_smmutcu"]} {
+		set name "psv_fpd_maincci"
+	}
 	set ver [lindex $vlnv 3]
 	if {[string match -nocase $ver ""]} {
 		set comp_prop "xlnx,${name}"
@@ -5043,7 +5139,21 @@ proc gen_compatible_property {drv_handle} {
 		set comp_prop "${comp_prop}${index}"
 	}
 	regsub -all {_} $comp_prop {-} comp_prop
-	set_drv_prop_if_empty $drv_handle compatible $comp_prop stringlist
+	if {[string match -nocase $proctype "processor"]} {
+		set proctype [get_hw_family]
+		set bus_name [detect_bus_name $drv_handle]
+		set count [get_microblaze_nr $drv_handle]
+		if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+			set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
+		} elseif {[string match -nocase $proctype "versal"]} {
+			set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
+		}
+		set node [create_node -n "cpu" -u 0 -d "pl.dtsi" -p $rt_node]
+		add_prop $node compatible "$comp_prop xlnx,microblaze" stringlist "pl.dtsi"	
+	} else {
+		
+		set_drv_prop_if_empty $drv_handle compatible $comp_prop stringlist
+	}
 
 }
 
@@ -5059,18 +5169,18 @@ proc ip2drv_prop {ip_name ip_prop_name} {
 	set ip [hsi::get_cells -hier $ip_name]
 	set emac [get_property IP_NAME $ip]
 
-	if { $emac == "axi_ethernet"} {
+	if { $emac == "axi_ethernet1"} {
 		# remove CONFIG.
 		set prop [get_property $ip_prop_name [hsi::get_cells -hier $ip_name]]
 		set drv_prop_name $ip_prop_name
 		regsub -all {CONFIG.} $drv_prop_name {xlnx,} drv_prop_name
 		regsub -all {_} $drv_prop_name {-} drv_prop_name
 		set drv_prop_name [string tolower $drv_prop_name]
-		set node [get_node $drv_handle]
-		add_prop $node $ip_prop_name $drv_prop_name hexint
+		set node [get_node $ip_name]
+		add_prop $node $drv_prop_name hexint "pl.dtsi"
 		return
 	}
-	if {[string match -nocase $ip_prop_name "CONFIG.C_AXIS_SIGNAL_SET"] || [string match -nocase $ip_prop_name "CONFIG.C_USE_BRAM_BLOCK"] || [string match -nocase $ip_prop_name "CONFIG.C_ALGORITHM"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_TYPE"] || [string match -nocase $ip_prop_name "CONFIG.C_INTERFACE_TYPE"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_SLAVE_TYPE"] || [string match -nocase $ip_prop_name "CONFIG.device_port_type"]} {
+	if {[string match -nocase $ip_prop_name "CONFIG.C_AXIS_SIGNAL_SET"] || [string match -nocase $ip_prop_name "CONFIG.C_USE_BRAM_BLOCK"] || [string match -nocase $ip_prop_name "CONFIG.C_ALGORITHM"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_TYPE"] || [string match -nocase $ip_prop_name "CONFIG.C_INTERFACE_TYPE"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_SLAVE_TYPE"] || [string match -nocase $ip_prop_name "CONFIG.device_port_type"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_WRITE_BASEADDR_SLV"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_WRITE_HIGHADDR_SLV"]} {
 		return
 	}
 	set drv_prop_name $ip_prop_name
@@ -5452,39 +5562,50 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 				switch $ip_type {
 					"psv_cortexa72" {
 						set index [string index $drv_handle end]
-						set rt_node [create_node -n "&cpu${index}" -d ${default_dts} -p root]
+						set rt_node [create_node -n "&a72_cpu${index}" -d ${default_dts} -p root]
 					} "psv_cortexr5" {
 						set index [string index $drv_handle end]
-						set index [expr $index + 4]
-						set rt_node [create_node -n "&cpu${index}" -d ${default_dts} -p root]
+						set rt_node [create_node -n "&r5_cpu${index}" -d ${default_dts} -p root]
 					} "psv_pmc" {
-						set rt_node [create_node -n "&cpu2" -d ${default_dts} -p root]
+						set rt_node [create_node -n "&ub1_cpu" -d ${default_dts} -p root]
 					} "psv_psm" {
-						set node [create_node -n "&cpu3" -d "pcw.dtsi" -p root]
+						set node [create_node -n "&ub2_cpu" -d "pcw.dtsi" -p root]
 					} "psu_cortexa53" {
 						set index [string index $src_handle end]
-						set node [create_node -n "&cpu${index}" -d "pcw.dtsi" -p root] 
+						set node [create_node -n "&a53_cpu${index}" -d "pcw.dtsi" -p root] 
 					} "psu_cortexr5" {
 						set index [string index $src_handle end]
-						set index [expr $index + 4]
-						set node [create_node -n "&cpu${index}" -d "pcw.dtsi" -p root]
+						set node [create_node -n "&r5_cpu${index}" -d "pcw.dtsi" -p root]
 					} "psu_pmu" {
-						set node [create_node -n "&cpu6" -d "pcw.dtsi" -p root]
+						set node [create_node -n "&ub1_cpu" -d "pcw.dtsi" -p root]
 					}
 				}
 			} else {
-				set rt_node [create_node -n ${dev_type} -l ${label} -u ${unit_addr} -d ${default_dts} -p $bus_node]
+				if {[string match -nocase $ip_type "microblaze"]} {
+					set proctype [get_hw_family]
+					set bus_name [detect_bus_name $drv_handle]
+					set count [get_microblaze_nr $drv_handle]
+					if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+						set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d ${default_dts} -p $bus_name]
+					} elseif {[string match -nocase $proctype "versal"]} {
+						set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d ${default_dts} -p $bus_name]
+					}
+					set rt_node [create_node -n "cpu" -u 0 -d "pl.dtsi" -p $rt_node]
+				} else {
+					if {[string match -nocase $dev_type "psv_fpd_smmutcu"]} {
+							set dev_type "psv_fpd_maincci"
+					}
+					set rt_node [create_node -n ${dev_type} -l ${label} -u ${unit_addr} -d ${default_dts} -p $bus_node]
+				}
 			}
 		}
 
 		add_prop $rt_node "status" "okay" string $default_dts
 	}
 
-
 	zynq_gen_pl_clk_binding $drv_handle
 	# generate mb ccf node
 	generate_mb_ccf_node $drv_handle
-
 	generate_cci_node $drv_handle $rt_node
 
 	set dts_file_list ""
@@ -5537,12 +5658,17 @@ proc detect_bus_name {ip_drv} {
 		if {[is_pl_ip $ip_drv] && $dt_overlay} {
 			# create the parent_node for pl.dtsi
 			set default_dts [set_drv_def_dts $ip_drv]
+			set fpga_node [create_node -n "fragment" -u 2 -d $default_dts -p root]
+			set targets "amba"
+			add_prop $fpga_node target "$targets" reference $default_dts 1
+			set child_name "__overlay__"
+			set bus_node [create_node -l "overlay2" -n $child_name -p $fpga_node -d $default_dts]
 			return "overlay2: __overlay__"
 		}
 		if {[is_pl_ip $ip_drv]}  {
 			# create the parent_node for pl.dtsi
 			set default_dts [set_drv_def_dts $ip_drv]
-			set root_node [create_node -n "amba_pl: amba_pl" -d ${default_dts} -p root]
+			set root_node [create_node -n "amba_pl" -l "amba_pl" -d ${default_dts} -p root]
 			return "amba_pl: amba_pl"
 		}
 		if {[string match -nocase $ip_drv "psu_acpu_gic"] || [string match -nocase $ip_drv "psv_acpu_gic"]} {
@@ -5659,8 +5785,12 @@ proc gen_root_node {drv_handle} {
 	set unit_addr [get_baseaddr $drv_handle noprefix]
 	set ps_mapping [gen_ps_mapping]
 	if {[catch {set tmp [dict get $ps_mapping $unit_addr label]} msg]} {
-		set root_node [create_node -n "&amba" -d $default_dts -p root]
+		if {[is_ps_ip $drv_handle]} {
+			set root_node [create_node -n "&amba" -d $default_dts -p root]
+		}
 	} elseif {[string match -nocase $default_dts "pcw.dtsi"]} {
+		set root_node "root"
+	} elseif {[string match -nocase $default_dts "pl.dtsi"]} {
 		set root_node "root"
 	}
 	switch $ip_name {
@@ -5751,8 +5881,19 @@ proc gen_root_node {drv_handle} {
 			return 0
 		}
 		"microblaze" {
-			set compatible "xlnx,microblaze"
-			set model "Xilinx MicroBlaze"
+			set family [get_hw_family]
+			set count [get_microblaze_nr $drv_handle]
+			set bus_name [detect_bus_name $drv_handle]
+			if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
+				set root_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d ${default_dts} -p $bus_name]
+			} elseif {[string match -nocase $family "versal"]} {
+				set root_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d ${default_dts} -p $bus_name]
+			}
+			add_prop $root_node "compatible" "cpus,cluster" string $default_dts
+			add_prop $root_node "#address-cells" 1 int $default_dts
+			add_prop $root_node "#size-cells" 0 int $default_dts
+			add_prop $root_node "#cpu-mask-cells" 1 int $default_dts
+			return 0
 		}
 		default {
 			return -code error "Unknown arch"
@@ -5818,6 +5959,7 @@ proc gen_cpu_nodes {drv_handle} {
 		} "psv_psm" {
 		} "psv_cortexr5" {
 		} "psu_cortexr5" {
+		} "microblaze" {
 		}
 		default {
 			error "Unknown arch"
@@ -5834,7 +5976,7 @@ proc gen_cpu_nodes {drv_handle} {
 
 	set default_dts [set_drv_def_dts $drv_handle]
 	set processor_type [get_property IP_NAME [hsi::get_cells -hier ${drv_handle}]]
-	set proc_list "psu_pmu psv_pmc psu_cortexr5 psu_cortexa53 psv_cortexa72 psv_cortexr5 ps7_cortexa9 psv_psm"
+	set proc_list "psu_pmu psv_pmc psu_cortexr5 psu_cortexa53 psv_cortexa72 psv_cortexr5 ps7_cortexa9 psv_psm microblaze"
 	if {[lsearch -nocase $proc_list $processor_type] >= 0} {
 	} else {
 		set cpu_root_node [get_node $drv_handle]
@@ -5842,14 +5984,13 @@ proc gen_cpu_nodes {drv_handle} {
 		add_prop $cpu_root_node "#size-cells" 0 int $default_dts
 	}
 	if {[string match -nocase $processor_type "psv_cortexa72"] || [string match -nocase $processor_type "psu_cortexa53"] || \
-		[string match -nocase $processor_type "ps7_cortexa9"]} {
+		[string match -nocase $processor_type "ps7_cortexa9"] || [string match -nocase $processor_type "microblaze"]} {
 		set processor_list [eval "hsi::get_cells -hier -filter { IP_TYPE == \"PROCESSOR\" && IP_NAME == \"${processor_type}\" }"]
 	} else {
 		set processor_list $drv_handle
 	}
 
 	set drv_dt_prop_list [get_driver_conf_list $drv_handle]
-
 	# generate mb ccf node
 	generate_mb_ccf_node $drv_handle
 	set bus_node [add_or_get_bus_node $drv_handle $default_dts]
@@ -5867,7 +6008,7 @@ proc gen_cpu_nodes {drv_handle} {
 			}
 		}
 		if {[string match -nocase $processor_type "psu_pmu"]} {
-			set cpu_node [pcwdt insert root end "&cpu6"]
+			set cpu_node [pcwdt insert root end "&ub1_cpu"]
 			add_prop $cpu_node "microblaze_ddr_reserve_ea" [get_property CONFIG.C_DDR_RESERVE_EA $slave] int $default_dts
 			add_prop $cpu_node "microblaze_ddr_reserve_sa" [get_property CONFIG.C_DDR_RESERVE_SA $slave] int $default_dts
 			set name [split [get_property NAME $slave] "_"]
@@ -5881,9 +6022,9 @@ proc gen_cpu_nodes {drv_handle} {
 			set loop 1
 		} elseif {[string match -nocase $processor_type "psv_pmc"] || [string match -nocase $processor_type "psv_psm"]} {
 			if {[string match -nocase $processor_type "psv_pmc"]} {
-				set cpu_node [pcwdt insert root end "&cpu2"]
+				set cpu_node [pcwdt insert root end "&ub1_cpu"]
 			} else {
-				set cpu_node [pcwdt insert root end "&cpu3"]
+				set cpu_node [pcwdt insert root end "&ub2_cpu"]
 			}
 			set name [split [get_property NAME $slave] "_"]
 			set cpu [lindex $name 2]
@@ -5897,19 +6038,11 @@ proc gen_cpu_nodes {drv_handle} {
 			set name [split [get_property NAME $slave] "_"]
 			set cpu [lindex $name 2]
 			if {[string match -nocase $cpu "0"]} {
-				if {[string match -nocase $processor_type "psu_cortexr5"]} {
-					set cpu_nr 4
-				} else {
-					set cpu_nr 4 
-				}
+					set cpu_nr 0
 			} else {
-				if {[string match -nocase $processor_type "psu_cortexr5"]} {
-					set cpu_nr 5
-				} else {
-					set cpu_nr 5
-				}
+					set cpu_nr 1
 			}
-			set cpu_node [pcwdt insert root end "&cpu${cpu_nr}"]
+			set cpu_node [pcwdt insert root end "&r5_cpu${cpu_nr}"]
 			add_prop $cpu_node "cpu-frequency" [get_property CONFIG.C_CPU_CLK_FREQ_HZ $slave] int $default_dts
 			set compatiblelist [lappend compatiblelist "arm,cortex-r5"]
 			set compatiblelist [lappend compatiblelist "arm,cortex-r5-$cpu"]
@@ -5921,9 +6054,9 @@ proc gen_cpu_nodes {drv_handle} {
 			set name [split [get_property NAME $slave] "_"]
 			set cpu_nr [lindex $name 2]
 			if {[string match -nocase $processor_type "psu_cortexa53"]} {
-				set cpu_node [pcwdt insert root end "&cpu${cpu_nr}"]
+				set cpu_node [pcwdt insert root end "&a53_cpu${cpu_nr}"]
 			} else {
-				set cpu_node [pcwdt insert root end "&cpu${cpu_nr}"]
+				set cpu_node [pcwdt insert root end "&a72_cpu${cpu_nr}"]
 			}
 			add_prop $cpu_node "cpu-frequency" [get_property CONFIG.C_CPU_CLK_FREQ_HZ $slave] int $default_dts
 			add_prop $cpu_node "stamp-frequency" [get_property CONFIG.C_TIMESTAMP_CLK_FREQ $slave] int $default_dts
@@ -5950,8 +6083,16 @@ proc gen_cpu_nodes {drv_handle} {
 			}
 			set loop 1
 		} else {
-			set cpu_node [create_node -l ${dev_type} -n "$cpu" -u ${cpu_no} -d ${default_dts} -p root]
-			add_prop $cpu_node "reg" $cpu_no int $default_dts
+			set proctype [get_hw_family]
+			set bus_name [detect_bus_name $drv_handle]
+			set count [get_microblaze_nr $drv_handle]
+			if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+				set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d ${default_dts} -p $bus_name]
+			} elseif {[string match -nocase $proctype "versal"]} {
+				set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d ${default_dts} -p $bus_name]
+			}
+			set cpu_node [create_node -n "cpu" -u 0 -d "pl.dtsi" -p $rt_node]
+			#set cpu_node [pldt insert root end "cpu@0"]
 		}
 		add_prop $cpu_node "bus-handle" $bus_label reference $default_dts
 		foreach drv_prop_name $drv_dt_prop_list {
@@ -7575,7 +7716,8 @@ proc update_endpoints {drv_handle} {
 			set label $ip
 			set ip_type [get_property IP_TYPE $ip]
                         if {[string match -nocase $ip_type "BUS"]} {
-                               break
+                               #break
+								return
                         }
 
 			set bus_node [detect_bus_name $ip]
@@ -7839,7 +7981,7 @@ proc get_connect_ip {ip intfpins dts_file} {
         global connectip ""
         foreach intf $intfpins {
                 set connectip [get_connected_stream_ip [hsi::get_cells -hier $ip] $intf]
-		if {[llength $connectip]} {
+				if {[llength $connectip]} {
                        if {[string match -nocase [get_property IP_NAME [hsi::get_cells -hier $connectip]] "axis_switch"]} {
                                gen_axis_switch $connectip
                                break
