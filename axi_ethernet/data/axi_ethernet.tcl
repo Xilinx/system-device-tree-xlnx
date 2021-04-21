@@ -313,9 +313,10 @@ set rxethmem 0
 		    for {set i 2} {$i <= $num_queues} {incr i} {
 			set i [format "%x" $i]
 			append id "\""
-			append id ",\"" $i
+			append id " ,\"" $i
 			set i [expr 0x$i]
 		   }
+			puts "chanll $id"
 		    add_prop $node "xlnx,channel-ids" $id intlist "pl.dtsi"
 		    #add_prop $node "xlnx,channel-ids" $id intlist $dts_file
 		    if {$ip_name == "xxv_ethernet"  && $core!= 0} {
@@ -357,6 +358,7 @@ set rxethmem 0
 #			add_prop $node "interrupt-parent" $intr_parent reference "pcw.dtsi"
 #			add_prop $node "interrupt-names" $intr_names stringlist "pcw.dtsi"
 			if {$ip_name == "xxv_ethernet"  && $core!= 0} {
+				puts "inter $intr_val"
 			     add_prop "${eth_node}" "interrupts" $intr_val int $dts_file
 			     add_prop "${eth_node}" "interrupt-parent" $intr_parent reference $dts_file
 			     add_prop "${eth_node}" "interrupt-names" $intr_names stringlist $dts_file
@@ -366,6 +368,7 @@ set rxethmem 0
                                regsub -all "\}||\t" $intr_val1 {} intr_val1
                                add_prop "${nodep}" "interrupts" $intr_val1 int "pcw.dtsi"
                        } else {
+				puts "2intr $intr_val"
                                add_prop "${nodep}" "interrupts" $intr_val int "pcw.dtsi"
                        }
                        add_prop "${nodep}" "interrupt-parent" $intr_parent reference "pcw.dtsi"
