@@ -242,13 +242,13 @@ set rxethmem 0
     	    }
 #	    set_property phy-mode "$phytype" $drv_handle
 	    if {![string match -nocase $phytype ""]} {
-		add_prop $node phy-mode "$phytype" string "pl.dtsi"
+		add_prop $node phy-mode "$phytype" string "pl.dtsi" 1
 		#add_prop $node phy-mode "$phytype" string $dts_file
 	    }
 	    if {$phytype == "sgmii" || $phytype == "1000basex"} {
 		  set phytype "sgmii"
 	      #set_property phy-mode "$phytype" $drv_handle
-	      add_prop $node phy-mode "$phytype" string "pl.dtsi"
+	      add_prop $node phy-mode "$phytype" string "pl.dtsi" 1
 	      #add_prop $node phy-mode "$phytype" string $dts_file
 		  set phynode [pcspma_phy_node $eth_ip]
 		  set phya [lindex $phynode 0]
@@ -316,7 +316,6 @@ set rxethmem 0
 			append id " ,\"" $i
 			set i [expr 0x$i]
 		   }
-			puts "chanll $id"
 		    add_prop $node "xlnx,channel-ids" $id intlist "pl.dtsi"
 		    #add_prop $node "xlnx,channel-ids" $id intlist $dts_file
 		    if {$ip_name == "xxv_ethernet"  && $core!= 0} {
@@ -327,52 +326,63 @@ set rxethmem 0
 		     set values [pldt getall $ipnode]
 		     if {[regexp "interrupt*" $values match]} {
 			    set intr_val [pldt get $ipnode interrupts]
-			    set intr_val [string trimright $intr_val ">"]
-			    set intr_val [string trimleft $intr_val "<"]
+			    set intr_val [string trimright $intr_val " >"]
+			    set intr_val [string trimleft $intr_val "< "]
 			    set intr_parent [pldt get $ipnode interrupt-parent]
 			    set intr_parent [string trimright $intr_parent ">"]
 			    set intr_parent [string trimleft $intr_parent "<"]
 			    set intr_parent [string trimleft $intr_parent "&"]
 #		            set intr_parent [get_property CONFIG.interrupt-parent $target_handle]
 		            set int_names  [pldt get $ipnode interrupt-names]
+			    set names [split $int_names ","]
+			    if {[llength $names] >= 1} {
+				set int1 [string trimright [lindex $names 0] "\" "]
+				set int1 [string trimleft $int1 "\""]
+			    }
+			    if {[llength $names] >= 2} {
+				set int2 [string trimright [lindex $names 1] "\""]
+				set int2 [string trimleft $int2 " \""]
+			    }
 		    }
 		    if { $hasbuf == "true" && $ip_name == "axi_ethernet"} {
 			set intr_val1 [pldt get $node interrupts]
+			set intr_val1 [string trimright $intr_val1 " >"]
+			set intr_val1 [string trimleft $intr_val1 "< "]
 			lappend intr_val1 $intr_val
 			set intr_name [pldt get $node interrupt-names]
-			append intr_names " " $intr_name " " $int_names
+			append intr_names " " $intr_name " "  $int1 " " $int2
 		    } else {
 			set intr_names $int_names
 		    }
 
 		     set default_dts "pl.dtsi"
-		    set nodep [create_node -n "&$drv_handle" -d "pcw.dtsi" -p root]
+		    set nodep [get_node $drv_handle]
 		    if {![string_is_empty $intr_parent]} {
 #			if { $hasbuf == "true" && $ip_name == "axi_ethernet"} {
 #			    regsub -all "\{||\t" $intr_val1 {} intr_val1
 #			    regsub -all "\}||\t" $intr_val1 {} intr_val1
-#			    add_prop $node "interrupts" $intr_val1 int "pcw.dtsi"
+#			    add_prop $node "interrupts" $intr_val1 int "pl.dtsi"
 #			} else {
-#			    add_prop $node "interrupts" $intr_val1 int "pcw.dtsi"
+#			    add_prop $node "interrupts" $intr_val1 int "pl.dtsi"
 #			}
-#			add_prop $node "interrupt-parent" $intr_parent reference "pcw.dtsi"
-#			add_prop $node "interrupt-names" $intr_names stringlist "pcw.dtsi"
+#			add_prop $node "interrupt-parent" $intr_parent reference "pl.dtsi"
+#			add_prop $node "interrupt-names" $intr_names stringlist "pl.dtsi"
 			if {$ip_name == "xxv_ethernet"  && $core!= 0} {
-				puts "inter $intr_val"
-			     add_prop "${eth_node}" "interrupts" $intr_val int $dts_file
+			     add_prop "${eth_node}" "interrupts" $intr_val intlist $dts_file
 			     add_prop "${eth_node}" "interrupt-parent" $intr_parent reference $dts_file
 			     add_prop "${eth_node}" "interrupt-names" $intr_names stringlist $dts_file
 			} else {
                        if { $hasbuf == "true" && $ip_name == "axi_ethernet"} {
                                regsub -all "\{||\t" $intr_val1 {} intr_val1
                                regsub -all "\}||\t" $intr_val1 {} intr_val1
-                               add_prop "${nodep}" "interrupts" $intr_val1 int "pcw.dtsi"
+                               add_prop "${nodep}" "interrupts" $intr_val1 intlist "pl.dtsi" 1
                        } else {
-				puts "2intr $intr_val"
-                               add_prop "${nodep}" "interrupts" $intr_val int "pcw.dtsi"
+                               add_prop "${nodep}" "interrupts" $intr_val intlist "pl.dtsi"
                        }
-                       add_prop "${nodep}" "interrupt-parent" $intr_parent reference "pcw.dtsi"
-                       add_prop "${nodep}" "interrupt-names" $intr_names stringlist "pcw.dtsi"
+                       add_prop "${nodep}" "interrupt-parent" $intr_parent reference "pl.dtsi"
+		       set test [pldt get $nodep interrupt-names]
+                       add_prop "${nodep}" "interrupt-names" $intr_names stringlist "pl.dtsi" 1
+		       set test [pldt get $nodep interrupt-names]
                }
 			
 		    }
@@ -434,7 +444,7 @@ set rxethmem 0
 		      set names ""
 		      append clk  "$eth_clks>," " $clks"
 		      set clks [string trimright $clks ">"]
-		      #set default_dts [get_property CONFIG.pcw_dts [get_os]]
+		      #set default_dts [get_property CONFIG.pl_dts [get_os]]
 		      
 		      if {$ip_name == "xxv_ethernet"  && $core== 0} {
 			    append clknames "$core_clk_0 " "$dclk " "$axi_aclk_0"
@@ -442,9 +452,9 @@ set rxethmem 0
 			    set index0 [lindex $clk_list $axi_index_0]
 			    regsub -all "\>||\t" $index0 {} index0
 			    append clkvals  "[lindex $clk_list $index_0], [lindex $clk_list $dclk_index], $index0>, $clks"
-			    set pcwnode [create_node -n "&${drv_handle}" -d "pcw.dtsi" -p root]
-			    add_prop $pcwnode "clocks" $clkvals reference "pcw.dtsi"
-			    add_prop "$pcwnode" "clock-names" $clknames1 stringlist "pcw.dtsi"
+			    set plnode [create_node -n "&${drv_handle}" -d "pl.dtsi" -p root]
+			    add_prop $plnode "clocks" $clkvals reference "pl.dtsi"
+			    add_prop "$plnode" "clock-names" $clknames1 stringlist "pl.dtsi"
 			    set clknames1 ""
 		     }
 		     if {$ip_name == "xxv_ethernet" && $core == 1} {
@@ -456,9 +466,9 @@ set rxethmem 0
 			   regsub -all " " $ini1 "" ini1
 			   regsub -all "\<&||\t" $ini1 {} ini1
 			   append clkvals1  "$ini1, [lindex $clk_list $dclk_index], $index1>, <&$clks"
-			   set eth1_node [create_node -n "&$clk_label" -d "pcw.dtsi" -p root]
-			   add_prop "${eth1_node}" "clocks" $clkvals1 reference "pcw.dtsi"
-			   add_prop "${eth1_node}" "clock-names" $clk_names1 stringlist "pcw.dtsi"
+			   set eth1_node [create_node -n "&$clk_label" -d "pl.dtsi" -p root]
+			   add_prop "${eth1_node}" "clocks" $clkvals1 reference "pl.dtsi"
+			   add_prop "${eth1_node}" "clock-names" $clk_names1 stringlist "pl.dtsi"
 			   set clk_names1 ""
 			   set clkvals1 ""
 		     }
@@ -472,9 +482,9 @@ set rxethmem 0
 			  regsub -all "\<&||\t" $ini2 {} ini2
 			  append clkvals2  "$ini2, [lindex $clk_list $dclk_index],[lindex $clk_list $axi_index_2], <&$clks"
 			  append clk_label2 $drv_handle "_" $core
-			  set eth2_node [create_node -n "&$clk_label2" -d "pcw.dtsi" -p root]
-			  add_prop "${eth2_node}" "clocks" $clkvals2 reference "pcw.dtsi"
-			  add_prop "${eth2_node}" "clock-names" $clk_names2 stringlist "pcw.dtsi"
+			  set eth2_node [create_node -n "&$clk_label2" -d "pl.dtsi" -p root]
+			  add_prop "${eth2_node}" "clocks" $clkvals2 reference "pl.dtsi"
+			  add_prop "${eth2_node}" "clock-names" $clk_names2 stringlist "pl.dtsi"
 			  set clk_names2 ""
 			  set clkvals2 ""
 		     }
@@ -488,9 +498,9 @@ set rxethmem 0
 			 regsub -all "\<&||\t" $ini {} ini
 			 append clkvals3 "$ini, [lindex $clk_list $dclk_index], [lindex $clk_list $axi_index_3]>, <&$clks"
 			 append clk_label3 $drv_handle "_" $core
-			 set eth3_node [create_node -n "&$clk_label3" -d "pcw.dtsi" -p root]
-			 add_prop "${eth3_node}" "clocks" $clkvals3 reference "pcw.dtsi"
-			 add_prop "${eth3_node}" "clock-names" $clk_names3 stringlist "pcw.dtsi"
+			 set eth3_node [create_node -n "&$clk_label3" -d "pl.dtsi" -p root]
+			 add_prop "${eth3_node}" "clocks" $clkvals3 reference "pl.dtsi"
+			 add_prop "${eth3_node}" "clock-names" $clk_names3 stringlist "pl.dtsi"
 			 set clk_names3 ""
 			 set clkvals3 ""
 		     }
