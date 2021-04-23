@@ -899,6 +899,9 @@ proc proc_mapping {} {
 				set temp [split $temp ":"]
 				set temp [lindex $temp 0]
 			}
+			if {[string match -nocase $ipname "psv_rcpu_gic"] } {
+				set temp "gic_r5"
+			}
 					if {[string match -nocase $iptype "psv_cortexa72"] || [string match -nocase $iptype "psu_cortexa53"]} {
 						set_memmap $temp a53 $regprop
 					}
