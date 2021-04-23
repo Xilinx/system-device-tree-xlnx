@@ -2096,7 +2096,6 @@ proc is_it_in_pl {ip} {
 
 proc get_intr_id {drv_handle intr_port_name} {
 	proc_called_by
-
 	set slave [hsi::get_cells -hier $drv_handle]
 	set intr_info ""
 	set proctype [get_hw_family]
@@ -2112,7 +2111,7 @@ proc get_intr_id {drv_handle intr_port_name} {
 					}
 				}
 			}
-			if {[string match -nocase $proctype "zynqmp"] && [string match -nocase $proctype "zynquplus"] } {
+			if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] } {
 				if {[string match -nocase $intc "axi_intc"]} {
 					set intc [get_interrupt_parent $drv_handle $pin]
 				}

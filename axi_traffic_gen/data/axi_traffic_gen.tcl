@@ -64,7 +64,7 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 				append interrupts " " "$intr_info"
 			}
 		}
-		add_prop $node "interrupts" $interrupts int "pl.dtsi"
-		add_prop $node "interrupt-names" $interrupt_names stringlist "pl.dtsi"
+		# add_prop $node "interrupts" $interrupts int "pl.dtsi"
+		# add_prop $node "interrupt-names" $interrupt_names stringlist "pl.dtsi"
 	}
 }
