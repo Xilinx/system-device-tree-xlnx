@@ -31,7 +31,7 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
                 foreach procc $proclist {
 			set ip_mem_handles [hsi::get_mem_ranges $slave]
 			                        set firstelement [lindex $ip_mem_handles 0]
-                        set index [lsearch [hsi::get_mem_ranges -of_objects $procc] [hsi::get_cells $firstelement]]
+                        set index [lsearch [hsi::get_mem_ranges -of_objects $procc] [hsi::get_cells -hier $firstelement]]
                         if {$index == "-1"} {
                                 continue
                         }

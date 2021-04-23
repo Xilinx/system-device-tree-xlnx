@@ -1234,7 +1234,7 @@ proc is_ip_interrupting_current_proc { periph_name} {
             return 0
         }
         #set current_proc [common::get_property HW_INSTANCE [hsi::get_sw_processor]]
-	set proc_list "psv_cortexa72_0 psu_cortexa53_0 ps7_cortexa9_0"
+	set proc_list "psv_cortexa72 psu_cortexa53 ps7_cortexa9"
 #        set current_proc "psv_cortexa72_0"
 #	set current_proc [get_hw_family]
         set intr_pin [hsi::get_pins -of_objects $periph "Irq"]
@@ -1244,7 +1244,7 @@ proc is_ip_interrupting_current_proc { periph_name} {
                 set connected_ip [hsi::get_cells -of_objects $sink_pin]
                 #Connected interface should be IP Instance
                 #Connected IP should be current_processor
-                set ip_name [common::get_property NAME $connected_ip]
+                set ip_name [common::get_property IP_NAME $connected_ip]
 		if {[lsearch -nocase $proc_list $ip_name] >= 0} {
                     return 1
                 }
@@ -1257,7 +1257,7 @@ proc is_ip_interrupting_current_proc { periph_name} {
                 set connected_ip [hsi::get_cells -of_objects $connected_intf] 
                 #Connected interface should be IP Instance
                 #Connected IP should be current_processor
-                set ip_name [common::get_property NAME $connected_ip]
+                set ip_name [common::get_property IP_NAME $connected_ip]
 		if {[lsearch -nocase $proc_list $ip_name] >= 0} {
                     return 1
                 }
@@ -1272,7 +1272,7 @@ proc is_ip_interrupting_current_proc { periph_name} {
                 set connected_ip [hsi::get_cells -of_objects $sink_pin]
                 #Connected interface should be IP Instance
                 #Connected IP should be current_processor
-                set ip_name [common::get_property NAME $connected_ip]
+                set ip_name [common::get_property IP_NAME $connected_ip]
 		if {[lsearch -nocase $proc_list $ip_name] >= 0} {
 #			puts "return3"
                     return 1
@@ -1711,7 +1711,7 @@ proc get_rp_rm_for_drv { drv_handle } {
 
 		hsi::current_hw_instance $bdc
 
-		set isPresent [hsi::get_cells $drv_handle]
+		set isPresent [hsi::get_cells -hier $drv_handle]
 		#puts "isPresent : $isPresent"
 		#change back the current hw instance to top
 		hsi::current_hw_instance  

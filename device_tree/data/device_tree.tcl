@@ -200,7 +200,7 @@ proc gen_sata_laneinfo {} {
 	foreach ip [hsi::get_cells] {
 		set slane 0
 		set freq {}
-		set ip_type [get_property IP_TYPE [hsi::get_cells $ip]]
+		set ip_type [get_property IP_TYPE [hsi::get_cells -hier $ip]]
 		if {$ip_type eq ""} {
 			set ps $ip
 		}
@@ -218,10 +218,10 @@ proc gen_sata_laneinfo {} {
 
 	set param_list "ceva,p%d-cominit-params ceva,p%d-comwake-params ceva,p%d-burst-params ceva,p%d-retry-params"
 	while {$slane < 2} {
-		if {[get_property CONFIG.PSU__SATA__LANE$slane\__ENABLE [hsi::get_cells $ps]] == 1} {
-			set gt_lane [get_property CONFIG.PSU__SATA__LANE$slane\__IO [hsi::get_cells $ps]]
+		if {[get_property CONFIG.PSU__SATA__LANE$slane\__ENABLE [hsi::get_cells -hier $ps]] == 1} {
+			set gt_lane [get_property CONFIG.PSU__SATA__LANE$slane\__IO [hsi::get_cells -hier $ps]]
 			regexp [0-9] $gt_lane gt_lane
-			lappend freq [get_property CONFIG.PSU__SATA__REF_CLK_FREQ [hsi::get_cells $ps]]
+			lappend freq [get_property CONFIG.PSU__SATA__REF_CLK_FREQ [hsi::get_cells -hier $ps]]
 		} else {
 			lappend freq 0
 			}
@@ -539,7 +539,6 @@ proc generate {} {
 		return
 	}
 	set list_offiles {}
-
 	lappend list_offiles "$path/device_tree/data/xillib_hw.tcl"
 	lappend list_offiles "$path/device_tree/data/xillib_sw.tcl"
 	lappend list_offiles "$path/device_tree/data/xillib_internal.tcl"
@@ -552,7 +551,7 @@ proc generate {} {
         namespace import ::tclapp::xilinx::devicetree::common::\*
 	set val_proclist "psv_cortexa72 psu_cortexa53 ps7_cortexa9"
 	set peri_list [hsi::get_cells -hier]
-	set proclist [hsi::get_cells -filter {IP_TYPE==PROCESSOR}]
+	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
 	set microblaze [hsi::get_cells -hier -filter {IP_NAME==microblaze}]
 	set ps_design 0
 	set pl_design 0
@@ -588,7 +587,6 @@ proc generate {} {
 			set non_val_list "versal_cips noc_nmu noc_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect"
 			set non_val_ip_types "MONITOR BUS PROCESSOR"
     			foreach drv_handle $peri_list {
-				
 				set ip_name [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
 				set ip_type [get_property IP_TYPE [hsi::get_cells -hier $drv_handle]]
 				if {[lsearch -nocase $non_val_list $ip_name] >= 0} {

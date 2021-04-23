@@ -23,8 +23,8 @@ proc special_handling_for_ps7_interrupt { periph_name} {
     #current processor should be ps7_cortexa9
 #    set sw_core [hsi::get_sw_processor]
  #   set proc_name [common::get_property HW_INSTANCE $sw_core]
-	set proc_list "psv_cortexa72_0 psu_cortexa53_0 ps7_cortexa9_0"
-	set ip_name [common::get_property NAME [hsi::get_cells -hier $periph_name]]
+	set proc_list "psv_cortexa72 psu_cortexa53 ps7_cortexa9"
+	set ip_name [common::get_property IP_NAME [hsi::get_cells -hier $periph_name]]
 	if { [lsearch -nocase $proc_list $ip_name] != 0 } {
 #    set hw_core [hsi::get_cells -hier -filter "NAME==$proc_name" ]
  #   set proc_type [common::get_property IP_NAME $hw_core ]

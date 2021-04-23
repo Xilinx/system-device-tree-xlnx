@@ -16,7 +16,7 @@ namespace eval ::tclapp::xilinx::devicetree::pmups {
 namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 		set dts_file [set_drv_def_dts $drv_handle]
-		set ip_name [get_property IP_NAME [hsi::get_cells $drv_handle]]
+		set ip_name [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
 		if {[string match -nocase $ip_name "psu_pmu"]} {
 			set node "&ub1_cpu"
 		} elseif {[string match -nocase $ip_name "psv_pmc"]} {
