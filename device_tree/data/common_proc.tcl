@@ -2101,16 +2101,20 @@ proc get_intr_id {drv_handle intr_port_name} {
 	set proctype [get_hw_family]
 	foreach pin ${intr_port_name} {
 		set intc [get_interrupt_parent $drv_handle $pin]
+		puts "intc for $drv_handle: $intc and pin $pin"
 		if {[string_is_empty $intc] == 1} {continue}
 		if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "zynquplus"]} {
-			set intc [get_property IP_NAME $intc]
+
 			if {[llength $intc] > 1} {
 				foreach intr_cntr $intc {
 					if { [is_ip_interrupting_current_proc $intr_cntr] } {
 						set intc $intr_cntr
+						puts "setit $intc"
 					}
 				}
 			}
+			set intc [get_property IP_NAME $intc]
+			puts "IP name $intc"
 			if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] } {
 				if {[string match -nocase $intc "axi_intc"]} {
 					set intc [get_interrupt_parent $drv_handle $pin]
@@ -2127,6 +2131,7 @@ proc get_intr_id {drv_handle intr_port_name} {
 		}
 		if {[string match -nocase $intr_id "-1"]} {continue}
 		set intr_type [get_intr_type $intc $slave $pin]
+		puts "intrrrr $intr_type"
 		if {[string match -nocase $intr_type "-1"]} {
 			continue
 		}
@@ -4360,7 +4365,9 @@ proc get_comp_str {drv_handle} {
 
 proc get_intr_type {intc_name ip_name port_name} {
 	set intc [hsi::get_cells -hier $intc_name]
+	puts "III $intc"
 	set ip [hsi::get_cells -hier $ip_name]
+	puts "IIIp $ip"
 	if {[llength $intc] == 0 && [llength $ip] == 0} {
 		return -1
 	}
@@ -4368,13 +4375,16 @@ proc get_intr_type {intc_name ip_name port_name} {
 		return -1
 	}
 	set intr_pin [hsi::get_pins -of_objects $ip $port_name]
+	puts "PPPP $intr_pin"
 	set sensitivity ""
 	if {[llength $intr_pin] >= 1} {
 		# TODO: check with HSM dev and see if this is a bug
 		set sensitivity [get_property SENSITIVITY $intr_pin]
 	}
+	puts "sens $sensitivity"
 	set intc_type [get_property IP_NAME $intc ]
 	set valid_intc_list "ps7_scugic psu_acpu_gic psv_acpu_gic"
+	puts "valid $valid_intc_list and type $intc_type"
 	if {[lsearch  -nocase $valid_intc_list $intc_type] >= 0} {
 		if {[string match -nocase $sensitivity "EDGE_FALLING"]} {
 				return 2;
@@ -4552,7 +4562,8 @@ proc get_interrupt_parent {  periph_name intr_pin_name } {
         } elseif { [llength $sink_periph] && [string match -nocase [common::get_property IP_NAME $sink_periph] "util_reduced_logic"] } {
             set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "Res"]]
         }  elseif { [llength $sink_periph] && [string match -nocase [common::get_property IP_NAME $sink_periph] "dfx_decoupler"] } {
-		set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "s_intf_0_INTERRUPT"]]
+		set intr [hsi::get_pins -of_objects $sink_periph -filter {TYPE==INTERRUPT&&DIRECTION==O}]
+		set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "$intr"]]
 	}
     }
     return $intr_cntrl
@@ -6357,7 +6368,8 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 				} elseif { [llength $sink_periph] && [string match -nocase [common::get_property IP_NAME $sink_periph] "microblaze"] } {
 					lappend intr_cntrl $sink_periph
 				} elseif { [llength $sink_periph] && [string match -nocase [common::get_property IP_NAME $sink_periph] "dfx_decoupler"] } {
-                    lappend intr_cntrl [get_intr_cntrl_name $sink_periph "s_intf_0_INTERRUPT"]
+					set intr [hsi::get_pins -of_objects $sink_periph -filter {TYPE==INTERRUPT&&DIRECTION==O}
+					lappend intr_cntrl [get_intr_cntrl_name $sink_periph "$intr"]
 			}
 			if {[llength $intr_cntrl] > 1} {
 				foreach intc $intr_cntrl {
@@ -6705,7 +6717,7 @@ proc get_psu_interrupt_id { ip_name port_name } {
         set connected_ip [get_property IP_NAME [hsi::get_cells -hier $sink_periph]]
 	if {[llength $connected_ip]} {
                if {[string compare -nocase "$connected_ip" "dfx_decoupler"] == 0} {
-                       set dfx_intr "s_intf_0_INTERRUPT"
+                       set dfx_intr [hsi::get_pins -of_objects $sink_periph -filter {TYPE==INTERRUPT&&DIRECTION==O}]
                        set intr_pin [hsi::get_pins -of_objects $sink_periph -filter "NAME==$dfx_intr"]
                        set sink_pins [get_sink_pins "$intr_pin"]
                        foreach pin $sink_pins {
