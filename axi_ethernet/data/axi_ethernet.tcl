@@ -351,6 +351,12 @@ set rxethmem 0
 			lappend intr_val1 $intr_val
 			set intr_name [pldt get $node interrupt-names]
 			append intr_names " " $intr_name " "  $int1 " " $int2
+			set proctype [get_hw_family]
+			if {[regexp "kintex*" $proctype match]} {
+				set null ""
+				add_prop $node "interrupt-names" $null stringlist "pl.dtsi"
+				add_prop $node "interrupts" $null intlist "pl.dtsi"
+			}
 		    } else {
 			set intr_names $int_names
 		    }
@@ -404,6 +410,25 @@ set rxethmem 0
 			  set trimvar [string trimleft $trimvar "\""]
 		          append temp "$trimvar "
 		        }
+		        if {$ip_name == "xxv_ethernet" && $core == 0} {
+                       		add_prop "${nodep}" "zclocks" $eth_clks reference "pl.dtsi"
+                	        set_drv_prop $drv_handle "zclock-names" $temp stringlist
+               		}
+               		if {$ip_name == "xxv_ethernet" && $core != 0} {
+				set eth_clks [pldt get $nodep zclocks]
+				set eth_clk_names [pldt get $nodep zclock-names]
+				set eth_clks [string trimright $eth_clks ">"]
+				set eth_clks [string trimleft $eth_clks "<"]
+				set eth_clks [string trimleft $eth_clks "&"]
+			        set eth_clk_names [split $eth_clk_names " , "]
+				set eth_clkname_len [llength $eth_clk_names]
+			        for {set i 0 } {$i < $eth_clkname_len} {incr i} {
+				  set trimvar [lindex $eth_clk_names $i]
+				  set trimvar [string trimright $trimvar "\""]
+				  set trimvar [string trimleft $trimvar "\""]
+			          append temp "$trimvar "
+			        }
+               		}
 			set eth_clk_names $temp
 			set i 0
 			while {$i < $eth_clkname_len} {
@@ -445,7 +470,10 @@ set rxethmem 0
 		      append clk  "$eth_clks>," " $clks"
 		      set clks [string trimright $clks ">"]
 		      #set default_dts [get_property CONFIG.pl_dts [get_os]]
-		      
+	              set null ""
+	              add_prop $nodep "clock-names" $null stringlist "pl.dtsi"
+	              add_prop $nodep "clocks" $null reference "pl.dtsi"
+
 		      if {$ip_name == "xxv_ethernet"  && $core== 0} {
 			    append clknames "$core_clk_0 " "$dclk " "$axi_aclk_0"
 			    append clknames1 " $clknames" " $clk_names"
@@ -466,9 +494,9 @@ set rxethmem 0
 			   regsub -all " " $ini1 "" ini1
 			   regsub -all "\<&||\t" $ini1 {} ini1
 			   append clkvals1  "$ini1, [lindex $clk_list $dclk_index], $index1>, <&$clks"
-			   set eth1_node [create_node -n "&$clk_label" -d "pl.dtsi" -p root]
-			   add_prop "${eth1_node}" "clocks" $clkvals1 reference "pl.dtsi"
-			   add_prop "${eth1_node}" "clock-names" $clk_names1 stringlist "pl.dtsi"
+			  # set eth1_node [create_node -n "&$clk_label" -d "pl.dtsi" -p root]
+			   add_prop "${eth_node}" "clocks" $clkvals1 reference "pl.dtsi"
+			   add_prop "${eth_node}" "clock-names" $clk_names1 stringlist "pl.dtsi"
 			   set clk_names1 ""
 			   set clkvals1 ""
 		     }
@@ -482,9 +510,9 @@ set rxethmem 0
 			  regsub -all "\<&||\t" $ini2 {} ini2
 			  append clkvals2  "$ini2, [lindex $clk_list $dclk_index],[lindex $clk_list $axi_index_2], <&$clks"
 			  append clk_label2 $drv_handle "_" $core
-			  set eth2_node [create_node -n "&$clk_label2" -d "pl.dtsi" -p root]
-			  add_prop "${eth2_node}" "clocks" $clkvals2 reference "pl.dtsi"
-			  add_prop "${eth2_node}" "clock-names" $clk_names2 stringlist "pl.dtsi"
+			  # set eth2_node [create_node -n "&$clk_label2" -d "pl.dtsi" -p root]
+			  add_prop "${eth_node}" "clocks" $clkvals2 reference "pl.dtsi"
+			  add_prop "${eth_node}" "clock-names" $clk_names2 stringlist "pl.dtsi"
 			  set clk_names2 ""
 			  set clkvals2 ""
 		     }
@@ -498,9 +526,9 @@ set rxethmem 0
 			 regsub -all "\<&||\t" $ini {} ini
 			 append clkvals3 "$ini, [lindex $clk_list $dclk_index], [lindex $clk_list $axi_index_3]>, <&$clks"
 			 append clk_label3 $drv_handle "_" $core
-			 set eth3_node [create_node -n "&$clk_label3" -d "pl.dtsi" -p root]
-			 add_prop "${eth3_node}" "clocks" $clkvals3 reference "pl.dtsi"
-			 add_prop "${eth3_node}" "clock-names" $clk_names3 stringlist "pl.dtsi"
+			 # set eth3_node [create_node -n "&$clk_label3" -d "pl.dtsi" -p root]
+			 add_prop "${eth_node}" "clocks" $clkvals3 reference "pl.dtsi"
+			 add_prop "${eth_node}" "clock-names" $clk_names3 stringlist "pl.dtsi"
 			 set clk_names3 ""
 			 set clkvals3 ""
 		     }
@@ -512,6 +540,12 @@ set rxethmem 0
 	    }
 	    gen_dev_ccf_binding $drv_handle "s_axi_aclk"
 	 }
+	    set proctype [get_hw_family]
+	    if {[regexp "kintex*" $proctype match]} {
+		set null ""
+		add_prop $node "zclock-names" $null stringlist "pl.dtsi"
+		add_prop $node "zclocks" $null reference "pl.dtsi"
+	    }
 	}
 
 	proc pcspma_phy_node {slave} {
