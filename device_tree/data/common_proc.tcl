@@ -3796,7 +3796,7 @@ proc gen_dfx_clk_property {drv_handle dts_file child_node dfx_node} {
                                                set updat [lappend updat $pl_clk3]
                                }
                                default {
-                                               dtg_debug "not supported pl_clk:$pl_clk"
+						dtg_warning  "Clock pin \"$clk\" of IP block \"$drv_handle\" is not connected to any of the pl_clk\"\n\r"
                                }
                        }
                }
@@ -3823,7 +3823,7 @@ proc gen_dfx_clk_property {drv_handle dts_file child_node dfx_node} {
                                                set updat [lappend updat $pl_clk3]
                                }
                                default {
-                                       dtg_debug "not supported pl_clk:$pl_clk"
+					dtg_warning  "Clock pin \"$clk\" of IP block \"$drv_handle\" is not connected to any of the pl_clk\"\n\r"
                                }
                        }
                }
@@ -4129,7 +4129,7 @@ proc gen_clk_property {drv_handle} {
 				"" {
 				}
 				default {
-						dtg_debug "not supported pl_clk:$pl_clk"
+						dtg_warning  "Clock pin \"$clk\" of IP block \"$drv_handle\" is not connected to any of the pl_clk\"\n\r"
 				}
 			}
 		}
