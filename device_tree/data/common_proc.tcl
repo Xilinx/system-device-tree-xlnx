@@ -8223,9 +8223,9 @@ proc gen_axis_switch {ip} {
 	add_prop "$switch_node" "xlnx,routing-mode" $routing_mode int $dts
 	set num_si [get_property CONFIG.NUM_SI [hsi::get_cells -hier $ip]]
 
-	add_prop "$switch_node" "xlnx,num-si" $num_si int $dts
+	add_prop "$switch_node" "xlnx,num-si-slots" $num_si int $dts
 	set num_mi [get_property CONFIG.NUM_MI [hsi::get_cells -hier $ip]]
-	add_prop "$switch_node" "xlnx,num-mi" $num_mi int $dts
+	add_prop "$switch_node" "xlnx,num-mi-slots" $num_mi int $dts
 	add_prop "$switch_node" "compatible" "$compatible" string $dts
 	set count 0
 	foreach intf $master_intf {

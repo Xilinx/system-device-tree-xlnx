@@ -26,6 +26,12 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		}
 		set dphy_lanes [get_property CONFIG.C_DPHY_LANES [hsi::get_cells -hier $drv_handle]]
 		add_prop "${node}" "xlnx,max-lanes" $dphy_lanes int $dts_file
+	       	for {set lane 1} {$lane <= $dphy_lanes} {incr lane} {
+	       	        lappend lanes $lane
+       		}
+       		if {[llength $lanes]} {
+               		add_prop "${node}" "data-lanes" $lanes int $dts_file
+       		}
 		set en_csi_v2_0 [get_property CONFIG.C_EN_CSI_V2_0 [hsi::get_cells -hier $drv_handle]]
 		set en_vcx [get_property CONFIG.C_EN_VCX [hsi::get_cells -hier $drv_handle]]
 		set cmn_vc [get_property CONFIG.CMN_VC [hsi::get_cells -hier $drv_handle]]

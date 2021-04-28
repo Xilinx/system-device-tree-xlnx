@@ -398,7 +398,7 @@ proc generate {drv_handle} {
 	add_prop "${node}" "clocks" $clkvals0 reference $dts_file
 	add_prop "${node}" "clock-names" $clknames stringlist $dts_file
 
-	set port0_pins [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "rx_axis_tdata0"]]
+	set port0_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "rx_axis_tdata0"]]
 	foreach pin $port0_pins {
 		set sink_periph [hsi::get_cells -of_objects $pin]
 		set mux_ip ""
@@ -540,7 +540,7 @@ proc generate {drv_handle} {
 	append clkvals  "$index1, [lindex $clk_list $rx_axi_clk_index1], [lindex $clk_list $rx_flexif_clk_index1], [lindex $clk_list $rx_ts_clk1_index1], [lindex $clk_list $tx_axi_clk_index1], [lindex $clk_list $tx_flexif_clk_index1], $txindex1"
 	add_prop "${mrmac1_node}" "clocks" $clkvals reference $dts_file
 	add_prop "${mrmac1_node}" "clock-names" $clknames1 stringlist $dts_file
-	set port1_pins [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "rx_axis_tdata2"]]
+	set port1_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "rx_axis_tdata2"]]
 	foreach pin $port1_pins {
 		set sink_periph [hsi::get_cells -of_objects $pin]
 		set mux_ip ""
@@ -901,7 +901,7 @@ proc generate {drv_handle} {
 	append clkvals2  "$index2,[lindex $clk_list $rx_axi_clk_index2], [lindex $clk_list $rx_flexif_clk_index2], [lindex $clk_list $rx_ts_clk2_index2], [lindex $clk_list $tx_axi_clk_index2], [lindex $clk_list $tx_flexif_clk_index2], $txindex2"
 	add_prop "${mrmac2_node}" "clocks" $clkvals2 reference $dts_file
 	add_prop "${mrmac2_node}" "clock-names" $clknames2 stringlist $dts_file
-	set port2_pins [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "rx_axis_tdata4"]]
+	set port2_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "rx_axis_tdata4"]]
 	foreach pin $port2_pins {
 		set sink_periph [hsi::get_cells -of_objects $pin]
 		set mux_ip ""
@@ -1235,7 +1235,7 @@ proc generate {drv_handle} {
 	set mrmac3_node [create_node -n "mrmac" -l "$label3" -u $mrmac3_base_hex -d $dts_file -p $bus_node]
 	add_prop "$mrmac3_node" "compatible" "$compatible" stringlist $dts_file
 	generate_reg_property $mrmac3_node $mrmac3_base $mrmac3_highaddr_hex
-	set port3_pins [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "rx_axis_tdata6"]]
+	set port3_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "rx_axis_tdata6"]]
 	foreach pin $port3_pins {
 		set sink_periph [hsi::get_cells -of_objects $pin]
 		set mux_ip ""

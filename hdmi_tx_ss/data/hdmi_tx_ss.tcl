@@ -101,5 +101,12 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		} else {
 			dtg_warning "$drv_handle pin AUDIO_IN is not connected... check your design"
 		}
+       		set pins [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier [hsi::get_cells -hier $drv_handle]] "acr_cts"]]
+	       foreach pin $pins {
+               set sink_periph [hsi::get_cells -of_objects $pin]
+               if {[string match -nocase "[get_property IP_NAME $sink_periph]" "hdmi_acr_ctrl"]} {
+                       add_prop "$node" "xlnx,xlnx-hdmi-acr-ctrl" $sink_periph reference $dts_file
+               }
+       }
 	}
 }
