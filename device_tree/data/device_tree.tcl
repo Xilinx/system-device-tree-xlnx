@@ -499,6 +499,23 @@ proc gen_zynqmp_ccf_clk {} {
 			}
 		}
 	}
+       set ccf_node [create_node -n "&video_clk" -d $default_dts -p root]
+       set periph_list [hsi::get_cells -hier]
+       foreach periph $periph_list {
+               set zynq_ultra_ps [get_property IP_NAME $periph]
+               if {[string match -nocase $zynq_ultra_ps "zynq_ultra_ps_e"] } {
+                       set avail_param [list_property [hsi::get_cells -hier $periph]]
+                       if {[lsearch -nocase $avail_param "CONFIG.PSU__VIDEO_REF_CLK__FREQMHZ"] >= 0} {
+                               set freq [get_property CONFIG.PSU__VIDEO_REF_CLK__FREQMHZ [hsi::get_cells -hier $periph]]
+                               if {[string match -nocase $freq "27"]} {
+                                       return
+                               } else {
+                                       dtg_warning "Frequency $freq used instead of 27.00"
+                                       add_prop "${ccf_node}" "clock-frequency" [scan [expr $freq * 1000000] "%d"] int $default_dts
+                               }
+                       }
+               }
+       }
 
 }
 
