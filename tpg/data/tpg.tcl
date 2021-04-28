@@ -26,7 +26,7 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		if { [llength $tpg_count] == 0 } {
 			set tpg_count 0
 		}
-		pldt append $node compatible "\ \, \"xlnx,v-tpg-7.0\""	
+		pldt append $node compatible "\ \, \"xlnx,v-tpg-8.0\""	
 		set ip [hsi::get_cells -hier $drv_handle]
 		set s_axi_ctrl_addr_width [get_property CONFIG.C_S_AXI_CTRL_ADDR_WIDTH [hsi::get_cells -hier $drv_handle]]
 		add_prop "${node}" "xlnx,s-axi-ctrl-addr-width" $s_axi_ctrl_addr_width int $dts_file 1
@@ -46,7 +46,7 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		set port1_node [create_node -n "port" -l tpg_port1$drv_handle -u 1 -p $ports_node -d $dts_file]
                 add_prop "$port1_node" "reg" 1 int $dts_file
                 #add_prop "${port1_node}" "/* Fill the field xlnx,video-format based on user requirement */" "" comment
-                add_prop "$port1_node" "xlnx,video-format" 12 int $dts_file
+                add_prop "$port1_node" "xlnx,video-format" 2 int $dts_file
                 add_prop "$port1_node" "xlnx,video-width" $max_data_width int $dts_file
 
 		set connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "S_AXIS_VIDEO"]
