@@ -45,6 +45,7 @@ proc get_drivers_sw args {
 	dict set driverlist canfd driver axi_can
 	dict set driverlist axi_cdma driver axi_cdma
 	dict set driverlist clk_wiz driver axi_clk_wiz
+	dict set driverlist clk_wizard driver axi_clk_wiz
 	dict set driverlist axi_dma driver axi_dma
 	dict set driverlist axi_emc driver axi_emc
 	dict set driverlist axi_ethernet driver axi_ethernet

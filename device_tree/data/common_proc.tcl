@@ -748,7 +748,7 @@ proc create_node args {
 		}
 		Pop args
 	}
-	set ignore_list "clk_wiz xlconcat xlconstant util_vector_logic xlslice util_ds_buf proc_sys_reset axis_data_fifo v_vid_in_axi4s bufg_gt axis_tdest_editor util_reduced_logic gt_quad_base noc_nsw blk_mem_gen emb_mem_gen lmb_bram_if_cntlr perf_axi_tg noc_mc_ddr4 c_counter_binary timer_sync_1588 oddr"
+	set ignore_list "clk_wiz clk_wizard xlconcat xlconstant util_vector_logic xlslice util_ds_buf proc_sys_reset axis_data_fifo v_vid_in_axi4s bufg_gt axis_tdest_editor util_reduced_logic gt_quad_base noc_nsw blk_mem_gen emb_mem_gen lmb_bram_if_cntlr perf_axi_tg noc_mc_ddr4 c_counter_binary timer_sync_1588 oddr"
 	set temp [lsearch $ignore_list $node_name]
 	if {[string match -nocase $node_unit_addr ""] && $temp >= 0 } {
 		set val_lab [string match -nocase $node_label ""]
@@ -1650,6 +1650,7 @@ proc get_drivers args {
 	dict set driverlist canfd driver axi_can
 	dict set driverlist axi_cdma driver axi_cdma
 	dict set driverlist clk_wiz driver axi_clk_wiz
+	dict set driverlist clk_wizard driver axi_clk_wiz
 	dict set driverlist axi_dma driver axi_dma
 	dict set driverlist axi_emc driver axi_emc
 	dict set driverlist axi_ethernet driver axi_ethernet
