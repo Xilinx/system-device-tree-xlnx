@@ -43,6 +43,8 @@ set rxethmem 0
 		set bus_node [detect_bus_name $drv_handle]
 	    global rxethmem
 	    set rxethmem 0
+		global ddrv_handle
+		set ddrv_handle $drv_handle
 	    set dts_file [set_drv_def_dts $drv_handle]
 	    update_eth_mac_addr $drv_handle
 	    #adding stream connectivity
@@ -670,6 +672,7 @@ set rxethmem 0
 	}
 
 	proc get_targetip {ip} {
+	  global ddrv_handle
 	   if {[string_is_empty $ip] != 0} {
 	       return
 	   }
@@ -717,10 +720,10 @@ set rxethmem 0
 					  return $connected_ip
 				 }
 			   } else {
-				  dtg_warning "$drv_handle connected ip is NULL for the target intf $target_intf"
+				  dtg_warning "$ddrv_handle connected ip is NULL for the target intf $target_intf"
 			   }
 		      } else {
-			      dtg_warning "$drv_handle target interface is NULL for the intf pin $intf"
+			      dtg_warning "$ddrv_handle target interface is NULL for the intf pin $intf"
 		      }
 		 }
 	      }
