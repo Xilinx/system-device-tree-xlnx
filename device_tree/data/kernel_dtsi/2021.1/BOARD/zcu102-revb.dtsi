@@ -115,6 +115,18 @@
 		compatible = "iio-hwmon";
 		io-channels = <&u75 0>, <&u75 1>, <&u75 2>, <&u75 3>;
 	};
+	/* 48MHz reference crystal */
+	ref48: ref48M {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <48000000>;
+	};
+
+	refhdmi: refhdmi {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <114285000>;
+	};
 };
 
 &can1 {
@@ -429,6 +441,53 @@ drivers/hwmon/pmbus/Makefile:11:obj-$(CONFIG_SENSORS_MAX20751)  += max20751.o
 			si5341: clock-generator1@36 { /* SI5341 - u69 */
 				compatible = "si5341";
 				reg = <0x36>;
+				#clock-cells = <2>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				clocks = <&ref48>;
+				clock-names = "xtal";
+				clock-output-names = "si5341";
+
+				si5341_0: out@0 {
+					/* refclk0 for PS-GT, used for DP */
+					reg = <0>;
+					always-on; /* assigned-clocks does not enable, so do it here */
+				};
+				si5341_2: out@2 {
+					/* refclk2 for PS-GT, used for USB3 */
+					reg = <2>;
+					always-on; /* assigned-clocks does not enable, so do it here */
+				};
+				si5341_3: out@3 {
+					/* refclk3 for PS-GT, used for SATA */
+					reg = <3>;
+					always-on; /* assigned-clocks does not enable, so do it here */
+				};
+				si5341_4: out@4 {
+					/* refclk4 for PS-GT, used for PCIE slot */
+					reg = <4>;
+					always-on; /* assigned-clocks does not enable, so do it here */
+				};
+				si5341_5: out@5 {
+					/* refclk5 for PS-GT, used for PCIE */
+					reg = <5>;
+					always-on; /* assigned-clocks does not enable, so do it here */
+				};
+				si5341_6: out@6 {
+					/* refclk6 PL CLK125 */
+					reg = <6>;
+					always-on; /* assigned-clocks does not enable, so do it here */
+				};
+				si5341_7: out@7 {
+					/* refclk7 PL CLK74 */
+					reg = <7>;
+					always-on; /* assigned-clocks does not enable, so do it here */
+				};
+				si5341_9: out@9 {
+					/* refclk9 used for PS_REF_CLK 33.3 MHz */
+					reg = <9>;
+					always-on; /* assigned-clocks does not enable, so do it here */
+				};
 			};
 
 		};
@@ -470,6 +529,17 @@ drivers/hwmon/pmbus/Makefile:11:obj-$(CONFIG_SENSORS_MAX20751)  += max20751.o
 				 * interrupt-parent = <&>;
 				 * interrupts = <>;
 				 */
+				#address-cells = <1>;
+				#size-cells = <0>;
+				#clock-cells = <1>;
+				clocks = <&refhdmi>;
+				clock-names = "xtal";
+				clock-output-names = "si5328";
+
+				si5328_clk: clk0@0 {
+					reg = <0>;
+					clock-frequency = <27000000>;
+				};
 			};
 		};
 		/* 5 - 7 unconnected */
@@ -815,6 +885,11 @@ drivers/hwmon/pmbus/Makefile:11:obj-$(CONFIG_SENSORS_MAX20751)  += max20751.o
 	};
 };
 
+&psgtr {
+	/* pcie, sata, usb3, dp */
+	clocks = <&si5341 0 5>, <&si5341 0 3>, <&si5341 0 2>, <&si5341 0 0>;
+	clock-names = "ref0", "ref1", "ref2", "ref3";
+};
 &qspi {
 	is-dual = <1>;
 	flash@0 {
@@ -856,7 +931,7 @@ drivers/hwmon/pmbus/Makefile:11:obj-$(CONFIG_SENSORS_MAX20751)  += max20751.o
 	ceva,p1-burst-params = /bits/ 8 <0x13 0x08 0x4A 0x06>;
 	ceva,p1-retry-params = /bits/ 16 <0x96A4 0x3FFC>;
 	phy-names = "sata-phy";
-	phys = <&lane3 PHY_TYPE_SATA 1 1 125000000>;
+	phys = <&psgtr 3 PHY_TYPE_SATA 1 1>;
 };
 
 /* SD1 with level shifter */
@@ -886,5 +961,5 @@ drivers/hwmon/pmbus/Makefile:11:obj-$(CONFIG_SENSORS_MAX20751)  += max20751.o
 	dr_mode = "host";
 	snps,usb3_lpm_capable;
 	phy-names = "usb3-phy";
-	phys = <&lane2 PHY_TYPE_USB3 0 2 26000000>;
+	phys = <&psgtr 2 PHY_TYPE_USB3 0 2>;
 };

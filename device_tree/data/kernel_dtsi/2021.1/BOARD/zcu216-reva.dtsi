@@ -96,6 +96,19 @@
 		compatible = "iio-hwmon";
 		io-channels = <&dac_avcc 0>, <&dac_avcc 1>, <&dac_avcc 2>, <&dac_avcc 3>;
 	};
+
+	/* 48MHz reference crystal */
+	ref48: ref48M {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <48000000>;
+	};
+};
+
+&psgtr {
+	/* pcie, sata, usb3, dp */
+	clocks = <&si5341 0 5>, <&si5341 0 3>, <&si5341 0 2>, <&si5341 0 0>;
+	clock-names = "ref0", "ref1", "ref2", "ref3";
 };
 
 &dcc {
@@ -103,7 +116,6 @@
 };
 
 &gem3 {
-	status = "okay";
 	phy-handle = <&phy0>;
 	phy-mode = "rgmii-id";
 	phy0: ethernet-phy@c {
@@ -116,7 +128,6 @@
 };
 
 &gpio {
-	status = "okay";
 	gpio-line-names = "QSPI_LWR_CLK", "QSPI_LWR_DQ1", "QSPI_LWR_DQ2", "QSPI_LWR_DQ3", "QSPI_LWR_DQ0", /* 0 - 4 */
 		  "QSPI_LWR_CS_B", "", "QSPI_UPR_CS_B", "QSPI_UPR_DQ0", "QSPI_UPR_DQ1", /* 5 - 9 */
 		  "QSPI_UPR_DQ2", "QSPI_UPR_DQ3", "QSPI_UPR_CLK", "PS_GPIO2", "I2C0_SCL", /* 10 - 14 */
@@ -156,7 +167,6 @@
 };
 
 &i2c0 {
-	status = "okay";
 	clock-frequency = <400000>;
 	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&pinctrl_i2c0_default>;
@@ -322,7 +332,6 @@
 };
 
 &i2c1 {
-	status = "okay";
 	clock-frequency = <400000>;
 	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&pinctrl_i2c1_default>;
@@ -335,6 +344,7 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 		reg = <0x74>;
+		i2c-mux-idle-disconnect;
 		/* FIXME reset-gpios = <&tca6416_u15 SYSCTLR_IIC_MUX0_RESET_B GPIO_ACTIVE_HIGH>; */
 		i2c_eeprom: i2c@0 {
 			#address-cells = <1>;
@@ -358,8 +368,40 @@
 			#size-cells = <0>;
 			reg = <1>;
 			si5341: clock-generator@36 { /* SI5341 - u43 */
-				compatible = "si5341";
+				compatible = "silabs,si5341";
 				reg = <0x36>;
+				#clock-cells = <2>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				clocks = <&ref48>;
+				clock-names = "xtal";
+				clock-output-names = "si5341";
+
+				si5341_2: out@2 {
+					/* refclk2 for PS-GT, used for USB3 */
+					reg = <2>;
+					always-on; /* assigned-clocks does not enable, so do it here */
+				};
+				si5341_3: out@3 {
+					/* refclk3 for PS-GT, used for SATA */
+					reg = <3>;
+					always-on; /* assigned-clocks does not enable, so do it here */
+				};
+				si5341_5: out@5 {
+					/* refclk5 PL CLK100 */
+					reg = <5>;
+					always-on; /* assigned-clocks does not enable, so do it here */
+				};
+				si5341_6: out@6 {
+					/* refclk6 PL CLK125 */
+					reg = <6>;
+					always-on; /* assigned-clocks does not enable, so do it here */
+				};
+				si5341_9: out@9 {
+					/* refclk9 used for PS_REF_CLK 33.3 MHz */
+					reg = <9>;
+					always-on; /* assigned-clocks does not enable, so do it here */
+				};
 			};
 
 		};
@@ -395,7 +437,10 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <4>;
-			/* U409B - 8a34001 */
+			idt_8a34001: phc@5b {
+				compatible = "idt,8a34001"; /* u409B */
+				reg = <0x5b>;
+			};
 		};
 		i2c_clk104: i2c@5 {
 			#address-cells = <1>;
@@ -417,6 +462,7 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 		reg = <0x75>;
+		i2c-mux-idle-disconnect;
 		/* FIXME reset-gpios = <&tca6416_u15 SYSCTLR_IIC_MUX0_RESET_B GPIO_ACTIVE_HIGH>; */
 		i2c@0 {
 			#address-cells = <1>;
@@ -536,7 +582,6 @@
 };
 
 &qspi {
-	status = "okay";
 	is-dual = <1>;
 	flash@0 {
 		compatible = "m25p80", "jedec,spi-nor"; /* U11 and U12 MT25QU02GCBBE12 1Gb */
@@ -550,7 +595,6 @@
 };
 
 &sata {
-	status = "okay";
 	/* SATA OOB timing settings */
 	ceva,p0-cominit-params = /bits/ 8 <0x18 0x40 0x18 0x28>;
 	ceva,p0-comwake-params = /bits/ 8 <0x06 0x14 0x08 0x0E>;
@@ -561,12 +605,11 @@
 	ceva,p1-burst-params = /bits/ 8 <0x13 0x08 0x4A 0x06>;
 	ceva,p1-retry-params = /bits/ 16 <0x96A4 0x3FFC>;
 	phy-names = "sata-phy";
-	phys = <&lane3 PHY_TYPE_SATA 1 3 125000000>;
+	phys = <&psgtr 3 PHY_TYPE_SATA 1 3>;
 };
 
 /* SD1 with level shifter */
 &sdhci1 {
-	status = "okay";
 	disable-wp;
 	xlnx,mio-bank = <1>;
 	/*
@@ -576,9 +619,8 @@
 };
 
 &dwc3_0 {
-	status = "okay";
 	dr_mode = "host";
 	snps,usb3_lpm_capable;
 	phy-names = "usb3-phy";
-	phys = <&lane2 PHY_TYPE_USB3 0 2 26000000>;
+	phys = <&psgtr 2 PHY_TYPE_USB3 0 2>;
 };
