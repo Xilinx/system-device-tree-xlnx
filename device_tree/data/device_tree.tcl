@@ -1322,7 +1322,6 @@ proc update_chosen {os_handle} {
     	if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"] || \
 		[string match -nocase $family "versal"]} {
 		if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
-	           	append bootargs " clk_ignore_unused"
 		}
     	}
     	add_prop $chosen_node "bootargs" $bootargs string $default_dts
