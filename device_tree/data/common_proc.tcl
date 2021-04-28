@@ -5405,6 +5405,11 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	}
 	set proc_type [get_hw_family]
 	set label $drv_handle
+	set label_len [string length $label]
+       if {$label_len >= 31} {
+               # As per the device tree specification the label length should be maximum of 31 characters
+               dtg_warning "the label \"$label\" length is $label_len characters which is greater than default 31 characters as per DT SPEC...user need to fix the label\n\r"
+       }
 	set dev_type ""
 	if {[string_is_empty $dev_type] == 1} {
 		set ps_mapping [gen_ps_mapping]
