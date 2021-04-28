@@ -2146,7 +2146,7 @@ proc get_intr_id {drv_handle intr_port_name} {
 			} elseif {[string match "[get_property IP_NAME $intc]" "axi_intc"] } {
 				set cur_intr_info "$intr_id $intr_type"
 			}
-		} elseif {[string match -nocase $intc "psu_acpu_gic"]|| [string match -nocase $intc "psv_acpu_gic"]} {
+		} elseif {[string match -nocase $intc "psu_acpu_gic"]|| [string match -nocase [get_property IP_NAME $intc] "psv_acpu_gic"]} {
 		    set cur_intr_info "0 $intr_id $intr_type"
 		} else {
 			set cur_intr_info "$intr_id $intr_type"
