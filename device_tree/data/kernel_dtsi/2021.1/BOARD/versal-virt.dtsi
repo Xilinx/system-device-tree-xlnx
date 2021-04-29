@@ -484,7 +484,7 @@
 			clock-names = "clk_xin", "clk_ahb";
 			clocks = <&clk25 &clk25>;
 			xlnx,device_id = <0>;
-			xlnx,mio_bank = <0>;
+			xlnx,mio-bank = <0>;
 			#stream-id-cells = <1>;
 			/* iommus = <&smmu 0x242>; */
 		};
@@ -498,7 +498,7 @@
 			clock-names = "clk_xin", "clk_ahb";
 			clocks = <&clk25 &clk25>;
 			xlnx,device_id = <1>;
-			xlnx,mio_bank = <0>;
+			xlnx,mio-bank = <0>;
 			#stream-id-cells = <1>;
 			/* iommus = <&smmu 0x243>; */
 		};

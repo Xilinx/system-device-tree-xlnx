@@ -3190,7 +3190,7 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping fd4d0000 label "watchdog0: watchdog"
 		dict set def_ps_mapping 43c00000 label dp
 		dict set def_ps_mapping 43c0a000 label dpsub
-		dict set def_ps_mapping fd4c0000 label "xlnx_dpdma: dma"
+		dict set def_ps_mapping fd4c0000 label "zynqmp_dpdma: dma-controller"
 		dict set def_ps_mapping fd4a0000 label "zynqmp_dpsub: zynqmp-display"
 		dict set def_ps_mapping fd0e0000 label "pcie: pcie"
 		dict set def_ps_mapping ff300000 label "ipi0: ipi"
