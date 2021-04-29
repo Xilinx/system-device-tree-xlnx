@@ -86,7 +86,11 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 	               set high_base "0x[string range $temp $rem $len]"
 	               set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
 	               set low_base [format 0x%08x $low_base]
-	               set reg "$low_base $high_base"
+		       if {$low_base == 0x0} {
+			   set reg "$high_base"
+			} else {
+				set reg "$low_base $high_base"
+			}
 	       } else {
         		set reg "$base"
        		}
