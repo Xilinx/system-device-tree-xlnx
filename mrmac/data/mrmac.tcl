@@ -93,11 +93,12 @@ proc generate {drv_handle} {
 	set MAC_PORT0_ENABLE_TIME_STAMPING_C1 [get_property CONFIG.MAC_PORT0_ENABLE_TIME_STAMPING_C1 [hsi::get_cells -hier $drv_handle]]
 	add_prop "${node}" "xlnx,mac-port0-enable-time-stamping-c1" $MAC_PORT0_ENABLE_TIME_STAMPING_C1 int $dts_file
 	set MAC_PORT0_RATE_C0 [get_property CONFIG.MAC_PORT0_RATE_C0 [hsi::get_cells -hier $drv_handle]]
-	set number 0
 	if {[string match -nocase $MAC_PORT0_RATE_C0 "10GE"]} {
                set number 10000
-        }
-        add_prop "${node}" "xlnx,mrmac-rate" $number int $dts_file
+        	add_prop "${node}" "xlnx,mrmac-rate" $number int $dts_file
+        } else {
+	        add_prop "${node}" "xlnx,mrmac-rate" $MAC_PORT0_RATE_C0 string $dts_file
+	}
 	add_prop "${node}" "xlnx,mac-port0-rate-c0" $MAC_PORT0_RATE_C0 string $dts_file
 	set MAC_PORT0_RATE_C1 [get_property CONFIG.MAC_PORT0_RATE_C1 [hsi::get_cells -hier $drv_handle]]
 	add_prop "${node}" "xlnx,mac-port0-rate-c1" $MAC_PORT0_RATE_C1 string $dts_file
@@ -444,6 +445,7 @@ proc generate {drv_handle} {
        }
 
        set port0_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "tx_timestamp_tod_0"]]
+	if {[llength $port0_pins]} {
        set sink_periph [hsi::get_cells -of_objects $port0_pins]
        if {[string match -nocase [get_property IP_NAME $sink_periph] "xlconcat"]} {
                set intf "dout"
@@ -461,7 +463,11 @@ proc generate {drv_handle} {
 				}
 			}
 		}
+       } else {
+	dtg_warning "tx_timestamp_tod_0 connected pins are NULL...please check the design..."
+       }
        set rxtod_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "rx_timestamp_tod_0"]]
+	if {[llength $rxtod_pins]} {
        set rx_periph [hsi::get_cells -of_objects $rxtod_pins]
        if {[string match -nocase [get_property IP_NAME $rx_periph] "xlconcat"]} {
                set intf "dout"
@@ -478,6 +484,9 @@ proc generate {drv_handle} {
 				}
 			}
 		}
+	}
+	} else {
+		dtg_warning "rx_timestamp_tod_0 connected pins are NULL...please check the design..."
 	}
        set handle ""
        set mask_handle ""
@@ -586,6 +595,7 @@ proc generate {drv_handle} {
        }
 
        set txtodport1_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "tx_timestamp_tod_1"]]
+	if {[llength $txtodport1_pins]} {
        set tod1_sink_periph [hsi::get_cells -of_objects $txtodport1_pins]
        if {[string match -nocase [get_property IP_NAME $tod1_sink_periph] "xlconcat"]} {
                set intf "dout"
@@ -603,8 +613,11 @@ proc generate {drv_handle} {
 			}
 			}
        }
-
+	} else {
+		dtg_warning "tx_timestamp_tod_1 connected pins are NULL...please check the design..."
+	}
        set rxtod1_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "rx_timestamp_tod_1"]]
+	dtg_warning "tx_timestamp_tod_1 connected pins are NULL...please check the design..."
        set rx_periph1 [hsi::get_cells -of_objects $rxtod1_pins]
        if {[string match -nocase [get_property IP_NAME $rx_periph1] "xlconcat"]} {
                set intf "dout"
@@ -621,6 +634,9 @@ proc generate {drv_handle} {
 				}
 			}
 		}
+	}
+	} else {
+		dtg_warning "rx_timestamp_tod_1 connected pins are NULL...please check the design..."
 	}
        if {[llength $handle]} {
                add_prop "$mrmac1_node" "xlnx,gtctrl" $handle reference $dts_file
@@ -660,11 +676,12 @@ proc generate {drv_handle} {
 	set MAC_PORT1_ENABLE_TIME_STAMPING_C1 [get_property CONFIG.MAC_PORT1_ENABLE_TIME_STAMPING_C1 [hsi::get_cells -hier $drv_handle]]
 	add_prop "${mrmac1_node}" "xlnx,mac-port1-enable-time-stamping-c1" $MAC_PORT1_ENABLE_TIME_STAMPING_C1 int $dts_file
 	set MAC_PORT1_RATE_C0 [get_property CONFIG.MAC_PORT1_RATE_C0 [hsi::get_cells -hier $drv_handle]]
-	set number 0
 	if {[string match -nocase $MAC_PORT1_RATE_C0 "10GE"]} {
                set number 10000
-        }
-	add_prop "${mrmac1_node}" "xlnx,mrmac-rate" $number string $dts_file
+		add_prop "${mrmac1_node}" "xlnx,mrmac-rate" $number int $dts_file
+        } else {
+		add_prop "${mrmac1_node}" "xlnx,mrmac-rate" $MAC_PORT1_RATE_C0 string $dts_file
+	}
 	set MAC_PORT1_RATE_C1 [get_property CONFIG.MAC_PORT1_RATE_C1 [hsi::get_cells -hier $drv_handle]]
 	add_prop "${mrmac1_node}" "xlnx,mac-port1-rate-c1" $MAC_PORT1_RATE_C1 string $dts_file
 	set MAC_PORT1_RX_ETYPE_GCP_C0 [get_property CONFIG.MAC_PORT1_RX_ETYPE_GCP_C0 [hsi::get_cells -hier $drv_handle]]
@@ -947,6 +964,7 @@ proc generate {drv_handle} {
        }
 
        set txtodport2_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "tx_timestamp_tod_2"]]
+	if {[llength $txtodport2_pins]} {
        set tod2_sink_periph [hsi::get_cells -of_objects $txtodport2_pins]
        if {[string match -nocase [get_property IP_NAME $tod2_sink_periph] "xlconcat"]} {
                set intf "dout"
@@ -964,8 +982,11 @@ proc generate {drv_handle} {
 			}
                }
        }
-
+	} else {
+		dtg_warning "tx_timestamp_tod_2 connected pins are NULL...please check the design..."
+	}
        set rxtod2_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "rx_timestamp_tod_2"]]
+	if {[llength $rxtod2_pins]} {
        set rx_periph2 [hsi::get_cells -of_objects $rxtod2_pins]
        if {[string match -nocase [get_property IP_NAME $rx_periph2] "xlconcat"]} {
                set intf "dout"
@@ -983,6 +1004,9 @@ proc generate {drv_handle} {
 
 			}
 		}
+	}
+	} else {
+		dtg_warning "rx_timestamp_tod_2 connected pins are NULL...please check the design..."
 	}
        if {[llength $handle]} {
                add_prop "$mrmac2_node" "xlnx,gtctrl" $handle reference $dts_file
@@ -1021,11 +1045,12 @@ proc generate {drv_handle} {
 	set MAC_PORT2_ENABLE_TIME_STAMPING_C1 [get_property CONFIG.MAC_PORT2_ENABLE_TIME_STAMPING_C1 [hsi::get_cells -hier $drv_handle]]
 	add_prop "${mrmac2_node}" "xlnx,mac-port2-enable-time-stamping-c1" $MAC_PORT2_ENABLE_TIME_STAMPING_C1 int $dts_file
 	set MAC_PORT2_RATE_C0 [get_property CONFIG.MAC_PORT2_RATE_C0 [hsi::get_cells -hier $drv_handle]]
-	set number 0
 	if {[string match -nocase $MAC_PORT2_RATE_C0 "10GE"]} {
                set number 10000
-       }
-	add_prop "${mrmac2_node}" "xlnx,mrmac-rate" $number string $dts_file
+		add_prop "${mrmac2_node}" "xlnx,mrmac-rate" $number int $dts_file
+        } else {
+		add_prop "${mrmac2_node}" "xlnx,mrmac-rate" $MAC_PORT2_RATE_C0 string $dts_file
+	}
 	set MAC_PORT2_RATE_C1 [get_property CONFIG.MAC_PORT2_RATE_C1 [hsi::get_cells -hier $drv_handle]]
 	add_prop "${mrmac2_node}" "xlnx,mac-port2-rate-c1" $MAC_PORT2_RATE_C1 string $dts_file
 	set MAC_PORT2_RX_ETYPE_GCP_C0 [get_property CONFIG.MAC_PORT2_RX_ETYPE_GCP_C0 [hsi::get_cells -hier $drv_handle]]
@@ -1280,6 +1305,8 @@ proc generate {drv_handle} {
                }
        }
        set txtodport3_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "tx_timestamp_tod_3"]]
+	if {[llength $txtodport3_pins]} {
+
        set tod3_sink_periph [::hsi::get_cells -of_objects $txtodport3_pins]
        if {[string match -nocase [get_property IP_NAME $tod3_sink_periph] "xlconcat"]} {
                set intf "dout"
@@ -1297,7 +1324,11 @@ proc generate {drv_handle} {
                        }
                }
        }
+	} else {
+		dtg_warning "tx_timestamp_tod_3 connected pins are NULL...please check the design..."
+	}
        set rxtod3_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "rx_timestamp_tod_3"]]
+	if {[llength $rxtod3_pins]} {
        set rx_periph3 [::hsi::get_cells -of_objects $rxtod3_pins]
        if {[string match -nocase [get_property IP_NAME $rx_periph3] "xlconcat"]} {
                set intf "dout"
@@ -1314,6 +1345,9 @@ proc generate {drv_handle} {
 				}
 			}
 		}
+	}
+	} else {
+		dtg_warning "rx_timestamp_tod_3 connected pins are NULL...please check the design..."
 	}
        if {[llength $handle]} {
                add_prop "$mrmac3_node" "xlnx,gtctrl" $handle reference $dts_file
@@ -1363,11 +1397,12 @@ proc generate {drv_handle} {
 	set MAC_PORT3_ENABLE_TIME_STAMPING_C1 [get_property CONFIG.MAC_PORT3_ENABLE_TIME_STAMPING_C1 [hsi::get_cells -hier $drv_handle]]
 	add_prop "${mrmac3_node}" "xlnx,mac-port3-enable-time-stamping-c1" $MAC_PORT3_ENABLE_TIME_STAMPING_C1 int $dts_file
 	set MAC_PORT3_RATE_C0 [get_property CONFIG.MAC_PORT3_RATE_C0 [hsi::get_cells -hier $drv_handle]]
-	set number 0
 	if {[string match -nocase $MAC_PORT3_RATE_C0 "10GE"]} {
                set number 10000
-       }
-	add_prop "${mrmac3_node}" "xlnx,mrmac-rate" $number string $dts_file
+		add_prop "${mrmac3_node}" "xlnx,mrmac-rate" $number int $dts_file
+        } else {
+		add_prop "${mrmac3_node}" "xlnx,mrmac-rate" $MAC_PORT3_RATE_C0 string $dts_file
+	}
 	set MAC_PORT3_RATE_C1 [get_property CONFIG.MAC_PORT3_RATE_C1 [hsi::get_cells -hier $drv_handle]]
 	add_prop "${mrmac3_node}" "xlnx,mac-port3-rate-c1" $MAC_PORT3_RATE_C1 string $dts_file
 	set MAC_PORT3_RX_ETYPE_GCP_C0 [get_property CONFIG.MAC_PORT3_RX_ETYPE_GCP_C0 [hsi::get_cells -hier $drv_handle]]
