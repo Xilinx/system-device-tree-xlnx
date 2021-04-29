@@ -3160,7 +3160,7 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping ffad0000 label "lpd_dma_chan6: dma"
 		dict set def_ps_mapping ffae0000 label "lpd_dma_chan7: dma"
 		dict set def_ps_mapping ffaf0000 label "lpd_dma_chan8: dma"
-		dict set def_ps_mapping ff100000 label "nand_0: nand" 
+		dict set def_ps_mapping ff100000 label "nand_0: nand-controller" 
 		dict set def_ps_mapping ff0b0000 label "gem0: ethernet"
 		dict set def_ps_mapping ff0c0000 label "gem1: ethernet"
 		dict set def_ps_mapping ff0d0000 label "gem2: ethernet"
@@ -3191,7 +3191,7 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping 43c00000 label dp
 		dict set def_ps_mapping 43c0a000 label dpsub
 		dict set def_ps_mapping fd4c0000 label "zynqmp_dpdma: dma-controller"
-		dict set def_ps_mapping fd4a0000 label "zynqmp_dpsub: zynqmp-display"
+		dict set def_ps_mapping fd4a0000 label "zynqmp_dpsub: display"
 		dict set def_ps_mapping fd0e0000 label "pcie: pcie"
 		dict set def_ps_mapping ff300000 label "ipi0: ipi"
 		dict set def_ps_mapping ff310000 label "ipi1: ipi"
