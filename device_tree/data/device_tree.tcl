@@ -102,7 +102,7 @@ proc inc_os_prop {drv_handle os_conf_dev_var var_name conf_prop} {
     }
 
     if {[string match -nocase "True" $ip_check]} {
-        set ip [get_cells -hier $drv_handle]
+        set ip [hsi::get_cells -hier $drv_handle]
         if {[string match -nocase $os_ip $ip]} {
             set ip_type [get_property IP_NAME $ip]
             set_property ${conf_prop} 0 $drv_handle
@@ -122,7 +122,7 @@ proc gen_count_prop {drv_handle data_dict} {
         set drv_conf [dict get $data_dict $dev_type "drv_conf"]
         set os_count_name [dict get $data_dict $dev_type "os_count_name"]
 
-        set slave [get_cells -hier $drv_handle]
+        set slave [hsi::get_cells -hier $drv_handle]
         set iptype [get_property IP_NAME $slave]
         if {[lsearch $valid_ip_list $iptype] < 0} {
             continue
@@ -600,7 +600,7 @@ proc gen_zocl_node {} {
 	set zocl [get_user_config $common_file -dt_zocl]
        #set ext_platform [get_property platform.extensible [get_os]]
        #puts "ext_platform:$ext_platform"
-       #set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]
+       #set proctype [get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]
        set proctype [get_hw_family]
        if {!$zocl} {
                return
@@ -686,6 +686,51 @@ proc gen_zynqmp_pinctrl {} {
                                        add_prop "$pinctrl_uart0_default" "/delete-node/ conf" "" boolean $default_dts
                                        add_prop "$pinctrl_uart0_default" "/delete-node/ conf-rx" "" boolean $default_dts
                                        add_prop "$pinctrl_uart0_default" "/delete-node/ conf-tx" "" boolean $default_dts
+                               }
+                       }
+                       if {[lsearch -nocase $avail_param "CONFIG.PSU__CAN1__PERIPHERAL__IO"] >= 0} {
+                               set can1_io [get_property CONFIG.PSU__CAN1__PERIPHERAL__IO [hsi::get_cells -hier $periph]]
+                               if {[string match -nocase $can1_io "EMIO"]} {
+                                       set pinctrl_can1_default [create_node -n "can1-default" -d $default_dts -p $pinctrl_node]
+                                       add_prop "$pinctrl_can1_default" "/delete-node/ mux" "" boolean $default_dts
+                                       add_prop "$pinctrl_can1_default" "/delete-node/ conf" "" boolean $default_dts
+                                       add_prop "$pinctrl_can1_default" "/delete-node/ conf-rx" "" boolean $default_dts
+                                       add_prop "$pinctrl_can1_default" "/delete-node/ conf-tx" "" boolean $default_dts
+                               }
+                       }
+                       if {[lsearch -nocase $avail_param "CONFIG.PSU__SD1__PERIPHERAL__IO"] >= 0} {
+                               set sd1_io [get_property CONFIG.PSU__SD1__PERIPHERAL__IO [hsi::get_cells -hier $periph]]
+                               if {[string match -nocase $sd1_io "EMIO"]} {
+                                       set pinctrl_sdhci1_default [create_node -n "sdhci1-default" -d $default_dts -p $pinctrl_node]
+                                       add_prop "$pinctrl_sdhci1_default" "/delete-node/ mux" "" boolean $default_dts
+                                       add_prop "$pinctrl_sdhci1_default" "/delete-node/ conf" "" boolean $default_dts
+                                       add_prop "$pinctrl_sdhci1_default" "/delete-node/ conf-cd" "" boolean $default_dts
+                                       add_prop "$pinctrl_sdhci1_default" "/delete-node/ mux-cd" "" boolean $default_dts
+                                       add_prop "$pinctrl_sdhci1_default" "/delete-node/ conf-wp" "" boolean $default_dts
+                                       add_prop "$pinctrl_sdhci1_default" "/delete-node/ mux-wp" "" boolean $default_dts
+                               }
+                       }
+                       if {[lsearch -nocase $avail_param "CONFIG.PSU__ENET3__PERIPHERAL__IO"] >= 0} {
+                               set gem3_io [get_property CONFIG.PSU__ENET3__PERIPHERAL__IO [hsi::get_cells -hier $periph]]
+                               if {[string match -nocase $gem3_io "EMIO"]} {
+                                       set pinctrl_gem3_default [create_node -n "gem3-default" -d $default_dts -p $pinctrl_node]
+                                       add_prop "$pinctrl_gem3_default" "/delete-node/ mux" "" boolean $default_dts
+                                       add_prop "$pinctrl_gem3_default" "/delete-node/ conf" "" boolean $default_dts
+                                       add_prop "$pinctrl_gem3_default" "/delete-node/ conf-rx" "" boolean $default_dts
+                                       add_prop "$pinctrl_gem3_default" "/delete-node/ conf-tx" "" boolean $default_dts
+                                       add_prop "$pinctrl_gem3_default" "/delete-node/ conf-mdio" "" boolean $default_dts
+                                       add_prop "$pinctrl_gem3_default" "/delete-node/ mux-mdio" "" boolean $default_dts
+                               }
+                       }
+                       if {[lsearch -nocase $avail_param "CONFIG.PSU__I2C1__PERIPHERAL__IO"] >= 0} {
+                               set i2c1_io [get_property CONFIG.PSU__I2C1__PERIPHERAL__IO [hsi::get_cells -hier $periph]]
+                               if {[string match -nocase $i2c1_io "EMIO"]} {
+                                       set pinctrl_i2c1_default [create_node -n "i2c1-default" -d $default_dts -p $pinctrl_node]
+                                       add_prop "$pinctrl_i2c1_default" "/delete-node/ mux" "" boolean $default_dts
+                                       add_prop "$pinctrl_i2c1_default" "/delete-node/ conf" "" boolean $default_dts
+                                       set pinctrl_i2c1_gpio [create_node -n "i2c1-gpio" -d $default_dts -p $pinctrl_node]
+                                       add_prop "$pinctrl_i2c1_gpio" "/delete-node/ mux" "" boolean $default_dts
+                                       add_prop "$pinctrl_i2c1_gpio" "/delete-node/ conf" "" boolean $default_dts
                                }
                        }
                }
@@ -1916,12 +1961,12 @@ proc remove_main_memory_node {} {
     }
 	set all_drivers [get_drivers]
 	foreach drv_handle $all_drivers {
-		set ip [get_property IP_NAME [get_cells -hier $drv_handle]]
+		set ip [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
 		if {[string match -nocase $ip "axi_bram_ctrl"]} {
 			return
 		}
 		if {[string match -nocase $ip "ddr4"]} {
-			set slave [get_cells -hier ${drv_handle}]
+			set slave [hsi::get_cells -hier ${drv_handle}]
 			set ip_mem_handles [get_ip_mem_ranges $slave]
 			if {[llength $ip_mem_handles] > 1} {
 				return
