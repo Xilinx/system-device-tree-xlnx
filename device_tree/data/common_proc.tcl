@@ -4610,6 +4610,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 		set valid_cascade_proc "kintex7 zynq zynqmp zynquplus versal zynquplusRFSOC"
 		# check whether intc is gpio or other
 		if {[lsearch  -nocase $valid_gpio_list $connected_intc_name] >= 0} {
+			set cur_intr_info ""
 			generate_gpio_intr_info $connected_intc $drv_handle $pin
 		} else {
 			set intc [get_interrupt_parent $drv_handle $pin]
