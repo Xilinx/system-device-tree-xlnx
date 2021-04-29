@@ -590,6 +590,76 @@ proc gen_zynqmp_opp_freq {} {
        }
 }
 
+proc gen_zocl_node {} {
+	global env
+	set path $env(REPO)
+	set common_file "$path/device_tree/data/config.yaml"
+	if {[file exists $common_file]} {
+        	#error "file not found: $common_file"
+    	}
+	set zocl [get_user_config $common_file -dt_zocl]
+       #set ext_platform [get_property platform.extensible [get_os]]
+       #puts "ext_platform:$ext_platform"
+       #set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]
+       set proctype [get_hw_family]
+       if {!$zocl} {
+               return
+       }
+       set bus_node "amba_pl"
+       set default_dts "pl.dtsi"
+       set zocl_node [create_node -n "zyxclmm_drm" -d ${default_dts} -p $bus_node]
+	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] || [string match -nocase $proctype "zynq"]} {
+               add_prop $zocl_node "compatible" "xlnx,zocl" string $default_dts
+       } else {
+               add_prop $zocl_node "compatible" "xlnx,zocl-versal" string $default_dts
+       }
+       set intr_ctrl [hsi::get_cells -hier -filter {IP_NAME == axi_intc}]
+       set intr_ctrl_len [llength $intr_ctrl]
+       set int0 [lindex $intr_ctrl 0]
+       foreach ip [get_drivers] {
+               if {[string compare -nocase $ip $int0] == 0} {
+                       set target_handle $ip
+               }
+       }
+       set intr_ctrl [pldt get $target_handle interrupt-parent]
+       set intr_ctrl [string trimright $intr_ctrl ">"]
+       set intr_ctrl [string trimleft $intr_ctrl "<"]
+       set intr_ctrl [string trimleft $intr_ctrl "&"]
+
+       set int1 [lindex $intr_ctrl 1]
+       foreach ip [get_drivers] {
+               if {[string compare -nocase $ip $int1] == 0} {
+                       set target_handle $ip
+               }
+       }
+       set intr [pldt get $target_handle interrupt-parent]
+       set intr [string trimright $intr ">"]
+       set intr [string trimleft $intr "<"]
+       set intr [string trimleft $intr "&"]
+       switch $intr_ctrl_len {
+               "1"   {
+                       set ref [lindex $intr_ctrl 0]
+                       append ref " 0 4>, <&[lindex $intr_ctrl 0] 1 4>, <&[lindex $intr_ctrl 0] 2 4>, <&[lindex $intr_ctrl 0] 3 4>, <&[lindex $intr_ctrl 0] 4 4>, <&[lindex $intr_ctrl 0] 5 4>, <&[lindex $intr_ctrl 0] 6 4>, <&[lindex $intr_ctrl 0] 7 4>, <&[lindex $intr_ctrl 0] 8 4>, <&[lindex $intr_ctrl 0] 9 4>,
+<&[lindex $intr_ctrl 0] 10 4>, <&[lindex $intr_ctrl 0] 11 4>, <&[lindex $intr_ctrl 0] 12 4>, <&[lindex $intr_ctrl 0] 13 4>, <&[lindex $intr_ctrl 0] 14 4>,
+<&[lindex $intr_ctrl 0] 15 4>, <&[lindex $intr_ctrl 0] 16 4>, <&[lindex $intr_ctrl 0] 17 4>, <&[lindex $intr_ctrl 0] 18 4>, <&[lindex $intr_ctrl 0] 19 4>,
+<&[lindex $intr_ctrl 0] 20 4>, <&[lindex $intr_ctrl 0] 21 4>, <&[lindex $intr_ctrl 0] 22 4>, <&[lindex $intr_ctrl 0] 23 4>, <&[lindex $intr_ctrl 0] 24 4>,
+<&[lindex $intr_ctrl 0] 25 4>, <&[lindex $intr_ctrl 0] 26 4>, <&[lindex $intr_ctrl 0] 27 4>, <&[lindex $intr_ctrl 0] 28 4>, <&[lindex $intr_ctrl 0] 29 4>,
+<&[lindex $intr_ctrl 0] 30 4>, <&[lindex $intr_ctrl 0] 31 4 "
+                       add_prop $zocl_node "interrupts-extended" $ref reference $default_dts
+               }
+               "2"   {
+                       set ref [lindex $intr_ctrl 0]
+                       append ref " 0 4>, <&[lindex $intr_ctrl 0] 1 4>, <&[lindex $intr_ctrl 0] 2 4>, <&[lindex $intr_ctrl 0] 3 4>, <&[lindex $intr_ctrl 0] 4 4>, <&[lindex $intr_ctrl 0] 5 4>, <&[lindex $intr_ctrl 0] 6 4>, <&[lindex $intr_ctrl 0] 7 4>, <&[lindex $intr_ctrl 0] 8 4>, <&[lindex $intr_ctrl 0] 9 4>, <&[lindex $intr_ctrl 0] 10 4>, <&[lindex $intr_ctrl 0] 11 4>, <&[lindex $intr_ctrl 0] 12 4>, <&[lindex $intr_ctrl 0] 13 4>, <&[lindex $intr_ctrl 0] 14 4>, <&[lindex $intr_ctrl 0] 15 4>, <&[lindex $intr_ctrl 0] 16 4>, <&[lindex $intr_ctrl 0] 17 4>, <&[lindex $intr_ctrl 0] 18 4>, <&[lindex $intr_ctrl 0] 19 4>, <&[lindex $intr_ctrl 0] 20 4>, <&[lindex $intr_ctrl 0] 21 4>, <&[lindex $intr_ctrl 0] 22 4>, <&[lindex $intr_ctrl 0] 23 4>, <&[lindex $intr_ctrl 0] 24 4>, <&[lindex $intr_ctrl 0] 25 4>, <&[lindex $intr_ctrl 0] 26 4>, <&[lindex $intr_ctrl 0] 27 4>, <&[lindex $intr_ctrl 0] 28 4>, <&[lindex $intr_ctrl 0] 29 4>, <&[lindex $intr_ctrl 0] 30 4>, <&[lindex $intr_ctrl 0] 31 4>, <&[lindex $intr_ctrl 1] 0 4>, <&[lindex $intr_ctrl 1] 1 4>, <&[lindex $intr_ctrl 1] 2 4>,  <&[lindex $intr_ctrl 1] 3 4>,  <&[lindex $intr_ctrl 1] 4 4>,  <&[lindex $intr_ctrl 1] 5 4>, <&[lindex $intr_ctrl 1] 6 4>, <&[lindex $intr_ctrl 1] 7 4>,  <&[lindex $intr_ctrl 1] 8 4>,  <&[lindex $intr_ctrl 1] 9 4>,  <&[lindex $intr_ctrl 1] 10 4>, <&[lindex $intr_ctrl 1] 11 4>, <&[lindex $intr_ctrl 1] 12 4>, <&[lindex $intr_ctrl 1] 13 4>, <&[lindex $intr_ctrl 1] 14 4>, <&[lindex $intr_ctrl 1] 15 4>, <&[lindex $intr_ctrl 1] 16 4>, <&[lindex $intr_ctrl 1] 17 4>, <&[lindex $intr_ctrl 1] 18 4>, <&[lindex $intr_ctrl 1] 19 4>, <&[lindex $intr_ctrl 1] 20 4>, <&[lindex $intr_ctrl 1] 21 4>, <&[lindex $intr_ctrl 1] 22 4>, <&[lindex $intr_ctrl 1] 23 4>, <&[lindex $intr_ctrl 1] 24 4>, <&[lindex $intr_ctrl 1] 25 4>, <&[lindex $intr_ctrl 1] 26 4>, <&[lindex $intr_ctrl 1] 27 4>, <&[lindex $intr_ctrl 1] 28 4>, <&[lindex $intr_ctrl 1] 29 4>, <&[lindex $intr_ctrl 1] 30 4 "
+               add_prop $zocl_node "interrupts-extended" $ref reference $default_dts
+               }
+               "3" {
+                       set ref [lindex $intr_ctrl 0]
+                       append ref " 0 4>, <&[lindex $intr_ctrl 0] 1 4>, <&[lindex $intr_ctrl 0] 2 4>, <&[lindex $intr_ctrl 0] 3 4>, <&[lindex $intr_ctrl 0] 4 4>, <&[lindex $intr_ctrl 0] 5 4>, <&[lindex $intr_ctrl 0] 6 4>, <&[lindex $intr_ctrl 0] 7 4>, <&[lindex $intr_ctrl 0] 8 4>, <&[lindex $intr_ctrl 0] 9 4>, <&[lindex $intr_ctrl 0] 10 4>, <&[lindex $intr_ctrl 0] 11 4>, <&[lindex $intr_ctrl 0] 12 4>, <&[lindex $intr_ctrl 0] 13 4>, <&[lindex $intr_ctrl 0] 14 4>, <&[lindex $intr_ctrl 0] 15 4>, <&[lindex $intr_ctrl 0] 16 4>, <&[lindex $intr_ctrl 0] 17 4>, <&[lindex $intr_ctrl 0] 18 4>, <&[lindex $intr_ctrl 0] 19 4>, <&[lindex $intr_ctrl 0] 20 4>, <&[lindex $intr_ctrl 0] 21 4>, <&[lindex $intr_ctrl 0] 22 4>, <&[lindex $intr_ctrl 0] 23 4>, <&[lindex $intr_ctrl 0] 24 4>, <&[lindex $intr_ctrl 0] 25 4>, <&[lindex $intr_ctrl 0] 26 4>, <&[lindex $intr_ctrl 0] 27 4>, <&[lindex $intr_ctrl 0] 28 4>, <&[lindex $intr_ctrl 0] 29 4>, <&[lindex $intr_ctrl 0] 30 4>, <&[lindex $intr_ctrl 0] 31 4>, <&[lindex $intr_ctrl 1] 0 4>, <&[lindex $intr_ctrl 1] 1 4>, <&[lindex $intr_ctrl 1] 2 4>, <&[lindex $intr_ctrl 1] 2 4>, <&[lindex $intr_ctrl 1] 3 4>, <&[lindex $intr_ctrl 1] 4 4>, <&[lindex $intr_ctrl 1] 5 4>, <&[lindex $intr_ctrl 1] 6 4>, <&[lindex $intr_ctrl 1] 7 4>, <&[lindex $intr_ctrl 1] 8 4>, <&[lindex $intr_ctrl 1] 9 4>, <&[lindex $intr_ctrl 1] 10 4>, <&[lindex $intr_ctrl 1] 11 4>, <&[lindex $intr_ctrl 1] 12 4>, <&[lindex $intr_ctrl 1] 13 4>, <&[lindex $intr_ctrl 1] 14 4>, <&[lindex $intr_ctrl 1] 15 4>, <&[lindex $intr_ctrl 1] 16 4>, <&[lindex $intr_ctrl 1] 17 4>, <&[lindex $intr_ctrl 1] 18 4>, <&[lindex $intr_ctrl 1] 19 4>, <&[lindex $intr_ctrl 1] 20 4>, <&[lindex $intr_ctrl 1] 21 4>, <&[lindex $intr_ctrl 1] 22 4>, <&[lindex $intr_ctrl 1] 23 4>, <&[lindex $intr_ctrl 1] 24 4>, <&[lindex $intr_ctrl 1] 25 4>, <&[lindex $intr_ctrl 1] 26 4>, <&[lindex $intr_ctrl 1] 27 4>, <&[lindex $intr_ctrl 1] 28 4>, <&[lindex $intr_ctrl 1] 29 4>, <&[lindex $intr_ctrl 1] 30 4>, <&[lindex $intr_ctrl 1] 31 4>, <&[lindex $intr_ctrl 2] 0 4>, <&[lindex $intr_ctrl 2] 1 4>, <&[lindex $intr_ctrl 2] 2 4>, <&[lindex $intr_ctrl 2] 3 4>, <&[lindex $intr_ctrl 2] 4 4>, <&[lindex $intr_ctrl 2] 5 4>, <&[lindex $intr_ctrl 2] 6 4>, <&[lindex $intr_ctrl 2] 7 4>, <&[lindex $intr_ctrl 2] 8 4>, <&[lindex $intr_ctrl 2] 9 4>, <&[lindex $intr_ctrl 2] 10 4>, <&[lindex $intr_ctrl 2] 11 4>, <&[lindex $intr_ctrl 2] 12 4>, <&[lindex $intr_ctrl 2] 13 4>, <&[lindex $intr_ctrl 2] 14 4>, <&[lindex $intr_ctrl 2] 15 4>, <&[lindex $intr_ctrl 2] 16 4>, <&[lindex $intr_ctrl 2] 17 4>, <&[lindex $intr_ctrl 2] 18 4>, <&[lindex $intr_ctrl 2] 19 4>, <&[lindex $intr_ctrl 2] 20 4>, <&[lindex $intr_ctrl 2] 21 4>, <&[lindex $intr_ctrl 2] 22 4 >, <&[lindex $intr_ctrl 2] 23 4>, <&[lindex $intr_ctrl 2] 24 4>, <&[lindex $intr_ctrl 2] 25 4>, <&[lindex $intr_ctrl 2] 26 4>, <&[lindex $intr_ctrl 2] 27 4>, <&[lindex $intr_ctrl 2] 28 4>, <&[lindex $intr_ctrl 2] 29 4>, <&[lindex $intr_ctrl 2] 30 4 "
+               add_prop $zocl_node "interrupts-extended" $ref reference $default_dts
+               }
+       }
+}
+
 proc gen_zynqmp_pinctrl {} {
        set default_dts "pcw.dtsi"
        set pinctrl_node [create_node -n "&pinctrl0" -d $default_dts -p root]
@@ -750,7 +820,14 @@ proc generate {} {
 			gen_versal_clk
 			gen_zynqmp_opp_freq
 			gen_zynqmp_pinctrl
+			gen_zocl_node
 		}
+    	}
+    	if {[string match -nocase $proctype "zynq"]} {
+		set mainline_ker [get_user_config $common_file -mainline_kernel]
+	       	if {[string match -nocase $mainline_ker "none"]} {
+        	    	gen_zocl_node
+        	}
     	}
     	#gen_resrv_memory
     	update_alias $drv_handle

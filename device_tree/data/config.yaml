@@ -4,3 +4,4 @@ dict_devicetree:
     board_dts: versal-vmk180-reva
     dt_overlay: false
     output_dir: /proj/xhdsswstaff/nagasure/aug20
+    dt_zocl: false
