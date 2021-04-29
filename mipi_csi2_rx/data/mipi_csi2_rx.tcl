@@ -115,6 +115,7 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
                         }
                 }
         }
+	gen_gpio_reset $drv_handle $node
 
 	}
 proc gen_frmbuf_node {outip drv_handle dts_file} {
@@ -133,4 +134,51 @@ proc gen_frmbuf_node {outip drv_handle dts_file} {
 	set vcap_in_node [create_node -n "endpoint" -l $outip$drv_handle -p $vcap_port_node -d $dts_file]
 	add_prop "$vcap_in_node" "remote-endpoint" mipi_csirx_out$drv_handle reference $dts_file
 }
+
+
+proc gen_gpio_reset {drv_handle node} {
+       set dts_file [set_drv_def_dts $drv_handle]
+       set pins [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier [hsi::get_cells -hier $drv_handle]] "video_aresetn"]]
+       foreach pin $pins {
+               set sink_periph [hsi::get_cells -of_objects $pin]
+               if {[llength $sink_periph]} {
+                       set sink_ip [get_property IP_NAME $sink_periph]
+                       if {[string match -nocase $sink_ip "xlslice"]} {
+                               set gpio [get_property CONFIG.DIN_FROM $sink_periph]
+                               set pins [hsi::get_pins -of_objects [hsi::get_nets -of_objects [hsi::get_pins -of_objects $sink_periph "Din"]]]
+                               foreach pin $pins {
+                                       set periph [hsi::get_cells -of_objects $pin]
+                                       if {[llength $periph]} {
+                                               set ip [get_property IP_NAME $periph]
+                                               #set proc_type [get_sw_proc_prop IP_NAME]
+						set proc_type [get_hw_family]
+                                               if {[string match -nocase $proc_type "versal"] } {
+                                                       if {[string match -nocase $ip "versal_cips"]} {
+                                                               # As versal has only bank0 for MIOs
+                                                               set gpio [expr $gpio + 26]
+                                                               add_prop "$node" "reset-gpios" "gpio0 $gpio 1" reference $dts_file
+                                                               break
+                                                       }
+                                               }
+                                               if {[string match -nocase $proc_type "zynqmp"] || [string match -nocase $proc_type "zynquplus"] } {
+                                                       if {[string match -nocase $ip "zynq_ultra_ps_e"]} {
+                                                               set gpio [expr $gpio + 78]
+                                                               add_prop "$node" "reset-gpios" "gpio $gpio 1" reference $dts_file
+                                                               break
+                                                       }
+                                               }
+                                               if {[string match -nocase $ip "axi_gpio"]} {
+                                                       add_prop "$node" "reset-gpios" "$periph $gpio 0 1" reference $dts_file
+                                               }
+                                       } else {
+                                               dtg_warning "$drv_handle peripheral is NULL for the $pin $periph"
+                                       }
+                               }
+                      }
+               } else {
+                       dtg_warning "$drv_handle peripheral is NULL for the $pin $sink_periph"
+               }
+       }
+}
+
 }
