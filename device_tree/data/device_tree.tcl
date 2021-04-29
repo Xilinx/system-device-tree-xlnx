@@ -547,6 +547,50 @@ proc gen_versal_clk {} {
 
 }
 
+proc gen_zynqmp_opp_freq {} {
+       set default_dts "pcw.dtsi"
+       set cpu_opp_table [create_node -n "&cpu_opp_table" -d $default_dts]
+       set periph_list [hsi::get_cells -hier]
+       foreach periph $periph_list {
+               set zynq_ultra_ps [get_property IP_NAME $periph]
+               if {[string match -nocase $zynq_ultra_ps "zynq_ultra_ps_e"] } {
+                       set avail_param [list_property [hsi::get_cells -hier $periph]]
+                       if {[lsearch -nocase $avail_param "CONFIG.PSU__CRF_APB__ACPU_CTRL__FREQMHZ"] >= 0} {
+                               set freq [get_property CONFIG.PSU__CRF_APB__ACPU_CTRL__FREQMHZ [hsi::get_cells -hier $periph]]
+                               if {[string match -nocase $freq "1200"]} {
+                                       # This is the default value set, so no need to calcualte
+                                       return
+                               }
+                               if {[lsearch -nocase $avail_param "CONFIG.PSU__CRF_APB__ACPU_CTRL__ACT_FREQMHZ"] >= 0} {
+                                       set act_freq [get_property CONFIG.PSU__CRF_APB__ACPU_CTRL__ACT_FREQMHZ [hsi::get_cells -hier $periph]]
+                                       set act_freq [expr $act_freq * 1000000]
+                               }
+                               if {[lsearch -nocase $avail_param "CONFIG.PSU__CRF_APB__ACPU_CTRL__DIVISOR0"] >= 0} {
+                                       set div [get_property CONFIG.PSU__CRF_APB__ACPU_CTRL__DIVISOR0 [hsi::get_cells -hier $periph]]
+                               }
+                               set opp_freq  [expr $act_freq * $div]
+                               set opp00_result [expr int ([expr $opp_freq / 1])]
+                               set opp01_result [expr int ([expr $opp_freq / 2])]
+                               set opp02_result [expr int ([expr $opp_freq / 3])]
+                               set opp03_result [expr int ([expr $opp_freq / 4])]
+                               set opp00 "/bits/ 64 <$opp00_result>"
+                               set opp01 "/bits/ 64 <$opp01_result>"
+                               set opp02 "/bits/ 64 <$opp02_result>"
+                               set opp03 "/bits/ 64 <$opp03_result>"
+                               set opp00_table [create_node -n "opp00" -d $default_dts -p $cpu_opp_table]
+                               add_prop "$opp00_table" "opp-hz" $opp00 stringlist $default_dts
+                               set opp01_table [create_node -n "opp01" -d $default_dts -p $cpu_opp_table]
+                               add_prop "$opp01_table" "opp-hz" $opp01 stringlist $default_dts
+                               set opp02_table [create_node -n "opp02" -d $default_dts -p $cpu_opp_table]
+                               add_prop "$opp02_table" "opp-hz" $opp02 stringlist $default_dts
+                               set opp03_table [create_node -n "opp03" -d $default_dts -p $cpu_opp_table]
+                               add_prop "$opp03_table" "opp-hz" $opp03 stringlist $default_dts
+                       }
+               }
+       }
+}
+
+
 proc generate {} {
 
 	global env
@@ -671,6 +715,7 @@ proc generate {} {
 			gen_sata_laneinfo
 			gen_zynqmp_ccf_clk
 			gen_versal_clk
+			gen_zynqmp_opp_freq
 		}
     	}
     	#gen_resrv_memory
