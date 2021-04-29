@@ -6723,6 +6723,31 @@ proc get_psu_interrupt_id { ip_name port_name } {
            return $number
        }
     }
+    if {[string match -nocase $proctype "versal"] || [string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]
+       || [string match -nocase $proctype "zynq"]} {
+       if {[string match -nocase "[get_property IP_NAME $periph]" "axi_intc"]} {
+               set ip [get_property IP_NAME $periph]
+               set cascade_master [get_property CONFIG.C_CASCADE_MASTER [hsi::get_cells -hier $periph]]
+               set en_cascade_mode [get_property CONFIG.C_EN_CASCADE_MODE [hsi::get_cells -hier $periph]]
+               set sink_pn [get_sink_pins $intr_pin]
+               set peri [hsi::get_cells -of_objects $sink_pn]
+               set periph_ip [get_property IP_NAME [hsi::get_cells -hier $peri]]
+               if {[string match -nocase $periph_ip "xlconcat"]} {
+                       set dout "dout"
+                       set intr_pin [hsi::get_pins -of_objects $peri -filter "NAME==$dout"]
+                       set pins [get_sink_pins "$intr_pin"]
+                       set periph [hsi::get_cells -of_objects $pins]
+                       if {[string match -nocase "[get_property IP_NAME $periph]" "axi_intc"]} {
+                               set cascade_master [get_property CONFIG.C_CASCADE_MASTER [hsi::get_cells -hier $periph]]
+                               set en_cascade_mode [get_property CONFIG.C_EN_CASCADE_MODE [hsi::get_cells -hier $periph]]
+                       }
+                       if {$en_cascade_mode == 1} {
+                               set number [regexp -all -inline -- {[0-9]+} $sink_pn]
+                               return $number
+                       }
+               }
+       }
+    }
     set concat_block 0
     foreach sink_pin $sink_pins {
         set sink_periph [hsi::get_cells -of_objects $sink_pin]
