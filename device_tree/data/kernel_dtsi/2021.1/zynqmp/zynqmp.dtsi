@@ -1324,6 +1324,8 @@
 			clock-names = "axi_clk";
 			power-domains = <&zynqmp_firmware 41>;
 			dma-channels = <6>;
+			#stream-id-cells = <1>;
+			/* iommus = <&smmu 0xce4>; */
 			#dma-cells = <1>;
 			dma-video0channel {
 				compatible = "xlnx,video0";
@@ -1355,6 +1357,8 @@
 			reg-names = "dp", "blend", "av_buf", "aud";
 			interrupts = <0 119 4>;
 			interrupt-parent = <&imux>;
+			#stream-id-cells = <1>;
+			/* iommus = <&smmu 0xce3>; */
 			clock-names = "dp_apb_clk", "dp_aud_clk", "dp_vtc_pixel_clk_in";
 			power-domains = <&zynqmp_firmware 41>;
 
