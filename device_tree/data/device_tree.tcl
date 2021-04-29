@@ -611,7 +611,12 @@ proc gen_zocl_node {} {
        if {!$zocl} {
                return
        }
-       set bus_node "amba_pl"
+       set dt_overlay [get_user_config $common_file -dt_overlay]
+       if {$dt_overlay} {
+               set bus_node "overlay2"
+       } else {
+               set bus_node "amba_pl"
+       }
        set default_dts "pl.dtsi"
        set zocl_node [create_node -n "zyxclmm_drm" -d ${default_dts} -p $bus_node]
 	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] || [string match -nocase $proctype "zynq"]} {
