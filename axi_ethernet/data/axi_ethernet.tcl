@@ -241,14 +241,15 @@ set rxethmem 0
 	    set phytype [string tolower [get_property CONFIG.PHY_TYPE $eth_ip]]
 	    if {$phytype == "rgmii" && $board_name == "kc705"} {
         	set phytype "rgmii-rxid"
+	    } elseif {$phytype == "1000basex"} {
+	        set phytype "1000base-x"
     	    }
 #	    set_property phy-mode "$phytype" $drv_handle
 	    if {![string match -nocase $phytype ""]} {
 		add_prop $node phy-mode "$phytype" string "pl.dtsi" 1
 		#add_prop $node phy-mode "$phytype" string $dts_file
 	    }
-	    if {$phytype == "sgmii" || $phytype == "1000basex"} {
-		  set phytype "sgmii"
+	    if {$phytype == "sgmii" || $phytype == "1000base-x"} {
 	      #set_property phy-mode "$phytype" $drv_handle
 	      add_prop $node phy-mode "$phytype" string "pl.dtsi" 1
 	      #add_prop $node phy-mode "$phytype" string $dts_file
