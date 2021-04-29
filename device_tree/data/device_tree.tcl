@@ -549,7 +549,7 @@ proc gen_versal_clk {} {
 
 proc gen_zynqmp_opp_freq {} {
        set default_dts "pcw.dtsi"
-       set cpu_opp_table [create_node -n "&cpu_opp_table" -d $default_dts]
+       set cpu_opp_table [create_node -n "&cpu_opp_table" -d $default_dts -p root]
        set periph_list [hsi::get_cells -hier]
        foreach periph $periph_list {
                set zynq_ultra_ps [get_property IP_NAME $periph]
@@ -589,6 +589,39 @@ proc gen_zynqmp_opp_freq {} {
                }
        }
 }
+
+proc gen_zynqmp_pinctrl {} {
+       set default_dts "pcw.dtsi"
+       set pinctrl_node [create_node -n "&pinctrl0" -d $default_dts -p root]
+       set periph_list [hsi::get_cells -hier]
+       foreach periph $periph_list {
+               set zynq_ultra_ps [get_property IP_NAME $periph]
+               if {[string match -nocase $zynq_ultra_ps "zynq_ultra_ps_e"] } {
+                       set avail_param [list_property [hsi::get_cells -hier $periph]]
+                       if {[lsearch -nocase $avail_param "CONFIG.PSU__UART1__PERIPHERAL__IO"] >= 0} {
+                               set uart1_io [get_property CONFIG.PSU__UART1__PERIPHERAL__IO [hsi::get_cells -hier $periph]]
+                               if {[string match -nocase $uart1_io "EMIO"]} {
+                                       set pinctrl_uart1_default [create_node -n "uart1-default" -d $default_dts -p $pinctrl_node]
+                                       add_prop "$pinctrl_uart1_default" "/delete-node/ mux" "" boolean $default_dts
+                                       add_prop "$pinctrl_uart1_default" "/delete-node/ conf" "" boolean $default_dts
+                                       add_prop "$pinctrl_uart1_default" "/delete-node/ conf-rx" "" boolean $default_dts
+                                       add_prop "$pinctrl_uart1_default" "/delete-node/ conf-tx" "" boolean $default_dts
+                               }
+                       }
+                       if {[lsearch -nocase $avail_param "CONFIG.PSU__UART0__PERIPHERAL__IO"] >= 0} {
+                               set uart0_io [get_property CONFIG.PSU__UART0__PERIPHERAL__IO [hsi::get_cells -hier $periph]]
+                               if {[string match -nocase $uart0_io "EMIO"]} {
+                                       set pinctrl_uart0_default [create_node -n "uart0-default" -d $default_dts -p $pinctrl_node]
+                                       add_prop "$pinctrl_uart0_default" "/delete-node/ mux" "" boolean $default_dts
+                                       add_prop "$pinctrl_uart0_default" "/delete-node/ conf" "" boolean $default_dts
+                                       add_prop "$pinctrl_uart0_default" "/delete-node/ conf-rx" "" boolean $default_dts
+                                       add_prop "$pinctrl_uart0_default" "/delete-node/ conf-tx" "" boolean $default_dts
+                               }
+                       }
+               }
+       }
+}
+
 
 
 proc generate {} {
@@ -716,6 +749,7 @@ proc generate {} {
 			gen_zynqmp_ccf_clk
 			gen_versal_clk
 			gen_zynqmp_opp_freq
+			gen_zynqmp_pinctrl
 		}
     	}
     	#gen_resrv_memory
