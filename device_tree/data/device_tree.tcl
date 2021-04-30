@@ -625,6 +625,7 @@ proc gen_zocl_node {} {
                add_prop $zocl_node "compatible" "xlnx,zocl-versal" string $default_dts
        }
        set intr_ctrl [hsi::get_cells -hier -filter {IP_NAME == axi_intc}]
+	if {[llength $intr_ctrl]} {
        set intr_ctrl_len [llength $intr_ctrl]
        set int0 [lindex $intr_ctrl 0]
        foreach ip [get_drivers] {
@@ -669,6 +670,7 @@ proc gen_zocl_node {} {
                add_prop $zocl_node "interrupts-extended" $ref reference $default_dts
                }
        }
+ }
 }
 
 proc gen_zynqmp_pinctrl {} {
