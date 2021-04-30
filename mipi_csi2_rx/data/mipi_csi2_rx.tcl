@@ -25,13 +25,18 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		if {[string match -nocase $dphy_en_reg_if "true"]} {
 			add_prop "${node}" "xlnx,dphy-present" boolean $dts_file
 		}
+	       	set en_vcx [get_property CONFIG.C_EN_VCX [hsi::get_cells -hier $drv_handle]]
+       		if {[string match -nocase $en_vcx "true"]} {
+               		add_prop "${node}" "xlnx,en-vcx" "" boolean $dts_file 1
+       		}
+		set en_csi_v2_0 [get_property CONFIG.C_EN_CSI_V2_0 [hsi::get_cells -hier $drv_handle]]
+       		if {[string match -nocase $en_csi_v2_0 "true"]} {
+               		add_prop "${node}" "xlnx,en-csi-v2-0" "" boolean $dts_file 1
+       		}
 		set dphy_lanes [get_property CONFIG.C_DPHY_LANES [hsi::get_cells -hier $drv_handle]]
 		add_prop "${node}" "xlnx,max-lanes" $dphy_lanes int $dts_file
 	       	for {set lane 1} {$lane <= $dphy_lanes} {incr lane} {
 	       	        lappend lanes $lane
-       		}
-       		if {[llength $lanes]} {
-               		add_prop "${node}" "data-lanes" $lanes int $dts_file
        		}
 		set en_csi_v2_0 [get_property CONFIG.C_EN_CSI_V2_0 [hsi::get_cells -hier $drv_handle]]
 		set en_vcx [get_property CONFIG.C_EN_VCX [hsi::get_cells -hier $drv_handle]]
@@ -47,7 +52,7 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 			add_prop "${node}" "xlnx,vc" $cmn_vc int $dts_file
 		}
 		set cmn_pxl_format [get_property CONFIG.CMN_PXL_FORMAT [hsi::get_cells -hier $drv_handle]]
-		add_prop "${node}" "xlnx,csi-pxl-format" $cmn_pxl_format string $dts_file
+		gen_pixel_format $node $cmn_pxl_format $dts_file
 		set csi_en_activelanes [get_property CONFIG.C_CSI_EN_ACTIVELANES [hsi::get_cells -hier $drv_handle]]
 		if {[string match -nocase $csi_en_activelanes "true"]} {
 			add_prop "${node}" "xlnx,en-active-lanes" boolean $dts_file
@@ -64,21 +69,23 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		set ports_node [create_node -n "ports" -l mipi_csi_ports$drv_handle -p $node -d $dts_file]
 		add_prop "$ports_node" "#address-cells" 1 int $dts_file
 		add_prop "$ports_node" "#size-cells" 0 int $dts_file
-		set port_node [create_node -n "port" -l mipi_csi_port0$drv_handle -u 0 -p $ports_node -d $dts_file]
-		add_prop "$port_node" "reg" 0 int $dts_file
+		set port_node [create_node -n "port" -l mipi_csi_port0$drv_handle -u 1 -p $ports_node -d $dts_file]
+		add_prop "$port_node" "reg" 1 int $dts_file
 		add_prop "$port_node" "xlnx,video-format" 12 int $dts_file
 		add_prop "$port_node" "xlnx,video-width" 8 int $dts_file
 		add_prop "$port_node" "xlnx,cfa-pattern" rggb string $dts_file
 
-		set port1_node [create_node -n "port" -l mipi_csi_port1$drv_handle -u 1 -p $ports_node -d $dts_file]
-		add_prop "$port1_node" "reg" 1 int $dts_file
+		set port1_node [create_node -n "port" -l mipi_csi_port1$drv_handle -u 0 -p $ports_node -d $dts_file]
+		add_prop "$port1_node" "reg" 0 int $dts_file
 #        add_new_dts_param "${port1_node}" "/* Fill cfa-pattern=rggb for raw data types, other fields video-format,video-width user needs to fill */" "" comment
  #       add_new_dts_param "${port1_node}" "/* User need to add something like remote-endpoint=<&out> under the node csiss_in:endpoint */" "" comment
 	add_prop "$port1_node" "xlnx,video-format" 12 int $dts_file
 	add_prop "$port1_node" "xlnx,video-width" 8 int $dts_file
 	add_prop "$port1_node" "xlnx,cfa-pattern" rggb string $dts_file
         set csiss_rx_node [create_node -n "endpoint" -l mipi_csi_in$drv_handle -p $port1_node -d $dts_file]
-
+       if {[llength $lanes]} {
+               add_prop "${csiss_rx_node}" "data-lanes" $lanes int $dts_file
+       }
 	set outip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "VIDEO_OUT"]
         if {[llength $outip]} {
                 if {[string match -nocase [get_property IP_NAME $outip] "axis_broadcaster"]} {
@@ -118,6 +125,59 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 	gen_gpio_reset $drv_handle $node
 
 	}
+proc gen_pixel_format {node pxl_format dts_file} {
+       set pixel_format ""
+       switch $pxl_format {
+               "YUV4228B" {
+                       set pixel_format 0x1e
+               }
+               "YUV42210B" {
+                       set pixel_format 0x1f
+               }
+               "RGB444" {
+                       set pixel_format 0x20
+               }
+               "RGB555" {
+                       set pixel_format 0x21
+               }
+               "RGB565" {
+                       set pixel_format 0x22
+               }
+               "RGB666" {
+                       set pixel_format 0x23
+               }
+               "RGB888" {
+                       set pixel_format 0x24
+               }
+               "RAW6" {
+                       set pixel_format 0x28
+               }
+               "RAW7" {
+                       set pixel_format 0x29
+               }
+               "RAW8" {
+                       set pixel_format 0x2a
+               }
+               "RAW10" {
+                       set pixel_format 0x2b
+               }
+               "RAW12" {
+                       set pixel_format 0x2c
+               }
+               "RAW14" {
+                       set pixel_format 0x2d
+               }
+               "RAW16" {
+                       set pixel_format 0x2e
+               }
+               "RAW20" {
+                       set pixel_format 0x2f
+               }
+       }
+       if {[llength $pixel_format]} {
+               add_prop "${node}" "xlnx,csi-pxl-format" $pixel_format hex $dts_file
+       }
+}
 proc gen_frmbuf_node {outip drv_handle dts_file} {
 #        set dt_overlay [get_property CONFIG.dt_overlay [get_os]]
 	set bus_node [detect_bus_name $drv_handle]
@@ -156,19 +216,19 @@ proc gen_gpio_reset {drv_handle node} {
                                                        if {[string match -nocase $ip "versal_cips"]} {
                                                                # As versal has only bank0 for MIOs
                                                                set gpio [expr $gpio + 26]
-                                                               add_prop "$node" "reset-gpios" "gpio0 $gpio 1" reference $dts_file
+                                                               add_prop "$node" "video-reset-gpios" "gpio0 $gpio 1" reference $dts_file
                                                                break
                                                        }
                                                }
                                                if {[string match -nocase $proc_type "zynqmp"] || [string match -nocase $proc_type "zynquplus"] } {
                                                        if {[string match -nocase $ip "zynq_ultra_ps_e"]} {
                                                                set gpio [expr $gpio + 78]
-                                                               add_prop "$node" "reset-gpios" "gpio $gpio 1" reference $dts_file
+                                                               add_prop "$node" "video-reset-gpios" "gpio $gpio 1" reference $dts_file
                                                                break
                                                        }
                                                }
                                                if {[string match -nocase $ip "axi_gpio"]} {
-                                                       add_prop "$node" "reset-gpios" "$periph $gpio 0 1" reference $dts_file
+                                                       add_prop "$node" "video-reset-gpios" "$periph $gpio 0 1" reference $dts_file
                                                }
                                        } else {
                                                dtg_warning "$drv_handle peripheral is NULL for the $pin $periph"
