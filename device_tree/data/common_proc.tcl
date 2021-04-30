@@ -5466,7 +5466,15 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	}
 	# TODO: more ignore ip list?
 	set ip_type [get_property IP_NAME $ip]
-	set ignore_list "lmb_bram_if_cntlr PERIPHERAL axi_noc dfx_decoupler mig_7series"
+	global env
+	set path $env(REPO)
+	set common_file "$path/device_tree/data/config.yaml"
+	set dt_overlay [get_user_config $common_file -dt_overlay]
+        if {$dt_overlay} {
+                set ignore_list "lmb_bram_if_cntlr PERIPHERAL axi_noc dfx_decoupler mig_7series"
+        } else {
+                set ignore_list "lmb_bram_if_cntlr PERIPHERAL axi_noc mig_7series"
+        }
 	if {[string match -nocase $ip_type "psu_pcie"]} {
 		set pcie_config [get_property CONFIG.C_PCIE_MODE [hsi::get_cells -hier $drv_handle]]
 		if {[string match -nocase $pcie_config "Endpoint Device"]} {
