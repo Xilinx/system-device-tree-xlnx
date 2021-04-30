@@ -57,7 +57,7 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 #			add_prop "${node}" "xlnx,use-gt-ch4-hdmi" $use_gt_ch4_hdmi int $dts_file
 		}
 		set tx_no_of_channels [get_property CONFIG.C_Tx_No_Of_Channels [hsi::get_cells -hier $drv_handle]]
-		for {set ch 0} {$ch <= $tx_no_of_channels} {incr ch} {
+		for {set ch 0} {$ch < $tx_no_of_channels} {incr ch} {
 			set phy_node [create_node -n "vphy_lane" -u $ch -l vphy_lane$ch -p $node -d $dts_file]
 			add_prop "$phy_node" "#phy-cells" 4 int $dts_file
 		}
