@@ -36,6 +36,9 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		add_prop "$port1_node" "xlnx,cfa-pattern" rggb string $dts_file 1
 
 		set outip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "m_axis_video"]
+	        set outipname [get_property IP_NAME $outip]
+	        set valid_mmip_list "mipi_csi2_rx_subsystem v_tpg v_hdmi_rx_ss v_smpte_uhdsdi_rx_ss v_smpte_uhdsdi_tx_ss v_demosaic v_gamma_lut v_proc_ss v_frmbuf_rd v_frmbuf_wr v_hdmi_tx_ss v_uhdsdi_audio audio_formatter i2s_receiver i2s_transmitter mipi_dsi_tx_subsystem v_mix v_multi_scaler v_scenechange"
+	        if {[lsearch  -nocase $valid_mmip_list $outipname] >= 0} {
 		foreach ip $outip {
 			if {[llength $ip]} {
                         set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
@@ -68,8 +71,8 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
                         dtg_warning "$drv_handle pin m_axis_video is not connected..check your design"
                 }
         }
-
-
+	}
+	gen_gpio_reset $drv_handle $node
 	}
 	proc gen_frmbuf_wr_node {outip drv_handle dts_file} {
 		set bus_node [detect_bus_name $drv_handle]
@@ -88,5 +91,48 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		add_prop "$vcap_in_node" "remote-endpoint" demo_out$drv_handle reference $dts_file
 		gen_remoteendpoint $drv_handle "$outip$drv_handle"
 	}
+	proc gen_gpio_reset {drv_handle node} {
+        set pins [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier [hsi::get_cells -hier $drv_handle]] "ap_rst_n"]]
+	set proc_type [get_hw_family]
+        foreach pin $pins {
+                set sink_periph [hsi::get_cells -of_objects $pin]
+                if {[llength $sink_periph]} {
+                        set sink_ip [get_property IP_NAME $sink_periph]
+                        if {[string match -nocase $sink_ip "xlslice"]} {
+                                set gpio [get_property CONFIG.DIN_FROM $sink_periph]
+                                set pins [hsi::get_pins -of_objects [hsi::get_nets -of_objects [hsi::get_pins -of_objects $sink_periph "Din"]]]
+                                foreach pin $pins {
+                                        set periph [hsi::get_cells -of_objects $pin]
+                                        if {[llength $periph]} {
+                                                set ip [get_property IP_NAME $periph]
+                                                if {[string match -nocase $proc_type "versal"] } {
+                                                        if {[string match -nocase $ip "versal_cips"]} {
+                                                                # As versal has only bank0 for MIOs
+                                                                set gpio [expr $gpio + 26]
+                                                                add_prop "$node" "reset-gpios" "gpio0 $gpio 1" reference "pl.dtsi"
+                                                                break
+                                                        }
+                                                }
+                                                if {[string match -nocase $proc_type "psu_cortexa53"] } {
+                                                        if {[string match -nocase $ip "zynq_ultra_ps_e"]} {
+                                                                set gpio [expr $gpio + 78]
+                                                                add_prop "$node" "reset-gpios" "gpio $gpio 1" reference "pl.dtsi"
+                                                                break
+                                                        }
+                                                }
+                                                if {[string match -nocase $ip "axi_gpio"]} {
+                                                        add_prop "$node" "reset-gpios" "$periph $gpio 0 1" reference "pl.dtsi"
+                                                }
+                                        } else {
+                                                dtg_warning "$drv_handle: peripheral is NULL for the $pin $periph"
+                                        }
+                                }
+                        }
+                } else {
+                        dtg_warning "$drv_handle: peripheral is NULL for the $pin $sink_periph"
+                }
+        }
+}
+
 }
 
