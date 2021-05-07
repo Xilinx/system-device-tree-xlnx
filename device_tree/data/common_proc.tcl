@@ -2103,7 +2103,6 @@ proc get_intr_id {drv_handle intr_port_name} {
 	set proctype [get_hw_family]
 	foreach pin ${intr_port_name} {
 		set intc [get_interrupt_parent $drv_handle $pin]
-		puts "intc for $drv_handle: $intc and pin $pin"
 		if {[string_is_empty $intc] == 1} {continue}
 		if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "zynquplus"]} {
 
@@ -2111,12 +2110,10 @@ proc get_intr_id {drv_handle intr_port_name} {
 				foreach intr_cntr $intc {
 					if { [is_ip_interrupting_current_proc $intr_cntr] } {
 						set intc $intr_cntr
-						puts "setit $intc"
 					}
 				}
 			}
 			set intc [get_property IP_NAME $intc]
-			puts "IP name $intc"
 			if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] } {
 				if {[string match -nocase $intc "axi_intc"]} {
 					set intc [get_interrupt_parent $drv_handle $pin]
@@ -2133,7 +2130,6 @@ proc get_intr_id {drv_handle intr_port_name} {
 		}
 		if {[string match -nocase $intr_id "-1"]} {continue}
 		set intr_type [get_intr_type $intc $slave $pin]
-		puts "intrrrr $intr_type"
 		if {[string match -nocase $intr_type "-1"]} {
 			continue
 		}
@@ -2148,7 +2144,7 @@ proc get_intr_id {drv_handle intr_port_name} {
 			} elseif {[string match "[get_property IP_NAME $intc]" "axi_intc"] } {
 				set cur_intr_info "$intr_id $intr_type"
 			}
-		} elseif {[string match -nocase $intc "psu_acpu_gic"]|| [string match -nocase [get_property IP_NAME $intc] "psv_acpu_gic"]} {
+		} elseif {[string match -nocase $intc "psu_acpu_gic"] || [string match -nocase $intc "psv_acpu_gic"]} {
 		    set cur_intr_info "0 $intr_id $intr_type"
 		} else {
 			set cur_intr_info "$intr_id $intr_type"
@@ -3138,6 +3134,7 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping f1270000 label "sysmon: sysmon"
 		dict set def_ps_mapping ff990000 label "lpd_xppu: xppu"
 		dict set def_ps_mapping f1310000 label "pmc_xppu: xppu"
+		dict set def_ps_mapping f1300000 label "pmc_xppu_npi: xppu"
 	} elseif {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
 		dict set def_ps_mapping f9010000 label "gic_a53: interrupt-controller"
 		dict set def_ps_mapping f9000000 label "gic_r5: interrupt-controller"
@@ -3209,7 +3206,7 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping fd490000 label "perf_monitor_cci: perf-monitor"
 		dict set def_ps_mapping ffa10000 label "perf_monitor_lpd: perf-monitor"
 		dict set def_ps_mapping ffc80000 label "csudma_0: dma"
-		dict set def_ps_mapping fd400000 label "serdes: zynqmp_phy"
+		dict set def_ps_mapping fd400000 label "psgtr: zynqmp_phy"
 		dict set def_ps_mapping ffa50000 label "xilinx_ams: ams"
 		dict set def_ps_mapping ffa50800 label "ams_ps: ams_ps"
 		dict set def_ps_mapping ffa50c00 label "ams_pl: ams_pl"
@@ -4502,6 +4499,7 @@ proc gen_clk_property {drv_handle} {
 		set axi 0
 	}
 	if {![string match -nocase $clocknames ""]} {
+		set len [llength $updat]
 		set_drv_prop_if_empty $drv_handle "clock-names" $clocknames stringlist
 	}
 	set ip [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
@@ -4623,9 +4621,7 @@ proc get_comp_str {drv_handle} {
 
 proc get_intr_type {intc_name ip_name port_name} {
 	set intc [hsi::get_cells -hier $intc_name]
-	puts "III $intc"
 	set ip [hsi::get_cells -hier $ip_name]
-	puts "IIIp $ip"
 	if {[llength $intc] == 0 && [llength $ip] == 0} {
 		return -1
 	}
@@ -4633,16 +4629,13 @@ proc get_intr_type {intc_name ip_name port_name} {
 		return -1
 	}
 	set intr_pin [hsi::get_pins -of_objects $ip $port_name]
-	puts "PPPP $intr_pin"
 	set sensitivity ""
 	if {[llength $intr_pin] >= 1} {
 		# TODO: check with HSM dev and see if this is a bug
 		set sensitivity [get_property SENSITIVITY $intr_pin]
 	}
-	puts "sens $sensitivity"
 	set intc_type [get_property IP_NAME $intc ]
 	set valid_intc_list "ps7_scugic psu_acpu_gic psv_acpu_gic"
-	puts "valid $valid_intc_list and type $intc_type"
 	if {[lsearch  -nocase $valid_intc_list $intc_type] >= 0} {
 		if {[string match -nocase $sensitivity "EDGE_FALLING"]} {
 				return 2;
@@ -4736,6 +4729,7 @@ proc set_drv_prop_if_empty args {
 		return -1
 	}
 	if {[llength $args] >= 4} {
+
 		set type [lindex $args 3]
 		set_drv_prop $drv_handle $prop_name $value $type
 	} else {
@@ -4839,7 +4833,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 	set intc ""
 	set intr_info ""
 	set intc_names ""
-        set intr_par   ""
+        set intr_par ""
 	if {[string_is_empty $intr_port_name]} {
 		if {[string match -nocase [common::get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "axi_intc"]} {
 			set val [hsi::get_pins -of_objects $slave -filter {TYPE==INTERRUPT}]
@@ -4914,7 +4908,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 				}
 			}
 
-	if {[regexp "kintex*" $proctype match]} {
+			if {[regexp "kintex*" $proctype match]} {
 				if {[string match -nocase [common::get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "axi_intc"] } {
 					set intr_id [get_psu_interrupt_id $drv_handle "irq"]
 				} else {
@@ -4953,8 +4947,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 			}
 		}
 			append intr_names " " "$pin"
-	}
-                       append intr_par   " " "$intc"
+                       append intr_par  " " "$intc"
                        lappend intc_names "$intc" "$cur_intr_info"
        }
        if {[llength $intr_par] > 1 } {
@@ -7080,7 +7073,6 @@ proc get_psu_interrupt_id { ip_name port_name } {
                        set connected_ip [get_property IP_NAME [hsi::get_cells -hier $sink_periph]]
                        if {[string match -nocase "$connected_ip" "xlconcat"]} {
                                set intr_wid [get_port_width $sink_pins]
-                               puts "intr_wid:$intr_wid"
                                dict set xlconcat_val $sink_periph $intr_wid
                                set num [regexp -all -inline -- {[0-9]+} $sink_pins]
                                set num1 [regexp -all -inline -- {[0-9]+} $sink_pin]

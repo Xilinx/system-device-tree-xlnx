@@ -806,7 +806,7 @@ proc generate {} {
 			#namespace import ::${drvname}::\*
 		        #::${drvname}::generate $procc
     			add_skeleton
-			set non_val_list "versal_cips noc_nmu noc_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect"
+			set non_val_list "versal_cips noc_nmu noc_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat axis_tdest_editor util_reduced_logic noc_nsw"
 			set non_val_ip_types "MONITOR BUS PROCESSOR"
     			foreach drv_handle $peri_list {
 				set ip_name [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
@@ -1646,7 +1646,7 @@ proc gen_cpu_cluster {os_handle} {
 			}
 		}
 		add_prop $cpu_node "address-map" $list_values special $default_dts
-		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x0> , <&pmc_xppu 0x0> , <&lpd_xppu 0x1>, <&pmc_xppu 0x1" hexlist $default_dts
+		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x260> , <&pmc_xppu 0x260> , <&lpd_xppu 0x261>, <&pmc_xppu 0x261> , <&pmc_xppu_npi 0x260> , <&pmc_xppu_npi 0x261" hexlist $default_dts
     	}
 	if {[string match -nocase $proctype "versal"] } {
 		set cpu_node [create_node -l "cpus_r5" -n "cpus-r5" -u 3 -d ${default_dts} -p root]
@@ -1680,7 +1680,7 @@ proc gen_cpu_cluster {os_handle} {
 	}
 	add_prop $cpu_node "address-map" $list_values special $default_dts
     	if {[string match -nocase $proctype "versal"] } {
-		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x0> , <&pmc_xppu 0x0> , <&lpd_xppu 0x1>, <&pmc_xppu 0x1" hexlist $default_dts
+		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x200> , <&pmc_xppu 0x200> , <&lpd_xppu 0x204>, <&pmc_xppu 0x204> , <&pmc_xppu_npi 0x200> , <&pmc_xppu_npi 0x204" hexlist $default_dts
 	} elseif {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
 		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x0> , <&lpd_xppu 0x10" hexlist $default_dts
 	}
@@ -1690,7 +1690,7 @@ proc gen_cpu_cluster {os_handle} {
 		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
 		add_prop $cpu_node "#ranges-size-cells" "0x1" hexint $default_dts
 	        add_prop "${cpu_node}" "#ranges-address-cells" "0x1" hexint $default_dts
-		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x247> , <&pmc_xppu 0x247" hexlist $default_dts
+		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x247> , <&pmc_xppu 0x247> , <&pmc_xppu_npi 0x247" hexlist $default_dts
 	} else {
         	set microblaze_node [create_node -l "cpus_microblaze_1" -n "cpus_microblaze" -u 1 -d ${default_dts} -p root]
 	        add_prop "${microblaze_node}" "compatible" "cpus,cluster" string $default_dts
@@ -1744,7 +1744,7 @@ proc gen_cpu_cluster {os_handle} {
 			}
 		}
 		add_prop $cpu_node "address-map" $list_values special $default_dts
-		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x238> , <&pmc_xppu 0x238" hexlist $default_dts
+		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x238> , <&pmc_xppu 0x238> , <&pmc_xppu_npi 0x238" hexlist $default_dts
 	}
 	set microblaze_proc [hsi::get_cells -hier -filter {IP_NAME==microblaze}]
 	
@@ -2012,6 +2012,7 @@ proc gen_ctrl_compatible {drv_handle} {
 	dict set pslist 0xf1270000 "xlnx,versal-sysmon"
 	dict set pslist 0xff990000 "xlnx,xppu"
 	dict set pslist 0xf1310000 "xlnx,xppu"
+	dict set pslist 0xf1300000 "xlnx,xppu"
 	dict set pslist 0xf1000000 "cdns,i2c-r1p14 cdns,i2c-r1p10"
 	if {[string match -nocase $family "versal"]} {
 		set ctrl_addr_list "0xF11E0000 0xFF9C0000 0xF11F0000 0xF12D0000 0xF12E4000
@@ -2170,7 +2171,7 @@ proc gen_xppu {drv_handle} {
 		dict set xppu	F1230000	addr	pmc
 		dict set xppu	F12F0000	addr	pmc
 		dict set xppu	F1310000	addr	pmc
-		dict set xppu	F1300000	addr	pmc
+		dict set xppu	F1300000	addr	npi
 		dict set xppu	F12B0000	addr	pmc
 		dict set xppu	F12E0000	addr	pmc
 		dict set xppu	F12C0000	addr	pmc
