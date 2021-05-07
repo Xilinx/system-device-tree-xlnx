@@ -1428,14 +1428,21 @@
 		lpd_xppu: xppu@ff990000 {
 			compatible = "xlnx,xppu";
 			#firewall-cells = <0x0>;
-			reg = <0x0 0xff990000 0x0 0x1000>;
+			reg = <0x0 0xff990000 0x0 0x2000>;
 			status = "disabled";
 		};
 		pmc_xppu: xppu@f1310000 {
 			compatible = "xlnx,xppu";
 			#firewall-cells = <0x0>;
-			reg = <0x0 0xf1310000 0x0 0x1000>;
+			reg = <0x0 0xf1310000 0x0 0x2000>;
 			status = "disabled";
 		};
+		pmc_xppu_npi: xppu@f1300000 {
+			compatible = "xlnx,xppu";
+			#firewall-cells = <0x0>;
+			reg = <0x0 0xf1300000 0x0 0x2000>;
+			status = "disabled";
+		};
+
 	};
 };
