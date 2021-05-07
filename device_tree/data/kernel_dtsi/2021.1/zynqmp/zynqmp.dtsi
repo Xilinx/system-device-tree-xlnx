@@ -12,6 +12,10 @@
  * the License, or (at your option) any later version.
  */
 
+#include "include/dt-bindings/dma/xlnx-zynqmp-dpdma.h"
+#include "include/dt-bindings/power/xlnx-zynqmp-power.h"
+#include "include/dt-bindings/reset/xlnx-zynqmp-resets.h"
+
 / {
 	compatible = "xlnx,zynqmp";
 	#address-cells = <2>;
