@@ -352,6 +352,7 @@ proc get_user_config args {
         	set mainline_kernel [dict get $user mainline_kernel]
         	set kernel_ver [dict get $user kernel_ver]
         	set dir [dict get $user output_dir]
+        	set zocl [dict get $user dt_zocl]
         	set param ""
         	switch -glob -- [lindex $args 1] {
                 	-repo {
@@ -372,6 +373,8 @@ proc get_user_config args {
 				set param $kernel_ver
 			} -dir {
 				set param $dir
+			} -dt_zocl {
+				set param $zocl
                 	} default {
                         	error "get_user_config bad option - [lindex $args 0]"
                 	}
@@ -399,6 +402,8 @@ proc set_dt_param args {
                        set env(kernel_ver) $val
                } "dir" {
                        set env(dir) $val
+               } "dt_zocl" {
+                       set env(dir) $val
                } default {
                        error "unknown option"
                }
@@ -423,6 +428,8 @@ proc get_dt_param args {
                        if {[catch {set val $env(kernel_ver)} msg ]} {}
                } -dir {
                        if {[catch {set val $env(dir)} msg ]} {}
+               } -dt_zocl {
+                       if {[catch {set val $env(dt_zocl)} msg ]} {}
                } default {
                        error "unknown option"
                }
@@ -435,7 +442,7 @@ proc get_node args {
 
 	proc_called_by
 	set handle [lindex $args 0]
-	set non_val_list "versal_cips noc_nmu noc_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect"
+	set non_val_list "versal_cips noc_nmu noc_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect noc_nsw"
 	set non_val_ip_types "MONITOR BUS PROCESSOR"
 	set ip_name [get_property IP_NAME [hsi::get_cells -hier $handle]]
 	set ip_type [get_property IP_TYPE [hsi::get_cells -hier $handle]]
