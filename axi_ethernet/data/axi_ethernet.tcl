@@ -336,7 +336,7 @@ set rxethmem 0
 						set intr_parent [string trimright $intr_parent ">"]
 						set intr_parent [string trimleft $intr_parent "<"]
 						set intr_parent [string trimleft $intr_parent "&"]
-						#		            set intr_parent [get_property CONFIG.interrupt-parent $target_handle]
+						#set intr_parent [get_property CONFIG.interrupt-parent $target_handle]
 						set int_names  [pldt get $ipnode interrupt-names]
 						set names [split $int_names ","]
 						if {[llength $names] >= 1} {
@@ -345,7 +345,7 @@ set rxethmem 0
 						}
 						if {[llength $names] >= 2} {
 							set int2 [string trimright [lindex $names 1] "\""]
-							set int2 [string trimleft $int2 "\""]
+							set int2 [string trimleft $int2 "\" "]
 						}
 					}
 			   		if { $hasbuf == "true" && $ip_name == "axi_ethernet"} {
