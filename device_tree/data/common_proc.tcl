@@ -756,7 +756,7 @@ proc create_node args {
 		}
 		Pop args
 	}
-	set ignore_list "clk_wiz clk_wizard xlconcat xlconstant util_vector_logic xlslice util_ds_buf proc_sys_reset axis_data_fifo v_vid_in_axi4s bufg_gt axis_tdest_editor util_reduced_logic gt_quad_base noc_nsw blk_mem_gen emb_mem_gen lmb_bram_if_cntlr perf_axi_tg noc_mc_ddr4 c_counter_binary timer_sync_1588 oddr"
+	set ignore_list "clk_wiz clk_wizard xlconcat xlconstant util_vector_logic xlslice util_ds_buf proc_sys_reset axis_data_fifo v_vid_in_axi4s bufg_gt axis_tdest_editor util_reduced_logic gt_quad_base noc_nsw blk_mem_gen emb_mem_gen lmb_bram_if_cntlr perf_axi_tg noc_mc_ddr4 c_counter_binary timer_sync_1588 oddr axi_noc"
 	set temp [lsearch $ignore_list $node_name]
 	if {[string match -nocase $node_unit_addr ""] && $temp >= 0 } {
 		set val_lab [string match -nocase $node_label ""]
@@ -2940,7 +2940,7 @@ proc add_driver_prop {drv_handle dt_node prop} {
 		set value ""
 	}
 	if {[string match -nocase "PROCESSOR" [get_property IP_TYPE [hsi::get_cells -hier $drv_handle]]]} {
-		add_prop $dt_node $prop $value $type [set_drv_def_dts $drv_handle]
+		add_prop $dt_node $prop $value $type [set_drv_def_dts $drv_handle] 1
 	} else {
 	set node [get_node $drv_handle ]
 	if {[string match -nocase $prop "c_tdest_val"]} {
@@ -4776,7 +4776,7 @@ proc gen_mb_interrupt_property {cpu_handle {intr_port_name ""}} {
 		set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
 	}
 	set cpu_node [create_node -n "cpu" -u 0 -d "pl.dtsi" -p $rt_node]
-	add_prop $cpu_node "interrupt-handle" $intc reference "pl.dtsi"
+	add_prop $cpu_node "interrupt-handle" $intc reference "pl.dtsi" 1
 	#set_drv_prop $cpu_handle interrupt-handle $intc reference
 }
 
@@ -5428,6 +5428,9 @@ proc gen_compatible_property {drv_handle} {
 	}
 	set vlnv [split [get_property VLNV $slave] ":"]
 	set name [lindex $vlnv 2]
+	if {[string match -nocase $name ""]} {
+		return 0
+	}
 	if {[string match -nocase $name "psv_fpd_smmutcu"]} {
 		set name "psv_fpd_maincci"
 	}
@@ -6292,7 +6295,7 @@ proc gen_cpu_nodes {drv_handle} {
 	}
 	gen_compatible_property $drv_handle
 	gen_mb_interrupt_property $drv_handle
-	gen_drv_prop_from_ip $drv_handle
+	#gen_drv_prop_from_ip $drv_handle
 
 	set default_dts [set_drv_def_dts $drv_handle]
 	set processor_type [get_property IP_NAME [hsi::get_cells -hier ${drv_handle}]]
@@ -6373,6 +6376,7 @@ proc gen_cpu_nodes {drv_handle} {
 			set slave [hsi::get_cells -hier $cpu]
 			set name [split [get_property NAME $slave] "_"]
 			set cpu_nr [lindex $name 2]
+			set cpu_nr [string index [get_property NAME $slave] end]
 			if {[string match -nocase $processor_type "psu_cortexa53"]} {
 				set cpu_node [pcwdt insert root end "&a53_cpu${cpu_nr}"]
 			} else {

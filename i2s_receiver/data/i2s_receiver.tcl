@@ -22,11 +22,11 @@ namespace eval ::tclapp::xilinx::devicetree::i2s_receiver {
 		}
 		pldt append $node compatible "\ \, \"xlnx,i2s-receiver-1.0\""
 		set dwidth [get_property CONFIG.C_DWIDTH [hsi::get_cells -hier $drv_handle]]
-		add_prop "$node" "xlnx,dwidth" $dwidth hexint $dts_file
+		add_prop "$node" "xlnx,dwidth" $dwidth hexint $dts_file 1
 		set num_channels [get_property CONFIG.C_NUM_CHANNELS [hsi::get_cells -hier $drv_handle]]
-		add_prop "$node" "xlnx,num-channels" $num_channels hexint $dts_file
+		add_prop "$node" "xlnx,num-channels" $num_channels hexint $dts_file 1
 		set depth [get_property CONFIG.C_DEPTH [hsi::get_cells -hier $drv_handle]]
-		add_prop "$node" "xlnx,depth" $depth hexint $dts_file
+		add_prop "$node" "xlnx,depth" $depth hexint $dts_file 1
 		set ip [hsi::get_cells -hier $drv_handle]
 		set freq ""
 		set clk [hsi::get_pins -of_objects $ip "aud_mclk"]
@@ -54,15 +54,15 @@ namespace eval ::tclapp::xilinx::devicetree::i2s_receiver {
 		}
 		set dwidth [get_property CONFIG.C_DWIDTH [hsi::get_cells -hier $drv_handle]]
 		if {[llength $dwidth]} {
-			add_prop "$node" "xlnx,dwidth" $dwidth hexint $dts_file
+			add_prop "$node" "xlnx,dwidth" $dwidth hexint $dts_file 1
 		}
 		set num_channels [get_property CONFIG.C_NUM_CHANNELS [hsi::get_cells -hier $drv_handle]]
 		if {[llength $num_channels]} {
-			add_prop "$node" "xlnx,num-channels" $num_channels hexint $dts_file
+			add_prop "$node" "xlnx,num-channels" $num_channels hexint $dts_file 1
 		}
 		set depth [get_property CONFIG.C_DEPTH [hsi::get_cells -hier $drv_handle]]
 		if {[llength $depth]} {
-			add_prop "$node" "xlnx,depth" $depth hexint $dts_file
+			add_prop "$node" "xlnx,depth" $depth hexint $dts_file 1
 		}
 	}
 }

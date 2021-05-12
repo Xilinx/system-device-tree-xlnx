@@ -34,7 +34,10 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		set avail_param [list_property [hsi::get_cells -hier $zynq_periph]]
 		if {[lsearch -nocase $avail_param "CONFIG.PSU__DDRC__DDR4_ADDR_MAPPING"] >= 0} {
 			set val [get_property CONFIG.PSU__DDRC__DDR4_ADDR_MAPPING [hsi::get_cells -hier $zynq_periph]]
-			add_prop $node "xlnx,addr-mapping" $val hexint $dts_file
+			if {[string match -nocase $val "NA"]} {
+			} else {
+				add_prop $node "xlnx,addr-mapping" $val hexint $dts_file
+			}
 		}
 		if {[lsearch -nocase $avail_param "CONFIG.PSU__ACT_DDR_FREQ_MHZ"] >= 0} {
 			set val [get_property CONFIG.PSU__ACT_DDR_FREQ_MHZ [hsi::get_cells -hier $zynq_periph]]

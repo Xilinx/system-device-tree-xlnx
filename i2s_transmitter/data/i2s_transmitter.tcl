@@ -22,11 +22,11 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		}
 		pldt append $node compatible "\ \, \"xlnx,i2s-transmitter-1.0\""
 		set dwidth [get_property CONFIG.C_DWIDTH [hsi::get_cells -hier $drv_handle]]
-		add_prop "$node" "xlnx,dwidth" $dwidth hexint $dts_file
+		add_prop "$node" "xlnx,dwidth" $dwidth hexint $dts_file 1
 		set num_channels [get_property CONFIG.C_NUM_CHANNELS [hsi::get_cells -hier $drv_handle]]
-		add_prop "$node" "xlnx,num-channels" $num_channels hexint $dts_file
+		add_prop "$node" "xlnx,num-channels" $num_channels hexint $dts_file 1
 		set depth [get_property CONFIG.C_DEPTH [hsi::get_cells -hier $drv_handle]]
-		add_prop "$node" "xlnx,depth" $depth hexint $dts_file
+		add_prop "$node" "xlnx,depth" $depth hexint $dts_file 1
 		set ip [hsi::get_cells -hier $drv_handle]
 		set freq ""
 		set clk [hsi::get_pins -of_objects $ip "aud_mclk"]
@@ -49,20 +49,20 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 					add_prop "$node" "xlnx,snd-pcm" $connected_ip reference $dts_file
 				}
 			} elseif {[string match -nocase $connect_ip_type "audio_formatter"]} {
-				add_prop "$node" "xlnx,snd-pcm" $connect_ip reference $dts_file
+				add_prop "$node" "xlnx,snd-pcm" $connect_ip reference $dts_file 1
 			}
 		}
 		set dwidth [get_property CONFIG.C_DWIDTH [hsi::get_cells -hier $drv_handle]]
 		if {[llength $dwidth]} {
-			add_prop "$node" "xlnx,dwidth" $dwidth hexint $dts_file
+			add_prop "$node" "xlnx,dwidth" $dwidth hexint $dts_file 1
 		}
 		set num_channels [get_property CONFIG.C_NUM_CHANNELS [hsi::get_cells -hier $drv_handle]]
 		if {[llength $num_channels]} {
-			add_prop "$node" "xlnx,num-channels" $num_channels hexint $dts_file
+			add_prop "$node" "xlnx,num-channels" $num_channels hexint $dts_file 1
 		}
 		set depth [get_property CONFIG.C_DEPTH [hsi::get_cells -hier $drv_handle]]
 		if {[llength $depth]} {
-			add_prop "$node" "xlnx,depth" $depth hexint $dts_file
+			add_prop "$node" "xlnx,depth" $depth hexint $dts_file 1
 		}
 	}
 }

@@ -20,7 +20,7 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		if {$node == 0} {
 			return
 		}
-		set keyval [pldt append $node compatible "\ \, \"xlnx,mipi-csi2-rx-subsystem-5.0\""
+		set keyval [pldt append $node compatible "\ \, \"xlnx,mipi-csi2-rx-subsystem-5.0\""]
 		set dphy_en_reg_if [get_property CONFIG.DPY_EN_REG_IF [hsi::get_cells -hier $drv_handle]]
 		if {[string match -nocase $dphy_en_reg_if "true"]} {
 			add_prop "${node}" "xlnx,dphy-present" boolean $dts_file
