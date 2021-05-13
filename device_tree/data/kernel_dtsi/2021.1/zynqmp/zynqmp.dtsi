@@ -804,7 +804,7 @@
 			status = "disabled";
 		};
 
-		nand_0: nand-controller@ff100000 {
+		nand0: nand-controller@ff100000 {
 			compatible = "xlnx,zynqmp-nand-controller", "arasan,nfc-v3p10";
 			status = "disabled";
 			reg = <0x0 0xff100000 0x0 0x1000>;
