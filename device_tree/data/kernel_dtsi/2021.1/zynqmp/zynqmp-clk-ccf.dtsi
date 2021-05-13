@@ -88,11 +88,11 @@
 	};
 };
 
-&can_0 {
+&can0 {
 	clocks = <&zynqmp_clk CAN0_REF>, <&zynqmp_clk LPD_LSBUS>;
 };
 
-&can_1 {
+&can1 {
 	clocks = <&zynqmp_clk CAN1_REF>, <&zynqmp_clk LPD_LSBUS>;
 };
 

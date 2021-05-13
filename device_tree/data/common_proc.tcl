@@ -756,7 +756,7 @@ proc create_node args {
 		}
 		Pop args
 	}
-	set ignore_list "clk_wiz clk_wizard xlconcat xlconstant util_vector_logic xlslice util_ds_buf proc_sys_reset axis_data_fifo v_vid_in_axi4s bufg_gt axis_tdest_editor util_reduced_logic gt_quad_base noc_nsw blk_mem_gen emb_mem_gen lmb_bram_if_cntlr perf_axi_tg noc_mc_ddr4 c_counter_binary timer_sync_1588 oddr axi_noc"
+	set ignore_list "clk_wiz clk_wizard xlconcat xlconstant util_vector_logic xlslice util_ds_buf proc_sys_reset axis_data_fifo v_vid_in_axi4s bufg_gt axis_tdest_editor util_reduced_logic gt_quad_base noc_nsw blk_mem_gen emb_mem_gen lmb_bram_if_cntlr perf_axi_tg noc_mc_ddr4 c_counter_binary timer_sync_1588 oddr axi_noc mailbox dp_videoaxi4s_bridge"
 	set temp [lsearch $ignore_list $node_name]
 	if {[string match -nocase $node_unit_addr ""] && $temp >= 0 } {
 		set val_lab [string match -nocase $node_label ""]
@@ -3145,8 +3145,8 @@ proc gen_ps_mapping {} {
 	} elseif {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
 		dict set def_ps_mapping f9010000 label "gic_a53: interrupt-controller"
 		dict set def_ps_mapping f9000000 label "gic_r5: interrupt-controller"
-		dict set def_ps_mapping ff060000 label "can_0: can"
-		dict set def_ps_mapping ff070000 label "can_1: can"
+		dict set def_ps_mapping ff060000 label "can0: can"
+		dict set def_ps_mapping ff070000 label "can1: can"
 		dict set def_ps_mapping fd500000 label "fpd_dma_chan1: dma"
 		dict set def_ps_mapping fd510000 label "fpd_dma_chan2: dma"
 		dict set def_ps_mapping fd520000 label "fpd_dma_chan3: dma"

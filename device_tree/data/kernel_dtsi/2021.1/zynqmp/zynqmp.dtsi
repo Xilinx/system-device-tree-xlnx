@@ -528,7 +528,7 @@
 
 		};
 
-		can_0: can@ff060000 {
+		can0: can@ff060000 {
 			compatible = "xlnx,zynq-can-1.0";
 			status = "disabled";
 			clock-names = "can_clk", "pclk";
@@ -540,7 +540,7 @@
 			power-domains = <&zynqmp_firmware 47>;
 		};
 
-		can_1: can@ff070000 {
+		can1: can@ff070000 {
 			compatible = "xlnx,zynq-can-1.0";
 			status = "disabled";
 			clock-names = "can_clk", "pclk";
