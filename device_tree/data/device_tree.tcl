@@ -2017,6 +2017,13 @@ proc gen_ctrl_compatible {drv_handle} {
 	dict set pslist 0xf1310000 "xlnx,xppu"
 	dict set pslist 0xf1300000 "xlnx,xppu"
 	dict set pslist 0xf1000000 "cdns,i2c-r1p14 cdns,i2c-r1p10"
+	dict set pslist 0xfd390000 "xlnx,xmpu"
+	dict set pslist 0xf12f0000 "xlnx,xmpu"
+	dict set pslist 0xff980000 "xlnx,xmpu"
+	dict set pslist 0xf6080000 "xlnx,xmpu"
+	dict set pslist 0xf6220000 "xlnx,xmpu"
+	dict set pslist 0xf6390000 "xlnx,xmpu"
+	dict set pslist 0xf6500000 "xlnx,xmpu"
 	if {[string match -nocase $family "versal"]} {
 		set ctrl_addr_list "0xF11E0000 0xFF9C0000 0xF11F0000 0xF12D0000 0xF12E4000
 				0xF12E6000 0xF12E8000 0xF12EA000 0xF12EC000 0xF12D2000
@@ -2035,7 +2042,9 @@ proc gen_ctrl_compatible {drv_handle} {
 				0xF0310000 0xF0282000 0xF0281000 0xF0284000 0xF0283000
 				0xF0300000 0xFFC90000 0xFFC80000 0xFFC88000 0xFFCF0000
 				0xFFCB0000 0xFFCA0000 0xFFCD0000 0xFFCC0000 0xFFCE0000
-				0xF0050000 0xF1210000 0xF1220000 0xF1230000"
+				0xF0050000 0xF1210000 0xF1220000 0xF1230000 0xFD390000
+				0xF12F0000 0xFF980000 0xF6080000 0xF6220000 0xF6390000
+				0xF6500000"
 		if {[lsearch -nocase $ctrl_addr_list $baseaddr] >= 0} {
 			if {[catch {set tmp [dict get $pslist $baseaddr]} msg]} {
 				pcwdt append $node compatible "\ \, \"xlnx,ctrlregs\""

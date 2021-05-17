@@ -1445,4 +1445,52 @@
 		};
 
 	};
+	amba_xmpu: indirect-bus@2 {
+		compatible = "indirect-bus";
+		#address-cells = <0x2>;
+		#size-cells = <0x2>;
+		fpd_xmpu: xmpu@fd390000 {
+			compatible = "xlnx,xmpu";
+			#firewall-cells = <0x0>;
+			reg = <0x0 0xfd390000 0x0 0x1000>;
+			status = "disabled";
+		};
+		pmc_xmpu: xmpu@f12f0000 {
+			compatible = "xlnx,xmpu";
+			#firewall-cells = <0x0>;
+			reg = <0x0 0xf12f0000 0x0 0x1000>;
+			status = "disabled";
+		};
+		ocm_xmpu: xmpu@ff980000 {
+			compatible = "xlnx,xmpu";
+			#firewall-cells = <0x0>;
+			reg = <0x0 0xff980000 0x0 0x1000>;
+			status = "disabled";
+		};
+		ddrmc_xmpu_0: xmpu@f6080000 {
+			compatible = "xlnx,xmpu";
+			#firewall-cells = <0x0>;
+			reg = <0x0 0xf6080000 0x0 0x1000>;
+			status = "disabled";
+		};
+		ddrmc_xmpu_1: xmpu@f6220000 {
+			compatible = "xlnx,xmpu";
+			#firewall-cells = <0x0>;
+			reg = <0x0 0xf6220000 0x0 0x1000>;
+			status = "disabled";
+		};
+		ddrmc_xmpu_2: xmpu@f6390000 {
+			compatible = "xlnx,xmpu";
+			#firewall-cells = <0x0>;
+			reg = <0x0 0xf6390000 0x0 0x1000>;
+			status = "disabled";
+		};
+		ddrmc_xmpu_3: xmpu@f6500000 {
+			compatible = "xlnx,xmpu";
+			#firewall-cells = <0x0>;
+			reg = <0x0 0xf6500000 0x0 0x1000>;
+			status = "disabled";
+		};
+	};
+
 };

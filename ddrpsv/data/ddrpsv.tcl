@@ -310,6 +310,9 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 			if {[catch {set value [pcwdt get "&mc0" ranges]} msg]} {
 				set node [create_node -n "&mc0" -d "pcw.dtsi" -p root]		
 				add_prop $node ranges $reg hexlist "pcw.dtsi" 1
+				add_prop $node "status" "okay" string "pcw.dtsi" 1
+				set mcnode [create_node -n "&ddrmc_xmpu_0" -d "pcw.dtsi" -p root]		
+				add_prop $mcnode "status" "okay" string "pcw.dtsi" 1
 			} else {
 				set reg_val $value
 				set reg_val [string trimleft $reg_val "<"]
@@ -318,6 +321,7 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 				pcwdt unset "&mc0" ranges
 				set reg_val [remove_dup $reg_val]
 				add_prop "&mc0" ranges $reg_val hexlist "pcw.dtsi" 1
+				add_prop "&mc0" "status" "okay" string "pcw.dtsi" 1
 			}
 			
 		}
@@ -326,6 +330,9 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 			if {[catch {set value [pcwdt get "&mc1" ranges]} msg]} {
 				set node [create_node -n "&mc1" -d "pcw.dtsi" -p root]		
 				add_prop $node ranges $reg hexlist "pcw.dtsi" 1
+				add_prop $node "status" "okay" string "pcw.dtsi" 1
+				set mcnode [create_node -n "&ddrmc_xmpu_1" -d "pcw.dtsi" -p root]		
+				add_prop $mcnode "status" "okay" string "pcw.dtsi" 1
 			} else {
 				set reg_val $value
 				set reg_val [string trimleft $reg_val "<"]
@@ -334,6 +341,7 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 				pcwdt unset "&mc1" ranges
 				set reg_val [remove_dup $reg_val]
 				add_prop "&mc1" ranges $reg_val hexlist "pcw.dtsi" 1			
+				add_prop "&mc1" "status" "okay" string "pcw.dtsi" 1
 			}
 			add_prop "&mc0" interleave "$intrleave_size 1" hexlist "pcw.dtsi" 1
 			add_prop "&mc1" interleave "$intrleave_size 2" hexlist "pcw.dtsi" 1
@@ -341,9 +349,28 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		}
 		
 		if {$num_mc >= 4} {
+			if {[catch {set value [pcwdt get "&mc2" ranges]} msg]} {
+				set node [create_node -n "&mc2" -d "pcw.dtsi" -p root]		
+				add_prop $node ranges $reg hexlist "pcw.dtsi" 1
+				add_prop $node "status" "okay" string "pcw.dtsi" 1
+				set mcnode [create_node -n "&ddrmc_xmpu_2" -d "pcw.dtsi" -p root]		
+				add_prop $mcnode "status" "okay" string "pcw.dtsi" 1
+			} else {
+				set reg_val $value
+				set reg_val [string trimleft $reg_val "<"]
+				set reg_val [string trimright $reg_val ">"]
+				append reg_val ">, <$reg"
+				pcwdt unset "&mc2" ranges
+				set reg_val [remove_dup $reg_val]
+				add_prop "&mc2" ranges $reg_val hexlist "pcw.dtsi" 1				
+				add_prop "&mc2" "status" "okay" string "pcw.dtsi" 1
+			}
+			add_prop "&mc2" interleave "$intrleave_size 3" hexlist "pcw.dtsi" 1
 			if {[catch {set value [pcwdt get "&mc3" ranges]} msg]} {
 				set node [create_node -n "&mc3" -d "pcw.dtsi" -p root]		
 				add_prop $node ranges $reg hexlist "pcw.dtsi" 1
+				set mcnode [create_node -n "&ddrmc_xmpu_3" -d "pcw.dtsi" -p root]		
+				add_prop $mcnode "status" "okay" string "pcw.dtsi" 1
 			} else {
 				set reg_val $value
 				set reg_val [string trimleft $reg_val "<"]
@@ -352,9 +379,10 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 				pcwdt unset "&mc3" ranges
 				set reg_val [remove_dup $reg_val]
 				add_prop "&mc3" ranges $reg_val hexlist "pcw.dtsi" 1				
+				add_prop "&mc3" "status" "okay" string "pcw.dtsi" 1
 			}
-			add_prop "&mc3" interleave "$intrleave_size 3" hexlist "pcw.dtsi" 1
-			add_prop "&mc4" interleave "$intrleave_size 4" hexlist "pcw.dtsi" 1
+
+			add_prop "&mc3" interleave "$intrleave_size 4" hexlist "pcw.dtsi" 1
 		}
 
 	}
