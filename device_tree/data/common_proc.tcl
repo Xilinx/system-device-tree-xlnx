@@ -756,7 +756,7 @@ proc create_node args {
 		}
 		Pop args
 	}
-	set ignore_list "clk_wiz clk_wizard xlconcat xlconstant util_vector_logic xlslice util_ds_buf proc_sys_reset axis_data_fifo v_vid_in_axi4s bufg_gt axis_tdest_editor util_reduced_logic gt_quad_base noc_nsw blk_mem_gen emb_mem_gen lmb_bram_if_cntlr perf_axi_tg noc_mc_ddr4 c_counter_binary timer_sync_1588 oddr axi_noc mailbox dp_videoaxi4s_bridge"
+	set ignore_list "clk_wiz clk_wizard xlconcat xlconstant util_vector_logic xlslice util_ds_buf proc_sys_reset axis_data_fifo v_vid_in_axi4s bufg_gt axis_tdest_editor util_reduced_logic gt_quad_base noc_nsw blk_mem_gen emb_mem_gen lmb_bram_if_cntlr perf_axi_tg noc_mc_ddr4 c_counter_binary timer_sync_1588 oddr axi_noc mailbox dp_videoaxi4s_bridge axi4svideo_bridge"
 	set temp [lsearch $ignore_list $node_name]
 	if {[string match -nocase $node_unit_addr ""] && $temp >= 0 } {
 		set val_lab [string match -nocase $node_label ""]
@@ -3142,6 +3142,13 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping ff990000 label "lpd_xppu: xppu"
 		dict set def_ps_mapping f1310000 label "pmc_xppu: xppu"
 		dict set def_ps_mapping f1300000 label "pmc_xppu_npi: xppu"
+		dict set def_ps_mapping fd390000 label "fpd_xmpu: xmpu"
+		dict set def_ps_mapping f12f0000 label "pmc_xmpu: xmpu"
+		dict set def_ps_mapping ff980000 label "ocm_xmpu: xmpu"
+		dict set def_ps_mapping f6080000 label "ddrmc_xmpu_0: xmpu"
+		dict set def_ps_mapping f6220000 label "ddrmc_xmpu_1: xmpu"
+		dict set def_ps_mapping f6390000 label "ddrmc_xmpu_2: xmpu"
+		dict set def_ps_mapping f6400000 label "ddrmc_xmpu_3: xmpu"
 	} elseif {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
 		dict set def_ps_mapping f9010000 label "gic_a53: interrupt-controller"
 		dict set def_ps_mapping f9000000 label "gic_r5: interrupt-controller"
@@ -3164,7 +3171,7 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping ffad0000 label "lpd_dma_chan6: dma"
 		dict set def_ps_mapping ffae0000 label "lpd_dma_chan7: dma"
 		dict set def_ps_mapping ffaf0000 label "lpd_dma_chan8: dma"
-		dict set def_ps_mapping ff100000 label "nand_0: nand-controller" 
+		dict set def_ps_mapping ff100000 label "nand0: nand-controller"
 		dict set def_ps_mapping ff0b0000 label "gem0: ethernet"
 		dict set def_ps_mapping ff0c0000 label "gem1: ethernet"
 		dict set def_ps_mapping ff0d0000 label "gem2: ethernet"
