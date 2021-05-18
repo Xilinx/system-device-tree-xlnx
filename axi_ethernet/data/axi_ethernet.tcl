@@ -344,7 +344,7 @@ set rxethmem 0
 							set int1 [string trimleft $int1 "\""]
 						}
 						if {[llength $names] >= 2} {
-							set int2 [string trimright [lindex $names 1] "\""]
+							set int2 [string trimright [lindex $names 1] "\" "]
 							set int2 [string trimleft $int2 "\" "]
 						}
 					}
