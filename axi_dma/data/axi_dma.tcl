@@ -142,7 +142,12 @@ set connected_ip 0
 	    add_cross_property_to_dtnode $drv_handle [format "CONFIG.C_INCLUDE_%s_DRE" $mode] $dma_channel "xlnx,include-dre" boolean
 	    # detection based on two property
 
-	    set datawidth  [get_property CONFIG.C_M_AXI_MM2S_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
+	    if {[string match -nocase $mode "MM2S"]} {
+	        set datawidth  [get_property CONFIG.C_M_AXI_MM2S_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
+	    }
+	    if {[string match -nocase $mode "S2MM"]} {
+	        set datawidth  [get_property CONFIG.C_S_AXIS_S2MM_TDATA_WIDTH [hsi::get_cells -hier $drv_handle]]
+	    }
 	    add_prop $dma_channel "xlnx,datawidth" $datawidth hexint $dts_file
 	    set num_channles [get_property CONFIG.c_num_mm2s_channels [hsi::get_cells -hier $drv_handle]]
 	    add_prop $dma_channel "dma-channels" $num_channles hexint "pl.dtsi"
