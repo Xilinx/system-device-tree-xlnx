@@ -5756,9 +5756,6 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 		} {
 		return 0
 	}
-	if {[string match -nocase $ip_type "mrmac"]} {
-               set unit_addr "a4090000"
-        }
 	set default_dts [set_drv_def_dts $drv_handle]
 	if {[string match -nocase $default_dts "pcw.dtsi"]} {
 		set treeobj "pcwdt"
