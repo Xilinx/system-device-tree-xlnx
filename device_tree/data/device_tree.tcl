@@ -406,12 +406,7 @@ proc gen_board_info {} {
 		return
 	}
 	set dts_name $dtsi_file
-	if {[string match -nocase $dts_name "template"]} {
-		return
-	}
-	if {[llength $dts_name] == 0} {
-		return
-	}
+
 	set include_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${kernel_ver}/include"]
 	set include_list "include*"
 	set gpio_list "gpio.h"
@@ -443,6 +438,12 @@ proc gen_board_info {} {
 				file copy -force $file $pinctrldir
 			}
 		}
+	}
+	if {[string match -nocase $dts_name "template"]} {
+		return
+	}
+	if {[llength $dts_name] == 0} {
+		return
 	}
 	set mainline_ker [get_user_config $common_file -mainline_kernel]
 	set valid_mainline_kernel_list "v4.17 v4.18 v4.19 v5.0 v5.1 v5.2 v5.3 v5.4"
