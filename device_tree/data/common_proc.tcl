@@ -2713,7 +2713,7 @@ proc add_or_get_dt_node args {
 		foreach node ${dts_nodes} {
 			if {[regexp $pattern $node match]} {
 				if {[dt_node_def_checking $node_label $node_name $node_unit_addr $node] == 0} {
-					error "$pattern :: $node_label : $node_name @ $node_unit_addr, is differ to the node object $node"
+					dtg_warning "$pattern :: $node_label : $node_name @ $node_unit_addr, is differ to the node object $node"
 				}
 				set node [update_dt_parent ${node} ${parent_obj} ${dts_file}]
 				set_cur_working_dts ${cur_working_dts}
@@ -8572,13 +8572,18 @@ proc gen_axis_switch {ip} {
 	puts "inip:$inip"
 	set bus_node [detect_bus_name $ip]
 	set dts [set_drv_def_dts $ip]
-	set switch_node [create_node -n "axis_switch" -l $ip -u 0 -p $bus_node -d $dts]
+	set routing_mode [get_property CONFIG.ROUTING_MODE [hsi::get_cells -hier $ip]]
+	if {$routing_mode == 1} {
+		set switch_node [create_node -n "axis_switch" -l $ip -u 0 -p $bus_node -d $dts]
+	} else {
+		set switch_node [create_node -n "axis_switch_$ip" -l $ip -u 0 -p $bus_node -d $dts]
+	}
+
 	set ports_node [create_node -n "ports" -l axis_switch_ports$ip -p $switch_node -d $dts]
 	add_prop "$ports_node" "#address-cells" 1 int $dts
 	add_prop "$ports_node" "#size-cells" 0 int $dts
 	set master_intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
 	puts "intf:$master_intf"
-	set routing_mode [get_property CONFIG.ROUTING_MODE [hsi::get_cells -hier $ip]]
 	add_prop "$switch_node" "xlnx,routing-mode" $routing_mode int $dts
 	set num_si [get_property CONFIG.NUM_SI [hsi::get_cells -hier $ip]]
 
