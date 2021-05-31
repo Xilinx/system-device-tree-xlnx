@@ -70,6 +70,7 @@ set rxethmem 0
 		set new_label ""
 		set clk_label ""
 		set connected_ip ""
+		set eth_node ""
 		for {set core 0} {$core < $num_cores} {incr core} {
 			if {$ip_name == "xxv_ethernet"  && $core != 0} {
 				global env
@@ -83,12 +84,15 @@ set rxethmem 0
 				}
 				#set dts_file [current_dt_tree]
 				set dts_file "pl.dtsi"
-				set base_addr [string tolower [get_property BASE_VALUE [lindex $ip_mem_handles $core]]]
-				regsub -all {^0x} $base_addr {} base_addr
-				append new_label $drv_handle "_" $core
-				append clk_label $drv_handle "_" $core
-				set eth_node [create_node -n "ethernet" -l "$new_label" -u $base_addr -d $dts_file -p $bus_node]
-				generate_reg_property $eth_node $ip_mem_handles $core
+				set ipmem_len [llength $ip_mem_handles]
+				if {$ipmem_len > 1} {
+					set base_addr [string tolower [get_property BASE_VALUE [lindex $ip_mem_handles $core]]]
+					regsub -all {^0x} $base_addr {} base_addr
+					append new_label $drv_handle "_" $core
+					append clk_label $drv_handle "_" $core
+					set eth_node [create_node -n "ethernet" -l "$new_label" -u $base_addr -d $dts_file -p $bus_node]
+					generate_reg_property $eth_node $ip_mem_handles $core
+				}
 			}
 			if {$hasbuf == "true" || $hasbuf == "" && $ip_name != "axi_10g_ethernet" && $ip_name != "ten_gig_eth_mac" && $ip_name != "xxv_ethernet" && $ip_name != "usxgmii"} {
 				foreach n "AXI_STR_RXD m_axis_rxd" {
@@ -174,7 +178,7 @@ set rxethmem 0
 				add_prop $node xlnx,rxmem "$rxethmem" string $dts_file
 				if {$ip_name == "xxv_ethernet"  && $core != 0} {
 					set intf [hsi::get_intf_pins -of_objects $eth_ip "axis_rx_${core}"]
-					if {[llength $intf]} {
+					if {[llength $intf] && [llength $eth_node]} {
 						set connected_ip [get_connectedip $intf]
 						if {![string_is_empty $connected_ip]} {
 						      add_prop $eth_node "axistream-connected" "$connected_ip" reference "pl.dtsi"
@@ -229,7 +233,7 @@ set rxethmem 0
 				#set_property clock-frequency "$freq" $drv_handle
 				add_prop $node clock-frequency "$freq" int "pl.dtsi"
 				#add_prop $node clock-frequency "$freq" int $dts_file
-				if {$ip_name == "xxv_ethernet"} {
+				if {$ip_name == "xxv_ethernet" && [llength $eth_node]} {
 					add_prop $eth_node "clock-frequency" "$freq" int "pl.dtsi"
 				}
 			}
@@ -262,7 +266,7 @@ set rxethmem 0
 					gen_phy_node $mdio_node $phy_name $phya $drv_handle
 			  	}
 			}
-			if {$ip_name == "xxv_ethernet" && $core != 0} {
+			if {$ip_name == "xxv_ethernet" && $core != 0 && [llength $eth_node]} {
 				append new_label "_" mdio
 				set mdionode [create_node -l "$new_label" -n mdio -p $eth_node -d $dts_file]
 				add_prop $mdio_node "#address-cells" 1 int $dts_file
@@ -283,7 +287,7 @@ set rxethmem 0
 				#set_property phy-mode "$phytype" $drv_handle
 				add_prop $node phy-mode "$phytype" string $dts_file
 				#pldt append $node compatible "\ \, \"xlnx,xxv-ethernet-1.0\""
-				if { $core!= 0} {
+				if { $core!= 0 && [llength $eth_node]} {
 					#add_prop $eth_node "compatible" $compatible stringlist "pl.dtsi"
 					add_prop $eth_node "phy-mode" $phytype string "pl.dtsi"
 				}
@@ -322,7 +326,7 @@ set rxethmem 0
 					}
 					add_prop $node "xlnx,channel-ids" $id intlist "pl.dtsi"
 					#add_prop $node "xlnx,channel-ids" $id intlist $dts_file
-					if {$ip_name == "xxv_ethernet"  && $core!= 0} {
+					if {$ip_name == "xxv_ethernet"  && $core!= 0 && [llength $eth_node]} {
 						add_prop $eth_node "xlnx,num-queues" $numqueues stringlist $dts_file
 						add_prop $eth_node "xlnx,channel-ids" $id stringlist $dts_file
 					}
