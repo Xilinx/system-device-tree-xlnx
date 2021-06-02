@@ -1580,6 +1580,12 @@ proc gen_cpu_cluster {os_handle} {
                         set size [format 0x%x [expr {${high} - ${base} + 1}]]
 			set_memmap $val1 r5 "0x0 $base 0x0 $size"
 		}
+		if {[string match -nocase $cpu "R5_0"] || [string match -nocase $cpu "R5_1"]} {
+			set base [get_baseaddr $val]
+			set high [get_highaddr $val]
+                        set size [format 0x%x [expr {${high} - ${base} + 1}]]
+			set_memmap $val1 r5 "0x0 $base 0x0 $size"
+		}
 		if {[string match -nocase $cpu "PSM"]} {
 			set base [get_baseaddr $val]
 			set high [get_highaddr $val]
