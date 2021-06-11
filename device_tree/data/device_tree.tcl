@@ -807,7 +807,7 @@ proc generate {} {
 			#namespace import ::${drvname}::\*
 		        #::${drvname}::generate $procc
     			add_skeleton
-			set non_val_list "versal_cips noc_nmu noc_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat axis_tdest_editor util_reduced_logic noc_nsw "
+			set non_val_list "versal_cips noc_nmu noc_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat axis_tdest_editor util_reduced_logic noc_nsw axis_ila"
 			set non_val_ip_types "MONITOR BUS PROCESSOR"
     			foreach drv_handle $peri_list {
 				set ip_name [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]

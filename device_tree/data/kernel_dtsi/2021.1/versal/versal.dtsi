@@ -805,15 +805,19 @@
 			status = "disabled";
 			reg = <0 0xfd4d0000 0 0x10000>;
 			interrupt-names = "wdt", "wwdt_reset_pending";
-			interrupts = <0 0x64 1>, <0 0x6D 1>;
+			interrupts = <0 100 1>, <0 109 1>;
 			timeout-sec = <30>;
 			pretimeout-sec = <25>;
 		};
 
 		watchdog1: watchdog@ff120000 {
-                        compatible = "xlnx,psv-wwdt";
+                        compatible = "xlnx,versal-wwdt-1.0";
                         status = "disabled";
                         reg = <0x0 0xff120000 0x0 0x10000>;
+			interrupt-names = "wdt", "wwdt_reset_pending";
+			interrupts = <0 49 1>, <0 69 1>;
+			timeout-sec = <30>;
+			pretimeout-sec = <25>;
                 };
 
 		dma0: pmcdma@f11c0000 {

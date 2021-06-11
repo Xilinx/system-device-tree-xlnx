@@ -6769,7 +6769,7 @@ proc generate_gpio_intr_info {connected_intc drv_handle pin} {
 	if {[string match -nocase $intr_type "-1"]} {
 		return -1
 	}
-	set sinkpin [hsi::get_sink_pins [hsi::get_pins -of [hsi::get_cells -hier $drv_handle] -filter {TYPE==INTERRUPT}]]
+	set sinkpin [get_sink_pins [hsi::get_pins -of [hsi::get_cells -hier $drv_handle] -filter {TYPE==INTERRUPT}]]
 	set dual [get_property CONFIG.C_IS_DUAL $connected_intc]
 	regsub -all {[^0-9]} $sinkpin "" gpio_pin_count
 	set gpio_cho_pin_lcnt [get_property LEFT [hsi::get_pins -of_objects [hsi::get_cells -hier $connected_intc] gpio_io_i]]
