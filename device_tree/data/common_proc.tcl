@@ -6318,6 +6318,7 @@ proc gen_cpu_nodes {drv_handle} {
 	}
 
 	set drv_dt_prop_list [get_driver_conf_list $drv_handle]
+        gen_drv_prop_from_ip $drv_handle
 	# generate mb ccf node
 	generate_mb_ccf_node $drv_handle
 	set bus_node [add_or_get_bus_node $drv_handle $default_dts]
@@ -6423,12 +6424,6 @@ proc gen_cpu_nodes {drv_handle} {
 			#set cpu_node [pldt insert root end "cpu@0"]
 		}
 		add_prop $cpu_node "bus-handle" $bus_label reference $default_dts
-		foreach drv_prop_name $drv_dt_prop_list {
-			set slave [hsi::get_cells -hier $tmp]
-			set prop [get_property $drv_prop_name $slave]
-			add_driver_prop $drv_handle $cpu_node ${drv_prop_name}
-		}
-
 		incr cpu_no
 	}
 	if {[lsearch -nocase $proc_list $processor_type] >= 0} {
