@@ -201,14 +201,11 @@ set rxethmem 0
 				#set phyaddr [convert_binary_to_decimal $phyaddr]
 				set rxmem [get_property CONFIG.RXMEM $eth_ip]
 				set rxmem [get_memrange $rxmem]
-				if {0} {
-					add_prop $node "xlnx,txcsum" $txcsum hex "pl.dtsi"
-					add_prop $node "xlnx,rxcsum" $rxcsum hex "pl.dtsi"
-					#add_prop $node "xlnx,rxcsum" $rxcsum hex $dts_file
-					add_prop $node "xlnx,phy-type" $phytype hex "pl.dtsi"
-					add_prop $node "xlnx,phyaddr" $phyaddr hex "pl.dtsi"
-					add_prop $node "xlnx,rxmem" $rxmem hex "pl.dtsi"
-				}
+				add_prop $node "xlnx,txcsum" $txcsum hexint "pl.dtsi" 1
+				add_prop $node "xlnx,rxcsum" $rxcsum hexint "pl.dtsi" 1
+				add_prop $node "xlnx,phy-type" $phytype hexint "pl.dtsi" 1
+				add_prop $node "xlnx,phyaddr" $phyaddr hexint "pl.dtsi" 1
+				add_prop $node "xlnx,rxmem" $rxmem hexint "pl.dtsi" 1
 			}
 
 			set is_nobuf 0
