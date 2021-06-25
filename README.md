@@ -1,1 +1,1 @@
-# system-dt
+# system-device-tree-xlnx
