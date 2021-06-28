@@ -1,8 +1,0 @@
-dict_devicetree:
-  dict_user:
-    repo_path: "/proj/xhdsswstaff/nagasure/new/new/system-dt"
-    dt_overlay: false
-    pl_only: false
-    board_name: versal
-    master_dts: system.dts
-    prj_config_dts: config.dts
