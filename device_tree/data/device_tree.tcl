@@ -2449,9 +2449,6 @@ proc update_alias {os_handle} {
 		set drvname [get_drivers $drv_handle]
 		set common_file "$path/$drvname/data/config.yaml"
 		set exists [file exists $common_file]
-		if {$exists == 0} {
-			continue
-		}
 		set alias_str [get_driver_config $drv_handle alias]
 		if {0} {
 		if {[string match -nocase $alias_str "serial"]} {
@@ -2487,9 +2484,6 @@ proc update_alias {os_handle} {
 
 		set common_file "$path/$drvname/data/config.yaml"
 		set exists [file exists $common_file]
-		if {$exists == 0} {
-			continue
-		}
 		set tmp [get_driver_config $drv_handle alias]
         	if {[string_is_empty $tmp]} {
             		continue

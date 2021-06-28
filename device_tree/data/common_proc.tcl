@@ -596,20 +596,6 @@ proc get_driver_config args {
 	set drv_handle [lindex $args 0]
 	set type [lindex $args 1]
 	set param [get_driver_param $drv_handle $type]
-	if {[string match -nocase $param ""]} {
-		set drvname [get_drivers $drv_handle]
-		set common_file "$path/$drvname/data/config.yaml"
-		if {[file exists $common_file]} {
-    		} else {
-			puts "file not found <$common_file>" 
-		}
-        	set dict_drvdata  {}
-        	set cfg [get_yaml_dict $common_file]
-        	set dict_devicetree [dict get $cfg dict_drvdata]
-		if {[catch {set param [dict get $dict_devicetree [lindex $args 1]]} msg]} {
-        		return ""
-		}
-	}
 
 	return $param
 }
