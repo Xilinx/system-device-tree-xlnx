@@ -1,7 +1,7 @@
 dict_devicetree:
     kernel_ver: 2021.1
     mainline_kernel: none
-    board_dts: versal-vmk180-reva
+    board_dts: versal-vck190-reva
     dt_overlay: false
-    output_dir: /proj/xhdsswstaff/nagasure/aug20
+    output_dir: output_dts
     dt_zocl: false
