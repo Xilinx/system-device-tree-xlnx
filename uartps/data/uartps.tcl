@@ -1,5 +1,5 @@
 #
-# (C) Copyright 2014-2015 Xilinx, Inc.
+# (C) Copyright 2014-2021 Xilinx, Inc.
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
 # (C) Copyright 2007-2012 PetaLogix Qld Pty Ltd
