@@ -29,6 +29,8 @@ global def_string zynq_soc_dt_tree bus_clk_list pl_ps_irq1 pl_ps_irq0 pstree inc
 global or_id
 global or_cnt
 global repo_path
+global mainlist
+global addrlist
 
 global driver_param
 set driver_param [dict create dev_type {items {}} alias {items {}}]
@@ -72,6 +74,8 @@ dict with driver_param alias {
 	lappend items psv_uart serial
 	lappend items psv_sbsauart serial
 }
+
+global set duplist [dict create]
 global set osmap [dict create]
 global set microblaze_map [dict create]
 global set mc_map [dict create]
@@ -273,6 +277,38 @@ proc get_label_addr args {
 
 	return $value
 }
+
+proc remove_duplicate_addr {} {
+	global duplist
+	set val [hsi::get_cells -hier]
+	global mainlist
+	global addrlist
+	set mainlist ""
+	set addrlist ""
+	set ignorelist "psu_iou_s zynq_ultra_ps_e_0"
+	foreach v $val {
+		if {[is_ps_ip $v] == 1} {
+			continue
+		}
+		set main_base [get_baseaddr $v]
+		if {$main_base == ""} {
+			continue
+		}
+		set ip_name [get_property IP_NAME [hsi::get_cells -hier $v]]
+		if {[lsearch $ignorelist $ip_name] >= 0} {
+			continue
+		}
+		if {[lsearch $addrlist $main_base] >= 0} {
+			continue
+		} else {
+			append mainlist " " $v
+			append addrlist " " $main_base
+			dict set duplist $main_base $v
+		}
+	}	
+	set values [dict keys $duplist]
+}
+
 
 proc set_memmap args {
 	global memmap
@@ -4783,6 +4819,14 @@ proc gen_mb_interrupt_property {cpu_handle {intr_port_name ""}} {
 		set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
 	}
 	set cpu_node [create_node -n "cpu" -u 0 -d "pl.dtsi" -p $rt_node]
+	if {[is_pl_ip $intc]} {
+		set tmpbase [get_baseaddr $intc]
+		global duplist
+		if {[catch {set handle_value [dict get $duplist $tmpbase]} msg]} {
+		} else {
+			set intc $handle_value
+		}
+	}
 	add_prop $cpu_node "interrupt-handle" $intc reference "pl.dtsi" 1
 	#set_drv_prop $cpu_handle interrupt-handle $intc reference
 }
@@ -5005,6 +5049,14 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 	}
 	if {[string match -nocase $intc "gic"]} {
 		set intc "imux"
+	}
+	if {[is_pl_ip $intc]} {
+		set tmpbase [get_baseaddr $intc]
+		global duplist
+		if {[catch {set handle_value [dict get $duplist $tmpbase]} msg]} {
+		} else {
+			set intc $handle_value
+		}
 	}
 	set_drv_prop $drv_handle interrupt-parent $intc reference
 	if {[string match -nocase [get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "xdma"]} {

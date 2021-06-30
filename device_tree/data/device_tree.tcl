@@ -793,6 +793,7 @@ proc generate {} {
 		set val_proclist "microblaze"
 	}
 	
+	remove_duplicate_addr
 	foreach procc $proclist {
 		set index [string index $procc end]
 		set ip_name [get_property IP_NAME [hsi::get_cells -hier $procc]]
@@ -809,8 +810,18 @@ proc generate {} {
     			add_skeleton
 			set non_val_list "versal_cips noc_nmu noc_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat axis_tdest_editor util_reduced_logic noc_nsw axis_ila"
 			set non_val_ip_types "MONITOR BUS PROCESSOR"
+			global duplist
     			foreach drv_handle $peri_list {
 				set ip_name [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+				if {[is_ps_ip $drv_handle] != 1} {
+				set base [get_baseaddr $drv_handle]
+				if {[catch {set rt [dict get $duplist $base]} msg]} {
+				} else {
+					if {![string match -nocase $rt $drv_handle]} {
+						continue
+					}
+				}
+				}
 				if {[string match -nocase $ip_name ""]} {
 					continue
 				}
@@ -841,6 +852,15 @@ proc generate {} {
 				}
 				if {[lsearch -nocase $non_val_ip_types $ip_type] >= 0} {
 					continue
+				}
+				if {[is_ps_ip $drv_handle] != 1} {
+					set base [get_baseaddr $drv_handle]
+					if {[catch {set rt [dict get $duplist $base]} msg]} {
+					} else {
+						if {![string match -nocase $rt $drv_handle]} {
+							continue
+						}
+					}
 				}
 				set drvname [get_drivers $drv_handle]
 				set drv_file "$path/${drvname}/data/${drvname}.tcl"
@@ -1155,7 +1175,18 @@ proc proc_mapping {} {
 						set_memmap $temp pmu $regprop
 					}
 					if {[string match -nocase $iptype "microblaze"]} {
-						set_memmap $temp $val $regprop
+						if {[is_pl_ip $val]} {
+							set tmpbase [get_baseaddr $periph]
+							global duplist
+							if {[catch {set handle_value [dict get $duplist $tmpbase]} msg]} {
+								set_memmap $temp $val $regprop
+							} else {
+								set temp [dict get $duplist $tmpbase]
+								set_memmap $handle_value $val $regprop
+							}
+						} else {
+								set_memmap $temp $val $regprop
+						}
 					}
 		}
 		
