@@ -1,3 +1,12 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * dts file for Xilinx zcu100 revb 
+ *
+ * (C) Copyright 2021, Xilinx, Inc.
+ *
+ * Michal Simek <michal.simek@xilinx.com>
+ *
+ */
 / {
 	model = "ZynqMP ZCU100 RevB";
 	compatible = "xlnx,zynqmp-zcu100-revB", "xlnx,zynqmp-zcu100", "xlnx,zynqmp";

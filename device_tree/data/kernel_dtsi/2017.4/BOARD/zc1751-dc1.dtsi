@@ -1,3 +1,12 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * dts file for Xilinx zc1751 dc1 
+ *
+ * (C) Copyright 2021, Xilinx, Inc.
+ *
+ * Michal Simek <michal.simek@xilinx.com>
+ *
+ */
 / {
 	model = "ZynqMP zc1751-xm015-dc1 RevA";
 	compatible = "xlnx,zynqmp-zc1751", "xlnx,zynqmp";
