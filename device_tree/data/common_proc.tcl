@@ -2609,9 +2609,11 @@ proc set_drv_def_dts {drv_handle} {
 		if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"] || [string match -nocase $family "zynquplusRFSOC"]} {
 			set hw_name [::hsi::get_hw_files -filter "TYPE == bit"]
 			add_prop "${child_node}" "firmware-name" "$hw_name.bin" string  $default_dts 1
+			add_prop "root" "firmware-name" "$hw_name" string  $default_dts 1
 		} elseif {[string match -nocase $family "versal"]} {
 			set hw_name [::hsi::get_hw_files -filter "TYPE == pdi"]
 			add_prop "${child_node}" "firmware-name" "$hw_name" string  $default_dts 1
+			add_prop "root" "firmware-name" "$hw_name" string  $default_dts 1
 		}
 	}
 	return $default_dts

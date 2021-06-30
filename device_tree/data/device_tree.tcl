@@ -379,6 +379,151 @@ proc gen_include_headers {} {
 	}
 }
 
+proc gen_afi_node {} {
+	set afi_ip [hsi::get_cells -hier -filter {IP_NAME==psu_afi}]
+	set pllist [hsi::get_cells -filter {IS_PL==1}]
+	set dts "pl.dtsi"
+	set family [get_hw_family]
+	if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
+	if {[llength $afi_ip] > 0 && [llength $pllist] > 0} {
+		set node [create_node -l "afi0" -n "afi0" -p "amba_pl: amba_pl" -d "pl.dtsi"]
+		add_prop $node "compatible" "xlnx,afi-fpga" string $dts 1
+		add_prop $node "status" "okay" string $dts 1
+		set config_afi " "
+		
+		set zynq_periph [hsi::get_cells -hier -filter {IP_NAME == zynq_ultra_ps_e}]
+		set avail_param [list_property [hsi::get_cells -hier $zynq_periph]]
+		if {[lsearch -nocase $avail_param "CONFIG.C_SAXIGP0_DATA_WIDTH"] >= 0} {
+			set val [get_property CONFIG.C_SAXIGP0_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
+			set afival [get_afi_val $val]
+			append config_afi "0 $afival>, <1 $afival>,"
+		}
+		if {[lsearch -nocase $avail_param "CONFIG.C_SAXIGP1_DATA_WIDTH"] >= 0} {
+			set val [get_property CONFIG.C_SAXIGP1_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
+			set afival [get_afi_val $val]
+			append config_afi " <2 $afival>, <3 $afival>,"
+		}
+		if {[lsearch -nocase $avail_param "CONFIG.C_SAXIGP2_DATA_WIDTH"] >= 0} {
+			set val [get_property CONFIG.C_SAXIGP2_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
+			set afival [get_afi_val $val]
+			append config_afi " <4 $afival>, <5 $afival>,"
+		}
+		if {[lsearch -nocase $avail_param "CONFIG.C_SAXIGP3_DATA_WIDTH"] >= 0} {
+			set val [get_property CONFIG.C_SAXIGP3_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
+			set afival [get_afi_val $val]
+			append config_afi " <6 $afival>, <7 $afival>,"
+		}
+		if {[lsearch -nocase $avail_param "CONFIG.C_SAXIGP4_DATA_WIDTH"] >= 0} {
+			set val [get_property CONFIG.C_SAXIGP4_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
+			set afival [get_afi_val $val]
+			append config_afi " <8 $afival>, <9 $afival>,"
+		}
+		if {[lsearch -nocase $avail_param "CONFIG.C_SAXIGP5_DATA_WIDTH"] >= 0} {
+			set val [get_property CONFIG.C_SAXIGP5_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
+			set afival [get_afi_val $val]
+			append config_afi " <10 $afival>, <11 $afival>,"
+		}
+		if {[lsearch -nocase $avail_param "CONFIG.C_SAXIGP6_DATA_WIDTH"] >= 0} {
+			set val [get_property CONFIG.C_SAXIGP6_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
+			set afival [get_afi_val $val]
+			append config_afi " <12 $afival>, <13 $afival>,"
+		}
+		if {[lsearch -nocase $avail_param "CONFIG.C_MAXIGP0_DATA_WIDTH"] >= 0} {
+			set val [get_property CONFIG.C_MAXIGP0_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
+			set afival0 [get_max_afi_val $val]
+		}
+		if {[lsearch -nocase $avail_param "CONFIG.C_MAXIGP1_DATA_WIDTH"] >= 0} {
+			set val [get_property CONFIG.C_MAXIGP1_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
+			set afival1 [get_max_afi_val $val]
+		}
+		set afi0 [expr $afival0 <<8]
+		set afi1 [expr $afival1 << 10]
+		set afival [expr {$afi0} | {$afi1}]
+		set afi_hex [format %x $afival]
+		append config_afi " <14 0x$afi_hex>,"
+		if {[lsearch -nocase $avail_param "CONFIG.C_MAXIGP2_DATA_WIDTH"] >= 0} {
+			set val [get_property CONFIG.C_MAXIGP2_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
+			switch $val {
+				"128" {
+					set afival 0x200
+				} "64" {
+					set afival 0x100
+				} "32" {
+					set afival 0x000
+				} default {
+					dtg_warning "invalid value:$val"
+				}
+			}
+			append config_afi " <15 $afival"
+		}
+		add_prop "${node}" "config-afi" "$config_afi" special $dts
+
+		if {[lsearch -nocase $avail_param "CONFIG.C_PL_CLK0_BUF"] >= 0} {
+			set val [get_property CONFIG.C_PL_CLK0_BUF [hsi::get_cells -hier $zynq_periph]]
+			if {[string match -nocase $val "true"]} {
+				set clocking_node [create_node -n "clocking0" -l "clocking0" -p "amba_pl: amba_pl" -d $dts]
+				add_prop "${clocking_node}" "compatible" "xlnx,fclk" string $dts 1
+				add_prop "${clocking_node}" "clocks" "zynqmp_clk 71" reference $dts 1
+				add_prop "${clocking_node}" "clock-output-names" "fabric_clk" string $dts 1
+				add_prop "${clocking_node}" "#clock-cells" 0 int $dts 1
+				add_prop "${clocking_node}" "assigned-clocks" "zynqmp_clk 71" reference $dts 1
+				set freq [get_property CONFIG.PSU__CRL_APB__PL0_REF_CTRL__ACT_FREQMHZ [hsi::get_cells -hier $zynq_periph]]
+				add_prop "${clocking_node}" "assigned-clock-rates" [scan [expr $freq * 1000000] "%d"] int $dts 1
+			}
+		}
+		if {[lsearch -nocase $avail_param "CONFIG.C_PL_CLK1_BUF"] >= 0} {
+			set val [get_property CONFIG.C_PL_CLK1_BUF [hsi::get_cells -hier $zynq_periph]]
+			if {[string match -nocase $val "true"]} {
+				set clocking_node [create_node -n "clocking1" -l "clocking1" -p "amba_pl: amba_pl" -d $dts]
+				add_prop "${clocking_node}" "compatible" "xlnx,fclk" string $dts 1
+				add_prop "${clocking_node}" "clocks" "zynqmp_clk 72" reference $dts 1
+				add_prop "${clocking_node}" "clock-output-names" "fabric_clk" string $dts 1
+				add_prop "${clocking_node}" "#clock-cells" 0 int $dts 1
+				add_prop "${clocking_node}" "assigned-clocks" "zynqmp_clk 72" reference $dts 1
+				set freq [get_property CONFIG.PSU__CRL_APB__PL1_REF_CTRL__ACT_FREQMHZ [hsi::get_cells -hier $zynq_periph]]
+				add_prop "${clocking_node}" "assigned-clock-rates" [scan [expr $freq * 1000000] "%d"] int $dts 1
+			}
+		}
+		if {[lsearch -nocase $avail_param "CONFIG.C_PL_CLK2_BUF"] >= 0} {
+			set val [get_property CONFIG.C_PL_CLK2_BUF [hsi::get_cells -hier $zynq_periph]]
+			if {[string match -nocase $val "true"]} {
+				set clocking_node [create_node -n "clocking2" -l "clocking2" -p "amba_pl: amba_pl" -d $dts]
+				add_prop "${clocking_node}" "compatible" "xlnx,fclk" string $dts 1
+				add_prop "${clocking_node}" "clocks" "zynqmp_clk 73" reference $dts 1
+				add_prop "${clocking_node}" "clock-output-names" "fabric_clk" string $dts 1
+				add_prop "${clocking_node}" "#clock-cells" 0 int $dts 1
+				add_prop "${clocking_node}" "assigned-clocks" "zynqmp_clk 73" reference $dts 1
+				set freq [get_property CONFIG.PSU__CRL_APB__PL2_REF_CTRL__ACT_FREQMHZ [hsi::get_cells -hier $zynq_periph]]
+				add_prop "${clocking_node}" "assigned-clock-rates" [scan [expr $freq * 1000000] "%d"] int $dts 1
+			}
+		}
+		if {[lsearch -nocase $avail_param "CONFIG.C_PL_CLK3_BUF"] >= 0} {
+			set val [get_property CONFIG.C_PL_CLK3_BUF [hsi::get_cells -hier $zynq_periph]]
+			if {[string match -nocase $val "true"]} {
+				set clocking_node [create_node -n "clocking3" -l "clocking3" -p "amba_pl: amba_pl" -d $dts]
+				add_prop "${clocking_node}" "compatible" "xlnx,fclk" string $dts 1
+				add_prop "${clocking_node}" "clocks" "zynqmp_clk 74" reference $dts 1
+				add_prop "${clocking_node}" "clock-output-names" "fabric_clk" string $dts 1
+				add_prop "${clocking_node}" "#clock-cells" 0 int $dts 1
+				add_prop "${clocking_node}" "assigned-clocks" "zynqmp_clk 74" reference $dts 1
+				set freq [get_property CONFIG.PSU__CRL_APB__PL3_REF_CTRL__ACT_FREQMHZ [hsi::get_cells -hier $zynq_periph]]
+				add_prop "${clocking_node}" "assigned-clock-rates" [scan [expr $freq * 1000000] "%d"] int $dts 1
+			}
+		}
+
+		if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"] || [string match -nocase $family "zynquplusRFSOC"]} {
+			set hw_name [::hsi::get_hw_files -filter "TYPE == bit"]
+			add_prop "amba_pl: amba_pl" "firmware-name" "$hw_name.bin" string  $dts 1
+		} 
+	}
+	} 
+	if {[string match -nocase $family "versal"] && [llength $pllist] > 0} {
+		set hw_name [::hsi::get_hw_files -filter "TYPE == pdi"]
+		add_prop "amba_pl: amba_pl" "firmware-name" "$hw_name" string  $dts 1
+	}
+	
+}
+
 proc gen_board_info {} {
 	global env
 	set path $env(REPO)
@@ -886,6 +1031,7 @@ proc generate {} {
 		}
 	}
     	gen_board_info
+	gen_afi_node
     	gen_include_headers
 	set proctype [get_hw_family]
 	set common_file "$path/device_tree/data/config.yaml"
