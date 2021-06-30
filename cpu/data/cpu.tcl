@@ -22,12 +22,13 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 	proc generate {drv_handle} {
 	set proctype [get_hw_family]
 	set bus_name [detect_bus_name $drv_handle]
+	set nr [get_microblaze_nr $drv_handle]
 	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
-		set node [create_node -n "cpus_microblaze" -l "cpus_microblaze_2" -u 2 -d "pl.dtsi" -p $bus_name]
+		set node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${nr}" -u $nr -d "pl.dtsi" -p $bus_name]
 	} elseif {[string match -nocase $proctype "versal"]} {
-		set node [create_node -n "cpus_microblaze" -l "cpus_microblaze_3" -u 3 -d "pl.dtsi" -p $bus_name]
+		set node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${nr}" -u $nr -d "pl.dtsi" -p $bus_name]
 	}
-	set node [create_node -n "cpu" -u 0 -d "pl.dtsi" -p $node]
+	set node [create_node -n "cpu" -l "ub${nr}_cpu" -u 0 -d "pl.dtsi" -p $node]
         set dts_file [set_drv_def_dts $drv_handle]
 	set ip [hsi::get_cells -hier $drv_handle]
 	set clk ""
