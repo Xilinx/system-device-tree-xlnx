@@ -53,38 +53,36 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 				if {[catch {set interface_block_names [get_property ADDRESS_BLOCK [hsi::get_mem_ranges $procc $periph]]} msg]} {
 					set interface_block_names ""
 				} else {
-					set interface_block_names [lsort $interface_block_names]
+					#set interface_block_names [lsort $interface_block_names]
 				}
 			} else {
-				set interface_block_names [lsort $interface_block_names]
 			}
-
+			if {$a72 == 1 && [string match -nocase [get_property IP_NAME $procc] "psv_cortexa72"]} {
+				continue
+			}
+		    	if {[string match -nocase [get_property IP_NAME $procc] "psv_cortexa72"]} {
+			       set a72 1
+			}
+			if {$r5 == 1 && [string match -nocase [get_property IP_NAME $procc] "psv_cortexr5"]} {
+				continue
+			}
+		        if {[string match -nocase [get_property IP_NAME $procc] "psv_cortexr5"]} {
+			      set r5 1
+			}
+			if {$pmc == 1 && [string match -nocase [get_property IP_NAME $procc] "psv_pmc"]} {
+				continue
+			}
+			if {[string match -nocase [get_property IP_NAME $procc] "psv_pmc"]} {
+				set pmc 1
+			}
+			if {$psm == 1 && [string match -nocase [get_property IP_NAME $procc] "psv_psm"]} {
+				continue
+			}
+			if {[string match -nocase [get_property IP_NAME $procc] "psv_psm"]} {
+				set psm 1
+			}
 			set i 0
 			foreach block_name $interface_block_names {
-				if {$a72 == 1 && [string match -nocase [get_property IP_NAME $procc] "psv_cortexa72"]} {
-					continue
-				}
-			    	if {[string match -nocase [get_property IP_NAME $procc] "psv_cortexa72"]} {
-				       set a72 1
-				}
-				if {$r5 == 1 && [string match -nocase [get_property IP_NAME $procc] "psv_cortexr5"]} {
-					continue
-				}
-			        if {[string match -nocase [get_property IP_NAME $procc] "psv_cortexr5"]} {
-				      set r5 1
-				}
-				if {$pmc == 1 && [string match -nocase [get_property IP_NAME $procc] "psv_pmc"]} {
-					continue
-				}
-				if {[string match -nocase [get_property IP_NAME $procc] "psv_pmc"]} {
-					set pmc 1
-				}
-				if {$psm == 1 && [string match -nocase [get_property IP_NAME $procc] "psv_psm"]} {
-					continue
-				}
-				if {[string match -nocase [get_property IP_NAME $procc] "psv_psm"]} {
-					set psm 1
-				}
 				if {[string match "C*_DDR_LOW0*" $block_name]} {
 					if {$is_ddr_low_0 == 0} {
 						if {[catch {set base_value_0 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
