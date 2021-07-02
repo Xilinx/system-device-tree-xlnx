@@ -285,8 +285,9 @@ proc remove_duplicate_addr {} {
 	global addrlist
 	set mainlist ""
 	set addrlist ""
-	set ignorelist "psu_iou_s zynq_ultra_ps_e_0"
+	set ignorelist "psu_iou_s zynq_ultra_ps_e_0 displayport v_tc"
 	foreach v $val {
+		set nested 0
 		if {[is_ps_ip $v] == 1} {
 			continue
 		}
@@ -299,11 +300,23 @@ proc remove_duplicate_addr {} {
 			continue
 		}
 		if {[lsearch $addrlist $main_base] >= 0} {
-			continue
+			if {[catch {set rt [dict get $duplist $main_base]} msg]} {
+				continue
+			} else {
+				set matchip_name [get_property IP_NAME [hsi::get_cells -hier $rt]]
+				if {[string match -nocase $matchip_name $ip_name]} {
+					continue
+				}
+				set nested 1
+			}
 		} else {
 			append mainlist " " $v
 			append addrlist " " $main_base
-			dict set duplist $main_base $v
+			if {$nested == 1} {
+				dict lappend duplist $main_base $v
+			} else {
+				dict set duplist $main_base $v
+			}
 		}
 	}	
 	set values [dict keys $duplist]
@@ -815,6 +828,10 @@ proc create_node args {
 	if {[string match -nocase $node_name "chosen"]} {
 		set interconnect [systemdt insert root end chosen]
 		return $interconnect
+	}
+	if {[string match -nocase $node_name "displayport"] || [string match -nocase $node_name "v_tc"]} {
+		set addr_val [get_label_addr $node_name $node_label]
+		set node_name "${node_name}_${addr_val}"
 	}
 	if {[string match -nocase $node_name "reserved-memory"]} {
 		set interconnect [systemdt insert root end reserved-memory]

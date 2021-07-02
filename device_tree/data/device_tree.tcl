@@ -962,8 +962,18 @@ proc generate {} {
 				set base [get_baseaddr $drv_handle]
 				if {[catch {set rt [dict get $duplist $base]} msg]} {
 				} else {
-					if {![string match -nocase $rt $drv_handle]} {
+					if {[llength $rt] == 1} {
+					set matchip_name [get_property IP_NAME [hsi::get_cells -hier $rt]]
+					if {![string match -nocase $rt $drv_handle] && [string match -nocase $matchip_name $ip_name]} {
 						continue
+					}
+					} else {
+						for {set cnt 0} {$cnt < [llength $rt]} {incr cnt} {
+							set matchip_name [get_property IP_NAME [hsi::get_cells -hier [lindex $rt $cnt]]]
+							if {![string match -nocase [lindex $rt $cnt] $drv_handle] && [string match -nocase $matchip_name $ip_name]} {
+								continue
+							}
+						}
 					}
 				}
 				}
@@ -1002,8 +1012,18 @@ proc generate {} {
 					set base [get_baseaddr $drv_handle]
 					if {[catch {set rt [dict get $duplist $base]} msg]} {
 					} else {
-						if {![string match -nocase $rt $drv_handle]} {
+						if {[llength $rt] == 1} {
+						set matchip_name [get_property IP_NAME [hsi::get_cells -hier $rt]]
+						if {![string match -nocase $rt $drv_handle] && [string match -nocase $matchip_name $ip_name]} {
 							continue
+						}
+						} else {
+							for {set cnt 0} {$cnt < [llength $rt]} {incr cnt} {
+								set matchip_name [get_property IP_NAME [hsi::get_cells -hier [lindex $rt $cnt]]]
+								if {![string match -nocase [lindex $rt $cnt] $drv_handle] && [string match -nocase $matchip_name $ip_name]} {
+									continue
+								}
+							}
 						}
 					}
 				}
@@ -1179,20 +1199,174 @@ proc update_hier_mem {iptype} {
 			set temp [lindex $temp 0]
 		}
 		if {[string match -nocase $iptype "psv_cortexa72"] || [string match -nocase $iptype "psu_cortexa53"]} {
-			set_memmap $temp a53 $regprop
+						if {[is_pl_ip $periph]} {
+							set tmpbase [get_baseaddr $periph]
+							set ip_name [get_property IP_NAME [hsi::get_cells -hier $periph]]
+							global duplist
+							if {[catch {set handle_value [dict get $duplist $tmpbase]} msg]} {
+								set_memmap $temp a53 $regprop
+							} else {
+								if {[llength $handle_value] == 1} {
+								set matchip_name [get_property IP_NAME [hsi::get_cells -hier $handle_value]]
+								set temp [dict get $duplist $tmpbase]
+								set_memmap $handle_value a53 $regprop
+								} else {
+									for {set cnt 0} {$cnt < [llength $handle_value]} {incr cnt} {
+										set matchip_name [get_property IP_NAME [hsi::get_cells -hier [lindex $handle_value $cnt]]]
+										if {![string match -nocase [lindex $handle_value $cnt] $periph] && [string match -nocase $matchip_name $ip_name]} {
+										continue
+										} else {
+											set_memmap [lindex $handle_value $cnt] a53 $regprop
+										}
+									}
+								}
+							}
+						} else {
+								set_memmap $temp a53 $regprop
+						}
+
 		}
 		if {[string match -nocase $iptype "psv_cortexr5"] || [string match -nocase $iptype "psu_cortexr5"]} {
-			set_memmap $temp r5 $regprop
+						if {[is_pl_ip $periph]} {
+							set tmpbase [get_baseaddr $periph]
+							set ip_name [get_property IP_NAME [hsi::get_cells -hier $periph]]
+							global duplist
+							if {[catch {set handle_value [dict get $duplist $tmpbase]} msg]} {
+								set_memmap $temp r5 $regprop
+							} else {
+								if {[llength $handle_value] == 1} {
+								set matchip_name [get_property IP_NAME [hsi::get_cells -hier $handle_value]]
+								set temp [dict get $duplist $tmpbase]
+								set_memmap $handle_value r5 $regprop
+								} else {
+									for {set cnt 0} {$cnt < [llength $handle_value]} {incr cnt} {
+										set matchip_name [get_property IP_NAME [hsi::get_cells -hier [lindex $handle_value $cnt]]]
+										if {![string match -nocase [lindex $handle_value $cnt] $periph] && [string match -nocase $matchip_name $ip_name]} {
+										continue
+										} else {
+											set_memmap [lindex $handle_value $cnt] r5 $regprop
+										}
+									}
+								}
+							}
+						} else {
+								set_memmap $temp r5 $regprop
+						}
+
 		}
 		if {[string match -nocase $iptype "psv_pmc"]} {
-			set_memmap $temp pmc $regprop
+						if {[is_pl_ip $periph]} {
+							set tmpbase [get_baseaddr $periph]
+							set ip_name [get_property IP_NAME [hsi::get_cells -hier $periph]]
+							global duplist
+							if {[catch {set handle_value [dict get $duplist $tmpbase]} msg]} {
+								set_memmap $temp pmc $regprop
+							} else {
+								if {[llength $handle_value] == 1} {
+								set matchip_name [get_property IP_NAME [hsi::get_cells -hier $handle_value]]
+								set temp [dict get $duplist $tmpbase]
+								set_memmap $handle_value pmc $regprop
+								} else {
+									for {set cnt 0} {$cnt < [llength $handle_value]} {incr cnt} {
+										set matchip_name [get_property IP_NAME [hsi::get_cells -hier [lindex $handle_value $cnt]]]
+										if {![string match -nocase [lindex $handle_value $cnt] $periph] && [string match -nocase $matchip_name $ip_name]} {
+										continue
+										} else {
+											set_memmap [lindex $handle_value $cnt] pmc $regprop
+										}
+									}
+								}
+							}
+						} else {
+								set_memmap $temp pmc $regprop
+						}
+
 		}
 		if {[string match -nocase $iptype "psv_psm"]} {
-			set_memmap $temp psm $regprop
+						if {[is_pl_ip $periph]} {
+							set tmpbase [get_baseaddr $periph]
+							set ip_name [get_property IP_NAME [hsi::get_cells -hier $periph]]
+							global duplist
+							if {[catch {set handle_value [dict get $duplist $tmpbase]} msg]} {
+								set_memmap $temp psm $regprop
+							} else {
+								if {[llength $handle_value] == 1} {
+								set matchip_name [get_property IP_NAME [hsi::get_cells -hier $handle_value]]
+								set temp [dict get $duplist $tmpbase]
+								set_memmap $handle_value psm $regprop
+								} else {
+									for {set cnt 0} {$cnt < [llength $handle_value]} {incr cnt} {
+										set matchip_name [get_property IP_NAME [hsi::get_cells -hier [lindex $handle_value $cnt]]]
+										if {![string match -nocase [lindex $handle_value $cnt] $periph] && [string match -nocase $matchip_name $ip_name]} {
+										continue
+										} else {
+											set_memmap [lindex $handle_value $cnt] psm $regprop
+										}
+									}
+								}
+							}
+						} else {
+								set_memmap $temp psm $regprop
+						}
+
 		}
 		if {[string match -nocase $iptype "psu_pmu"]} {
-			set_memmap $temp pmu $regprop
+						if {[is_pl_ip $periph]} {
+							set tmpbase [get_baseaddr $periph]
+							set ip_name [get_property IP_NAME [hsi::get_cells -hier $periph]]
+							global duplist
+							if {[catch {set handle_value [dict get $duplist $tmpbase]} msg]} {
+								set_memmap $temp pmu $regprop
+							} else {
+								if {[llength $handle_value] == 1} {
+								set matchip_name [get_property IP_NAME [hsi::get_cells -hier $handle_value]]
+								set temp [dict get $duplist $tmpbase]
+								set_memmap $handle_value pmu $regprop
+								} else {
+									for {set cnt 0} {$cnt < [llength $handle_value]} {incr cnt} {
+										set matchip_name [get_property IP_NAME [hsi::get_cells -hier [lindex $handle_value $cnt]]]
+										if {![string match -nocase [lindex $handle_value $cnt] $periph] && [string match -nocase $matchip_name $ip_name]} {
+										continue
+										} else {
+											set_memmap [lindex $handle_value $cnt] pmu $regprop
+										}
+									}
+								}
+							}
+						} else {
+								set_memmap $temp pmu $regprop
+						}
+
 		}
+			if {[string match -nocase $iptype "microblaze"]} {
+						if {[is_pl_ip $periph]} {
+							set tmpbase [get_baseaddr $periph]
+							set ip_name [get_property IP_NAME [hsi::get_cells -hier $periph]]
+							global duplist
+							if {[catch {set handle_value [dict get $duplist $tmpbase]} msg]} {
+								set_memmap $temp $val $regprop
+							} else {
+								if {[llength $handle_value] == 1} {
+								set matchip_name [get_property IP_NAME [hsi::get_cells -hier $handle_value]]
+								set temp [dict get $duplist $tmpbase]
+								set_memmap $handle_value $val $regprop
+								} else {
+									for {set cnt 0} {$cnt < [llength $handle_value]} {incr cnt} {
+										set matchip_name [get_property IP_NAME [hsi::get_cells -hier [lindex $handle_value $cnt]]]
+										if {![string match -nocase [lindex $handle_value $cnt] $periph] && [string match -nocase $matchip_name $ip_name]} {
+										continue
+										} else {
+											set_memmap [lindex $handle_value $cnt] $val $regprop
+										}
+									}
+								}
+							}
+						} else {
+								set_memmap $temp $val $regprop
+						}
+
+		}
+	
 	}
 }
 proc proc_mapping {} {
@@ -1225,9 +1399,6 @@ proc proc_mapping {} {
 		foreach periph $periph_list {
 			set hier_prop [get_property IS_HIERARCHICAL [hsi::get_cells -hier $periph]]
 			if {[string match -nocase $hier_prop "1"]} {
-				hsi::current_hw_instance $periph
-				update_hier_mem $iptype
-				hsi::current_hw_instance
 			}
 			if {[catch {set ipname [get_property IP_NAME [hsi::get_cells -hier $periph]]} msg]} {
 				set ipname ""
@@ -1300,38 +1471,171 @@ proc proc_mapping {} {
 				set temp [split $temp ":"]
 				set temp [lindex $temp 0]
 			}
+
 			if {[string match -nocase $ipname "psv_rcpu_gic"] } {
 				set temp "gic_r5"
 			}
-					if {[string match -nocase $iptype "psv_cortexa72"] || [string match -nocase $iptype "psu_cortexa53"]} {
+
+			set ip_name [get_property IP_NAME [hsi::get_cells -hier $periph]]
+
+			if {[string match -nocase $iptype "psv_cortexa72"] || [string match -nocase $iptype "psu_cortexa53"]} {
+				
+				
+				if {[is_pl_ip $periph]} {
+					set tmpbase [get_baseaddr $periph]
+					global duplist
+					if {[catch {set handle_value [dict get $duplist $tmpbase]} msg]} {
 						set_memmap $temp a53 $regprop
-					}
-					if {[string match -nocase $iptype "psv_cortexr5"] || [string match -nocase $iptype "psu_cortexr5"]} {
-						set_memmap $temp r5 $regprop
-					}
-					if {[string match -nocase $iptype "psv_pmc"]} {
-						set_memmap $temp pmc $regprop
-					}
-					if {[string match -nocase $iptype "psv_psm"]} {
-						set_memmap $temp psm $regprop
-					}
-					if {[string match -nocase $iptype "psu_pmu"]} {
-						set_memmap $temp pmu $regprop
-					}
-					if {[string match -nocase $iptype "microblaze"]} {
-						if {[is_pl_ip $val]} {
-							set tmpbase [get_baseaddr $periph]
-							global duplist
-							if {[catch {set handle_value [dict get $duplist $tmpbase]} msg]} {
-								set_memmap $temp $val $regprop
-							} else {
-								set temp [dict get $duplist $tmpbase]
-								set_memmap $handle_value $val $regprop
-							}
+					} else {
+						if {[llength $handle_value] == 1} {
+							set matchip_name [get_property IP_NAME [hsi::get_cells -hier $handle_value]]
+							set temp [dict get $duplist $tmpbase]
+							set_memmap $handle_value a53 $regprop
 						} else {
-								set_memmap $temp $val $regprop
+							for {set cnt 0} {$cnt < [llength $handle_value]} {incr cnt} {
+								set matchip_name [get_property IP_NAME [hsi::get_cells -hier [lindex $handle_value $cnt]]]
+								if {![string match -nocase [lindex $handle_value $cnt] $periph] && [string match -nocase $matchip_name $ip_name]} {
+								continue
+								} else {
+									set_memmap [lindex $handle_value $cnt] a53 $regprop
+								}
+							}
 						}
 					}
+				} else {
+						set_memmap $temp a53 $regprop
+				}
+			}
+			if {[string match -nocase $iptype "psv_cortexr5"] || [string match -nocase $iptype "psu_cortexr5"]} {
+				if {[is_pl_ip $periph]} {
+					set tmpbase [get_baseaddr $periph]
+					global duplist
+					if {[catch {set handle_value [dict get $duplist $tmpbase]} msg]} {
+						set_memmap $temp r5 $regprop
+					} else {
+						if {[llength $handle_value] == 1} {
+						set matchip_name [get_property IP_NAME [hsi::get_cells -hier $handle_value]]
+						set temp [dict get $duplist $tmpbase]
+						set_memmap $handle_value r5 $regprop
+						} else {
+							for {set cnt 0} {$cnt < [llength $handle_value]} {incr cnt} {
+								set matchip_name [get_property IP_NAME [hsi::get_cells -hier [lindex $handle_value $cnt]]]
+								if {![string match -nocase [lindex $handle_value $cnt] $periph] && [string match -nocase $matchip_name $ip_name]} {
+								continue
+								} else {
+									set_memmap [lindex $handle_value $cnt] r5 $regprop
+								}
+							}
+						}
+					}
+				} else {
+						set_memmap $temp r5 $regprop
+				}
+			}
+			if {[string match -nocase $iptype "psv_pmc"]} {
+				if {[is_pl_ip $periph]} {
+					set tmpbase [get_baseaddr $periph]
+					global duplist
+					if {[catch {set handle_value [dict get $duplist $tmpbase]} msg]} {
+						set_memmap $temp pmc $regprop
+					} else {
+						if {[llength $handle_value] == 1} {
+						set matchip_name [get_property IP_NAME [hsi::get_cells -hier $handle_value]]
+						set temp [dict get $duplist $tmpbase]
+						set_memmap $handle_value pmc $regprop
+						} else {
+							for {set cnt 0} {$cnt < [llength $handle_value]} {incr cnt} {
+								set matchip_name [get_property IP_NAME [hsi::get_cells -hier [lindex $handle_value $cnt]]]
+								if {![string match -nocase [lindex $handle_value $cnt] $periph] && [string match -nocase $matchip_name $ip_name]} {
+								continue
+								} else {
+									set_memmap [lindex $handle_value $cnt] pmc $regprop
+								}
+							}
+						}
+					}
+				} else {
+						set_memmap $temp pmc $regprop
+				}
+			}
+			if {[string match -nocase $iptype "psv_psm"]} {
+				if {[is_pl_ip $periph]} {
+					set tmpbase [get_baseaddr $periph]
+					global duplist
+					if {[catch {set handle_value [dict get $duplist $tmpbase]} msg]} {
+						set_memmap $temp psm $regprop
+					} else {
+						if {[llength $handle_value] == 1} {
+						set matchip_name [get_property IP_NAME [hsi::get_cells -hier $handle_value]]
+						set temp [dict get $duplist $tmpbase]
+						set_memmap $handle_value psm $regprop
+						} else {
+							for {set cnt 0} {$cnt < [llength $handle_value]} {incr cnt} {
+								set matchip_name [get_property IP_NAME [hsi::get_cells -hier [lindex $handle_value $cnt]]]
+								if {![string match -nocase [lindex $handle_value $cnt] $periph] && [string match -nocase $matchip_name $ip_name]} {
+								continue
+								} else {
+									set_memmap [lindex $handle_value $cnt] psm $regprop
+								}
+							}
+						}
+					}
+				} else {
+						set_memmap $temp psm $regprop
+				}
+			}
+			if {[string match -nocase $iptype "psu_pmu"]} {
+				if {[is_pl_ip $periph]} {
+					set tmpbase [get_baseaddr $periph]
+					global duplist
+					if {[catch {set handle_value [dict get $duplist $tmpbase]} msg]} {
+						set_memmap $temp pmu $regprop
+					} else {
+						if {[llength $handle_value] == 1} {
+						set matchip_name [get_property IP_NAME [hsi::get_cells -hier $handle_value]]
+						set temp [dict get $duplist $tmpbase]
+						set_memmap $handle_value pmu $regprop
+						} else {
+							for {set cnt 0} {$cnt < [llength $handle_value]} {incr cnt} {
+								set matchip_name [get_property IP_NAME [hsi::get_cells -hier [lindex $handle_value $cnt]]]
+								if {![string match -nocase [lindex $handle_value $cnt] $periph] && [string match -nocase $matchip_name $ip_name]} {
+								continue
+								} else {
+									set_memmap [lindex $handle_value $cnt] pmu $regprop
+								}
+							}
+						}
+					}
+				} else {
+						set_memmap $temp pmu $regprop
+				}
+			}
+			if {[string match -nocase $iptype "microblaze"]} {
+				if {[is_pl_ip $periph]} {
+					set tmpbase [get_baseaddr $periph]
+					global duplist
+					if {[catch {set handle_value [dict get $duplist $tmpbase]} msg]} {
+						set_memmap $temp $val $regprop
+					} else {
+						if {[llength $handle_value] == 1} {
+						set matchip_name [get_property IP_NAME [hsi::get_cells -hier $handle_value]]
+						set temp [dict get $duplist $tmpbase]
+						set_memmap $handle_value $val $regprop
+						} else {
+							for {set cnt 0} {$cnt < [llength $handle_value]} {incr cnt} {
+								set matchip_name [get_property IP_NAME [hsi::get_cells -hier [lindex $handle_value $cnt]]]
+								if {![string match -nocase [lindex $handle_value $cnt] $periph] && [string match -nocase $matchip_name $ip_name]} {
+								continue
+								} else {
+									set_memmap [lindex $handle_value $cnt] $val $regprop
+								}
+							}
+						}
+					}
+				} else {
+						set_memmap $temp $val $regprop
+				}
+			}
 		}
 		
 	}
