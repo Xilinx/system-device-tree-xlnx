@@ -1397,8 +1397,8 @@ proc proc_mapping {} {
 		set periph_list [hsi::get_mem_ranges -of_objects [hsi::get_cells -hier $val]]
 		set iptype [get_property IP_NAME [hsi::get_cells -hier $val]]
 		foreach periph $periph_list {
-			set hier_prop [get_property IS_HIERARCHICAL [hsi::get_cells -hier $periph]]
-			if {[string match -nocase $hier_prop "1"]} {
+			if {[catch {set hier_prop [get_property IS_HIERARCHICAL [hsi::get_cells -hier $periph]]} msg]} {
+				set hier_prop 0
 			}
 			if {[catch {set ipname [get_property IP_NAME [hsi::get_cells -hier $periph]]} msg]} {
 				set ipname ""
