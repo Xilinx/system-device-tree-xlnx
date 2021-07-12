@@ -1106,12 +1106,16 @@ proc generate {} {
 		write_dt systemdt root "$dir/system-top.dts"
 		write_dt pldt root "$dir/pl.dtsi"
 		write_dt pcwdt root "$dir/pcw.dtsi"
+		global set osmap
+		unset osmap
 		
 	} else {
 		delete_tree systemdt root
 		delete_tree pldt root
 		write_dt systemdt root "$dir/system-top.dts"
 		write_dt pldt root "$dir/pl.dtsi"
+		global set osmap
+		unset osmap
 	}
 	destroy_tree
 }
