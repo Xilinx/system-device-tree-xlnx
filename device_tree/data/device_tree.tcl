@@ -1080,6 +1080,7 @@ proc generate {} {
     	#gen_resrv_memory
     	update_alias $drv_handle
     	update_cpu_node $drv_handle
+	gen_r5_trustzone_config
 	gen_tcmbus
 	proc_mapping
         gen_cpu_cluster $drv_handle
@@ -1132,6 +1133,49 @@ proc delete_tree {dttree head} {
 				}
 			}
 		}
+	}
+}
+
+proc gen_r5_trustzone_config {} {
+        set cortexa72proc [hsi::get_cells -hier -filter {IP_NAME=="psv_cortexa72"}]
+        set family [get_hw_family]
+        if {[string match -nocase $family "versal"]} {
+                set cortexr5proc [hsi::get_cells -hier -filter {IP_NAME=="psv_cortexr5"}]
+        } elseif {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
+                set cortexr5proc [hsi::get_cells -hier -filter {IP_NAME=="psu_cortexr5"}]
+        } else {
+                set cortexr5proc ""
+        }
+	set rpu_cnt 0
+        set slcr_instance [hsi::get_cells -hier -filter { IP_NAME == "psu_iouslcr" }]
+	foreach r5proc $cortexr5proc {
+		set r5_tz ""
+		set r5_access 0
+		set cnt 0
+		if {[catch {set r5_tz [get_property CONFIG.C_TZ_NONSECURE $r5proc]} msg]} {
+		}
+		if {$r5_tz == "" || $r5_tz == "0"} {
+			set r5_access 0xff
+		} else {
+			if {[llength $cortexr5proc] > 0} {
+				set rpu_tz [string toupper [get_property TRUSTZONE [lindex [hsi::get_mem_ranges \
+				[hsi::get_cells -hier $r5proc] *rpu*] 0]]]
+				if {[string compare -nocase $rpu_tz "NONSECURE"] == 0} {
+					set r5_access [expr int([expr $r5_access + pow(2,$cnt)])]
+				}
+			}
+			incr cnt
+			if {[llength $cortexa72proc] == 0 && [llength $slcr_instance] > 0} {
+				set iou_slcr_tz [string toupper [get_property TRUSTZONE [lindex [hsi::get_mem_ranges \
+				[hsi::get_cells -hier $r5proc] psu_iouslcr_0] 0]]]
+				if {([string compare -nocase $iou_slcr_tz "NONSECURE"] == 0)} {
+					set r5_access [expr int([expr $r5_access + pow(2,$cnt)])]
+				}
+			}
+	        }
+		set rt_node [create_node -n "&r5_cpu${rpu_cnt}" -d "pcw.dtsi" -p root]
+		add_prop $rt_node "access-val" $r5_access hexint "pcw.dtsi"
+		incr rpu_cnt
 	}
 }
 
