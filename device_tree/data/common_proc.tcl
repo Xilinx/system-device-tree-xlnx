@@ -285,7 +285,7 @@ proc remove_duplicate_addr {} {
 	global addrlist
 	set mainlist ""
 	set addrlist ""
-	set ignorelist "psu_iou_s zynq_ultra_ps_e_0 displayport v_tc"
+	set ignorelist "psu_iou_s zynq_ultra_ps_e_0 versal_cips displayport v_tc"
 	foreach v $val {
 		set nested 0
 		if {[is_ps_ip $v] == 1} {
