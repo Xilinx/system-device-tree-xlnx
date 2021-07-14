@@ -33,7 +33,7 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 
 	    } else {
 		set freq [get_clk_pin_freq $ip "$clock_port"]
-		add_prop $node "clock-frequency" hexint $dts_file
+		add_prop $node "clock-frequency" $freq int $dts_file
 	    }
 
 #	    set_os_parameter_value "console" "ttyS0,115200"
