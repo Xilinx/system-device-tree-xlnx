@@ -1459,6 +1459,18 @@ proc proc_mapping {} {
                                        continue
                                }
                         }
+			if {[string match -nocase $iptype "psv_cortexa72"] && [string match -nocase $ipname "psv_rcpu_gic"]} {
+				continue
+			}
+			if {[string match -nocase $iptype "psv_cortexr5"] && [string match -nocase $ipname "psv_acpu_gic"]} {
+				continue
+			}
+			if {[string match -nocase $iptype "psu_cortexa53"] && [string match -nocase $ipname "psu_rcpu_gic"]} {
+				continue
+			}
+			if {[string match -nocase $iptype "psu_cortexr5"] && [string match -nocase $ipname "psu_acpu_gic"]} {
+				continue
+			}
 			if {[string match -nocase $ipname "psv_ipi"]} {
 				continue
 			}
@@ -1525,6 +1537,7 @@ proc proc_mapping {} {
 			}
 
 			set ip_name [get_property IP_NAME [hsi::get_cells -hier $periph]]
+			
 
 			if {[string match -nocase $iptype "psv_cortexa72"] || [string match -nocase $iptype "psu_cortexa53"]} {
 				
@@ -1537,6 +1550,7 @@ proc proc_mapping {} {
 					} else {
 						if {[llength $handle_value] == 1} {
 							set matchip_name [get_property IP_NAME [hsi::get_cells -hier $handle_value]]
+
 							set temp [dict get $duplist $tmpbase]
 							set_memmap $handle_value a53 $regprop
 						} else {
