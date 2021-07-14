@@ -1985,7 +1985,7 @@ proc set_drv_conf_prop args {
 				set type [lindex $args 3]
 				if {[string equal -nocase $type "boolean"]} {
 					if {[expr $value < 1]} {
-				#		return 0
+						return 0
 					}
 					set value ""
 				}
@@ -5610,6 +5610,9 @@ proc ip2drv_prop {ip_name ip_prop_name} {
 		set type "string"
 	} else {
 		set type "mixed"
+	}
+	if {[string match -nocase $drv_prop_name "xlnx,include-sg"] || [string match -nocase $drv_prop_name "xlnx,sg-include-stscntrl-strm"]} {
+		return
 	}
 	if {[string match -nocase $emac "psv_pciea_attrib"] && [string match -nocase $ip_prop_name "CONFIG.C_CPM_PCIE0_PORT_TYPE"]} {
 		set node [get_node $ip_name]
