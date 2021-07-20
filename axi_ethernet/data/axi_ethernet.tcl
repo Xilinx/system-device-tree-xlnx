@@ -266,8 +266,8 @@ set rxethmem 0
 			if {$ip_name == "xxv_ethernet" && $core != 0 && [llength $eth_node]} {
 				append new_label "_" mdio
 				set mdionode [create_node -l "$new_label" -n mdio -p $eth_node -d $dts_file]
-				add_prop $mdio_node "#address-cells" 1 int $dts_file
-				add_prop "${mdio_node}" "#size-cells" 0 int $dts_file
+				add_prop $mdionode "#address-cells" 1 int $dts_file
+				add_prop "${mdionode}" "#size-cells" 0 int $dts_file
 				set new_label ""
 			}
 			if {$ip_name == "axi_10g_ethernet"} {
@@ -882,25 +882,22 @@ set rxethmem 0
 		regsub -all {CONFIG.C_} $drv_prop_name {xlnx,} drv_prop_name
 		regsub -all {_} $drv_prop_name {-} drv_prop_name
 		set drv_prop_name [string tolower $drv_prop_name]
-		set value [get_property ${ip_prop_name} [hsi::get_cells -hier $drv_handle]]
-		if {[llength $value]} {
-		       if {$value != "-1" && [llength $value] !=0} {
-			     #set type "hex"
-				set type "hexint"
-			     if {[string equal -nocase $type "boolean"]} {
-				     if {[expr $value < 1]} {
-					    return 0
-				     }
-				     set value ""
-			     }
-			     if {[regexp "(int|hex).*" $type match]} {
-				     regsub -all {"} $value "" value
-			     }
-			     set node [get_node $drv_handle]
-			     add_prop $ip_name "$drv_prop_name" $value $type "pl.dtsi"
-	#                     add_new_dts_param "$ip_name" "$drv_prop_name" $value $type
-			     return 0
-		       }
+		set prop [get_property ${ip_prop_name} [hsi::get_cells -hier $drv_handle]]
+		if {[llength $prop]} {
+			if {$prop != "-1" && [llength $prop] !=0} {
+				if {[regexp -nocase {0x([0-9a-f])} $prop match]} {
+					set type "hexint"
+				} elseif {[string is integer -strict $prop]} {
+					set type "int"
+				} elseif {[string is boolean -strict $prop]} {
+					set type "boolean"
+				} elseif {[string is wordchar -strict $prop]} {
+					set type "string"
+				} else {
+					set type "mixed"
+				}
+				add_prop $ip_name "$drv_prop_name" $prop $type "pl.dtsi"
+			}
 		}
 	}
 }
