@@ -329,6 +329,7 @@ set rxethmem 0
 					}
 					set ipnode [get_node $target_handle]
 					set values [pldt getall $ipnode]
+					set intr_parent ""
 					if {[regexp "interrupt*" $values match]} {
 						set intr_val [pldt get $ipnode interrupts]
 						set intr_val [string trimright $intr_val " >"]
@@ -349,23 +350,25 @@ set rxethmem 0
 							set int2 [string trimleft $int2 "\" "]
 						}
 					}
-			   		if { $hasbuf == "true" && $ip_name == "axi_ethernet"} {
-						set intr_val1 [pldt get $node interrupts]
-						set intr_val1 [string trimright $intr_val1 " >"]
-						set intr_val1 [string trimleft $intr_val1 "< "]
-						lappend intr_val1 $intr_val
-						set intr_name [pldt get $node interrupt-names]
-						set intr_name [string trimleft $intr_name "\""]
-						set intr_name [string trimright $intr_name "\""]
-						append intr_names " " $intr_name " "  $int1 " " $int2
-						set proctype [get_hw_family]
-						if {[regexp "kintex*" $proctype match]} {
-							set null ""
-							add_prop $node "interrupt-names" $null stringlist "pl.dtsi"
-							add_prop $node "interrupts" $null intlist "pl.dtsi"
+					if {[regexp "interrupt*" $values match]} {
+						if { $hasbuf == "true" && $ip_name == "axi_ethernet"} {
+							set intr_val1 [pldt get $node interrupts]
+							set intr_val1 [string trimright $intr_val1 " >"]
+							set intr_val1 [string trimleft $intr_val1 "< "]
+							lappend intr_val1 $intr_val
+							set intr_name [pldt get $node interrupt-names]
+							set intr_name [string trimleft $intr_name "\""]
+							set intr_name [string trimright $intr_name "\""]
+							append intr_names " " $intr_name " "  $int1 " " $int2
+							set proctype [get_hw_family]
+							if {[regexp "kintex*" $proctype match]} {
+								set null ""
+								add_prop $node "interrupt-names" $null stringlist "pl.dtsi"
+								add_prop $node "interrupts" $null intlist "pl.dtsi"
+							}
+						} else {
+							set intr_names $int_names
 						}
-					} else {
-						set intr_names $int_names
 					}
 					set default_dts "pl.dtsi"
 					set nodep [get_node $drv_handle]
