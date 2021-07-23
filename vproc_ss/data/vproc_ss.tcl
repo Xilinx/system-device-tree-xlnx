@@ -296,5 +296,3 @@ proc add_hier_instances {drv_handle} {
 	}
 
 }
-}
-

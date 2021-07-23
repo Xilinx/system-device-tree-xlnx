@@ -22,4 +22,3 @@ proc generate {drv_handle} {
     set_drv_conf_prop $drv_handle C_HAS_CD xlnx,card-detect int
     set_drv_conf_prop $drv_handle C_HAS_WP xlnx,write-protect int
 }
-}
