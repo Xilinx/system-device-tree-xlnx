@@ -12,24 +12,21 @@
 # GNU General Public License for more details.
 #
 
-namespace eval ::tclapp::xilinx::devicetree::axi_perf_mon {
-namespace import ::tclapp::xilinx::devicetree::common::\*
-	proc generate {drv_handle} {
-		global env
-		global dtsi_fname
-		set path $env(REPO)
+proc generate {drv_handle} {
+	global env
+	global dtsi_fname
+	set path $env(REPO)
 
-		set node [get_node $drv_handle]
-		if {$node == 0} {
-			return
-		}
+	set node [get_node $drv_handle]
+	if {$node == 0} {
+		return
+	}
 
-		pldt append $node compatible "\ \, \"xlnx,axi-perf-monitor\""
-		set check_list "enable-profile enable-trace num-monitor-slots enable-event-count enable-event-log have-sampled-metric-cnt num-of-counters metric-count-width metrics-sample-count-width global-count-width metric-count-scale"
-		foreach p ${check_list} {
-			set ip_conf [string toupper "c_${p}"]
-			regsub -all {\-} $ip_conf {_} ip_conf
-			set_drv_conf_prop $drv_handle ${ip_conf} xlnx,${p} hexint
-		}
+	pldt append $node compatible "\ \, \"xlnx,axi-perf-monitor\""
+	set check_list "enable-profile enable-trace num-monitor-slots enable-event-count enable-event-log have-sampled-metric-cnt num-of-counters metric-count-width metrics-sample-count-width global-count-width metric-count-scale"
+	foreach p ${check_list} {
+		set ip_conf [string toupper "c_${p}"]
+		regsub -all {\-} $ip_conf {_} ip_conf
+		set_drv_conf_prop $drv_handle ${ip_conf} xlnx,${p} hexint
 	}
 }

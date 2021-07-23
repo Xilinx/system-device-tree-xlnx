@@ -17,9 +17,7 @@
 # GNU General Public License for more details.
 #
 
-namespace eval ::tclapp::xilinx::devicetree::cpu {
-namespace import ::tclapp::xilinx::devicetree::common::\*
-	proc generate {drv_handle} {
+proc generate {drv_handle} {
 	set proctype [get_hw_family]
 	set bus_name [detect_bus_name $drv_handle]
 	set nr [get_microblaze_nr $drv_handle]
@@ -29,7 +27,7 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 		set node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${nr}" -u $nr -d "pl.dtsi" -p $bus_name]
 	}
 	set node [create_node -n "cpu" -l "ub${nr}_cpu" -u 0 -d "pl.dtsi" -p $node]
-        set dts_file [set_drv_def_dts $drv_handle]
+	set dts_file [set_drv_def_dts $drv_handle]
 	set ip [hsi::get_cells -hier $drv_handle]
 	set clk ""
 	set clkhandle [hsi::get_pins -of_objects $ip "CLK"]
@@ -71,31 +69,30 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 	set model "[get_property IP_NAME $ip],[get_ip_version $ip]"
 	add_prop $node "model" $model string $dts_file
 	#set_drv_conf_prop $drv_handle C_FAMILY "xlnx,family" string
-        set family [get_property C_FAMILY [hsi::get_cells -hier $drv_handle]]
+	set family [get_property C_FAMILY [hsi::get_cells -hier $drv_handle]]
 	add_prop $node "xlnx,family" $family string $dts_file
 	# create root node
 	set master_root_node [gen_root_node $drv_handle]
 	set nodes [gen_cpu_nodes $drv_handle]
-   }
-
-	proc check_64bit {base} {
-       		if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
-               		set temp $base
-	               set temp [string trimleft [string trimleft $temp 0] x]
-	               set len [string length $temp]
-	               set rem [expr {${len} - 8}]
-	               set high_base "0x[string range $temp $rem $len]"
-	               set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
-	               set low_base [format 0x%08x $low_base]
-		       if {$low_base == 0x0} {
-			   set reg "$high_base"
-			} else {
-				set reg "$low_base $high_base"
-			}
-	       } else {
-        		set reg "$base"
-       		}
-	       return $reg
-	}
-
 }
+
+proc check_64bit {base} {
+	if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
+       		set temp $base
+               set temp [string trimleft [string trimleft $temp 0] x]
+               set len [string length $temp]
+               set rem [expr {${len} - 8}]
+               set high_base "0x[string range $temp $rem $len]"
+               set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
+               set low_base [format 0x%08x $low_base]
+	       if {$low_base == 0x0} {
+		   set reg "$high_base"
+		} else {
+			set reg "$low_base $high_base"
+		}
+       } else {
+		set reg "$base"
+	}
+       return $reg
+}
+

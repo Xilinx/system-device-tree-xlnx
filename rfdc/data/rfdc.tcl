@@ -12,8 +12,6 @@
 # GNU General Public License for more details.
 #
 
-namespace eval ::tclapp::xilinx::devicetree::rfdc {
-namespace import ::tclapp::xilinx::devicetree::common::\*
 proc generate {drv_handle} {
 	set node [get_node $drv_handle]
 	set dts_file [set_drv_def_dts $drv_handle]
@@ -102,5 +100,4 @@ proc add_param_list_property {drv_handle args} {
 		}
 	}
 	add_new_property $drv_handle "param-list" bytelist $data
-}
 }

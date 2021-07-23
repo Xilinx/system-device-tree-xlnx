@@ -12,12 +12,9 @@
 # GNU General Public License for more details.
 #
 
-namespace eval ::tclapp::xilinx::devicetree::emaclite {
-namespace import ::tclapp::xilinx::devicetree::common::\*
-	proc generate {drv_handle} {
-	    set node [get_node $drv_handle]
-	    add_prop $node compatible "\ \, \"xlnx,xps-ethernetlite-1.00.a\""
-	    update_eth_mac_addr $drv_handle
-	    gen_mdio_node $drv_handle $node
-	}
+proc generate {drv_handle} {
+    set node [get_node $drv_handle]
+    add_prop $node compatible "\ \, \"xlnx,xps-ethernetlite-1.00.a\""
+    update_eth_mac_addr $drv_handle
+    gen_mdio_node $drv_handle $node
 }

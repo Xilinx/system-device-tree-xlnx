@@ -21,7 +21,6 @@ package require yaml
 package require struct
 #namespace export *
 #namespace export get_dt_param
-namespace eval ::tclapp::xilinx::devicetree::utils {
 # load yaml file into dict
 proc get_yaml_dict1 { config_file } {
         set data ""
@@ -916,7 +915,6 @@ proc generate {} {
 		        source -notrace $file
 		}
 	}
-        namespace import ::tclapp::xilinx::devicetree::common::\*
 	set val_proclist "psv_cortexa72 psu_cortexa53 ps7_cortexa9"
 	set peri_list [hsi::get_cells -hier]
 	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
@@ -947,7 +945,6 @@ proc generate {} {
 			set drvname [get_drivers $procc]
 			set proc_file "$path/${drvname}/data/${drvname}.tcl"
 			source -notrace $proc_file
-			namespace import ::tclapp::xilinx::devicetree::${drvname}::\*
 	                ::tclapp::xilinx::devicetree::${drvname}::generate $procc
 		
 			#namespace import ::${drvname}::\*
@@ -1030,7 +1027,6 @@ proc generate {} {
 				set drvname [get_drivers $drv_handle]
 				set drv_file "$path/${drvname}/data/${drvname}.tcl"
 				source -notrace $drv_file
-				namespace import ::tclapp::xilinx::devicetree::${drvname}::\*
 		                ::tclapp::xilinx::devicetree::${drvname}::generate $drv_handle
 			}
 			foreach drv_handle $peri_list {
@@ -1042,7 +1038,6 @@ proc generate {} {
 			set drvname [get_drivers $procc]
 			set proc_file "$path/${drvname}/data/${drvname}.tcl"
 			source -notrace $proc_file
-			namespace import ::tclapp::xilinx::devicetree::${drvname}::\*
 	                ::tclapp::xilinx::devicetree::${drvname}::generate $procc
 			namespace forget ::
 			
@@ -4017,4 +4012,3 @@ proc gen_xppu {drv_handle} {
 	}
 }
 
-}

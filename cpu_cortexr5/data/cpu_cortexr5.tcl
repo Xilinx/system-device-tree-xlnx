@@ -12,26 +12,23 @@
 # GNU General Public License for more details.
 #
 
-namespace eval ::tclapp::xilinx::devicetree::cpu_cortexr5 {
-namespace import ::tclapp::xilinx::devicetree::common::\*
-	proc generate {drv_handle} {
-		set nr [string index $drv_handle end]
-		set dts_file [set_drv_def_dts $drv_handle]
-		global dtsi_fname
-		global env
-		set path $env(REPO)
+proc generate {drv_handle} {
+	set nr [string index $drv_handle end]
+	set dts_file [set_drv_def_dts $drv_handle]
+	global dtsi_fname
+	global env
+	set path $env(REPO)
 
-		set drvname [get_drivers $drv_handle]
+	set drvname [get_drivers $drv_handle]
 
-		set common_file "$path/device_tree/data/config.yaml"
-		if {[file exists $common_file]} {
-			#error "file not found: $common_file"
-		}
-		set mainline_ker [get_user_config $common_file -mainline_kernel]
-		set ip [hsi::get_cells -hier $drv_handle]
-		set default_dts [set_drv_def_dts $drv_handle]
-		# create root node
-		set master_root_node [gen_root_node $drv_handle]
-		set nodes [gen_cpu_nodes $drv_handle]
+	set common_file "$path/device_tree/data/config.yaml"
+	if {[file exists $common_file]} {
+		#error "file not found: $common_file"
 	}
+	set mainline_ker [get_user_config $common_file -mainline_kernel]
+	set ip [hsi::get_cells -hier $drv_handle]
+	set default_dts [set_drv_def_dts $drv_handle]
+	# create root node
+	set master_root_node [gen_root_node $drv_handle]
+	set nodes [gen_cpu_nodes $drv_handle]
 }

@@ -17,8 +17,6 @@
 # GNU General Public License for more details.
 #
 
-namespace eval ::tclapp::xilinx::devicetree::emacps {
-namespace import ::tclapp::xilinx::devicetree::common::\*
 ##############################################################################
 variable phy_count 0
 ##############################################################################
@@ -284,6 +282,3 @@ proc gen_mdio1_node {drv_handle parent_node} {
        add_prop "${mdio_node}" "#size-cells" 0 int $default_dts
        return $mdio_node
 }
-}
-
-

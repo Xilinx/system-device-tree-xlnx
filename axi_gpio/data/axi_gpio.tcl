@@ -12,44 +12,41 @@
 # GNU General Public License for more details.
 #
 
-namespace eval ::tclapp::xilinx::devicetree::axi_gpio {
-namespace import ::tclapp::xilinx::devicetree::common::\*
-	proc generate {drv_handle} {
-		global env
-		global dtsi_fname
-		set path $env(REPO)
+proc generate {drv_handle} {
+	global env
+	global dtsi_fname
+	set path $env(REPO)
 
-		set node [get_node $drv_handle]
-		if {$node == 0} {
-			return
-		}
-
-		pldt append $node compatible "\ \, \"xlnx,xps-gpio-1.00.a\""
-		set intr_present [get_property CONFIG.C_INTERRUPT_PRESENT [hsi::get_cells -hier $drv_handle]]
-		if {[string match $intr_present "1"]} {
-			if {$node != 0} {
-				add_prop $node "#interrupt-cells" 2 int "pl.dtsi"
-			}
-			add_prop $node "interrupt-controller" boolean "pl.dtsi"
-		}
-		set proc_type [get_hw_family]
-		if {[regexp "kintex*" $proc_type match]} {
-				gen_dev_ccf_binding $drv_handle "s_axi_aclk"
-				set_drv_prop_if_empty $drv_handle "clock-names" "s_axi_aclk" stringlist
-		}
-	       #Workaround: There is no unique way to differentiate the gt_ctrl, so hardcoding the size
-	       #for the address 0xa4010000 to 0x40000
-	       set ips [hsi::get_cells -hier -filter {IP_NAME == "mrmac"}]
-	       if {[llength $ips]} {
-	               set mem_ranges [hsi::get_ip_mem_ranges [get_cells -hier $drv_handle]]
-	               foreach mem_range $mem_ranges {
-	                       set base_addr [string tolower [get_property BASE_VALUE $mem_range]]
-	                       set high_addr [string tolower [get_property HIGH_VALUE $mem_range]]
-	                       if {[string match -nocase $base_addr "0xa4010000"]} {
-	                               set reg "0x0 0xa4010000 0x0 0x40000"
-				       add_prop $node "reg" $reg inthexlist "pl.dtsi"
-	                       }
-	               }
-	       }
+	set node [get_node $drv_handle]
+	if {$node == 0} {
+		return
 	}
+
+	pldt append $node compatible "\ \, \"xlnx,xps-gpio-1.00.a\""
+	set intr_present [get_property CONFIG.C_INTERRUPT_PRESENT [hsi::get_cells -hier $drv_handle]]
+	if {[string match $intr_present "1"]} {
+		if {$node != 0} {
+			add_prop $node "#interrupt-cells" 2 int "pl.dtsi"
+		}
+		add_prop $node "interrupt-controller" boolean "pl.dtsi"
+	}
+	set proc_type [get_hw_family]
+	if {[regexp "kintex*" $proc_type match]} {
+			gen_dev_ccf_binding $drv_handle "s_axi_aclk"
+			set_drv_prop_if_empty $drv_handle "clock-names" "s_axi_aclk" stringlist
+	}
+       #Workaround: There is no unique way to differentiate the gt_ctrl, so hardcoding the size
+       #for the address 0xa4010000 to 0x40000
+       set ips [hsi::get_cells -hier -filter {IP_NAME == "mrmac"}]
+       if {[llength $ips]} {
+               set mem_ranges [hsi::get_ip_mem_ranges [get_cells -hier $drv_handle]]
+               foreach mem_range $mem_ranges {
+                       set base_addr [string tolower [get_property BASE_VALUE $mem_range]]
+                       set high_addr [string tolower [get_property HIGH_VALUE $mem_range]]
+                       if {[string match -nocase $base_addr "0xa4010000"]} {
+                               set reg "0x0 0xa4010000 0x0 0x40000"
+			       add_prop $node "reg" $reg inthexlist "pl.dtsi"
+                       }
+               }
+       }
 }

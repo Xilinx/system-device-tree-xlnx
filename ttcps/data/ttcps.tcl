@@ -12,9 +12,6 @@
 # GNU General Public License for more details.
 #
 
-namespace eval ::tclapp::xilinx::devicetree::ttcps {
-namespace import ::tclapp::xilinx::devicetree::common::\*
-	proc generate {drv_handle} {
-		set_drv_conf_prop $drv_handle C_TTC_CLK0_FREQ_HZ xlnx,clock-freq int
-	}
+proc generate {drv_handle} {
+	set_drv_conf_prop $drv_handle C_TTC_CLK0_FREQ_HZ xlnx,clock-freq int
 }

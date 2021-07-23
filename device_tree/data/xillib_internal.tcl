@@ -11,7 +11,6 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
-namespace eval ::tclapp::xilinx::devicetree::hsi::utils {
 namespace export *
 
 proc dep_msg { older_proc new_proc args } {
@@ -486,5 +485,3 @@ proc xload_xilinx_library { libname } {
     dep_msg xload_xilinx_library load_xilinx_library $libname
     return [load_xilinx_library $libname]
 }
-}
-

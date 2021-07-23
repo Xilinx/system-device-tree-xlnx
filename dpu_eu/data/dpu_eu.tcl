@@ -12,13 +12,10 @@
 # GNU General Public License for more details.
 #
 
-namespace eval ::tclapp::xilinx::devicetree::dpu_eu {
-namespace import ::tclapp::xilinx::devicetree::common::\*
-	proc generate {drv_handle} {
-		set node [get_node $drv_handle]
-		if {$node == 0} {
-			return
-		}
-		pldt append $node compatible "\ \, \"deephi,dpu\""
+proc generate {drv_handle} {
+	set node [get_node $drv_handle]
+	if {$node == 0} {
+		return
 	}
+	pldt append $node compatible "\ \, \"deephi,dpu\""
 }

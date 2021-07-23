@@ -12,15 +12,12 @@
 # GNU General Public License for more details.
 #
 
-namespace eval ::tclapp::xilinx::devicetree::smccps {
-namespace import ::tclapp::xilinx::devicetree::common::\*
-	proc generate {drv_handle} {
-		set handle [hsi::get_cells -hier -filter {IP_NAME==ps7_nand}]
-		set node [get_node $drv_handle]
-		set dts_file [set_drv_def_dts $drv_handle]
-		set reg [get_baseaddr [hsi::get_cells -hier $handle]]
-		add_prop $node "flashbase" $reg int $dts_file
-		set bus_width [get_property CONFIG.C_NAND_WIDTH [hsi::get_cells -hier $handle]]
-		add_prop $node "nand-bus-width" $bus_width $dts_file
-	}
+proc generate {drv_handle} {
+	set handle [hsi::get_cells -hier -filter {IP_NAME==ps7_nand}]
+	set node [get_node $drv_handle]
+	set dts_file [set_drv_def_dts $drv_handle]
+	set reg [get_baseaddr [hsi::get_cells -hier $handle]]
+	add_prop $node "flashbase" $reg int $dts_file
+	set bus_width [get_property CONFIG.C_NAND_WIDTH [hsi::get_cells -hier $handle]]
+	add_prop $node "nand-bus-width" $bus_width $dts_file
 }

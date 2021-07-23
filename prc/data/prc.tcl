@@ -11,8 +11,6 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
-namespace eval ::tclapp::xilinx::devicetree::prc {
-namespace import ::tclapp::xilinx::devicetree::common::\*
 proc generate {drv_handle} {
 	prc_generate_params $drv_handle
 }
@@ -192,5 +190,4 @@ proc prc_generate_params {drv_handle} {
 	add_prop $node "banl-lsb" $C_VSM_SELECT_MSB int $dts_file
 	add_prop $node "reg-select-msb" $C_VSM_SELECT_MSB int $dts_file
 	add_prop $node "reg-select-lsb" $C_VSM_SELECT_MSB int $dts_file
-}
 }

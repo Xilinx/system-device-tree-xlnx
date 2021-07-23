@@ -12,43 +12,40 @@
 # GNU General Public License for more details.
 #
 
-namespace eval ::tclapp::xilinx::devicetree::dp_tx {
-namespace import ::tclapp::xilinx::devicetree::common::\*
-	proc generate {drv_handle} {
-		set node [get_node $drv_handle]
-		if {$node == 0} {
-			return
-		}
-		set dts_file [set_drv_def_dts $drv_handle]
-		set num_audio_channels [get_property CONFIG.Number_of_Audio_Channels [hsi::get_cells -hier $drv_handle]]
-		add_prop "${node}" "xlnx,num-audio-channels" $num_audio_channels int $dts_file
-		set audio_enable [get_property CONFIG.AUDIO_ENABLE [hsi::get_cells -hier $drv_handle]]
-		add_prop "${node}" "xlnx,audio-enable" $audio_enable int $dts_file
-		set bits_per_color [get_property CONFIG.BITS_PER_COLOR [hsi::get_cells -hier $drv_handle]]
-		add_prop "${node}" "xlnx,bits-per-color" $bits_per_color int $dts_file
-		set hdcp22_enable [get_property CONFIG.HDCP22_ENABLE [hsi::get_cells -hier $drv_handle]]
-		add_prop "${node}" "xlnx,hdcp22-enable" $hdcp22_enable int $dts_file
-		set hdcp_enable [get_property CONFIG.HDCP_ENABLE [hsi::get_cells -hier $drv_handle]]
-		add_prop "${node}" "xlnx,hdcp-enable" $hdcp_enable int $dts_file
-		set include_fec_ports [get_property CONFIG.INCLUDE_FEC_PORTS [hsi::get_cells -hier $drv_handle]]
-		add_prop "${node}" "xlnx,include-fec-ports" $include_fec_ports int $dts_file
-		set lane_count [get_property CONFIG.LANE_COUNT [hsi::get_cells -hier $drv_handle]]
-		add_prop "${node}" "xlnx,lane-count" $lane_count int $dts_file
-		set link_rate [get_property CONFIG.LINK_RATE [hsi::get_cells -hier $drv_handle]]
-		set link_rate [expr {${link_rate} * 1000}]
-		set link_rate [expr int ($link_rate)]
-		add_prop "${node}" "xlnx,linkrate" $link_rate int $dts_file
-		set mode [get_property CONFIG.MODE [hsi::get_cells -hier $drv_handle]]
-		add_prop "${node}" "xlnx,mode" $mode int $dts_file
-		set num_streams [get_property CONFIG.NUM_STREAMS [hsi::get_cells -hier $drv_handle]]
-		add_prop "${node}" "xlnx,num-streams" $num_streams int $dts_file
-		set phy_data_width [get_property CONFIG.PHY_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
-		add_prop "${node}" "xlnx,phy-data-width" $phy_data_width int $dts_file
-		set pixel_mode [get_property CONFIG.PIXEL_MODE [hsi::get_cells -hier $drv_handle]]
-		add_prop "${node}" "xlnx,pixel-mode" $pixel_mode int $dts_file
-		set sim_mode [get_property CONFIG.SIM_MODE [hsi::get_cells -hier $drv_handle]]
-		add_prop "${node}" "xlnx,sim-mode" $sim_mode string $dts_file
-		set video_interface [get_property CONFIG.VIDEO_INTERFACE [hsi::get_cells -hier $drv_handle]]
-		add_prop "${node}" "xlnx,video-interface" $video_interface int $dts_file
+proc generate {drv_handle} {
+	set node [get_node $drv_handle]
+	if {$node == 0} {
+		return
 	}
+	set dts_file [set_drv_def_dts $drv_handle]
+	set num_audio_channels [get_property CONFIG.Number_of_Audio_Channels [hsi::get_cells -hier $drv_handle]]
+	add_prop "${node}" "xlnx,num-audio-channels" $num_audio_channels int $dts_file
+	set audio_enable [get_property CONFIG.AUDIO_ENABLE [hsi::get_cells -hier $drv_handle]]
+	add_prop "${node}" "xlnx,audio-enable" $audio_enable int $dts_file
+	set bits_per_color [get_property CONFIG.BITS_PER_COLOR [hsi::get_cells -hier $drv_handle]]
+	add_prop "${node}" "xlnx,bits-per-color" $bits_per_color int $dts_file
+	set hdcp22_enable [get_property CONFIG.HDCP22_ENABLE [hsi::get_cells -hier $drv_handle]]
+	add_prop "${node}" "xlnx,hdcp22-enable" $hdcp22_enable int $dts_file
+	set hdcp_enable [get_property CONFIG.HDCP_ENABLE [hsi::get_cells -hier $drv_handle]]
+	add_prop "${node}" "xlnx,hdcp-enable" $hdcp_enable int $dts_file
+	set include_fec_ports [get_property CONFIG.INCLUDE_FEC_PORTS [hsi::get_cells -hier $drv_handle]]
+	add_prop "${node}" "xlnx,include-fec-ports" $include_fec_ports int $dts_file
+	set lane_count [get_property CONFIG.LANE_COUNT [hsi::get_cells -hier $drv_handle]]
+	add_prop "${node}" "xlnx,lane-count" $lane_count int $dts_file
+	set link_rate [get_property CONFIG.LINK_RATE [hsi::get_cells -hier $drv_handle]]
+	set link_rate [expr {${link_rate} * 1000}]
+	set link_rate [expr int ($link_rate)]
+	add_prop "${node}" "xlnx,linkrate" $link_rate int $dts_file
+	set mode [get_property CONFIG.MODE [hsi::get_cells -hier $drv_handle]]
+	add_prop "${node}" "xlnx,mode" $mode int $dts_file
+	set num_streams [get_property CONFIG.NUM_STREAMS [hsi::get_cells -hier $drv_handle]]
+	add_prop "${node}" "xlnx,num-streams" $num_streams int $dts_file
+	set phy_data_width [get_property CONFIG.PHY_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
+	add_prop "${node}" "xlnx,phy-data-width" $phy_data_width int $dts_file
+	set pixel_mode [get_property CONFIG.PIXEL_MODE [hsi::get_cells -hier $drv_handle]]
+	add_prop "${node}" "xlnx,pixel-mode" $pixel_mode int $dts_file
+	set sim_mode [get_property CONFIG.SIM_MODE [hsi::get_cells -hier $drv_handle]]
+	add_prop "${node}" "xlnx,sim-mode" $sim_mode string $dts_file
+	set video_interface [get_property CONFIG.VIDEO_INTERFACE [hsi::get_cells -hier $drv_handle]]
+	add_prop "${node}" "xlnx,video-interface" $video_interface int $dts_file
 }

@@ -11,7 +11,6 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
-namespace eval ::tclapp::xilinx::devicetree::hsi::utils {
 namespace export *
 proc get_exact_arg_list { args } {
     lappend argList
@@ -1741,6 +1740,3 @@ proc get_rp_rm_for_drv { drv_handle } {
         return ""
 
 }
-}
-
-

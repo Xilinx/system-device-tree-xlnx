@@ -11,7 +11,6 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
-namespace eval ::tclapp::xilinx::devicetree::hsi::utils {
 namespace export *
 
 
@@ -532,5 +531,3 @@ proc format_xparam_name {param_name} {
   set xparam_name [string map { "/" "_" } $param_name]
   return $xparam_name
 }
-}
-

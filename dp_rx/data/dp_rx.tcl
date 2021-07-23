@@ -12,9 +12,7 @@
 # GNU General Public License for more details.
 #
 
-namespace eval ::tclapp::xilinx::devicetree::dp_rx {
-namespace import ::tclapp::xilinx::devicetree::common::\*
-	proc generate {drv_handle} {
+proc generate {drv_handle} {
 	set node [get_node $drv_handle]
 	if {$node == 0} {
 		return
@@ -50,5 +48,4 @@ namespace import ::tclapp::xilinx::devicetree::common::\*
 	add_prop "${node}" "xlnx,sim-mode" $sim_mode string $dts_file
 	set video_interface [get_property CONFIG.VIDEO_INTERFACE [hsi::get_cells -hier $drv_handle]]
 	add_prop "${node}" "xlnx,video-interface" $video_interface int $dts_file
-}
 }

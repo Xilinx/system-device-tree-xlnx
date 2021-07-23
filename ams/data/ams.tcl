@@ -11,34 +11,31 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
-namespace eval ::tclapp::xilinx::devicetree::ams {
-namespace import ::tclapp::xilinx::devicetree::common::\*
-	proc generate {drv_handle} {
-		global env
-		global dtsi_fname
-		set path $env(REPO)
+proc generate {drv_handle} {
+	global env
+	global dtsi_fname
+	set path $env(REPO)
 
-		set node [get_node $drv_handle]
-		if {$node == 0} {
-			return
-		}
-		set drvname [get_drivers $drv_handle]
-
-		set common_file "$path/device_tree/data/config.yaml"
-		if {[file exists $common_file]} {
-			#error "file not found: $common_file"
-		}
-		set mainline_ker [get_user_config $common_file -mainline_kernel]
-		if {[string match -nocase $mainline_ker "none"]} {
-		  set ams_list "ams_ps ams_pl"
-		set family [get_property FAMILY [hsi::current_hw_design]]
-		set dts [set_drv_def_dts $drv_handle]
-		if {[string match -nocase $family "versal"]} {
-		} elseif {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
-		}
-		  foreach ams_name ${ams_list} {
-			add_prop $node "status" "okay" string $dts
-		  }
-	    }
+	set node [get_node $drv_handle]
+	if {$node == 0} {
+		return
 	}
+	set drvname [get_drivers $drv_handle]
+
+	set common_file "$path/device_tree/data/config.yaml"
+	if {[file exists $common_file]} {
+		#error "file not found: $common_file"
+	}
+	set mainline_ker [get_user_config $common_file -mainline_kernel]
+	if {[string match -nocase $mainline_ker "none"]} {
+	  set ams_list "ams_ps ams_pl"
+	set family [get_property FAMILY [hsi::current_hw_design]]
+	set dts [set_drv_def_dts $drv_handle]
+	if {[string match -nocase $family "versal"]} {
+	} elseif {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
+	}
+	  foreach ams_name ${ams_list} {
+		add_prop $node "status" "okay" string $dts
+	  }
+    }
 }

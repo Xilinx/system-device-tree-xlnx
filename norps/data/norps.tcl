@@ -12,12 +12,9 @@
 # GNU General Public License for more details.
 #
 
-namespace eval ::tclapp::xilinx::devicetree::norps {
-namespace import ::tclapp::xilinx::devicetree::common::\*
-	proc generate {drv_handle} {
-	  
-	    # TODO: if addr25 is used, should we consider set the reg size to 64MB?
-	    # enable reg generation for ps ip
-	    gen_reg_property $drv_handle "enable_ps_ip"
-	}
+proc generate {drv_handle} {
+  
+    # TODO: if addr25 is used, should we consider set the reg size to 64MB?
+    # enable reg generation for ps ip
+    gen_reg_property $drv_handle "enable_ps_ip"
 }

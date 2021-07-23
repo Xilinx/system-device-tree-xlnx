@@ -17,35 +17,32 @@
 # GNU General Public License for more details.
 #
 
-namespace eval ::tclapp::xilinx::devicetree::uartlite {
-namespace import ::tclapp::xilinx::devicetree::common::\*
-	proc generate {drv_handle} {
-		set node [get_node $drv_handle]
-		set dts_file [set_drv_def_dts $drv_handle]
-		pldt append $node compatible "\ \, \"xlnx,xps-uartlite-1.00.a\""
-		set ip [hsi::get_cells -hier $drv_handle]
-		set ip_type [get_property IP_NAME $ip]
-		set avail_param [list_property [hsi::get_cells -hier $drv_handle]]
-		# This check is needed because BAUDRATE parameter for psuart is available from
-		# 2017.1 onwards
-		if {[lsearch -nocase $avail_param "CONFIG.C_BAUDRATE"] >= 0} {
-		    set baud [get_property CONFIG.C_BAUDRATE [hsi::get_cells -hier $drv_handle]]
-		} else {
-		    set baud "115200"
-		}
-		set chosen_node [create_node -n "chosen" -d "system-top.dts" -p root]
-		set bootargs "earlycon"
-		set proctype [get_hw_family]
-		if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] || \
-			[string match -nocase $proctype "versal"]} {
-				if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
-				   append bootargs "\ \, \"clk_ignore_unused\""
-				}
-		}
-		#add_prop $chosen_node "stdout-path" "serial0:${baud}n8" string "system-top.dts"
-		set_drv_conf_prop $drv_handle C_BAUDRATE current-speed int
-		if {[regexp "kintex*" $proctype match]} {
-			 gen_dev_ccf_binding $drv_handle "s_axi_aclk"
-		}
+proc generate {drv_handle} {
+	set node [get_node $drv_handle]
+	set dts_file [set_drv_def_dts $drv_handle]
+	pldt append $node compatible "\ \, \"xlnx,xps-uartlite-1.00.a\""
+	set ip [hsi::get_cells -hier $drv_handle]
+	set ip_type [get_property IP_NAME $ip]
+	set avail_param [list_property [hsi::get_cells -hier $drv_handle]]
+	# This check is needed because BAUDRATE parameter for psuart is available from
+	# 2017.1 onwards
+	if {[lsearch -nocase $avail_param "CONFIG.C_BAUDRATE"] >= 0} {
+	    set baud [get_property CONFIG.C_BAUDRATE [hsi::get_cells -hier $drv_handle]]
+	} else {
+	    set baud "115200"
+	}
+	set chosen_node [create_node -n "chosen" -d "system-top.dts" -p root]
+	set bootargs "earlycon"
+	set proctype [get_hw_family]
+	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] || \
+		[string match -nocase $proctype "versal"]} {
+			if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+			   append bootargs "\ \, \"clk_ignore_unused\""
+			}
+	}
+	#add_prop $chosen_node "stdout-path" "serial0:${baud}n8" string "system-top.dts"
+	set_drv_conf_prop $drv_handle C_BAUDRATE current-speed int
+	if {[regexp "kintex*" $proctype match]} {
+		 gen_dev_ccf_binding $drv_handle "s_axi_aclk"
 	}
 }

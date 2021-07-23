@@ -11,7 +11,6 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
-namespace eval ::tclapp::xilinx::devicetree::hsi::utils {
 namespace export *
 
 #
@@ -1003,4 +1002,3 @@ proc generate_psinit { } {
 
 
 
-}

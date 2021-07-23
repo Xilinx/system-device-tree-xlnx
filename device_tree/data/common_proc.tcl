@@ -106,7 +106,6 @@ global set broad_port4_remo_mappings [dict create]
 global set broad_port5_remo_mappings [dict create]
 global set broad_port6_remo_mappings [dict create]
 
-namespace eval ::tclapp::xilinx::devicetree::common {
 if {[catch {set tmp [::struct::tree psdt]} msg]} {
 }
 if {[catch {set tmp [::struct::tree pldt]} msg]} {
@@ -121,8 +120,6 @@ if {[catch {set tmp [::struct::tree clkdt]} msg]} {
 #namespace export get_drivers
 #namespace export gen_root_node
 #namespace export gen_cpu_nodes
-namespace import ::tclapp::xilinx::devicetree::cpu_cortexa72
-namespace import ::tclapp::xilinx::devicetree::hsi::utils::\*
 namespace export psdt
 namespace export systemdt
 namespace export pldt
@@ -8754,5 +8751,4 @@ proc get_broad_in_ip {ip} {
                 }
         }
         return $connectip
-}
 }

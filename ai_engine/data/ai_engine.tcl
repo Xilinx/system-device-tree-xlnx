@@ -11,46 +11,43 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
-namespace eval ::tclapp::xilinx::devicetree::ai_engine { 
-namespace import ::tclapp::xilinx::devicetree::common::\*
-	proc generate {drv_handle} {
-		global env
-		global dtsi_fname
-		set path $env(REPO)
+proc generate {drv_handle} {
+	global env
+	global dtsi_fname
+	set path $env(REPO)
 
-		set node [get_node $drv_handle]
-		if {$node == 0} {
-			return
-		}
-		set keyval [pldt append $node compatible "\ \, \"xlnx,ai_engine-v1.0\""]	
-		set intr_names "interrupt1"
-		set intr_num "<0x0 0x94 0x1>, <0x0 0x95 0x1>, <0x0 0x96 0x1>"
-		set power_domain "&versal_firmware 0x18224072"
-		add_prop $node "interrupt-names" $intr_names stringlist "pl.dtsi"
-		set keyval [pldt append $node "interrupt-names" "\ \, \"interrupt2\""]  
-		set keyval [pldt append $node "interrupt-names" "\ \, \"interrupt3\""]
-		add_prop $node "interrupts" $intr_num intlist "pl.dtsi"
-		add_prop $node "power-domains" $power_domain hexlist "pl.dtsi"
-		add_prop $node "#address-cells" 2 intlist "pl.dtsi"
-		add_prop $node "#size-cells" 2 intlist "pl.dtsi"
-		# Add one AI engine partition child node
-	       	set ai_part_id 0
-       		set ai_part_nid 1
-       		set ai_part_node [create_node -n "aie_partition" -u "${ai_part_id}" -l "aie_partition${ai_part_id}" -p ${node} -d "pl.dtsi"]
-       		add_prop "${ai_part_node}" "reg" "0 0 50 9" intlist "pl.dtsi"
-       		add_prop "${ai_part_node}" "xlnx,partition-id" "${ai_part_nid}" intlist "pl.dtsi"
-		#set dt_overlay [get_property CONFIG.dt_overlay [get_os]]
-		set dt_overlay 0
-	       	if {$dt_overlay} {
-			set RpRm [get_rp_rm_for_drv $drv_handle]
-	               regsub -all { } $RpRm "" RpRm
-	       	        if {[llength $RpRm]} {
-	       	                set bus_node "overlay2_$RpRm"
-	       	        } else  {
-	       	                set bus_node "overlay2"
-	       	        }
-		} else {
-		       	       set bus_node "amba_pl"
-       		}
+	set node [get_node $drv_handle]
+	if {$node == 0} {
+		return
+	}
+	set keyval [pldt append $node compatible "\ \, \"xlnx,ai_engine-v1.0\""]	
+	set intr_names "interrupt1"
+	set intr_num "<0x0 0x94 0x1>, <0x0 0x95 0x1>, <0x0 0x96 0x1>"
+	set power_domain "&versal_firmware 0x18224072"
+	add_prop $node "interrupt-names" $intr_names stringlist "pl.dtsi"
+	set keyval [pldt append $node "interrupt-names" "\ \, \"interrupt2\""]  
+	set keyval [pldt append $node "interrupt-names" "\ \, \"interrupt3\""]
+	add_prop $node "interrupts" $intr_num intlist "pl.dtsi"
+	add_prop $node "power-domains" $power_domain hexlist "pl.dtsi"
+	add_prop $node "#address-cells" 2 intlist "pl.dtsi"
+	add_prop $node "#size-cells" 2 intlist "pl.dtsi"
+	# Add one AI engine partition child node
+       	set ai_part_id 0
+	set ai_part_nid 1
+	set ai_part_node [create_node -n "aie_partition" -u "${ai_part_id}" -l "aie_partition${ai_part_id}" -p ${node} -d "pl.dtsi"]
+	add_prop "${ai_part_node}" "reg" "0 0 50 9" intlist "pl.dtsi"
+	add_prop "${ai_part_node}" "xlnx,partition-id" "${ai_part_nid}" intlist "pl.dtsi"
+	#set dt_overlay [get_property CONFIG.dt_overlay [get_os]]
+	set dt_overlay 0
+       	if {$dt_overlay} {
+		set RpRm [get_rp_rm_for_drv $drv_handle]
+               regsub -all { } $RpRm "" RpRm
+       	        if {[llength $RpRm]} {
+       	                set bus_node "overlay2_$RpRm"
+       	        } else  {
+       	                set bus_node "overlay2"
+       	        }
+	} else {
+	       	       set bus_node "amba_pl"
 	}
 }

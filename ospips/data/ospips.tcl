@@ -12,8 +12,6 @@
 # GNU General Public License for more details.
 #
 
-namespace eval ::tclapp::xilinx::devicetree::ospips {
-namespace import ::tclapp::xilinx::devicetree::common::\*
 proc generate {drv_handle} {
 	set node [get_node $drv_handle]
         set_drv_conf_prop $drv_handle C_OSPI_CLK_FREQ_HZ xlnx,clock-freq int
@@ -26,5 +24,4 @@ proc generate {drv_handle} {
         }
 	add_prop $node "is-dual" $is_dual int "pcw.dtsi"
 	add_prop $node "is-stacked" $is_stacked int "pcw.dtsi"
-}
 }

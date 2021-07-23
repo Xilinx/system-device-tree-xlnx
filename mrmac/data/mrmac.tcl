@@ -12,8 +12,6 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
-namespace eval ::tclapp::xilinx::devicetree::axi_can {
-namespace import ::tclapp::xilinx::devicetree::common::\*
 proc generate {drv_handle} {
 	set node [get_node $drv_handle]
 	if {$node == 0} {
@@ -2352,5 +2350,4 @@ proc get_clk_frequency {ip_handle portname} {
 		}
 	}
 	return $clk
-}
 }

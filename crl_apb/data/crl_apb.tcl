@@ -11,9 +11,6 @@
 # GNU General Public License for more details.
 #
 
-namespace eval ::tclapp::xilinx::devicetree::crl_apb {
-namespace import ::tclapp::xilinx::devicetree::common::\*
-	proc generate {drv_handle} {
-	    set dts_file [set_drv_def_dts $drv_handle]
-	}
+proc generate {drv_handle} {
+    set dts_file [set_drv_def_dts $drv_handle]
 }

@@ -12,28 +12,25 @@
 # GNU General Public License for more details.
 #
 
-namespace eval ::tclapp::xilinx::devicetree::spips {
-namespace import ::tclapp::xilinx::devicetree::common::\*
-	proc generate {drv_handle} {
-		set node [get_node $drv_handle]
-		set dts_file [set_drv_def_dts $drv_handle]
-		set ip [hsi::get_cells -hier $drv_handle]
-		set cs-num 0
-		# SPI PS only have chip select range 0 - 2
-		foreach n {0 1 2} {
-			set cs_en [get_property CONFIG.C_HAS_SS${n} $ip]
-			if {[string equal "1" $cs_en]} {
-				inc cs-num
-			}
+proc generate {drv_handle} {
+	set node [get_node $drv_handle]
+	set dts_file [set_drv_def_dts $drv_handle]
+	set ip [hsi::get_cells -hier $drv_handle]
+	set cs-num 0
+	# SPI PS only have chip select range 0 - 2
+	foreach n {0 1 2} {
+		set cs_en [get_property CONFIG.C_HAS_SS${n} $ip]
+		if {[string equal "1" $cs_en]} {
+			inc cs-num
 		}
-		if {${cs-num} != 0} {
-			add_prop $node "num-cs" ${cs-num} int $dts_file
-	#		set_property CONFIG.num-cs ${cs-num} $drv_handle
-		}
-
-		# the is-decoded-cs property is hard coded as we do not know if the
-		# board has external decoder connected or not
-		# Once we had the board level information, is-decoded-cs need to be
-		# generated based on it.
 	}
+	if {${cs-num} != 0} {
+		add_prop $node "num-cs" ${cs-num} int $dts_file
+#		set_property CONFIG.num-cs ${cs-num} $drv_handle
+	}
+
+	# the is-decoded-cs property is hard coded as we do not know if the
+	# board has external decoder connected or not
+	# Once we had the board level information, is-decoded-cs need to be
+	# generated based on it.
 }
