@@ -26,7 +26,7 @@ proc generate {drv_handle} {
     if {[file exists $common_file]} {
 	#error "file not found: $common_file"
     }
-    set zocl [get_user_config $common_file -dt_zocl]
+    set zocl [get_user_config $common_file --dt_zocl]
     pldt append $node compatible "\ \, \"xlnx,xps-intc-1.00.a\""
     add_prop $node "#interrupt-cells" 2 int "pl.dtsi"
     set ip [hsi::get_cells -hier $drv_handle]

@@ -29,7 +29,7 @@ proc generate {drv_handle} {
 	if {[file exists $common_file]} {
 		#error "file not found: $common_file"
 	}
-	set mainline_ker [get_user_config $common_file -mainline_kernel]
+	set mainline_ker [get_user_config $common_file --mainline_kernel]
 
 	if {[string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_cortexr5"] || [string match -nocase $proctype "psv_pmc"]} {
 		#TODO:Remove this once the versal dts is fully updated.

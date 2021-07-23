@@ -34,49 +34,105 @@ proc get_yaml_dict1 { config_file } {
     return [yaml::yaml2dict $data]
 }
 
-proc set_dt_param_1 args {
-       global env
-       set param [lindex $args 0]
-       set val [lindex $args 1]
-       switch $param {
-               "repo" {
-                       set env(REPO) $val
-               } "board" {
-                       set env(board) $val
-               } "dt_overlay" {
-                       set env(dt_overlay) $val
-               } "mainline_kernel" {
-                       set env(kernel) $val
-               } "kernel_ver" {
-                       set env(kernel_ver) $val
-               } "dir" {
-                       set env(dir) $val
-               } default {
-                       error "unknown option"
-               }
-       }
-
+proc Pop {varname {nth 0}} {
+	upvar $varname args
+	set r [lindex $args $nth]
+	set args [lreplace $args $nth $nth]
+	return $r
 }
 
-proc get_dt_param_1 args {
+proc print_usage args {
+	puts "Usage: set/get_dt_param \[OPTION\]"
+	puts "\r\t--repo\t		system device tree repo source"
+	puts "\r\t--xsa\t		Vivado hw design file"
+	puts "\r\t--board_dts		board specific file"
+	puts "\r\t--mainline_kernel	mainline kernel version"
+	puts "\r\t--kernel_ver		kernel version"
+	puts "\r\t--dir\t		Directory where the dt files will be generated"
+	puts "\r\t--debug		Enable DTG++ debug"
+	puts "\r\t--trace		Enable DTG++ traces"
+}
+
+proc set_dt_param args {
+        global env
+        set param [lindex $args 0]
+        set val [lindex $args 1]
+        set xsa ""
+        set repo ""
+        set board ""
+        set dt_overlay ""
+        set mainline_kernel ""
+        set kernel_ver ""
+        set dir ""
+        set dt_zocl ""
+        set dt_warn ""
+	if {[llength $args] == 0 || ![string match --* [lindex $args 0]]} {
+		print_usage
+	} else {
+	        while {[string match --* [lindex $args 0]]} {
+		if {[string match -nocase [lindex $args 1] ""] && ![string match -nocase [lindex $args 0] "--help"]} {
+			puts "invalid value for [lindex $args 0]"
+			print_usage
+			return
+		}
+       	         switch -glob -- [lindex $args 0] {
+       	                --force {set force_create 1}
+                        --repo {set env(REPO) [Pop args 1]}
+                        --xsa {set env(xsa) [Pop args 1]}
+                        --board_dts {set env(board) [Pop args 1]}
+                        --dt_overlay {set env(dt_overlay) [Pop args 1]}
+                        --mainline_kernel {set env(kernel) [Pop args 1] }
+                        --kernel_ver {set env(kernel_ver) [Pop args 1]}
+                        --dir {set env(dir) [Pop args 1]}
+                        --dt_zocl {set env(dir) [Pop args 1]}
+                        --debug {set env(debug) [Pop args 1]}
+                        --trace {set env(trace) [Pop args 1]}
+			--help { print_usage }
+                        --  {Pop args ; break}
+                        default {
+                                error "set_dt_param bad option - [lindex $args 0]"
+				print_usage
+                        }
+                }
+                Pop args
+        	}
+	}
+}
+
+proc get_dt_param args {
        global env
        set param [lindex $args 0]
        set val ""
        switch $param {
-               -repo {
+                --xsa {
+                     if {[catch {set val $env(xsa)} msg ]} {}
+               } --repo {
                        if {[catch {set val $env(REPO)} msg ]} {}
-               } -board_dts {
+               } --board -
+                 --board_dts {
                        if {[catch {set val $env(board)} msg ]} {}
-               } -dt_overlay {
+               } --dt_overlay {
                        if {[catch {set val $env(dt_overlay)} msg ]} {}
-               } -mainline_kernel {
+               } --mainline_kernel {
                        if {[catch {set val $env(kernel)} msg ]} {}
-               } -kernel_ver {
+               } --kernel_ver {
                        if {[catch {set val $env(kernel_ver)} msg ]} {}
-               } -dir {
+               } --dir {
                        if {[catch {set val $env(dir)} msg ]} {}
+               } --trace {
+                       if {[catch {set val $env(trace)} msg ]} {
+				set val "disable"
+			}
+               } --debug {
+                       if {[catch {set val $env(debug)} msg ]} {
+				set val "disable"
+			}
+               } --dt_zocl {
+                       if {[catch {set val $env(dt_zocl)} msg ]} {}
+	       } --help { print_usage 
                } default {
-                       error "unknown option"
+                        puts "unknown option $param"
+			print_usage
                }
        }
 
@@ -338,12 +394,12 @@ proc gen_include_headers {} {
         	#error "file not found: $common_file"
     	}
 	#set file "$path/${drvname}/data/config.yaml"
-	set kernel_ver [get_user_config $common_file -kernel_ver]
+	set kernel_ver [get_user_config $common_file --kernel_ver]
 
 	set family [get_hw_family]
 	set include_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${kernel_ver}/include"]
 	set include_list "include*"
-	set dir_path [get_user_config $common_file -dir]
+	set dir_path [get_user_config $common_file --dir]
 	if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
 		set power_list "xlnx-zynqmp-power.h"
 		set clock_list "xlnx-zynqmp-clk.h"
@@ -528,12 +584,12 @@ proc gen_board_info {} {
 	set path $env(REPO)
 
 	set common_file "$path/device_tree/data/config.yaml"
-	set kernel_ver [get_user_config $common_file -kernel_ver]
+	set kernel_ver [get_user_config $common_file --kernel_ver]
 	if {[file exists $common_file]} {
         	#error "file not found: $common_file"
     	}
-	set dtsi_file [get_user_config $common_file -board_dts]
-	set dir_path [get_user_config $common_file -dir]
+	set dtsi_file [get_user_config $common_file --board_dts]
+	set dir_path [get_user_config $common_file --dir]
     	if {[string match $dtsi_file "none"]} {
 		return
     	}
@@ -589,7 +645,7 @@ proc gen_board_info {} {
 	if {[llength $dts_name] == 0} {
 		return
 	}
-	set mainline_ker [get_user_config $common_file -mainline_kernel]
+	set mainline_ker [get_user_config $common_file --mainline_kernel]
 	set valid_mainline_kernel_list "v4.17 v4.18 v4.19 v5.0 v5.1 v5.2 v5.3 v5.4"
 	if {[lsearch $valid_mainline_kernel_list $mainline_ker] >= 0 } {
 		set mainline_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${mainline_ker}/board"]
@@ -748,7 +804,7 @@ proc gen_zocl_node {} {
 	if {[file exists $common_file]} {
         	#error "file not found: $common_file"
     	}
-	set zocl [get_user_config $common_file -dt_zocl]
+	set zocl [get_user_config $common_file --dt_zocl]
        #set ext_platform [get_property platform.extensible [get_os]]
        #puts "ext_platform:$ext_platform"
        #set proctype [get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]
@@ -756,7 +812,7 @@ proc gen_zocl_node {} {
        if {!$zocl} {
                return
        }
-       set dt_overlay [get_user_config $common_file -dt_overlay]
+       set dt_overlay [get_user_config $common_file --dt_overlay]
        if {$dt_overlay} {
                set bus_node "overlay2"
        } else {
@@ -897,14 +953,33 @@ proc gen_zynqmp_pinctrl {} {
 
 
 
-proc generate {} {
+proc generate_sdt {} {
 
 	global env
-	set path $env(REPO)
-	if {[string match -nocase $path ""]} {
-		error "please set repo path"
+	if {[catch {set path $env(REPO)} msg]} {
+		set path "."
+		set env(REPO) $path
+	}
+	if {[catch {set debug $env(debug)} msg]} {
+		set env(debug) "disable"
+	}
+	if {[catch {set trace $env(trace)} msg]} {
+		set env(trace) "disable"
+	}
+	set dt_file "$path/device_tree/data/device_tree.tcl"
+	source -notrace $dt_file
+	if {[catch {set xsa $env(xsa)} msg]} {
+		error "\[DTG++ ERROR]:	No xsa provided, please set the xsa \
+			\n\r		Ex: set_dt_param xsa <system.xsa>"
 		return
 	}
+
+	set hw_designs [hsi::get_hw_designs]
+	if {[string match -nocase $hw_designs ""]} {
+		set xsa_log [hsi::open_hw_design $xsa]
+	}
+	set design_handles [hsi::get_cells -hier]
+	set env(dsg_handles) $design_handles
 	set list_offiles {}
 	lappend list_offiles "$path/device_tree/data/xillib_hw.tcl"
 	lappend list_offiles "$path/device_tree/data/xillib_sw.tcl"
@@ -945,8 +1020,9 @@ proc generate {} {
 			set drvname [get_drivers $procc]
 			set proc_file "$path/${drvname}/data/${drvname}.tcl"
 			source -notrace $proc_file
-	                ::tclapp::xilinx::devicetree::${drvname}::generate $procc
-		
+			#namespace import ::tclapp::xilinx::devicetree::${drvname}::\*
+	                #::tclapp::xilinx::devicetree::${drvname}::generate $procc
+			generate $procc
 			#namespace import ::${drvname}::\*
 		        #::${drvname}::generate $procc
     			add_skeleton
@@ -1027,7 +1103,9 @@ proc generate {} {
 				set drvname [get_drivers $drv_handle]
 				set drv_file "$path/${drvname}/data/${drvname}.tcl"
 				source -notrace $drv_file
-		                ::tclapp::xilinx::devicetree::${drvname}::generate $drv_handle
+				#namespace import ::tclapp::xilinx::devicetree::${drvname}::\*
+		                #::tclapp::xilinx::devicetree::${drvname}::generate $drv_handle
+				generate $drv_handle
 			}
 			foreach drv_handle $peri_list {
 				update_endpoints $drv_handle
@@ -1038,8 +1116,9 @@ proc generate {} {
 			set drvname [get_drivers $procc]
 			set proc_file "$path/${drvname}/data/${drvname}.tcl"
 			source -notrace $proc_file
-	                ::tclapp::xilinx::devicetree::${drvname}::generate $procc
-			namespace forget ::
+#	                ::tclapp::xilinx::devicetree::${drvname}::generate $procc
+			generate $procc
+#			namespace forget ::
 			
 		} else {
 			continue
@@ -1053,7 +1132,7 @@ proc generate {} {
 	if {[file exists $common_file]} {
         	#error "file not found: $common_file"
     	}
-	set kernel_ver [get_user_config $common_file -kernel_ver]
+	set kernel_ver [get_user_config $common_file --kernel_ver]
 
     	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] || \
 		[string match -nocase $proctype "versal"]} {
@@ -1067,7 +1146,7 @@ proc generate {} {
 		}
     	}
     	if {[string match -nocase $proctype "zynq"]} {
-		set mainline_ker [get_user_config $common_file -mainline_kernel]
+		set mainline_ker [get_user_config $common_file --mainline_kernel]
 	       	if {[string match -nocase $mainline_ker "none"]} {
         	    	gen_zocl_node
         	}
@@ -1084,11 +1163,11 @@ proc generate {} {
 		set reset_node [create_node -n "&zynqmp_reset" -p root -d "pcw.dtsi"]
 		add_prop $reset_node "status" "okay" string "pcw.dtsi"
 	}
-	set dir [get_user_config $common_file -dir]
+	set dir [get_user_config $common_file --dir]
 	if [catch { set retstr [file mkdir $dir] } errmsg] {
 		error "cannot create directory"
 	}
-	set release [get_user_config $common_file -kernel_ver]
+	set release [get_user_config $common_file --kernel_ver]
 	global dtsi_fname
 	if {[string match -nocase $family "versal"] || [string match -nocase $family "zynqmp"] || [string match -nocase $family "zynq"] || [string match -nocase $family "zynquplus"]} {
 		set mainline_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${release}/${dtsi_fname}"]
@@ -2402,7 +2481,7 @@ proc update_alias {os_handle} {
 	if {[file exists $common_file]} {
         	#error "file not found: $common_file"
     	}
-	set mainline_ker [get_user_config $common_file -mainline_kernel]
+	set mainline_ker [get_user_config $common_file --mainline_kernel]
 	set valid_mainline_kernel_list "v4.17 v4.18 v4.19 v5.0 v5.1 v5.2 v5.3 v5.4"
 	if {[lsearch $valid_mainline_kernel_list $mainline_ker] >= 0 } {
          	return
@@ -2598,7 +2677,7 @@ proc gen_xppu {drv_handle} {
 	global env
 	set path $env(REPO)
 	set common_file "$path/device_tree/data/config.yaml"
-	set dt_overlay [get_user_config $common_file -dt_overlay]
+	set dt_overlay [get_user_config $common_file --dt_overlay]
 	set ip [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
 	if {[string match -nocase $ip "axi_noc"] && $dt_overlay} {
 		return

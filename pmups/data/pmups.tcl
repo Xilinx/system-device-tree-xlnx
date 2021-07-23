@@ -31,7 +31,7 @@ proc generate {drv_handle} {
 	if {[file exists $common_file]} {
 		#error "file not found: $common_file"
 	}
-	set mainline_ker [get_user_config $common_file -mainline_kernel]
+	set mainline_ker [get_user_config $common_file --mainline_kernel]
 	global dtsi_fname
 	set proc_type [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
 	set master_root_node [gen_root_node $drv_handle]

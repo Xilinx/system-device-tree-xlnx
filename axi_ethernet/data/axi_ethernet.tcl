@@ -37,7 +37,7 @@ proc generate {drv_handle} {
 	global env
 	set path $env(REPO)
 	set common_file "$path/device_tree/data/config.yaml"
-	set dt_overlay [get_user_config $common_file -dt_overlay]
+	set dt_overlay [get_user_config $common_file --dt_overlay]
 	set bus_node [detect_bus_name $drv_handle]
     	global rxethmem
     	set rxethmem 0
@@ -74,7 +74,7 @@ proc generate {drv_handle} {
 			global env
 			set path $env(REPO)
 			set common_file "$path/device_tree/data/config.yaml"
-			set dt_overlay [get_user_config $common_file -dt_overlay]
+			set dt_overlay [get_user_config $common_file --dt_overlay]
 			if {$dt_overlay} {
 				set bus_node "overlay2"
 			} else {

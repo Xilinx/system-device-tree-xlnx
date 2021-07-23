@@ -112,7 +112,7 @@ proc generate {drv_handle} {
 	if {[file exists $common_file]} {
 		#error "file not found: $common_file"
 	}
-	set mainline_ker [get_user_config $common_file -mainline_kernel]
+	set mainline_ker [get_user_config $common_file --mainline_kernel]
     if {[string match -nocase $mainline_ker "none"]} {
 	set proc_type [get_hw_family]
 	if {[regexp "kintex*" $proc_type match]} {

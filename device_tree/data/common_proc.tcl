@@ -401,25 +401,25 @@ proc get_user_config args {
         	set zocl [dict get $user dt_zocl]
         	set param ""
         	switch -glob -- [lindex $args 1] {
-                	-repo {
+                	--repo {
                         	set param $path
-                	} -master_dts {
+                	} --master_dts {
                         	set param $master_dts
                 	} -config_dts {
                         	set param $config_dts
-                	} -board_dts {
+                	} --board_dts {
                         	set param ""
-                	} -dt_overlay {
+                	} --dt_overlay {
                         	set param $overlay
-                	} -pl_only {
+                	} --pl_only {
                         	set param $pl_only
-			} -mainline_kernel {
+			} --mainline_kernel {
 				set param $mainline_kernel
-			} -kernel_ver {
+			} --kernel_ver {
 				set param $kernel_ver
-			} -dir {
+			} --dir {
 				set param $dir
-			} -dt_zocl {
+			} --dt_zocl {
 				set param $zocl
                 	} default {
                         	error "get_user_config bad option - [lindex $args 0]"
@@ -429,59 +429,6 @@ proc get_user_config args {
 		set param $val
 	}
         return $param
-}
-
-proc set_dt_param args {
-       global env
-       set param [lindex $args 0]
-       set val [lindex $args 1]
-       switch $param {
-               "repo" {
-                       set env(REPO) $val
-               } "board" {
-                       set env(board) $val
-               } "dt_overlay" {
-                       set env(dt_overlay) $val
-               } "mainline_kernel" {
-                       set env(kernel) $val
-               } "kernel_ver" {
-                       set env(kernel_ver) $val
-               } "dir" {
-                       set env(dir) $val
-               } "dt_zocl" {
-                       set env(dir) $val
-               } default {
-                       error "unknown option"
-               }
-       }
-
-}
-
-proc get_dt_param args {
-       global env
-       set param [lindex $args 0]
-       set val ""
-       switch $param {
-               -repo {
-                       if {[catch {set val $env(REPO)} msg ]} {}
-               } -board_dts {
-                       if {[catch {set val $env(board)} msg ]} {}
-               } -dt_overlay {
-                       if {[catch {set val $env(dt_overlay)} msg ]} {}
-               } -mainline_kernel {
-                       if {[catch {set val $env(kernel)} msg ]} {}
-               } -kernel_ver {
-                       if {[catch {set val $env(kernel_ver)} msg ]} {}
-               } -dir {
-                       if {[catch {set val $env(dir)} msg ]} {}
-               } -dt_zocl {
-                       if {[catch {set val $env(dt_zocl)} msg ]} {}
-               } default {
-                       error "unknown option"
-               }
-       }
-
-       return $val
 }
 
 proc get_node args {
@@ -1360,7 +1307,7 @@ proc write_dt args {
 	global env
 	set path $env(REPO)
 	set common_file "$path/device_tree/data/config.yaml"
-	set dt_overlay [get_user_config $common_file -dt_overlay]
+	set dt_overlay [get_user_config $common_file --dt_overlay]
 	set fd [open $file w]
 	if {[string match -nocase $dt "systemdt"]} {
 		puts $fd "\/dts-v1\/\;"
@@ -2221,12 +2168,21 @@ proc dtg_debug msg {
 }
 
 proc dtg_warning msg {
-	puts "WARNING: $msg"
+	global env
+	set debug $env(debug)
+	if {[string match -nocase $debug "enable"]} {
+		puts "WARNING: $msg"
+	}
 }
 
 proc proc_called_by {} {
-	return
-	puts "# [lindex [info level -1] 0] #>> called by [lindex [info level -2] 0]"
+	global env
+	set trace $env(trace)
+	if {[string match -nocase $trace "enable"]} {
+		puts "# [lindex [info level -1] 0] #>> called by [lindex [info level -2] 0]"
+	} else {
+		return
+	}
 }
 
 proc Pop {varname {nth 0}} {
@@ -2525,7 +2481,7 @@ proc update_system_dts_include {include_file} {
 		if {[file exists $common_file]} {
        		 	#error "file not found: $common_file"
     		}
-		set board_dts [get_user_config $common_file -board_dts]
+		set board_dts [get_user_config $common_file --board_dts]
 		set dtsi_file " "
 		set dtsi_file $board_dts
 	}
@@ -2563,7 +2519,7 @@ proc get_dts_include {} {
 	set path $env(REPO)
 	set family [get_hw_family]
 	set common_file "$path/device_tree/data/config.yaml" 
-        set dir [get_user_config $common_file -output_dir]
+        set dir [get_user_config $common_file --output_dir]
         if {[string match -nocase $family "versal"] || [string match -nocase $family "zynqmp"] || [string match -nocase $family "zynq"] || [string match -nocase $family "zynquplus"]} {
 		return [file normalize "$path/device_tree/data/kernel_dtsi/${release}/${dtsi_fname}"]
 	} else {
@@ -2580,7 +2536,7 @@ proc set_drv_def_dts {drv_handle} {
 	if {[file exists $common_file]} {
         	#error "file not found: $common_file"
     	}
-	set dt_overlay [get_user_config $common_file -dt_overlay]
+	set dt_overlay [get_user_config $common_file --dt_overlay]
 	# optional dts control by adding the following line in mdd file
 	# PARAMETER name = def_dts, default = ps.dtsi, type = string;
 	#set dt_overlay [get_property CONFIG.dt_overlay [get_os]]
@@ -3559,7 +3515,7 @@ proc zynq_gen_pl_clk_binding {drv_handle} {
 	if {[file exists $common_file]} {
         	#error "file not found: $common_file"
     	}
-	set mainline_ker [get_user_config $common_file -mainline_kernel]
+	set mainline_ker [get_user_config $common_file --mainline_kernel]
 
 	set valid_mainline_kernel_list "v4.17 v4.18 v4.19 v5.0 v5.1 v5.2 v5.3 v5.4"
 	if {[lsearch $valid_mainline_kernel_list $mainline_ker] >= 0 } {
@@ -3964,7 +3920,7 @@ proc gen_axis_switch_clk_property {drv_handle dts_file node} {
 	if {[file exists $common_file]} {
         	#error "file not found: $common_file"
     	}
-	set mainline_ker [get_user_config $common_file -mainline_kernel]
+	set mainline_ker [get_user_config $common_file --mainline_kernel]
        set valid_mainline_kernel_list "v4.17 v4.18 v4.19 v5.0 v5.1 v5.2 v5.3 v5.4"
        if {[lsearch $valid_mainline_kernel_list $mainline_ker] >= 0 } {
                return 0
@@ -4225,7 +4181,7 @@ proc gen_clk_property {drv_handle} {
 	if {[file exists $common_file]} {
         	#error "file not found: $common_file"
     	}
-	set mainline_ker [get_user_config $common_file -mainline_kernel]
+	set mainline_ker [get_user_config $common_file --mainline_kernel]
 	set valid_mainline_kernel_list "v4.17 v4.18 v4.19 v5.0 v5.1 v5.2 v5.3 v5.4"
         if {[lsearch $valid_mainline_kernel_list $mainline_ker] >= 0 } {
 		return 0
@@ -5731,7 +5687,7 @@ proc ps7_reset_handle {drv_handle reset_pram conf_prop} {
 			if {[file exists $common_file]} {
 		        	#error "file not found: $common_file"
 		    	}
-			set kernel_ver [get_user_config $common_file -kernel_ver]
+			set kernel_ver [get_user_config $common_file --kernel_ver]
 
 			switch -exact $kernel_ver {
 				default {
@@ -5803,7 +5759,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	global env
 	set path $env(REPO)
 	set common_file "$path/device_tree/data/config.yaml"
-	set dt_overlay [get_user_config $common_file -dt_overlay]
+	set dt_overlay [get_user_config $common_file --dt_overlay]
         if {$dt_overlay} {
                 set ignore_list "lmb_bram_if_cntlr PERIPHERAL axi_noc dfx_decoupler mig_7series"
         } else {
@@ -6047,7 +6003,7 @@ proc detect_bus_name {ip_drv} {
 	global env
 	set path $env(REPO)
 	set common_file "$path/device_tree/data/config.yaml"
-	set dt_overlay [get_user_config $common_file -dt_overlay]
+	set dt_overlay [get_user_config $common_file --dt_overlay]
 		if {[is_pl_ip $ip_drv] && $dt_overlay} {
 			# create the parent_node for pl.dtsi
 			set default_dts [set_drv_def_dts $ip_drv]
@@ -6140,7 +6096,7 @@ proc add_or_get_bus_node {ip_drv dts_file} {
 	if {[file exists $common_file]} {
 		#error "file not found: $common_file"
 	}
-	set dt_overlay [get_user_config $common_file -dt_overlay]
+	set dt_overlay [get_user_config $common_file --dt_overlay]
 	set proctype [get_hw_family]
 	if {[is_pl_ip $ip_drv] && $dt_overlay} {
 		set dts "pl.dtsi"
@@ -6207,8 +6163,8 @@ proc gen_root_node {drv_handle} {
 			global pstree
 			set path $env(REPO)
 			set common_file "$path/device_tree/data/config.yaml"
-			set release [get_user_config $common_file -kernel_ver]
-			set mainline_ker [get_user_config $common_file -mainline_kernel]
+			set release [get_user_config $common_file --kernel_ver]
+			set mainline_ker [get_user_config $common_file --mainline_kernel]
 			set psfile "$path/device_tree/data/kernel_dtsi/$release/zynqmp/zynqmp.dtsi"
 			set clkfile "$path/device_tree/data/kernel_dtsi/$release/zynqmp/zynqmp-clk-ccf.dtsi"
 			create_ps_tree $psfile psdt
@@ -6236,7 +6192,7 @@ proc gen_root_node {drv_handle} {
 			global pstree
 			set path $env(REPO)
 			set common_file "$path/device_tree/data/config.yaml"
-			set release [get_user_config $common_file -kernel_ver]
+			set release [get_user_config $common_file --kernel_ver]
 			set psfile "$path/device_tree/data/kernel_dtsi/$release/versal/versal.dtsi"
 			set clkfile "$path/device_tree/data/kernel_dtsi/$release/versal/versal-clk.dtsi"
 			create_ps_tree $psfile psdt
@@ -6246,7 +6202,7 @@ proc gen_root_node {drv_handle} {
 			if {[file exists $common_file]} {
        		 		#error "file not found: $common_file"
     			}
-			set board_dts [get_user_config $common_file -board_dts]
+			set board_dts [get_user_config $common_file --board_dts]
 
 
 			global dtsi_fname
