@@ -281,11 +281,15 @@ set rxethmem 0
 			}
 			if {$ip_name == "xxv_ethernet"} {
 				set phytype [string tolower [get_property CONFIG.BASE_R_KR $eth_ip]]
-				#set_property phy-mode "$phytype" $drv_handle
 				add_prop $node phy-mode "$phytype" string $dts_file
-				#pldt append $node compatible "\ \, \"xlnx,xxv-ethernet-1.0\""
+				if {$core == 0} {
+					pldt append $node compatible "\ \, \"xlnx,xxv-ethernet-1.0\""
+				}
 				if { $core!= 0 && [llength $eth_node]} {
-					#add_prop $eth_node "compatible" $compatible stringlist "pl.dtsi"
+					set compatible [pldt get $node compatible]
+					set compatible [string trimright $compatible "\""]
+					set compatible [string trimleft $compatible "\""]
+					add_prop $eth_node "compatible" $compatible string "pl.dtsi"
 					add_prop $eth_node "phy-mode" $phytype string "pl.dtsi"
 				}
 			}
