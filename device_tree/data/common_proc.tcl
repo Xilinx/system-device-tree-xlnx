@@ -4517,7 +4517,11 @@ proc gen_clk_property {drv_handle} {
 	}
 	if {![string match -nocase $clocknames ""]} {
 		set len [llength $updat]
-		set_drv_prop_if_empty $drv_handle "clock-names" $clocknames stringlist
+		if {[string match -nocase "[get_property IP_NAME [hsi::get_cells -hier $drv_handle]]" "dfx_axi_shutdown_manager"]} {
+			set_drv_prop_if_empty $drv_handle "clock-names" "aclk" stringlist
+		} else {
+			set_drv_prop_if_empty $drv_handle "clock-names" $clocknames stringlist
+		}
 	}
 	set ip [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
 	if {[string match -nocase $ip "vcu"]} {
@@ -5483,8 +5487,12 @@ proc gen_compatible_property {drv_handle} {
 		set node [create_node -n "cpu" -l "ub${count}_cpu" -u 0 -d "pl.dtsi" -p $rt_node]
 		add_prop $node compatible "$comp_prop xlnx,microblaze" stringlist "pl.dtsi"	
 	} else {
-		
 		set_drv_prop_if_empty $drv_handle compatible $comp_prop stringlist
+		if {[string match -nocase $ip_name "dfx_axi_shutdown_manager"]} {
+			set node [get_node $drv_handle]
+			pldt append $node compatible "\ \, \"xlnx,dfx-axi-shutdown-manager-1.00\""
+			pldt append $node compatible "\ \, \"xlnx,dfx-axi-shutdown-manager\""
+		}
 	}
 
 }
