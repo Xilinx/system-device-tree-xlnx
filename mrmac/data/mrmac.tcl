@@ -615,6 +615,7 @@ proc generate {drv_handle} {
 	}
        set rxtod1_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "rx_timestamp_tod_1"]]
 	dtg_warning "tx_timestamp_tod_1 connected pins are NULL...please check the design..."
+       if {[llength $rxtod1_pins]} {
        set rx_periph1 [hsi::get_cells -of_objects $rxtod1_pins]
        if {[string match -nocase [get_property IP_NAME $rx_periph1] "xlconcat"]} {
                set intf "dout"
