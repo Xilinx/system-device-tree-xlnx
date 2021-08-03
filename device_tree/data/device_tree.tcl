@@ -2472,46 +2472,20 @@ proc update_alias {os_handle} {
 		set all_drivers [lreplace $all_drivers 0 0 $qspi_element]
 		set all_drivers [lreplace $all_drivers $pos $pos $first_element]
     	}
-	# Update all_drivers list such that console device should be the first
-	# uart device in the list.
-	#set console_ip [get_property CONFIG.console_device [get_os]]
-	#if {![string match -nocase $console_ip "none"]} {
-		#set valid_console [lsearch $all_drivers $console_ip]
-		#if { $valid_console < 0 } {
-			#error "Trying to assign a console::$console_ip which doesn't exists !!!"
-		#}
-	#}
-	#set dt_overlay [get_property CONFIG.DT_Overlay [get_os]]
-	#set remove_pl [get_property CONFIG.remove_pl [get_os]]
-	
+
+	set valid_pluarts "mdm axi_uartlite axi_uart16550"
+	set design_pluarts ""
 	foreach drv_handle $all_drivers {
-		set drvname [get_drivers $drv_handle]
-		set common_file "$path/$drvname/data/config.yaml"
-		set exists [file exists $common_file]
-		set alias_str [get_driver_config $drv_handle alias]
-		if {0} {
-		if {[string match -nocase $alias_str "serial"]} {
-			if {![string match -nocase $console_ip "none"]} {
-				if {[string match $console_ip $drv_handle] == 0} {
-					# break the loop After swaping console device and uart device
-					# found in list
-					set consoleip_pos [lsearch $all_drivers $console_ip]
-					set first_occur_pos [lsearch $all_drivers $drv_handle]
-					set console_element [lindex $all_drivers $consoleip_pos]
-					set uart_element [lindex $all_drivers $first_occur_pos]
-					set all_drivers [lreplace $all_drivers $consoleip_pos $consoleip_pos $uart_element]
-					set all_drivers [lreplace $all_drivers $first_occur_pos $first_occur_pos $console_element]
-					break
-				} else {
-					# if the first uart device in the list is console device
-					break
-				}
-			}
-		 }
+		set ip_name  [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+		if {[lsearch $valid_pluarts $ip_name] >= 0} {
+			lappend design_pluarts $drv_handle
 		}
 	}
 
 	foreach drv_handle $all_drivers {
+		if {[lsearch $design_pluarts $drv_handle] >= 0} {
+			continue
+		}
             	set ip_name  [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
             	if {[string match -nocase $ip_name "psv_pmc_qspi"]} {
                   	set ip_type [get_property IP_TYPE [hsi::get_cells -hier $drv_handle]]
@@ -2537,13 +2511,36 @@ proc update_alias {os_handle} {
 				set value "&$value"
 			}
 			set ip_list "i2c spi serial"
-            	# TODO: need to check if the label already exists in the current system
-		set proctype [get_hw_family]
+			# TODO: need to check if the label already exists in the current system
+			set proctype [get_hw_family]
 			set alias_node [create_node -n "aliases" -p root -d "system-top.dts"]
 			add_prop $alias_node $conf_name $value aliasref $default_dts
-        }
-    }
+		}
+	}
+
+	foreach drv_handle $design_pluarts {
+		set drvname [get_drivers $drv_handle]
+		set common_file "$path/$drvname/data/config.yaml"
+		set exists [file exists $common_file]
+		set tmp [get_driver_config $drv_handle alias]
+		if {[string_is_empty $tmp]} {
+			continue
+		} else {
+			set alias_str $tmp
+			set alias_count [get_count $alias_str]
+			set conf_name ${alias_str}${alias_count}
+			set value [get_node $drv_handle]
+			set value [split $value ": "]
+			set value [lindex $value 0]
+			if {[is_pl_ip $drv_handle]} {
+				set value "&$value"
+			}
+			set alias_node [create_node -n "aliases" -p root -d "system-top.dts"]
+			add_prop $alias_node $conf_name $value aliasref $default_dts
+		}
+	}
 }
+
 # remove main memory node
 proc remove_main_memory_node {} {
     set main_memory [get_property CONFIG.main_memory [get_os]]
