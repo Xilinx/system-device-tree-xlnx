@@ -272,10 +272,6 @@ proc generate {drv_handle} {
 }
 
 proc gen_mdio1_node {drv_handle parent_node} {
-    #   set remove_pl [get_property CONFIG.remove_pl [get_os]]
-     #  if {[is_pl_ip $drv_handle] && $remove_pl} {
-      #         return
-      # }
         set default_dts "pcw.dtsi"
        set mdio_node [create_node -l ${drv_handle}_mdio -n mdio -d $default_dts -p $parent_node]
        add_prop "${mdio_node}" "#address-cells" 1 int $default_dts

@@ -66,7 +66,6 @@ proc gen_ps7_ddr_reg_property {drv_handle system_node} {
 }
 
 proc generate_secure_memory {drv_handle} {
-#	    set regprop [get_count "regp"]
     set regprop ""
     set psu_cortexa53 ""
     set r5 0

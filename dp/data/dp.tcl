@@ -68,9 +68,6 @@ proc generate_dp_param {drv_handle node} {
 	set drvname [get_drivers $drv_handle]
 
 	set common_file "$path/device_tree/data/config.yaml"
-	if {[file exists $common_file]} {
-		#error "file not found: $common_file"
-	}
 	set mainline_ker [get_user_config $common_file --mainline_kernel]
 	if {[string match -nocase $mainline_ker "none"]} {
 		set dp_list "zynqmp_dp_snd_pcm0 zynqmp_dp_snd_pcm1 zynqmp_dp_snd_card0 zynqmp_dp_snd_codec0"

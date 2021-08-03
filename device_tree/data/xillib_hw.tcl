@@ -31,7 +31,6 @@ proc get_connected_intf { periph_name intf_name} {
     if { [llength $intf_net] == 0} {
         return $ret
     }
-    # set connected_intf [hsi::get_intf_pins -of_objects $intf_net -filter "TYPE!=[common::get_property TYPE $intf_pin]"]
     
     set connected_intf [get_other_intf_pin $intf_net $intf_pin ] 
     set intf_type [common::get_property TYPE $intf_pin]
@@ -156,10 +155,6 @@ proc remove_pin_from_list { pinList pin } {
     lappend returnList
     
     foreach pinInList $pinList {
-        # set pin_type [common::get_property TYPE $pinInList]
-        # if { $pin_type == "MONITOR"} {
-            # continue
-        # }
         set givenCell [hsi::get_cells -of_objects $pin]
         set newCell [hsi::get_cells -of_objects $pinInList]
         if { $givenCell != $newCell } {

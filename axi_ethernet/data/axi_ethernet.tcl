@@ -80,7 +80,6 @@ proc generate {drv_handle} {
 			} else {
 				set bus_node "amba_pl: amba_pl"
 			}
-			#set dts_file [current_dt_tree]
 			set dts_file "pl.dtsi"
 			set ipmem_len [llength $ip_mem_handles]
 			if {$ipmem_len > 1} {
@@ -106,9 +105,7 @@ proc generate {drv_handle} {
 					if { [llength $target_intf] } {
 						set connected_ip [get_connectedip $intf]				
 						if {[llength $connected_ip]} {
-							#set_property axistream-connected "$connected_ip" $drv_handle
 							add_prop $node axistream-connected "$connected_ip" reference $dts_file 1
-							#set_property axistream-control-connected "$connected_ip" $drv_handle
 							add_prop $node axistream-control-connected "$connected_ip" reference $dts_file 1
 							set ip_prop CONFIG.c_include_mm2s_dre
 							add_cross_property $connected_ip $ip_prop $drv_handle "xlnx,include-dre" boolean
@@ -165,15 +162,11 @@ proc generate {drv_handle} {
 			}
 			if {![string_is_empty $connected_ip]} {
 				add_prop $node axistream-connected "$connected_ip" reference $dts_file 1
-				#set_property axistream-control-connected "$connected_ip" $drv_handle
 				add_prop $node axistream-control-connected "$connected_ip" reference $dts_file 1
-				# set_property axistream-connected "$connected_ip" $drv_handle
-				# set_property axistream-control-connected "$connected_ip" $drv_handle
 				set ip_prop CONFIG.c_include_mm2s_dre
 				add_cross_property $connected_ip $ip_prop $drv_handle "xlnx,include-dre" boolean
 			}
-			#set_property xlnx,rxmem "$rxethmem" $drv_handle
-			add_prop $node xlnx,rxmem "$rxethmem" string $dts_file
+			add_prop $node xlnx,rxmem "$rxethmem" hexint $dts_file
 			if {$ip_name == "xxv_ethernet"  && $core != 0} {
 				set intf [hsi::get_intf_pins -of_objects $eth_ip "axis_rx_${core}"]
 				if {[llength $intf] && [llength $eth_node]} {
@@ -183,7 +176,7 @@ proc generate {drv_handle} {
 					      add_prop $eth_node "axistream-control-connected" "$connected_ip" reference "pl.dtsi"
 					}
 					add_prop $eth_node "xlnx,include-dre" boolean "pl.dtsi"
-					#add_prop $eth_node "xlnx,rxmem" "$rxethmem" hex "pl.dtsi"
+  			add_prop $eth_node xlnx,rxmem "$rxethmem" hexint $dts_file
 				}
 			}
 		}
@@ -196,7 +189,6 @@ proc generate {drv_handle} {
 			set phytype [get_property CONFIG.PHY_TYPE $eth_ip]
 			set phytype [get_phytype $phytype]
 			set phyaddr [get_property CONFIG.PHYADDR $eth_ip]
-			#set phyaddr [convert_binary_to_decimal $phyaddr]
 			set rxmem [get_property CONFIG.RXMEM $eth_ip]
 			set rxmem [get_memrange $rxmem]
 			add_prop $node "xlnx,txcsum" $txcsum hexint "pl.dtsi" 1
@@ -213,7 +205,6 @@ proc generate {drv_handle} {
 				if {[get_property CONFIG.speed_1_2p5 [hsi::get_cells -hier $drv_handle]] == "2p5G"} {
 					set is_nobuf 1
 					pldt append $node compatible "\ \, \"xlnx,axi-2_5-gig-ethernet-1.0\""	
-					#set_property compatible "xlnx,axi-2_5-gig-ethernet-1.0" $drv_handle
 		    		}
 			}
 		}
@@ -225,18 +216,12 @@ proc generate {drv_handle} {
 		set clk [hsi::get_pins -of_objects $eth_ip "S_AXI_ACLK"]
 		if {[llength $clk] } {
 			set freq [get_property CLK_FREQ $clk]
-			#set_property clock-frequency "$freq" $drv_handle
 			add_prop $node clock-frequency "$freq" int "pl.dtsi"
-			#add_prop $node clock-frequency "$freq" int $dts_file
 			if {$ip_name == "xxv_ethernet" && [llength $eth_node]} {
 				add_prop $eth_node "clock-frequency" "$freq" int "pl.dtsi"
 			}
 		}
 
-		# node must be created before child node
-		if {$ip_name == "axi_ethernet"} {
-			#set hier_params [gen_hierip_params $drv_handle]
-		}
 		set mdio_node [gen_mdio_node $drv_handle $node]
 		set phytype [string tolower [get_property CONFIG.PHY_TYPE $eth_ip]]
 		if {$phytype == "rgmii" && $board_name == "kc705"} {
@@ -244,15 +229,11 @@ proc generate {drv_handle} {
 		} elseif {$phytype == "1000basex"} {
 			set phytype "1000base-x"
 		}
-		#set_property phy-mode "$phytype" $drv_handle
 		if {![string match -nocase $phytype ""]} {
 			add_prop $node phy-mode "$phytype" string "pl.dtsi" 1
-			#add_prop $node phy-mode "$phytype" string $dts_file
 		}
 		if {$phytype == "sgmii" || $phytype == "1000base-x"} {
-			#set_property phy-mode "$phytype" $drv_handle
 			add_prop $node phy-mode "$phytype" string "pl.dtsi" 1
-			#add_prop $node phy-mode "$phytype" string $dts_file
 		  	set phynode [pcspma_phy_node $eth_ip]
 		  	set phya [lindex $phynode 0]
 		  	if { $phya != "-1"} {
@@ -270,11 +251,8 @@ proc generate {drv_handle} {
 		}
 		if {$ip_name == "axi_10g_ethernet"} {
 			set phytype [string tolower [get_property CONFIG.base_kr $eth_ip]]
-			#set_property phy-mode "$phytype" $drv_handle
 			add_prop $node phy-mode "$phytype" string "pl.dtsi"
-			#add_prop $node phy-mode "$phytype" string $dts_file
 			add_prop $node "phy-mode" $phytype string "pl.dtsi"
-			#add_prop $node "phy-mode" $phytype string $dts_file 
 			pldt append $node compatible "\ \, \"xlnx,ten-gig-eth-mac\""
 		}
 		if {$ip_name == "xxv_ethernet"} {
@@ -312,7 +290,6 @@ proc generate {drv_handle} {
 				set inhex [format %x $num_queues]
 				set numqueues "/bits/ 16 <0x$inhex>"
 				add_prop $node "xlnx,num-queues" $numqueues stringlist "pl.dtsi"
-				#add_prop $node "xlnx,num-queues" $numqueues stringlist $dts_file
 				if {$version < 2018} {
 					dtg_warning "quotes to be removed or use 2018.1 version for $node param xlnx,num-queues"
 				}
@@ -324,7 +301,6 @@ proc generate {drv_handle} {
 					set i [expr 0x$i]
 				}
 				add_prop $node "xlnx,channel-ids" $id intlist "pl.dtsi"
-				#add_prop $node "xlnx,channel-ids" $id intlist $dts_file
 				if {$ip_name == "xxv_ethernet"  && $core!= 0 && [llength $eth_node]} {
 					add_prop $eth_node "xlnx,num-queues" $numqueues stringlist $dts_file
 					add_prop $eth_node "xlnx,channel-ids" $id stringlist $dts_file
@@ -340,7 +316,6 @@ proc generate {drv_handle} {
 					set intr_parent [string trimright $intr_parent ">"]
 					set intr_parent [string trimleft $intr_parent "<"]
 					set intr_parent [string trimleft $intr_parent "&"]
-					#set intr_parent [get_property CONFIG.interrupt-parent $target_handle]
 					set int_names  [pldt get $ipnode interrupt-names]
 					set names [split $int_names ","]
 					if {[llength $names] >= 1} {
@@ -375,15 +350,6 @@ proc generate {drv_handle} {
 				set default_dts "pl.dtsi"
 				set nodep [get_node $drv_handle]
 				if {![string_is_empty $intr_parent]} {
-					#if { $hasbuf == "true" && $ip_name == "axi_ethernet"} {
-					#regsub -all "\{||\t" $intr_val1 {} intr_val1
-					#regsub -all "\}||\t" $intr_val1 {} intr_val1
-					#add_prop $node "interrupts" $intr_val1 int "pl.dtsi"
-					#} else {
-					#	add_prop $node "interrupts" $intr_val1 int "pl.dtsi"
-					#}
-					#add_prop $node "interrupt-parent" $intr_parent reference "pl.dtsi"
-					#add_prop $node "interrupt-names" $intr_names stringlist "pl.dtsi"
 					if {$ip_name == "xxv_ethernet"  && $core!= 0 && [llength $eth_node]} {
 						add_prop "${eth_node}" "interrupts" $intr_val intlist $dts_file
 						add_prop "${eth_node}" "interrupt-parent" $intr_parent reference $dts_file
@@ -403,7 +369,6 @@ proc generate {drv_handle} {
 				}
 			}
 			if {$connected_ipname == "axi_dma" || $connected_ipname == "axi_mcdma"} {
-				#set proctype [get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]]
 				set proctype [get_hw_family]
 				if {![regexp "kintex*" $proctype match]} {
 					set eth_clk_names [pldt get $node clock-names]
@@ -478,11 +443,7 @@ proc generate {drv_handle} {
 					set names ""
 					append clk  "$eth_clks>," " $clks"
 					set clks [string trimright $clks ">"]
-					#set default_dts [get_property CONFIG.pl_dts [get_os]]
 					set null ""
-					#add_prop $nodep "clock-names" $null stringlist "pl.dtsi"
-					#add_prop $nodep "clocks" $null reference "pl.dtsi"
-
 					if {$ip_name == "xxv_ethernet"  && $core== 0} {
 						if {[llength $dclk]} {	
 							append clknames "$core_clk_0 " "$dclk " "$axi_aclk_0"
@@ -497,9 +458,6 @@ proc generate {drv_handle} {
 						} else {
 							append clkvals  "[lindex $clk_list $index_0], $index0>, <&$clks"
 						}
-						#set plnode [create_node -n "&${drv_handle}" -d "pl.dtsi" -p root]
-						#  add_prop $eth_node "clocks" $clkvals reference "pl.dtsi"
-						#  add_prop "$eth_node" "clock-names" $clknames1 stringlist "pl.dtsi"
 						set clknames1 ""
 					}
 					if {$ip_name == "xxv_ethernet" && $core == 1 && [llength $eth_node]} {
@@ -519,7 +477,6 @@ proc generate {drv_handle} {
 						} else {
 							append clkvals1  "$ini1, $index1>, <&$clks"
 						}
-						# set eth1_node [create_node -n "&$clk_label" -d "pl.dtsi" -p root]
 						add_prop "${eth_node}" "clocks" $clkvals1 reference "pl.dtsi"
 						add_prop "${eth_node}" "clock-names" $clk_names1 stringlist "pl.dtsi"
 						set clk_names1 ""
@@ -543,7 +500,6 @@ proc generate {drv_handle} {
 							append clkvals2  "$ini2, [lindex $clk_list $axi_index_2], <&$clks"
 						}
 						append clk_label2 $drv_handle "_" $core
-						# set eth2_node [create_node -n "&$clk_label2" -d "pl.dtsi" -p root]
 						add_prop "${eth_node}" "clocks" $clkvals2 reference "pl.dtsi"
 						add_prop "${eth_node}" "clock-names" $clk_names2 stringlist "pl.dtsi"
 						set clk_names2 ""
@@ -567,7 +523,6 @@ proc generate {drv_handle} {
 							append clkvals3 "$ini, [lindex $clk_list $axi_index_3]>, <&$clks"
 						}
 						append clk_label3 $drv_handle "_" $core
-						# set eth3_node [create_node -n "&$clk_label3" -d "pl.dtsi" -p root]
 						add_prop "${eth_node}" "clocks" $clkvals3 reference "pl.dtsi"
 						add_prop "${eth_node}" "clock-names" $clk_names3 stringlist "pl.dtsi"
 						set clk_names3 ""
@@ -591,7 +546,6 @@ proc generate {drv_handle} {
 
 proc pcspma_phy_node {slave} {
 	set phyaddr [get_property CONFIG.PHYADDR $slave]
-	#set phyaddr [convert_binary_to_decimal $phyaddr]
 	set phymode "phy$phyaddr"
 
 	return "$phyaddr $phymode"
@@ -727,7 +681,6 @@ proc get_targetip {ip} {
       set cell_name [hsi::get_cells -hier $target_periph]
       set target_name [get_property IP_NAME [hsi::get_cells -hier $target_periph]]
       if {$target_name == "axis_data_fifo" || $target_name == "Ethernet_filter"} {
-	  #set target_periph [get_cells -of_objects $conn_busif_handle]
 	  set master_slaves [hsi::get_intf_pins -of [hsi::get_cells -hier $cell_name]]
 	  if {[llength $master_slaves] == 0} {
 	      return
@@ -840,9 +793,7 @@ proc generate_reg_property {node ip_mem_handles num} {
        set high [string tolower [get_property HIGH_VALUE [lindex $ip_mem_handles $num]]]
        set size [format 0x%x [expr {${high} - ${base} + 1}]]
 
-#       set proctype [get_property IP_NAME [get_cells -hier [get_sw_processor]]]
 	set proctype [get_hw_family]
-#	set proctype "psv_cortexa72"
        if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
 	    if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 		      set temp $base
@@ -871,8 +822,7 @@ proc generate_reg_property {node ip_mem_handles num} {
 	       set reg "$base $size"
        }
        add_prop $node "reg" $reg hexint "pl.dtsi"
-       #add_prop $node "reg" $reg hexlist "pl.dtsi"
-#       add_new_dts_param "${node}" "reg" $reg inthexlist
+
 }
 
 proc gen_drv_prop_eth_ip {drv_handle ipname} {

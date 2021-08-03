@@ -33,7 +33,6 @@ proc generate {drv_handle} {
         }
         set dts_file [current_dt_tree]
 	set mem_ranges [get_mem_ranges [hsi::get_cells -hier $drv_handle]]
-#	set connected_ip [get_connected_stream_ip $mrmac_ip "tx_axis_tdata0"]
         foreach mem_range $mem_ranges {
                set base_addr [string tolower [get_property BASE_VALUE $mem_range]]
                set base [format %x $base_addr]

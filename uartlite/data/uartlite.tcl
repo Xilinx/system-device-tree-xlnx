@@ -40,7 +40,6 @@ proc generate {drv_handle} {
 			   append bootargs "\ \, \"clk_ignore_unused\""
 			}
 	}
-	#add_prop $chosen_node "stdout-path" "serial0:${baud}n8" string "system-top.dts"
 	set_drv_conf_prop $drv_handle C_BAUDRATE current-speed int
 	if {[regexp "kintex*" $proctype match]} {
 		 gen_dev_ccf_binding $drv_handle "s_axi_aclk"

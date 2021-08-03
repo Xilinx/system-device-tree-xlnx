@@ -457,7 +457,6 @@ proc get_hostos_sharedlib_suffix { } {
 # relative with respect to the input directories
 #
 proc find_file_in_dirs { dirlist relative_filepath } {
-   #puts "$dirlist\n"
    foreach dir $dirlist {
    set filepath [format "%s/%s" $dir $relative_filepath]
    if { [file exists $filepath] } {

@@ -43,7 +43,6 @@ proc generate {drv_handle} {
         add_prop "$ports_node" "#size-cells" 0 int $dts_file
 	set port1_node [create_node -n "port" -l tpg_port1$drv_handle -u 1 -p $ports_node -d $dts_file]
         add_prop "$port1_node" "reg" 1 int $dts_file
-        #add_prop "${port1_node}" "/* Fill the field xlnx,video-format based on user requirement */" "" comment
         add_prop "$port1_node" "xlnx,video-format" 2 int $dts_file
         add_prop "$port1_node" "xlnx,video-width" $max_data_width int $dts_file
 

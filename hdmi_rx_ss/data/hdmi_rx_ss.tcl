@@ -110,7 +110,6 @@ if {![string match -nocase $phys ""]} {
 	add_prop "$node" "phys" $phys reference $dts_file
 }
 set edid_ram_size [get_property CONFIG.C_EDID_RAM_SIZE [hsi::get_cells -hier $drv_handle]]
-#add_prop "${node}" "xlnx,edid-ram-size" $edid_ram_size hexint $dts_file
 set include_hdcp_1_4 [get_property CONFIG.C_INCLUDE_HDCP_1_4 [hsi::get_cells -hier $drv_handle]]
 if {[string match -nocase $include_hdcp_1_4 "true"]} {
 	add_prop "${node}" "xlnx,include-hdcp-1-4" "" boolean $dts_file
@@ -139,7 +138,6 @@ if {[llength $audio_out_connect_ip] != 0} {
 }
 
 proc gen_frmbuf_node {ip drv_handle dts_file} {
-#     set dt_overlay [get_property CONFIG.dt_overlay [get_os]]
 set bus_node [detect_bus_name $drv_handle]
 set vcap [create_node -n "vcap_sdirx$drv_handle" -p $bus_node -d $dts_file]
 add_prop $vcap "compatible" "xlnx,video" string $dts_file

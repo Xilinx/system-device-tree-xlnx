@@ -21,9 +21,6 @@ proc generate {drv_handle} {
 		lappend valid_prop_names $par
 	}
 	set proplist $valid_prop_names
-	foreach prop_name ${proplist} {
-#                ip2drv_prop $drv_handle $prop_name
-	}
 	set proctype [get_hw_family]
 	if { [string match -nocase $proctype "zynq"] }  {
 		return

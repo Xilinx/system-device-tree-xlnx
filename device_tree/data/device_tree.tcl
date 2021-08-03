@@ -19,9 +19,6 @@
 package require Tcl 8.5.14
 package require yaml
 package require struct
-#namespace export *
-#namespace export get_dt_param
-# load yaml file into dict
 proc get_yaml_dict1 { config_file } {
         set data ""
         if {[file exists $config_file]} {
@@ -390,10 +387,6 @@ proc gen_include_headers {} {
 	global env
 	set path $env(REPO)
 	set common_file "$path/device_tree/data/config.yaml"
-	if {[file exists $common_file]} {
-        	#error "file not found: $common_file"
-    	}
-	#set file "$path/${drvname}/data/config.yaml"
 	set kernel_ver [get_user_config $common_file --kernel_ver]
 
 	set family [get_hw_family]
@@ -585,9 +578,6 @@ proc gen_board_info {} {
 
 	set common_file "$path/device_tree/data/config.yaml"
 	set kernel_ver [get_user_config $common_file --kernel_ver]
-	if {[file exists $common_file]} {
-        	#error "file not found: $common_file"
-    	}
 	set dtsi_file [get_user_config $common_file --board_dts]
 	set dir_path [get_user_config $common_file --dir]
     	if {[string match $dtsi_file "none"]} {
@@ -801,13 +791,7 @@ proc gen_zocl_node {} {
 	global env
 	set path $env(REPO)
 	set common_file "$path/device_tree/data/config.yaml"
-	if {[file exists $common_file]} {
-        	#error "file not found: $common_file"
-    	}
 	set zocl [get_user_config $common_file --dt_zocl]
-       #set ext_platform [get_property platform.extensible [get_os]]
-       #puts "ext_platform:$ext_platform"
-       #set proctype [get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]
        set proctype [get_hw_family]
        if {!$zocl} {
                return
@@ -1020,11 +1004,7 @@ proc generate_sdt {} {
 			set drvname [get_drivers $procc]
 			set proc_file "$path/${drvname}/data/${drvname}.tcl"
 			source -notrace $proc_file
-			#namespace import ::tclapp::xilinx::devicetree::${drvname}::\*
-	                #::tclapp::xilinx::devicetree::${drvname}::generate $procc
 			generate $procc
-			#namespace import ::${drvname}::\*
-		        #::${drvname}::generate $procc
     			add_skeleton
 			set non_val_list "versal_cips noc_nmu noc_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat axis_tdest_editor util_reduced_logic noc_nsw axis_ila"
 			set non_val_ip_types "MONITOR BUS PROCESSOR"
@@ -1103,8 +1083,6 @@ proc generate_sdt {} {
 				set drvname [get_drivers $drv_handle]
 				set drv_file "$path/${drvname}/data/${drvname}.tcl"
 				source -notrace $drv_file
-				#namespace import ::tclapp::xilinx::devicetree::${drvname}::\*
-		                #::tclapp::xilinx::devicetree::${drvname}::generate $drv_handle
 				generate $drv_handle
 			}
 			foreach drv_handle $peri_list {
@@ -1116,9 +1094,7 @@ proc generate_sdt {} {
 			set drvname [get_drivers $procc]
 			set proc_file "$path/${drvname}/data/${drvname}.tcl"
 			source -notrace $proc_file
-#	                ::tclapp::xilinx::devicetree::${drvname}::generate $procc
 			generate $procc
-#			namespace forget ::
 			
 		} else {
 			continue
@@ -1129,9 +1105,6 @@ proc generate_sdt {} {
     	gen_include_headers
 	set proctype [get_hw_family]
 	set common_file "$path/device_tree/data/config.yaml"
-	if {[file exists $common_file]} {
-        	#error "file not found: $common_file"
-    	}
 	set kernel_ver [get_user_config $common_file --kernel_ver]
 
     	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] || \
@@ -1151,7 +1124,6 @@ proc generate_sdt {} {
         	    	gen_zocl_node
         	}
     	}
-    	#gen_resrv_memory
     	update_alias $drv_handle
     	update_cpu_node $drv_handle
 	gen_r5_trustzone_config
@@ -2134,13 +2106,9 @@ proc add_skeleton {} {
 	set path $env(REPO)
 
 	set common_file "$path/device_tree/data/config.yaml"
-	if {[file exists $common_file]} {
-        	#error "file not found: $common_file"
-    	}
 
 	set default_dts "system-top.dts"
 	set chosen_node [create_node -n "chosen" -p root -d $default_dts]
-	#set chosen_node [create_node -n "aliases" -p root -d $default_dts]
 }
 
 proc update_chosen {os_handle} {
@@ -2478,9 +2446,6 @@ proc update_alias {os_handle} {
 	global env
 	set path $env(REPO)
 	set common_file "$path/device_tree/data/config.yaml"
-	if {[file exists $common_file]} {
-        	#error "file not found: $common_file"
-    	}
 	set mainline_ker [get_user_config $common_file --mainline_kernel]
 	set valid_mainline_kernel_list "v4.17 v4.18 v4.19 v5.0 v5.1 v5.2 v5.3 v5.4"
 	if {[lsearch $valid_mainline_kernel_list $mainline_ker] >= 0 } {
@@ -2574,10 +2539,8 @@ proc update_alias {os_handle} {
 			set ip_list "i2c spi serial"
             	# TODO: need to check if the label already exists in the current system
 		set proctype [get_hw_family]
-	       # if {[regexp "kintex*" $proctype match]} {
 			set alias_node [create_node -n "aliases" -p root -d "system-top.dts"]
 			add_prop $alias_node $conf_name $value aliasref $default_dts
-	#	}
         }
     }
 }

@@ -35,7 +35,6 @@ proc generate {drv_handle} {
 		for {set stream 0} {$stream < $max_nr_streams} {incr stream} {
 			set scd_node [create_node -n "subdev" -u $stream -p $node -d $dts_file]
 			set port_node [create_node -n "port" -u 0 -l "port_$stream" -p $scd_node -d $dts_file]
-			#add_prop "$port_node" "reg" 0 int $dts_fle
 			set endpoint [create_node -n "endpoint" -l "scd_in$stream" -p $port_node -d $dts_file]
 			add_prop "$endpoint" "remote-endpoint" "vcap0_out$stream" reference $dts_file
 		}

@@ -53,7 +53,6 @@ proc generate {drv_handle} {
     if { $axiethernetfound || $is_xxv == 1} {
 	set compatstring "xlnx,eth-dma"
 	pldt append $node compatible "\ \, \"xlnx,eth-dma\""
-	#add_prop $node compatible $compatstring string "pl.dtsi"
     }
     set tx_chan 0
     set rx_chan 0
@@ -109,9 +108,6 @@ proc generate {drv_handle} {
 	set drvname [get_drivers $drv_handle]
 
 	set common_file "$path/device_tree/data/config.yaml"
-	if {[file exists $common_file]} {
-		#error "file not found: $common_file"
-	}
 	set mainline_ker [get_user_config $common_file --mainline_kernel]
     if {[string match -nocase $mainline_ker "none"]} {
 	set proc_type [get_hw_family]

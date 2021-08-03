@@ -26,7 +26,6 @@ proc generate {drv_handle} {
 	}
 	if {${cs-num} != 0} {
 		add_prop $node "num-cs" ${cs-num} int $dts_file
-#		set_property CONFIG.num-cs ${cs-num} $drv_handle
 	}
 
 	# the is-decoded-cs property is hard coded as we do not know if the

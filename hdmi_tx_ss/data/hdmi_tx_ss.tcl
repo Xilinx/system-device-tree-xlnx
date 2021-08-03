@@ -20,9 +20,7 @@ proc generate {drv_handle} {
 	}
 	pldt append $node compatible "\ \, \"xlnx,v-hdmi-tx-ss-3.1\""
 	set input_pixels_per_clock [get_property CONFIG.C_INPUT_PIXELS_PER_CLOCK [hsi::get_cells -hier $drv_handle]]
-	#add_prop "${node}" "xlnx,input-pixels-per-clock" $input_pixels_per_clock int $dts_file
 	set max_bits_per_component [get_property CONFIG.C_MAX_BITS_PER_COMPONENT [hsi::get_cells -hier $drv_handle]]
-	#add_prop "${node}" "xlnx,max-bits-per-component" $max_bits_per_component int $dts_file
         set vid_interface [get_property CONFIG.C_VID_INTERFACE [hsi::get_cells -hier $drv_handle]]
         add_prop "${node}" "xlnx,vid-interface" $vid_interface int $dts_file 1
 	set phy_names ""

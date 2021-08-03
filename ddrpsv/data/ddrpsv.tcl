@@ -46,14 +46,10 @@ proc generate {drv_handle} {
 		set is_ddr_ch_3 0
 		
 		set periph [hsi::get_cells -hier $drv_handle]
-#			set interface_block_names ""
 		if {[catch {set interface_block_names [get_property ADDRESS_BLOCK [hsi::get_mem_ranges -of_objects $procc $periph]]} msg]} {
 			if {[catch {set interface_block_names [get_property ADDRESS_BLOCK [hsi::get_mem_ranges $procc $periph]]} msg]} {
 				set interface_block_names ""
-			} else {
-				#set interface_block_names [lsort $interface_block_names]
-			}
-		} else {
+			} 
 		}
 		if {$a72 == 1 && [string match -nocase [get_property IP_NAME $procc] "psv_cortexa72"]} {
 			continue

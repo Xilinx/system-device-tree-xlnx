@@ -37,7 +37,6 @@ proc generate {drv_handle} {
 	set ai_part_node [create_node -n "aie_partition" -u "${ai_part_id}" -l "aie_partition${ai_part_id}" -p ${node} -d "pl.dtsi"]
 	add_prop "${ai_part_node}" "reg" "0 0 50 9" intlist "pl.dtsi"
 	add_prop "${ai_part_node}" "xlnx,partition-id" "${ai_part_nid}" intlist "pl.dtsi"
-	#set dt_overlay [get_property CONFIG.dt_overlay [get_os]]
 	set dt_overlay 0
        	if {$dt_overlay} {
 		set RpRm [get_rp_rm_for_drv $drv_handle]

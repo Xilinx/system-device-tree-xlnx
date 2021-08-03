@@ -174,7 +174,7 @@ proc generate {drv_handle} {
 		set reg "$base $size"
 	}
 }
-	#gen_compatible_property $drv_handle
+
 	set slave [hsi::get_cells -hier ${drv_handle}]
 	set proctype [get_property IP_TYPE $slave]
 	set vlnv [split [get_property VLNV $slave] ":"]
@@ -184,9 +184,4 @@ proc generate {drv_handle} {
 	regsub -all {_} $comp_prop {-} comp_prop
 
 	add_prop ${memory_node} "compatible" $comp_prop string "system-top.dts"
-#		add_prop ${memory_node} "reg" $reg hexlist "system-top.dts"
-#		set dev_type memory
-
-#		if {[string_is_empty $dev_type]} {set dev_type memory}
-#		add_prop ${memory_node} "device_type" $dev_type string "system-top.dts"
 }

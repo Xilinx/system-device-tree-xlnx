@@ -34,7 +34,6 @@ proc generate {drv_handle} {
 		add_prop "$node" "xlnx,dsi-data-type" 3 int $dts_file
 	}
 	set panel_node [create_node -n "simple_panel" -l simple_panel$drv_handle -u 0 -p $node -d $dts_file]
-# 		add_new_dts_param "${panel_node}" "/* User needs to add the panel node based on their requirement */" "" comment
 	add_prop "$panel_node" "reg" 0 int $dts_file
 	add_prop "$panel_node" "compatible" "auo,b101uan01" string $dts_file
 }

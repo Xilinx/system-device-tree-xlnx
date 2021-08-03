@@ -18,44 +18,7 @@ proc generate {drv_handle} {
 	if {$node == 0} {
 		return
 	}
-	if {0} {
-	set err_irq_en [get_property CONFIG.C_Err_Irq_En [hsi::get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,err-irq-en" $err_irq_en int $dts_file
-	set tx_frl_refclk_sel [get_property CONFIG.C_TX_FRL_REFCLK_SEL [hsi::get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,tx-frl-refclk-sel" $tx_frl_refclk_sel int $dts_file
-	set rx_frl_refclk_sel [get_property CONFIG.C_RX_FRL_REFCLK_SEL [hsi::get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,rx-frl-refclk-sel" $rx_frl_refclk_sel int $dts_file
-	set input_pixels_per_clock [get_property CONFIG.C_INPUT_PIXELS_PER_CLOCK [hsi::get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,input-pixels-per-clock" $input_pixels_per_clock int $dts_file
-	set nidru [get_property CONFIG.C_NIDRU [hsi::get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,nidru" $nidru int $dts_file
-	set use_gt_ch4_hdmi [get_property CONFIG.C_Use_GT_CH4_HDMI [hsi::get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,use-gt-ch4-hdmi" $use_gt_ch4_hdmi int $dts_file
-	set nidru_refclk_sel [get_property CONFIG.C_NIDRU_REFCLK_SEL [hsi::get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,nidru-refclk-sel" $nidru_refclk_sel int $dts_file
-	set Rx_No_Of_Channels [get_property CONFIG.C_Rx_No_Of_Channels [hsi::get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,rx-no-of-channels" $Rx_No_Of_Channels int $dts_file
-	set rx_pll_selection [get_property CONFIG.C_RX_PLL_SELECTION [hsi::get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,rx-pll-selection" $rx_pll_selection int $dts_file
-	set rx_protocol [get_property CONFIG.C_Rx_Protocol [hsi::get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,rx-protocol" $rx_protocol int $dts_file
-	set rx_refclk_sel [get_property CONFIG.C_RX_REFCLK_SEL [hsi::get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,rx-refclk-sel" $rx_refclk_sel int $dts_file
-	set tx_pll_selection [get_property CONFIG.C_TX_PLL_SELECTION [hsi::get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,tx-pll-selection" $tx_pll_selection int $dts_file
-	set tx_protocol [get_property CONFIG.C_Tx_Protocol [hsi::get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,tx-protocol" $tx_protocol int $dts_file
-	set tx_refclk_sel [get_property CONFIG.C_TX_REFCLK_SEL [hsi::get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,tx-refclk-sel" $tx_refclk_sel int $dts_file
-	set tx_no_of_channels [get_property CONFIG.C_Tx_No_Of_Channels [hsi::get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,tx-no-of-channels" $tx_no_of_channels int $dts_file
-	set tx_buffer_bypass [get_property CONFIG.Tx_Buffer_Bypass [hsi::get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,tx-buffer-bypass" $tx_buffer_bypass int $dts_file
-	set transceiver_width [get_property CONFIG.Transceiver_Width [hsi::get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,transceiver-width" $transceiver_width int $dts_file
-	set hdmi_fast_switch [get_property CONFIG.C_Hdmi_Fast_Switch [hsi::get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,hdmi-fast-switch" $hdmi_fast_switch int $dts_file
-	}
+
 	set tx_no_of_channels [get_property CONFIG.C_Tx_No_Of_Channels [hsi::get_cells -hier $drv_handle]]
 	for {set ch 0} {$ch < $tx_no_of_channels} {incr ch} {
 		set phy_node [create_node -n "vphy_lane" -u $ch -l vphy_lane$ch -p $node -d $dts_file]

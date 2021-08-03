@@ -29,9 +29,6 @@ proc generate {drv_handle} {
 	set drvname [get_drivers $drv_handle]
 
 	set common_file "$path/device_tree/data/config.yaml"
-	if {[file exists $common_file]} {
-		#error "file not found: $common_file"
-	}
 	set mainline_ker [get_user_config $common_file --mainline_kernel]
 	pldt append $node compatible "\ \, \"xlnx,axi-vdma-1.00.a\""
 	set dma_ip [hsi::get_cells -hier $drv_handle]
@@ -114,7 +111,6 @@ proc generate {drv_handle} {
 	}
 #	incr vdma_count
 	if {[string match -nocase $mainline_ker "none"]} {
-		#set proc_type [get_sw_proc_prop IP_NAME]
 		set proc_type [get_hw_family]
 		set clocknames "s_axi_lite_aclk"
 		if { $tx_chan ==1 } {
@@ -160,7 +156,6 @@ proc add_dma_channel {drv_handle parent_node xdma addr mode devid} {
 }
 
 proc generate_clk_nodes {drv_handle tx_chan rx_chan} {
-#    set proc_type [get_sw_proc_prop IP_NAME]
 	set proc_type [get_hw_family]
     set clocknames "s_axi_lite_aclk"
 	if {[string match -nocase $proc_type "zynq"]} {

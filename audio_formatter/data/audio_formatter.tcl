@@ -24,6 +24,6 @@ proc generate {drv_handle} {
 	if {$node == 0} {
 		return
 	}
-	pldt append #node compatible "\ \, \"xlnx,audio-formatter-1.0\""
+	pldt append $node compatible "\ \, \"xlnx,audio-formatter-1.0\""
 
 }

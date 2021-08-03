@@ -19,9 +19,5 @@ proc generate {drv_handle} {
 	set dts_file [set_drv_def_dts $drv_handle]
 	if {$value >= 2018} {
 		set generic_node [get_node $drv_handle]
-#			set last [string last "@" $generic_node]
-#			if {$last != -1} {
-#				add_prop "${generic_node}" "/* This is a place holder node for a custom IP, user may need to update the entries */" comment $dts_file
-#			}
 	}
 }

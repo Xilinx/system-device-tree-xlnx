@@ -91,12 +91,8 @@ proc generate {drv_handle} {
 	add_prop $node "xlnx,gpo-init" $gpo_init intlist $default_dts
 
 	set param_list "C_INTC_HAS_FAST C_INTC_ADDR_WIDTH C_INTC_LEVEL_EDGE C_UART_BAUDRATE"
-	foreach param $param_list {
-#		ip2drv_prop $drv_handle "CONFIG.$param"
-	}
 	set val [get_ip_param_value $slave "C_FREQ"]
 	add_prop $node "xlnx,clock-freq" $val int $default_dts
-#		set val [get_ip_param_value $slave "C_INTC_INTR_SIZE"]
 	set max_intr_size 0
 	set periph_num_intr_internal [get_num_intr_internal $slave]
 	set periph_num_intr_inputs [get_num_intr_inputs $slave]

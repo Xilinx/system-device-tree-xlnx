@@ -99,6 +99,4 @@ proc generate {drv_handle} {
 			append interrupts " " "$intr_info"
 		}
 	}
-	# add_prop $node "interrupts" $interrupts int "pl.dtsi"
-	# add_prop $node "interrupt-names" $interrupt_names stringlist "pl.dtsi"
 }

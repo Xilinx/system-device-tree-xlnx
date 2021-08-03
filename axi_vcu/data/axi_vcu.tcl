@@ -38,9 +38,7 @@ proc generate {drv_handle} {
     set intr_parent [string trimleft $intr_parent "<"]
     set intr_parent [string trimleft $intr_parent "&"]
     set clock-names " pll_ref\"\ \, \"aclk\""
-#	    set clock-names [append clock-names " aclk"]
     pldt append $node clock-names " , \"pll_ref\" , \"aclk\" , "
-#	    pldt append $node clock-names ${clock-names}
     zynq_gen_pl_clk_binding $drv_handle
     set first_reg_name "vcu_slcr"
     set second_reg_name " logicore"
@@ -92,7 +90,6 @@ proc generate {drv_handle} {
 					set periph [hsi::get_cells -of_objects $pin]
 					if {[llength $periph]} {
 						set ip [get_property IP_NAME $periph]
-						#set proc_type [get_sw_proc_prop IP_NAME]
 						set proc_type [get_hw_family]
 						if {[string match -nocase $proc_type "versal"] } {
 							if {[string match -nocase $ip "versal_cips"]} {

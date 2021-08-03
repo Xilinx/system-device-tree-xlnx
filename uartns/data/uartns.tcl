@@ -34,8 +34,6 @@ proc generate {drv_handle} {
 	add_prop $node "clock-frequency" $freq int $dts_file
     }
 
-#	    set_os_parameter_value "console" "ttyS0,115200"
-
     set proctype [get_hw_family]
     if {[regexp "kintex*" $proctype match]} {
 		 gen_dev_ccf_binding $drv_handle "s_axi_aclk"

@@ -668,7 +668,6 @@ proc write_value {type value} {
                         		set val "<[format %d $tmp]>"
 				} else {
 					set val [append val "<"]
-					#set val [append val [scan [expr $value * 1000000] "%d"]]
 					set tmp [scan [expr $value * 1000000] "%d"]
 					set base [format 0x%x $tmp]
 					set temp $base
@@ -956,13 +955,9 @@ proc add_prop args {
 	if {[string match -nocase $node "&gic"]} {
 	}
 	if {[string match -nocase $dts_file "pcw.dtsi"]} {
-		if {![string match -nocase $node root]} {
-		#set node [pcwdt insert root end $node]
-		}
+
 	}
-	if {[string match -nocase $type "boolean"] && [string match -nocase $val ""]} {
-		#set bypass 1
-	}
+
 	set val [write_value $type $val]
 	if {[string match -nocase $dts_file "pcw.dtsi"]} {
 		set treeobj "pcwdt"
@@ -1257,23 +1252,15 @@ proc create_busmap args {
 	set mainroot [$dt children $rootn]
 	set values ""
 	foreach children $mainroot {
-#		set temp [split $children ":"]
-#		append values "[lindex $temp 0] "
 		append values "$children\n"
 		set childs [$dt children $children]
 		foreach child $childs {
-#			set temp [split $child ":"]
-#			append values "[lindex $temp 0] "
 			append values "$child\n"
 			set nestchilds [$dt children $child]
 			foreach child $nestchilds {
-#				set temp [split $child ":"]
-#				append values "[lindex $temp 0] "
 				append values "$child\n"
 				set innerchilds [$dt children $child]
 				foreach child $innerchilds {
-#					set temp [split $child ":"]
-#					append values "[lindex $temp 0] "
 					append values "$child\n"
 					set nextinner [$dt children $child]
 					foreach child $nextinner {
@@ -2022,7 +2009,6 @@ proc add_cross_property args {
 								set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
 							}
 								set node [create_node -n "cpu" -l "ub${count}_cpu" -u 0 -d "pl.dtsi" -p $rt_node]
-								#set node [create_node -n "cpu" -u 0 -d "pl.dtsi" -p root]
 						}
 					}
 				} else {
@@ -2478,9 +2464,6 @@ proc update_system_dts_include {include_file} {
 		set path $env(REPO)
 		set drvname [get_drivers $drv_handle]
 		set common_file "$path/device_tree/data/config.yaml"
-		if {[file exists $common_file]} {
-       		 	#error "file not found: $common_file"
-    		}
 		set board_dts [get_user_config $common_file --board_dts]
 		set dtsi_file " "
 		set dtsi_file $board_dts
@@ -2533,14 +2516,7 @@ proc set_drv_def_dts {drv_handle} {
 
 	set drvname [get_drivers $drv_handle]
 	set common_file "$path/device_tree/data/config.yaml"
-	if {[file exists $common_file]} {
-        	#error "file not found: $common_file"
-    	}
 	set dt_overlay [get_user_config $common_file --dt_overlay]
-	# optional dts control by adding the following line in mdd file
-	# PARAMETER name = def_dts, default = ps.dtsi, type = string;
-	#set dt_overlay [get_property CONFIG.dt_overlay [get_os]]
-	#set partial_image [get_property CONFIG.partial_image [get_os]]
 	set family [get_hw_family]
 	global bus_clk_list
 	if {[is_pl_ip $drv_handle]} {
@@ -2785,8 +2761,6 @@ proc add_or_get_dt_node args {
 	if {![string equal -nocase ${parent_obj} ${def_string}] && \
 		![string_is_empty ${parent_obj}]} {
 		# temp solution for getting the right node object
-		#set cmd "${cmd} -objects \[get_node_object ${parent_obj} $dts_file\]"
-		#report_property [get_node_object ${parent_obj} $dts_file]
 		set cmd "${cmd} -objects \[get_node_object ${parent_obj} $parent_dts_file\]"
 	}
 
@@ -3109,10 +3083,6 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping ff040000 label "spi0: spi"
 		dict set def_ps_mapping ff050000 label "spi1: spi"
 		dict set def_ps_mapping f1010000 label "ospi: spi"
-#		dict set def_ps_mapping ff0e0000 label "psv_ttc0: timer"
-#		dict set def_ps_mapping ff0f0000 label "psv_ttc1: timer"
-#		dict set def_ps_mapping ff100000 label "psv_ttc2: timer"
-#		dict set def_ps_mapping ff110000 label "psv_ttc3: timer"
 		dict set def_ps_mapping ff000000 label "serial0: serial"
 		dict set def_ps_mapping ff010000 label "serial1: serial"
 		dict set def_ps_mapping fd4d0000 label "watchdog: watchdog"
@@ -3228,11 +3198,6 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping ffa50800 label "ams_ps: ams_ps"
 		dict set def_ps_mapping ffa50c00 label "ams_pl: ams_pl"
 		dict set def_ps_mapping ff980000 label "lpd_xppu: xppu"
-#		dict set def_ps_mapping fd1a0000 label crfapb
-#		dict set def_ps_mapping ff5e0000 label crlapb
-#		dict set def_ps_mapping ffcc0000 label efuse
-#		dict set def_ps_mapping ff180000 label iou_slcr
-#		dict set def_ps_mapping ff410000 label lpd_slcr
 
 	}
 	return $def_ps_mapping
@@ -3917,9 +3882,6 @@ proc gen_axis_switch_clk_property {drv_handle dts_file node} {
 	set path $env(REPO)
 	set drvname [get_drivers $drv_handle]
 	set common_file "$path/device_tree/data/config.yaml"
-	if {[file exists $common_file]} {
-        	#error "file not found: $common_file"
-    	}
 	set mainline_ker [get_user_config $common_file --mainline_kernel]
        set valid_mainline_kernel_list "v4.17 v4.18 v4.19 v5.0 v5.1 v5.2 v5.3 v5.4"
        if {[lsearch $valid_mainline_kernel_list $mainline_ker] >= 0 } {
@@ -4178,9 +4140,6 @@ proc gen_clk_property {drv_handle} {
 	set path $env(REPO)
 	set drvname [get_drivers $drv_handle]
 	set common_file "$path/device_tree/data/config.yaml"
-	if {[file exists $common_file]} {
-        	#error "file not found: $common_file"
-    	}
 	set mainline_ker [get_user_config $common_file --mainline_kernel]
 	set valid_mainline_kernel_list "v4.17 v4.18 v4.19 v5.0 v5.1 v5.2 v5.3 v5.4"
         if {[lsearch $valid_mainline_kernel_list $mainline_ker] >= 0 } {
@@ -4275,13 +4234,6 @@ proc gen_clk_property {drv_handle} {
 					}
 				}
 				set dts_file "pl.dtsi"
-				#set RpRm [get_rp_rm_for_drv $drv_handle]
-                	        #regsub -all { } $RpRm "" RpRm
-        	                #if {[llength $RpRm]} {
-                          	#        set dts_file "$RpRm.dtsi"
-                               	#} else {
-                                #       set dts_file "pl.dtsi"
-                               	#}
 				set bus_node [add_or_get_bus_node $drv_handle $dts_file]
 				set clk_freq [get_clock_frequency [hsi::get_cells -hier $drv_handle] "$clk"]
 				if {[llength $clk_freq] == 0} {
@@ -4298,21 +4250,9 @@ proc gen_clk_property {drv_handle} {
 					set bus_clk_cnt [lsearch -exact $bus_clk_list $clk_freq]
 					set misc_clk_node [create_node -n "misc_clk_${bus_clk_cnt}" -l "misc_clk_${bus_clk_cnt}" \
 					-d ${dts_file} -p ${bus_node}]
-				#	if {[llength $RpRm]} {
-					#	set misc_clk_node [add_or_get_dt_node -n "misc_clk${bus_clk_cnt}" -l "misc_clk_$RpRm${bus_clk_cnt}" \
-                                       #        -d ${dts_file} -p ${bus_node}]
-                                       #} else {
-                                       #        set misc_clk_node [add_or_get_dt_node -n "misc_clk_${bus_clk_cnt}" -l "misc_clk_${bus_clk_cnt}" \
-                                               -d ${dts_file} -p ${bus_node}]
-                                       #}
 
 					set clk_refs [lappend clk_refs misc_clk_${bus_clk_cnt}]
 					set updat [lappend updat misc_clk_${bus_clk_cnt}]
-				#	if {[llength $RpRm]} {
-                                 #              set updat [lappend updat misc_clk_$RpRm${bus_clk_cnt}]
-                                  #     } else {
-                                   #            set updat [lappend updat misc_clk_${bus_clk_cnt}]
-                                    #   }
 					add_prop $misc_clk_node "compatible" "fixed-clock" stringlist $dts_file 1
 					add_prop $misc_clk_node "#clock-cells" 0 int $dts_file 1
 					add_prop $misc_clk_node "clock-frequency" $clk_freq int $dts_file 1
@@ -4466,13 +4406,6 @@ proc gen_clk_property {drv_handle} {
 
 		if {[string match -nocase $is_clk_wiz "0"]&& [string match -nocase $is_pl_clk "0"]} {
 			set dts_file "pl.dtsi"
-			#set RpRm [get_rp_rm_for_drv $drv_handle]
-                       #regsub -all { } $RpRm "" RpRm
-                       #if {[llength $RpRm]} {
-                       #        set dts_file "$RpRm.dtsi"
-                       #} else {
-                        #       set dts_file "pl.dtsi"
-                        #}
 			set bus_node [add_or_get_bus_node $drv_handle $dts_file]
 			set clk_freq [get_clock_frequency [hsi::get_cells -hier $drv_handle] "$clk"]
 			if {[llength $clk_freq] == 0} {
@@ -4489,13 +4422,6 @@ proc gen_clk_property {drv_handle} {
 				set bus_clk_cnt [lsearch -exact $bus_clk_list $clk_freq]
 				set misc_clk_node [create_node -n "misc_clk_${bus_clk_cnt}" -l "misc_clk_${bus_clk_cnt}" \
 				-d ${dts_file} -p ${bus_node}]
-				#if {[llength $RpRm]} {
-                                #       set misc_clk_node [add_or_get_dt_node -n "misc_clk_${bus_clk_cnt}" -l "misc_clk_$RpRm${bus_clk_cnt}" \
-                                               -d ${dts_file} -p ${bus_node}]
-                               #} else {
-                               #        set misc_clk_node [add_or_get_dt_node -n "misc_clk_${bus_clk_cnt}" -l "misc_clk_${bus_clk_cnt}" \
-                                               -d ${dts_file} -p ${bus_node}]
-                               #}
 				if {[catch {set compatible [pldt get $misc_clk_node "compatible"]} msg]} {
 				add_prop $misc_clk_node "compatible" "fixed-clock" stringlist $dts_file 1
 				add_prop $misc_clk_node "#clock-cells" 0 int $dts_file 1
@@ -4503,11 +4429,6 @@ proc gen_clk_property {drv_handle} {
 				}
 				set clk_refs [lappend clk_refs misc_clk_${bus_clk_cnt}]
 				set updat [lappend updat misc_clk_${bus_clk_cnt}]
-				#if {[llength $RpRm]} {
-                                #       set updat [lappend updat misc_clk_$RpRm${bus_clk_cnt}]
-                               #} else {
-                               #        set updat [lappend updat misc_clk_${bus_clk_cnt}]
-                              # }
 			}
 		}
 		append clocknames " " "$clk"
@@ -4799,7 +4720,6 @@ proc gen_mb_interrupt_property {cpu_handle {intr_port_name ""}} {
 		}
 	}
 	add_prop $cpu_node "interrupt-handle" $intc reference "pl.dtsi" 1
-	#set_drv_prop $cpu_handle interrupt-handle $intc reference
 }
 
 proc get_interrupt_parent {  periph_name intr_pin_name } {
@@ -5066,8 +4986,6 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 			set node [get_node $drv_handle]
 			if {[catch {set tmp [set val [$treeobj get $node "reg"]]} msg]} {
 			}
-	#		set val [get_property CONFIG.reg $drv_handle]
-			#return 0
 		}
 	}
 	set ip_name  [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
@@ -5076,7 +4994,6 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 	}
 
 	set reg ""
-	#set ip_skip_list "ddr4_*"
 	set slave [hsi::get_cells -hier ${drv_handle}]
 	set ip_mem_handles [hsi::get_mem_ranges $slave]
 	if { [string_is_empty $ip_mem_handles] } {
@@ -5133,7 +5050,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 	}
 	foreach mem_handle ${ip_mem_handles} {
 		set proctype [get_hw_family]
-	#	if {![regexp $ip_skip_list $mem_handle match]} {
+
 			set base [string tolower [get_property BASE_VALUE $mem_handle]]
 	                set ips [hsi::get_cells -hier -filter {IP_NAME == "mrmac"}]
                         if {[llength $ips]} {
@@ -5143,7 +5060,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
                         }
 			set high [string tolower [get_property HIGH_VALUE $mem_handle]]
 			set size [format 0x%x [expr {${high} - ${base} + 1}]]
-			#set proctype [get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]]
+
 			if {[string_is_empty $reg]} {
 				if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_pmc"] || [string match -nocase $proctype "zynquplus"]} {
 					# check if base address is 64bit and split it as MSB and LSB
@@ -5217,7 +5134,6 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 					}
 				}
 			}
-	#	}
 	}
 	set_drv_prop_if_empty $drv_handle reg $reg hexlist
 	set ip_name [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
@@ -5598,8 +5514,6 @@ proc remove_duplicates {ip_handle} {
 		if {[catch {set rt [dict get $dictval $temp]} msg]} {
 			dict append dictval $temp $prop
 		} else {
-			#puts "append for $temp prop $prop"
-			#dict append dictval $temp $prop
 		}
 
 	}
@@ -5619,7 +5533,6 @@ proc default_parameters {ip_handle {dont_generate ""}} {
 	proc_called_by
 	set par_handles [get_ip_conf_prop_list $ip_handle "CONFIG.*"]
 	set par_handles [remove_duplicates $ip_handle]
-#	set par_handles [lsort -unique $par_handles]
 	set valid_prop_names {}
 	foreach par $par_handles {
 		if {[is_ps_ip $ip_handle]} {
@@ -5692,9 +5605,6 @@ proc ps7_reset_handle {drv_handle reset_pram conf_prop} {
 			set drvname [get_drivers $drv_handle]
 
 			set common_file "$path/device_tree/data/config.yaml"
-			if {[file exists $common_file]} {
-		        	#error "file not found: $common_file"
-		    	}
 			set kernel_ver [get_user_config $common_file --kernel_ver]
 
 			switch -exact $kernel_ver {
@@ -5961,7 +5871,6 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	}
 
 	zynq_gen_pl_clk_binding $drv_handle
-	# generate mb ccf node
 	generate_mb_ccf_node $drv_handle
 	generate_cci_node $drv_handle $rt_node
 
@@ -5990,10 +5899,6 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 		}
 	}
 
-	# update rest of properties to dt node
-	foreach drv_prop_name $drv_dt_prop_list {
-	#	add_driver_prop $drv_handle $rt_node ${drv_prop_name}
-	}
 	return $rt_node
 }
 
@@ -6093,17 +5998,11 @@ proc get_axi_datawidth {val} {
 proc add_or_get_bus_node {ip_drv dts_file} {
 	proc_called_by
 	set bus_name [detect_bus_name $ip_drv]
-	if {[string match -nocase $bus_name "amba_pl: amba_pl"]} {
-#		set bus_name [create_node -n "amba_pl: amba_pl@" -p root -d $dts_file]
-	}
 	dtg_debug "bus_name: $bus_name"
 	dtg_debug "bus_label: $bus_name"
 	global env
 	set path $env(REPO)
 	set common_file "$path/device_tree/data/config.yaml"
-	if {[file exists $common_file]} {
-		#error "file not found: $common_file"
-	}
 	set dt_overlay [get_user_config $common_file --dt_overlay]
 	set proctype [get_hw_family]
 	if {[is_pl_ip $ip_drv] && $dt_overlay} {
@@ -6192,7 +6091,6 @@ proc gen_root_node {drv_handle} {
 			add_prop "${root_node}" "#address-cells" 2 int $default_dts
 			add_prop "${root_node}" "#size-cells" 2 int $default_dts
 			# no root_node required as zynqmp.dtsi
-			# set board_name [generate_board_compatible $root_node]
 			return 0
 		}
 		"psv_cortexa72" {
@@ -6206,13 +6104,7 @@ proc gen_root_node {drv_handle} {
 			create_ps_tree $psfile psdt
 			create_ps_tree $clkfile clkdt
 			set pstree 1
-
-			if {[file exists $common_file]} {
-       		 		#error "file not found: $common_file"
-    			}
 			set board_dts [get_user_config $common_file --board_dts]
-
-
 			global dtsi_fname
 			update_system_dts_include [file tail ${dtsi_fname}]
 			set overrides ""
@@ -6223,7 +6115,6 @@ proc gen_root_node {drv_handle} {
 			} else {
 				update_system_dts_include "versal-clk.dtsi"
 			}
-			#set board_name [generate_board_compatible $root_node]
 			add_prop $root_node "model" "xlnx,versal" string $default_dts
 			add_prop $root_node "#address-cells" 2 int $default_dts
 			add_prop $root_node "#size-cells" 2 int $default_dts
@@ -6329,7 +6220,6 @@ proc gen_cpu_nodes {drv_handle} {
 	}
 	gen_compatible_property $drv_handle
 	gen_mb_interrupt_property $drv_handle
-	#gen_drv_prop_from_ip $drv_handle
 
 	set default_dts [set_drv_def_dts $drv_handle]
 	set processor_type [get_property IP_NAME [hsi::get_cells -hier ${drv_handle}]]
@@ -6349,7 +6239,6 @@ proc gen_cpu_nodes {drv_handle} {
 
 	set drv_dt_prop_list [get_driver_conf_list $drv_handle]
         gen_drv_prop_from_ip $drv_handle
-	# generate mb ccf node
 	generate_mb_ccf_node $drv_handle
 	set bus_node [add_or_get_bus_node $drv_handle $default_dts]
 	set bus_label [lindex [split $bus_node ":"] 0]
@@ -6451,7 +6340,6 @@ proc gen_cpu_nodes {drv_handle} {
 				set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d ${default_dts} -p $bus_name]
 			}
 			set cpu_node [create_node -n "cpu" -l "ub${count}_cpu" -u 0 -d "pl.dtsi" -p $rt_node]
-			#set cpu_node [pldt insert root end "cpu@0"]
 		}
 		add_prop $cpu_node "bus-handle" $bus_label reference $default_dts
 		incr cpu_no
@@ -6577,8 +6465,6 @@ proc gen_dev_ccf_binding args {
 	# list of ip should have the clocks property
 	global bus_clk_list
 
-#	set sw_proc [get_sw_processor]
-#	set proc_ip [hsi::get_cells -hier $sw_proc]
 	set proctype [get_hw_family]
 	if {[regexp "kintex*" $proctype match]} {
 		set clk_refs ""
@@ -6959,7 +6845,6 @@ proc get_psu_interrupt_id { ip_name port_name } {
     }
 
     set intc_type [common::get_property IP_NAME $intc_periph]
-    #set proctype [get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]]
     if {[llength $intc_type] > 1} {
         foreach intr_cntr $intc_type {
             if { [is_ip_interrupting_current_proc $intr_cntr] } {
@@ -8158,12 +8043,10 @@ enechange"
 		set dts_file [set_drv_def_dts $ip]
 		set unit_addr [get_baseaddr ${ip} no_prefix]
 		if { ![string equal $unit_addr ""] } {
-			#break
 			return
 		}
 		set label $ip
 		set bus_node [detect_bus_name $ip]
-		#set bus_node [add_or_get_bus_node $ip $default_dts]
 		set dev_type [get_property IP_NAME [hsi::get_cell -hier [hsi::get_cells -hier $ip]]]
 		if {[llength $axis_ip]} {
 			set intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
@@ -8219,7 +8102,6 @@ proc gen_broadcaster {ip dts_file} {
         add_prop "$broad_node" "compatible" "$compatible" string $dts_file
         set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
         set broad 10
-        #set_os_parameter_value "broad" $broad
         set count 0
 	foreach intf $master_intf {
 		set connectip [get_connected_stream_ip [hsi::get_cells -hier $ip] $intf]
@@ -8342,12 +8224,6 @@ proc gen_broadcaster {ip dts_file} {
 }
 
 proc gen_broad_frmbuf_wr_node {connectip outip drv_handle ip dts_file} {
-#        set dt_overlay [get_property CONFIG.dt_overlay [get_os]]
-#        if {$dt_overlay} {
-#                set bus_node "overlay2"
-#        } else {
-#                set bus_node "amba_pl"
-#        }
 	 set bus_node [detect_bus_name $ip]
         set vcap [create_node -n vcap$drv_handle -p $bus_node -d $dts_file]
         add_prop $vcap "compatible" "xlnx,video" string $dts_file

@@ -141,9 +141,6 @@ proc generate {drv_handle} {
 	set intr_val [pldt get $node interrupts]
 	set intr_parent [pldt get interrupt-parent]
 	set intr_names [pldt get interrupt-names]
-#	set intr_val [get_property CONFIG.interrupts $drv_handle]
-#	set intr_parent [get_property CONFIG.interrupt-parent $drv_handle]
-#	set intr_names [get_property CONFIG.interrupt-names $drv_handle]
 
 	set mac0intr ""
 	set mac1intr ""

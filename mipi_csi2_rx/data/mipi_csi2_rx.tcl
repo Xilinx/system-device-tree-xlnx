@@ -75,8 +75,6 @@ proc generate {drv_handle} {
 
 	set port1_node [create_node -n "port" -l mipi_csi_port1$drv_handle -u 0 -p $ports_node -d $dts_file]
 	add_prop "$port1_node" "reg" 0 int $dts_file
-#        add_new_dts_param "${port1_node}" "/* Fill cfa-pattern=rggb for raw data types, other fields video-format,video-width user needs to fill */" "" comment
-#       add_new_dts_param "${port1_node}" "/* User need to add something like remote-endpoint=<&out> under the node csiss_in:endpoint */" "" comment
 add_prop "$port1_node" "xlnx,video-format" 12 int $dts_file
 add_prop "$port1_node" "xlnx,video-width" 8 int $dts_file
 add_prop "$port1_node" "xlnx,cfa-pattern" rggb string $dts_file
@@ -177,7 +175,6 @@ if {[llength $pixel_format]} {
 }
 }
 proc gen_frmbuf_node {outip drv_handle dts_file} {
-#        set dt_overlay [get_property CONFIG.dt_overlay [get_os]]
 set bus_node [detect_bus_name $drv_handle]
 set vcap [create_node -n "vcap_sdirx$drv_handle" -p $bus_node -d $dts_file]
 add_prop $vcap "compatible" "xlnx,video" string $dts_file
@@ -208,7 +205,6 @@ foreach pin $pins {
                                set periph [hsi::get_cells -of_objects $pin]
                                if {[llength $periph]} {
                                        set ip [get_property IP_NAME $periph]
-                                       #set proc_type [get_sw_proc_prop IP_NAME]
 					set proc_type [get_hw_family]
                                        if {[string match -nocase $proc_type "versal"] } {
                                                if {[string match -nocase $ip "versal_cips"]} {

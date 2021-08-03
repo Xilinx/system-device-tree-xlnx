@@ -26,9 +26,6 @@ proc generate {drv_handle} {
 	set drvname [get_drivers $drv_handle]
 
 	set common_file "$path/device_tree/data/config.yaml"
-	if {[file exists $common_file]} {
-		#error "file not found: $common_file"
-	}
 	set mainline_ker [get_user_config $common_file --mainline_kernel]
 
 	if {[string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_cortexr5"] || [string match -nocase $proctype "psv_pmc"]} {
