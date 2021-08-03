@@ -88,6 +88,7 @@ proc generate {drv_handle} {
 				append new_label $drv_handle "_" $core
 				append clk_label $drv_handle "_" $core
 				set eth_node [create_node -n "ethernet" -l "$new_label" -u $base_addr -d $dts_file -p $bus_node]
+				add_prop $eth_node "status" "okay" string $dts_file
 				generate_reg_property $eth_node $ip_mem_handles $core
 			}
 		}
@@ -822,6 +823,22 @@ proc generate_reg_property {node ip_mem_handles num} {
 	       set reg "$base $size"
        }
        add_prop $node "reg" $reg hexint "pl.dtsi"
+       set label [split $node ":"]
+       set label [lindex $label 0]
+       set design_handles [hsi::get_cells -hier]
+       if {[lsearch $design_handles $label] >= 0} {
+           return
+       }
+       set family [get_hw_family]
+       if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
+           set_memmap $label a53 $reg
+           set_memmap $label r5 $reg
+           set_memmap $label pmu $reg
+       } else {
+           set_memmap $label a53 $reg
+           set_memmap $label r5 $reg
+           set_memmap $label pmc $reg
+       }
 
 }
 
