@@ -21,7 +21,7 @@ proc generate {drv_handle} {
 	foreach n {0 1 2} {
 		set cs_en [get_property CONFIG.C_HAS_SS${n} $ip]
 		if {[string equal "1" $cs_en]} {
-			inc cs-num
+			incr cs-num
 		}
 	}
 	if {${cs-num} != 0} {
