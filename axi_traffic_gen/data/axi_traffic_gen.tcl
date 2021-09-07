@@ -65,6 +65,27 @@ proc generate {drv_handle} {
 	}
 
 	add_prop $node "xlnx,atg-mode-l2" $atg_mode_value_l2 int "pl.dtsi" 1
+	set axi_mode_name [get_property "CONFIG.C_AXIS_MODE" [hsi::get_cells -hier $drv_handle]]
+	set master_name [string match -nocase $axi_mode_name "Master Only"]
+	set slave_name [string match -nocase $axi_mode_name "Slave Only"]
+	set master_loop_name [string match -nocase $axi_mode_name "Master Loop back"]
+	set slave_loop_name [string match -nocase $axi_mode_name "Slave Loop back"]
+	if {$master_name == 1} {
+		set axi_mode_value 1
+	}
+	if {$slave_name == 1} {
+		set axi_mode_value 2
+	}
+	if {$master_loop_name == 1} {
+		set axi_mode_value 3
+	}
+	if {$slave_loop_name == 1} {
+		set axi_mode_value 4
+	}
+	if {[llength $axi_mode_name] == 0} {
+		set axi_mode_value 0
+	}
+	add_prop $node "xlnx,axis-mode" $axi_mode_value int "pl.dtsi" 1
 	set proc_type [get_hw_family]
 	# set up interrupt-names
 	set intr_list "irq_out err_out"
