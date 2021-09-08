@@ -1006,7 +1006,7 @@ proc generate_sdt {} {
 			source -notrace $proc_file
 			generate $procc
     			add_skeleton
-			set non_val_list "versal_cips noc_nmu noc_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat axis_tdest_editor util_reduced_logic noc_nsw axis_ila"
+			set non_val_list "versal_cips noc_nmu noc_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat axis_tdest_editor util_reduced_logic noc_nsw axis_ila pspmc psv_ocm_ram_0 psv_pmc_qspi_ospi"
 			set non_val_ip_types "MONITOR BUS PROCESSOR"
 			global duplist
     			foreach drv_handle $peri_list {
@@ -1050,7 +1050,7 @@ proc generate_sdt {} {
 				set driver_name [get_drivers $drv_handle]
 				gen_xppu $drv_handle
     			}
-			set non_val_list "psv_cortexa72 psu_cortexa53 ps7_cortexa9 versal_cips noc_nmu noc_nsu ila psu_iou_s noc_nsw"
+			set non_val_list "psv_cortexa72 psu_cortexa53 ps7_cortexa9 versal_cips noc_nmu noc_nsu ila psu_iou_s noc_nsw pspmc"
 			set non_val_ip_types "MONITOR BUS"
 			foreach drv_handle $peri_list {
 				set ip_name [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
@@ -1127,7 +1127,6 @@ proc generate_sdt {} {
     	update_alias $drv_handle
     	update_cpu_node $drv_handle
 	gen_r5_trustzone_config
-	gen_tcmbus
 	proc_mapping
         gen_cpu_cluster $drv_handle
 	set family [get_hw_family]
@@ -1515,6 +1514,9 @@ proc proc_mapping {} {
 				continue
 			}
 			if {[string match -nocase $iptype "psu_cortexr5"] && [string match -nocase $ipname "psu_acpu_gic"]} {
+				continue
+			}
+			if {[string match -nocase $ipname "psv_pmc_qspi_ospi"]} {
 				continue
 			}
 			if {[string match -nocase $ipname "psv_ipi"]} {
@@ -2098,7 +2100,6 @@ proc post_generate {os_handle} {
     delete_objs [get_dt_tree $zynq_soc_dt_tree]
     remove_empty_reference_node
     remove_main_memory_node
-    gen_tcmbus $os_handle
 }
 
 proc add_skeleton {} {
@@ -2198,7 +2199,7 @@ proc gen_cpu_cluster {os_handle} {
 		add_prop $cpu_node "#ranges-address-cells" "0x2" hexint $default_dts
 		global memmap
 		set values [dict keys $memmap]
-		set list_values "0x0 0xf0000000 &amba 0x0 0xf0000000 0x0 0x10000000>, \n\t\t\t      <0x0 0xffe00000 &tcm_bus 0x0 0x0 0x0 0x10000>, \n\t\t\t      <0x0 0xf9000000 &amba_apu 0x0 0xf9000000 0x0 0x80000>, \n\t\t\t      <0x0 0x0 &zynqmp_reset 0x0 0x0 0x0 0x0"
+		set list_values "0x0 0xf0000000 &amba 0x0 0xf0000000 0x0 0x10000000>, \n\t\t\t      <0x0 0xf9000000 &amba_apu 0x0 0xf9000000 0x0 0x80000>, \n\t\t\t      <0x0 0x0 &zynqmp_reset 0x0 0x0 0x0 0x0"
 		foreach val $values {
 			set temp [get_memmap $val a53]
 			set com_val [split $temp ","]
@@ -2226,7 +2227,7 @@ proc gen_cpu_cluster {os_handle} {
 		global memmap
 		set cnt 0
 		set values [dict keys $memmap]
-		set list_values "0x0 0xf0000000 &amba 0x0 0xf0000000 0x0 0x10000000>, \n\t\t\t     <0x0 0xffe00000 &tcm_bus 0x0 0xffe00000 0x0 0x10000>, \n\t\t\t      <0x0 0xf9000000 &amba_apu 0x0 0xf9000000 0x0 0x80000"
+		set list_values "0x0 0xf0000000 &amba 0x0 0xf0000000 0x0 0x10000000>, \n\t\t\t      <0x0 0xf9000000 &amba_apu 0x0 0xf9000000 0x0 0x80000"
 		foreach val $values {
 			set temp [get_memmap $val a53]
 			set com_val [split $temp ","]
@@ -2241,7 +2242,7 @@ proc gen_cpu_cluster {os_handle} {
 			}
 		}
 		add_prop $cpu_node "address-map" $list_values special $default_dts
-		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x260> , <&pmc_xppu 0x260> , <&lpd_xppu 0x261>, <&pmc_xppu 0x261> , <&pmc_xppu_npi 0x260> , <&pmc_xppu_npi 0x261" hexlist $default_dts
+		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x260> , <&lpd_xppu 0x261" hexlist $default_dts
     	}
 	if {[string match -nocase $proctype "versal"] } {
 		set cpu_node [create_node -l "cpus_r5" -n "cpus-r5" -u 3 -d ${default_dts} -p root]
@@ -2253,9 +2254,9 @@ proc gen_cpu_cluster {os_handle} {
 	add_prop $cpu_node "#ranges-address-cells" "0x1" hexint $default_dts
 	global memmap
 	set values [dict keys $memmap]
-	set list_values "0xf0000000 &amba 0xf0000000 0x10000000>, \n\t\t\t      <0x0 &tcm_bus 0xffe00000 0x100000>, \n\t\t\t      <0xf9000000 &amba_rpu 0xf9000000 0x3000"
+	set list_values "0xf0000000 &amba 0xf0000000 0x10000000>, \n\t\t\t      <0xf9000000 &amba_rpu 0xf9000000 0x3000"
     	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
-		set list_values "0xf0000000 &amba 0xf0000000 0x10000000>, \n\t\t\t      <0x0 &tcm_bus 0xffe00000 0x100000>, \n\t\t\t      <0xf9000000 &amba_rpu 0xf9000000 0x3000>, \n\t\t\t      <0x0 &zynqmp_reset 0x0 0x0"
+		set list_values "0xf0000000 &amba 0xf0000000 0x10000000>, \n\t\t\t      <0xf9000000 &amba_rpu 0xf9000000 0x3000>, \n\t\t\t      <0x0 &zynqmp_reset 0x0 0x0"
 	}
 
 	foreach val $values {
@@ -2275,7 +2276,7 @@ proc gen_cpu_cluster {os_handle} {
 	}
 	add_prop $cpu_node "address-map" $list_values special $default_dts
     	if {[string match -nocase $proctype "versal"] } {
-		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x200> , <&pmc_xppu 0x200> , <&lpd_xppu 0x204>, <&pmc_xppu 0x204> , <&pmc_xppu_npi 0x200> , <&pmc_xppu_npi 0x204" hexlist $default_dts
+		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x200> , <&lpd_xppu 0x204" hexlist $default_dts
 	} elseif {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
 		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x0> , <&lpd_xppu 0x10" hexlist $default_dts
 	}
@@ -2285,7 +2286,7 @@ proc gen_cpu_cluster {os_handle} {
 		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
 		add_prop $cpu_node "#ranges-size-cells" "0x1" hexint $default_dts
 	        add_prop "${cpu_node}" "#ranges-address-cells" "0x1" hexint $default_dts
-		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x247> , <&pmc_xppu 0x247> , <&pmc_xppu_npi 0x247" hexlist $default_dts
+		#add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x247> , <&pmc_xppu 0x247> , <&pmc_xppu_npi 0x247" hexlist $default_dts
 	} else {
         	set microblaze_node [create_node -l "cpus_microblaze_1" -n "cpus_microblaze" -u 1 -d ${default_dts} -p root]
 	        add_prop "${microblaze_node}" "compatible" "cpus,cluster" string $default_dts
@@ -2374,17 +2375,6 @@ proc gen_cpu_cluster {os_handle} {
 	}
 	}
 	
-}
-
-proc gen_tcmbus {} {
-    set default_dts "system-top.dts"
-    set tcmbus [create_node -n tcm_bus -l tcm_bus -d ${default_dts} -p root]
-    add_prop "${tcmbus}" "compatible" "simple-bus" string $default_dts
-    add_prop "${tcmbus}" "#size-cells" "0x1" hexlist $default_dts
-    add_prop "${tcmbus}" "#address-cells" "0x1" hexlist $default_dts
-    set tcm_child [create_node -n "tcm" -u "ffe00000" -d ${default_dts} -p $tcmbus]
-    add_prop $tcm_child "compatible" "mmiio-sram" string $default_dts
-    add_prop $tcm_child "reg" "0xffe00000 0x10000" hexlist $default_dts
 }
 
 proc update_cpu_node {os_handle} {
@@ -2646,7 +2636,28 @@ proc gen_xppu {drv_handle} {
 	set baseaddr [get_baseaddr $drv_handle noprefix]
 	set xppu [dict create]
 	set family [get_hw_family]
+
 	if {[string match -nocase $family "versal"] && [is_ps_ip $drv_handle]} {
+
+		dict set xppu	FF200000	addr	xmpu_pmc
+		dict set xppu	FD4D0000	addr	xmpu_fpd
+		dict set xppu	FD390000	addr	xmpu_fpd
+		dict set xppu	FD800000	addr	xmpu_fpd
+		dict set xppu	A4000000	addr	xmpu_fpd
+		dict set xppu	B0000000	addr	xmpu_fpd
+		dict set xppu	80000000	addr	xmpu_fpd
+		dict set xppu	FD5C0000	addr	xmpu_fpd
+		dict set xppu	FD000000	addr	xmpu_fpd
+		dict set xppu	FD1A0000	addr	xmpu_fpd
+		dict set xppu	FD360000	addr	xmpu_fpd
+		dict set xppu	FD380000	addr	xmpu_fpd
+		dict set xppu	FD5E0000	addr	xmpu_fpd
+		dict set xppu	FD5F0000	addr	xmpu_fpd
+		dict set xppu	FD610000	addr	xmpu_fpd
+		dict set xppu	FD690000	addr	xmpu_fpd
+		dict set xppu	FD700000	addr	xmpu_fpd
+		dict set xppu	F9000000	addr	xmpu_fpd
+		dict set xppu	FFFC0000	addr	xmpu_ocm
 		dict set xppu	FF980000	addr	lpd
 		dict set xppu	FF990000	addr	lpd
 		dict set xppu	FFA80000	addr	lpd
@@ -2671,26 +2682,19 @@ proc gen_xppu {drv_handle} {
 		dict set xppu	FF510000	addr	lpd
 		dict set xppu	FF540000	addr	lpd
 		dict set xppu	FF520000	addr	lpd
-		dict set xppu	80000000	addr	lpd
 		dict set xppu	400000000	addr	lpd
 		dict set xppu	40000000000	addr	lpd
 		dict set xppu	FE600000	addr	lpd
 		dict set xppu	FCFF0000	addr	lpd
-		dict set xppu	F9000000	addr	lpd
 		dict set xppu	F8000000	addr	lpd
-		dict set xppu	FD000000	addr	lpd
-		dict set xppu	A4000000	addr	lpd
 		dict set xppu	A8000000	addr	lpd
-		dict set xppu	B0000000	addr	lpd
 		dict set xppu	FF9D0000	addr	lpd
 		dict set xppu	FF9E0000	addr	lpd
 		dict set xppu	FE200000	addr	lpd
-		dict set xppu	FF200000	addr	lpd
 		dict set xppu	FE000000	addr	lpd
 		dict set xppu	FF000000	addr	lpd
 		dict set xppu	FFC00000	addr	lpd
 		dict set xppu	FF300000	addr	lpd
-		dict set xppu	FFFC0000	addr	lpd
 		dict set xppu	FE800000	addr	lpd
 		dict set xppu	FFE40000	addr	lpd
 		dict set xppu	FFE00000	addr	lpd
@@ -2707,7 +2711,6 @@ proc gen_xppu {drv_handle} {
 		dict set xppu	FC800000	addr	lpd
 		dict set xppu	FC000000	addr	lpd
 		dict set xppu	F0000000	addr	lpd
-		dict set xppu	C0000000	addr	pmc
 		dict set xppu	FB000000	addr	lpd
 		dict set xppu	E0000000	addr	lpd
 		dict set xppu	100000000	addr	lpd
@@ -2761,7 +2764,7 @@ proc gen_xppu {drv_handle} {
 		dict set xppu	F1230000	addr	pmc
 		dict set xppu	F12F0000	addr	pmc
 		dict set xppu	F1310000	addr	pmc
-		dict set xppu	F1300000	addr	npi
+		dict set xppu	F1300000	addr	pmc
 		dict set xppu	F12B0000	addr	pmc
 		dict set xppu	F12E0000	addr	pmc
 		dict set xppu	F12C0000	addr	pmc
@@ -2796,24 +2799,12 @@ proc gen_xppu {drv_handle} {
 		dict set xppu	4000000000	addr	pmc
 		dict set xppu	1C000000000	addr	pmc
 		dict set xppu	F1320000	addr	pmc
-		dict set xppu	FD360000	addr	lpd
-		dict set xppu	FD380000	addr	lpd
-		dict set xppu	FD5C0000	addr	lpd
-		dict set xppu	FD1A0000	addr	lpd
 		dict set xppu	FD2C0000	addr	lpd
 		dict set xppu	FD1C0000	addr	lpd
 		dict set xppu	FD280000	addr	lpd
 		dict set xppu	FD200000	addr	lpd
 		dict set xppu	FD370000	addr	lpd
-		dict set xppu	FD390000	addr	lpd
-		dict set xppu	FD5E0000	addr	lpd
-		dict set xppu	FD5F0000	addr	lpd
-		dict set xppu	FD4D0000	addr	lpd
-		dict set xppu	FD610000	addr	lpd
-		dict set xppu	FD690000	addr	lpd
-		dict set xppu	FD700000	addr	lpd
 		dict set xppu	AC000000	addr	lpd
-		dict set xppu	FD800000	addr	lpd
 		dict set xppu	FFF00000	addr	lpd
 		dict set xppu	FD620000	addr	lpd
 		dict set xppu	380000		addr	lpd
@@ -3034,7 +3025,6 @@ proc gen_xppu {drv_handle} {
 		dict set xppu	FFFA0000	addr	lpd
 		dict set xppu	FFFB0000	addr	lpd
 		dict set xppu	FFFD0000	addr	lpd
-		dict set xppu	FFFE0000	addr	lpd
 		dict set xppu	FFFF0000	addr	lpd
 		dict set xppu	FE100000	addr	lpd
 		dict set xppu	FE300000	addr	lpd
@@ -3562,6 +3552,15 @@ proc gen_xppu {drv_handle} {
 		}
 		if {[string match -nocase $tmp "npi"]} {
 			set prop "pmc_xppu_npi"
+		}
+		if {[string match -nocase $tmp "xmpu_pmc"]} {
+			set prop "pmc_xmpu"
+		}
+		if {[string match -nocase $tmp "xmpu_fpd"]} {
+			set prop "fpd_xmpu"
+		}
+		if {[string match -nocase $tmp "xmpu_ocm"]} {
+			set prop "ocm_xmpu"
 		}
 		
 		if {![string match -nocase $tmp ""]} {

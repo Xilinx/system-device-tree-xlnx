@@ -5355,6 +5355,7 @@ proc gen_compatible_property {drv_handle} {
 	if {$unit_addr == "-1"} {
 		return 0
 	}
+	set tcm_addresses "ffe00000 ffe10000 ffe20000 ffe30000 ffe90000 ffeb0000"
 	set ps_mapping [gen_ps_mapping]
 	if {[catch {set tmp [dict get $ps_mapping $unit_addr label]} msg]} {
 	} else {
@@ -5408,6 +5409,10 @@ proc gen_compatible_property {drv_handle} {
 			set node [get_node $drv_handle]
 			pldt append $node compatible "\ \, \"xlnx,dfx-axi-shutdown-manager-1.00\""
 			pldt append $node compatible "\ \, \"xlnx,dfx-axi-shutdown-manager\""
+		}
+		if {[lsearch -nocase $tcm_addresses $unit_addr] >= 0} {
+			set node [get_node $drv_handle]
+			pcwdt append $node compatible "\ \, \"mmio-sram\""
 		}
 	}
 

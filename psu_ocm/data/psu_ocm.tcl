@@ -141,7 +141,6 @@ proc generate {drv_handle} {
 		set comp_prop "xlnx,${name}-${ver}"
 	}
 	regsub -all {_} $comp_prop {-} comp_prop
-	set_drv_prop_if_empty $drv_handle compatible $comp_prop stringlist
 
 	add_prop "${memory_node}" "compatible" $comp_prop string "system-top.dts"
 	systemdt append $memory_node compatible "\ \, \"mmio-sram\""

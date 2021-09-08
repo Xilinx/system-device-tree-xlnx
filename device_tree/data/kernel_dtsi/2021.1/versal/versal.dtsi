@@ -18,6 +18,7 @@
 	cpus_a72: cpus-a72@0 {
 		#address-cells = <1>;
 		#size-cells = <0>;
+		base-address = <0x0 0xfd5c0000 0x0 0x10000>;
 
 		a72_cpu0: cpu@0 {
 			compatible = "arm,cortex-a72", "arm,armv8";
@@ -75,6 +76,7 @@
 	cpus_r5: cpus-r5@3 {
 		#address-cells = <1>;
 		#size-cells = <0>;
+		base-address = <0x0 0xff9a0000 0x0 0x10000>;
                 r5_cpu0: cpu@0 {
                         compatible = "arm,cortex-r5";
                         device_type = "cpu";
