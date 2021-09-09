@@ -1559,8 +1559,6 @@
         ipi3: ipi@ff330000 {
                 status = "disabled";
                 compatible = "xlnx,zynqmp-ipi-mailbox";
-                interrupt-parent = <&imux>;
-                interrupts = <0 29 4>;
                 reg = <0x0 0xff330000 0x0 0x20>;
                 xlnx,ipi-bitmask = <0x10000>;
                 xlnx,ipi-id = <7>;
@@ -1602,8 +1600,6 @@
         ipi4: ipi@ff331000 {
                 status = "disabled";
                 compatible = "xlnx,zynqmp-ipi-mailbox";
-                interrupt-parent = <&imux>;
-                interrupts = <0 30 4>;
                 reg = <0x0 0xff331000 0x0 0x20>;
                 xlnx,ipi-bitmask = <0x20000U>;
                 xlnx,ipi-id = <7>;
@@ -1646,8 +1642,6 @@
         ipi5: ipi@ff332000 {
                 compatible = "xlnx,zynqmp-ipi-mailbox";
                 status = "disabled";
-                interrupt-parent = <&imux>;
-                interrupts = <0 31 4>;
                 reg = <0x0 0xff332000 0x0 0x20>;
                 xlnx,ipi-bitmask = <0x40000>;
                 xlnx,ipi-id = <7>;
@@ -1690,8 +1684,6 @@
         ipi6: ipi@ff333000 {
                 status = "disabled";
                 compatible = "xlnx,zynqmp-ipi-mailbox";
-                interrupt-parent = <&imux>;
-                interrupts = <0 32 4>;
                 reg = <0x0 0xff333000 0x0 0x20>;
                 xlnx,ipi-bitmask = <0x80000>;
                 xlnx,ipi-id = <7>;
@@ -1729,6 +1721,179 @@
                         xlnx,ipi-bitmask = <0x80000>;
                 };
         };
+
+        ipi7: ipi@ff340000 {
+                status = "disabled";
+                compatible = "xlnx,zynqmp-ipi-mailbox";
+                interrupt-parent = <&imux>;
+                interrupts = <0 29 4>;
+                reg = <0x0 0xff340000 0x0 0x20>;
+                xlnx,ipi-bitmask = <0x1000000>;
+                xlnx,ipi-id = <3>;
+                #address-cells = <2>;
+                #size-cells = <2>;
+                xlnx,ipi-target-count = <7>;
+                u-boot,dm-pre-reloc;
+                ranges;
+                ipi7_0: mailbox@0 {
+                        xlnx,ipi-id = <2>;
+                        xlnx,ipi-bitmask = <0x1>;
+                };
+                ipi7_1: mailbox@1 {
+                        xlnx,ipi-id = <0>;
+                        xlnx,ipi-bitmask = <0x100>;
+                };
+                ipi7_2: mailbox@2 {
+                        xlnx,ipi-id = <1>;
+                        xlnx,ipi-bitmask = <0x200>;
+                };
+                ipi7_3: mailbox@3 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x10000>;
+                };
+                ipi7_4: mailbox@4 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x20000>;
+                };
+                ipi7_5: mailbox@5 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x40000>;
+                };
+                ipi7_6: mailbox@6 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x80000>;
+                };
+        };
+
+        ipi8: ipi@ff350000 {
+                status = "disabled";
+                compatible = "xlnx,zynqmp-ipi-mailbox";
+                interrupt-parent = <&imux>;
+                interrupts = <0 30 4>;
+                reg = <0x0 0xff350000 0x0 0x20>;
+                xlnx,ipi-bitmask = <0x2000000>;
+                xlnx,ipi-id = <4>;
+                #address-cells = <2>;
+                #size-cells = <2>;
+                xlnx,ipi-target-count = <7>;
+                u-boot,dm-pre-reloc;
+                ranges;
+                ipi8_0: mailbox@0 {
+                        xlnx,ipi-id = <2>;
+                        xlnx,ipi-bitmask = <0x1>;
+                };
+                ipi8_1: mailbox@1 {
+                        xlnx,ipi-id = <0>;
+                        xlnx,ipi-bitmask = <0x100>;
+                };
+                ipi8_2: mailbox@2 {
+                        xlnx,ipi-id = <1>;
+                        xlnx,ipi-bitmask = <0x200>;
+                };
+                ipi8_3: mailbox@3 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x10000>;
+                };
+                ipi8_4: mailbox@4 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x20000>;
+                };
+                ipi8_5: mailbox@5 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x40000>;
+                };
+                ipi8_6: mailbox@6 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x80000>;
+                };
+        };
+
+        ipi9: ipi@ff360000 {
+                status = "disabled";
+                compatible = "xlnx,zynqmp-ipi-mailbox";
+                interrupt-parent = <&imux>;
+                interrupts = <0 31 4>;
+                reg = <0x0 0xff360000 0x0 0x20>;
+                xlnx,ipi-bitmask = <0x4000000>;
+                xlnx,ipi-id = <5>;
+                #address-cells = <2>;
+                #size-cells = <2>;
+                xlnx,ipi-target-count = <7>;
+                u-boot,dm-pre-reloc;
+                ranges;
+                ipi9_0: mailbox@0 {
+                        xlnx,ipi-id = <2>;
+                        xlnx,ipi-bitmask = <0x1>;
+                };
+                ipi9_1: mailbox@1 {
+                        xlnx,ipi-id = <0>;
+                        xlnx,ipi-bitmask = <0x100>;
+                };
+                ipi9_2: mailbox@2 {
+                        xlnx,ipi-id = <1>;
+                        xlnx,ipi-bitmask = <0x200>;
+                };
+                ipi9_3: mailbox@3 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x10000>;
+                };
+                ipi9_4: mailbox@4 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x20000>;
+                };
+                ipi9_5: mailbox@5 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x40000>;
+                };
+                ipi9_6: mailbox@6 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x80000>;
+                };
+        };
+
+        ipi10: ipi@ff370000 {
+                status = "disabled";
+                compatible = "xlnx,zynqmp-ipi-mailbox";
+                interrupt-parent = <&imux>;
+                interrupts = <0 32 4>;
+                reg = <0x0 0xff370000 0x0 0x20>;
+                xlnx,ipi-bitmask = <0x8000000>;
+                xlnx,ipi-id = <6>;
+                #address-cells = <2>;
+                #size-cells = <2>;
+                xlnx,ipi-target-count = <7>;
+                u-boot,dm-pre-reloc;
+                ranges;
+                ipi10_0: mailbox@0 {
+                        xlnx,ipi-id = <2>;
+                        xlnx,ipi-bitmask = <0x1>;
+                };
+                ipi10_1: mailbox@1 {
+                        xlnx,ipi-id = <0>;
+                        xlnx,ipi-bitmask = <0x100>;
+                };
+                ipi10_2: mailbox@2 {
+                        xlnx,ipi-id = <1>;
+                        xlnx,ipi-bitmask = <0x200>;
+                };
+                ipi10_3: mailbox@3 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x10000>;
+                };
+                ipi10_4: mailbox@4 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x20000>;
+                };
+                ipi10_5: mailbox@5 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x40000>;
+                };
+                ipi10_6: mailbox@6 {
+                        xlnx,ipi-id = <7>;
+                        xlnx,ipi-bitmask = <0x80000>;
+                };
+        };
+
         amba_xppu: indirect-bus@1 {
                 compatible = "indirect-bus";
                 #address-cells = <0x2>;
