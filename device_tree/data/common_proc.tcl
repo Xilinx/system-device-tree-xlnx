@@ -3168,8 +3168,8 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping ff010000 label "uart1: serial"
 		dict set def_ps_mapping fe200000 label "dwc3_0: dwc3"
 		dict set def_ps_mapping fe300000 label "dwc3_1: dwc3"
-		dict set def_ps_mapping ff9e0000 label "usb0: usb"
-		dict set def_ps_mapping ff9d0000 label "usb1: usb"
+		dict set def_ps_mapping ff9e0000 label "usb1: usb"
+		dict set def_ps_mapping ff9d0000 label "usb0: usb"
 		dict set def_ps_mapping ff150000 label "lpd_watchdog: watchdog"
 		dict set def_ps_mapping fd4d0000 label "watchdog0: watchdog"
 		dict set def_ps_mapping 43c00000 label dp

@@ -1128,11 +1128,14 @@ proc generate_sdt {} {
     	update_cpu_node $drv_handle
 	gen_r5_trustzone_config
 	proc_mapping
+    	update_chosen
         gen_cpu_cluster $drv_handle
 	set family [get_hw_family]
 	if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
 		set reset_node [create_node -n "&zynqmp_reset" -p root -d "pcw.dtsi"]
 		add_prop $reset_node "status" "okay" string "pcw.dtsi"
+		set pinctrl_node [create_node -n "&pinctrl0" -p root -d "pcw.dtsi"]
+		add_prop $pinctrl_node "status" "okay" string "pcw.dtsi"
 	}
 	set dir [get_user_config $common_file --dir]
 	if [catch { set retstr [file mkdir $dir] } errmsg] {
@@ -2112,30 +2115,20 @@ proc add_skeleton {} {
 	set chosen_node [create_node -n "chosen" -p root -d $default_dts]
 }
 
-proc update_chosen {os_handle} {
+proc update_chosen {} {
 	set default_dts "system-top.dts"
     	set chosen_node [create_node -n "chosen" -d ${default_dts} -p root]
 
 	set bootargs ""
     	if {[llength $bootargs]} {
-        	append bootargs " earlycon"
+        	append bootargs "earlycon console=ttyPS0,115200 clk_ignore_unused init_fatal_sh=1"
     	} else {
-		set bootargs "earlycon"
+		set bootargs "earlycon console=ttyPS0,115200 clk_ignore_unused init_fatal_sh=1"
     	}
 	set family [get_hw_family]
-    	if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"] || \
-		[string match -nocase $family "versal"]} {
-		if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
-		}
+    	if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
+    		add_prop $chosen_node "bootargs" $bootargs string $default_dts
     	}
-    	add_prop $chosen_node "bootargs" $bootargs string $default_dts
-     	set consoleip "none"
-    	if {![string match -nocase $consoleip "none"]} {
-         	set consoleip [ps_node_mapping $consoleip label]
-         	set index [string first "," $console]
-         	set baud [string range $console [expr $index + 1] [string length $console]]
-		add_prop $chosen_node "stdout-path" "serial0:${baud}n8" string $default_dts
-   	}
 }
 
 proc gen_cpu_cluster {os_handle} {
@@ -2199,7 +2192,7 @@ proc gen_cpu_cluster {os_handle} {
 		add_prop $cpu_node "#ranges-address-cells" "0x2" hexint $default_dts
 		global memmap
 		set values [dict keys $memmap]
-		set list_values "0x0 0xf0000000 &amba 0x0 0xf0000000 0x0 0x10000000>, \n\t\t\t      <0x0 0xf9000000 &amba_apu 0x0 0xf9000000 0x0 0x80000>, \n\t\t\t      <0x0 0x0 &zynqmp_reset 0x0 0x0 0x0 0x0"
+		set list_values "0x0 0xf0000000 &amba 0x0 0xf0000000 0x0 0x10000000>, \n\t\t\t      <0x0 0xf9000000 &amba_apu 0x0 0xf9000000 0x0 0x80000>, \n\t\t\t      <0x0 0x0 &zynqmp_reset 0x0 0x0 0x0 0x0>, \n\t\t\t      <0x0 0x0 &pinctrl0 0x0 0x0 0x0 0x0"
 		foreach val $values {
 			set temp [get_memmap $val a53]
 			set com_val [split $temp ","]
