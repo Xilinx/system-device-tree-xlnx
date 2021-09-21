@@ -2465,6 +2465,24 @@ proc update_alias {os_handle} {
 		}
 	}
 
+	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+		set ps_uarts [hsi::get_cells -hier -filter {IP_NAME==psu_uart}]
+	} elseif {[string match -nocase $proctype "versal"]} {
+		set ps_uarts [hsi::get_cells -hier -filter {IP_NAME==psv_sbsauart}]
+	}
+
+        if {[llength $ps_uarts] >= 2} {
+		set uart_address "ff000000 ff010000"
+                set addr [get_baseaddr [lindex $ps_uarts 0] noprefix]
+                set pos [lsearch $uart_address $addr]
+                set list_pos1 [lsearch $all_drivers [lindex $ps_uarts 0]]
+                set list_pos2 [lsearch $all_drivers [lindex $ps_uarts 1]]
+                if {$pos == 1} {
+                        set all_drivers [lreplace $all_drivers $list_pos1 $list_pos1 [lindex $ps_uarts 1]]
+                        set all_drivers [lreplace $all_drivers $list_pos2 $list_pos2 [lindex $ps_uarts 0]]
+                }
+        }
+
 	foreach drv_handle $all_drivers {
 		if {[lsearch $design_pluarts $drv_handle] >= 0} {
 			continue
