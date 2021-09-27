@@ -36,7 +36,7 @@ proc generate {drv_handle} {
 	if {![string_is_empty $output_names]} {
 		add_prop $node "clock-output-names" $output_names string "pl.dtsi"
 	}
-
+	add_prop $node "#clock-cells" 1 int "pl.dtsi"
 
 	set family [get_hw_family]
 	if {[regexp "kintex*" $family match]} {
