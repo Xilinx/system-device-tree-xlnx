@@ -32,7 +32,8 @@ proc generate {drv_handle} {
 	} elseif {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
 	}
 	  foreach ams_name ${ams_list} {
-		add_prop $node "status" "okay" string $dts
+		set node [create_node -n "&${ams_name}" -p root -d "pcw.dtsi"]
+		add_prop $node "status" "okay" string "pcw.dtsi"
 	  }
     }
 }
