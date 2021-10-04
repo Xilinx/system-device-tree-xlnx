@@ -72,6 +72,7 @@ proc generate_secure_memory {drv_handle} {
     set a53 0
     set pmu 0
     set slave [hsi::get_cells -hier ${drv_handle}]
+    set name [get_property NAME [hsi::get_cells -hier $drv_handle]]
     set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
     foreach procc $proclist {
     set ip_mem_handles [hsi::get_mem_ranges $slave]
@@ -108,6 +109,10 @@ proc generate_secure_memory {drv_handle} {
 		set base [get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
 		set high [get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
 		set mem_size [format 0x%x [expr {${high} - ${base} + 1}]]
+		if {[string match -nocase $name "psu_r5_ddr_0"]} {
+                        set mem_size $high
+                }
+
 		if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 		    set addr_64 "1"
 		    set temp $base
