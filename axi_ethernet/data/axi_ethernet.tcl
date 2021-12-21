@@ -397,6 +397,7 @@ proc generate {drv_handle} {
 						set eth_clks [string trimleft $eth_clks "&"]
 						set eth_clk_names [split $eth_clk_names " , "]
 						set eth_clkname_len [llength $eth_clk_names]
+						set temp ""
 						for {set i 0 } {$i < $eth_clkname_len} {incr i} {
 							set trimvar [lindex $eth_clk_names $i]
 							set trimvar [string trimright $trimvar "\""]
@@ -449,7 +450,7 @@ proc generate {drv_handle} {
 						if {[llength $dclk]} {	
 							append clknames "$core_clk_0 " "$dclk " "$axi_aclk_0"
 						} else {
-							append clknames "$core_clk_0" "$axi_aclk_0"
+							append clknames "$core_clk_0 " "$axi_aclk_0"
 						}		
 						append clknames1 " $clknames" " $clk_names"
 						set index0 [lindex $clk_list $axi_index_0]
@@ -463,9 +464,9 @@ proc generate {drv_handle} {
 					}
 					if {$ip_name == "xxv_ethernet" && $core == 1 && [llength $eth_node]} {
 						if {[llength $dclk]} {
-							append clknames1 "$core_clk_1" "$dclk" "$axi_aclk_1"
+							append clknames1 "$core_clk_1 " "$dclk " "$axi_aclk_1"
 						} else {
-							append clknames1 "$core_clk_1" "$axi_aclk_1"
+							append clknames1 "$core_clk_1 " "$axi_aclk_1"
 						}
 						append clk_names1 " $clknames1" " $clk_names"
 						set index1 [lindex $clk_list $axi_index_1]
@@ -474,9 +475,9 @@ proc generate {drv_handle} {
 						regsub -all " " $ini1 "" ini1
 						regsub -all "\<&||\t" $ini1 {} ini1
 						if {[llength $dclk]} {
-							append clkvals1  "$ini1, [lindex $clk_list $dclk_index], $index1>, <&$clks"
+							append clkvals1  "$ini1, [lindex $clk_list $dclk_index], $index1>, $clks"
 						} else {
-							append clkvals1  "$ini1, $index1>, <&$clks"
+							append clkvals1  "$ini1, $index1>, $clks"
 						}
 						add_prop "${eth_node}" "clocks" $clkvals1 reference "pl.dtsi"
 						add_prop "${eth_node}" "clock-names" $clk_names1 stringlist "pl.dtsi"
@@ -485,9 +486,9 @@ proc generate {drv_handle} {
 					}
 					if {$ip_name == "xxv_ethernet" && $core == 2 && [llength $eth_node]} {
 						if {[llength $dclk]} {
-							append clknames2 "$core_clk_2" "$dclk" "$axi_aclk_2"
+							append clknames2 "$core_clk_2 " "$dclk " "$axi_aclk_2"
 						} else {
-							append clknames2 "$core_clk_2" "$axi_aclk_2"
+							append clknames2 "$core_clk_2 " "$axi_aclk_2"
 						}
 						append clk_names2 " $clknames2" " $clk_names"
 						set index2 [lindex $clk_list $axi_index_2]
@@ -508,9 +509,9 @@ proc generate {drv_handle} {
 					}
 					if {$ip_name == "xxv_ethernet" && $core == 3 && [llength $eth_node]} {
 						if {[llength $dclk]} {
-							append clknames3 "$core_clk_3" "$dclk" "$axi_aclk_3"
+							append clknames3 "$core_clk_3 " "$dclk " "$axi_aclk_3"
 						} else {
-							append clknames3 "$core_clk_3" "$axi_aclk_3"
+							append clknames3 "$core_clk_3 " "$axi_aclk_3"
 						}
 						append  clk_names3 " $clknames3" " $clk_names"
 						set index3 [lindex $clk_list $axi_index_3]
