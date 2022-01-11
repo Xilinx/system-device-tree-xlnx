@@ -39,15 +39,17 @@ proc Pop {varname {nth 0}} {
 }
 
 proc print_usage args {
-	puts "Usage: set/get_dt_param \[OPTION\]"
-	puts "\r\t--repo\t		system device tree repo source"
-	puts "\r\t--xsa\t		Vivado hw design file"
-	puts "\r\t--board_dts		board specific file"
-	puts "\r\t--mainline_kernel	mainline kernel version"
-	puts "\r\t--kernel_ver		kernel version"
-	puts "\r\t--dir\t		Directory where the dt files will be generated"
-	puts "\r\t--debug		Enable DTG++ debug"
-	puts "\r\t--trace		Enable DTG++ traces"
+        set help_str { 
+            Usage: set/get_dt_param \[OPTION\]
+            --repo             system device tree repo source
+            --xsa              Vivado hw design file
+            --board_dts        board specific file
+            --mainline_kernel  mainline kernel version
+            --kernel_ver       kernel version
+            --dir              Directory where the dt files will be generated
+            --debug            Enable DTG++ debug
+            --trace            Enable DTG++ traces} 
+        return $help_str
 }
 
 proc set_dt_param args {
@@ -55,7 +57,8 @@ proc set_dt_param args {
         set param [lindex $args 0]
         set val [lindex $args 1]
         set xsa ""
-        set repo ""
+        set sdt_path $env(XILINX_VITIS)
+        set env(REPO) $sdt_path/data/system-device-tree-xlnx/
         set board ""
         set dt_overlay ""
         set mainline_kernel ""
@@ -70,11 +73,9 @@ proc set_dt_param args {
 		if {[string match -nocase [lindex $args 1] ""] && ![string match -nocase [lindex $args 0] "--help"]} {
 			puts "invalid value for [lindex $args 0]"
 			print_usage
-			return
 		}
        	         switch -glob -- [lindex $args 0] {
        	                --force {set force_create 1}
-                        --repo {set env(REPO) [Pop args 1]}
                         --xsa {set env(xsa) [Pop args 1]}
                         --board_dts {set env(board) [Pop args 1]}
                         --dt_overlay {set env(dt_overlay) [Pop args 1]}
@@ -126,10 +127,13 @@ proc get_dt_param args {
 			}
                } --dt_zocl {
                        if {[catch {set val $env(dt_zocl)} msg ]} {}
-	       } --help { print_usage 
+	       } --help { 
+		       set val [print_usage] 
+               } -help {
+	               set val [print_usage] 
                } default {
-                        puts "unknown option $param"
-			print_usage
+                       puts "unknown option $param"
+                       set val [print_usage]
                }
        }
 
@@ -938,6 +942,13 @@ proc gen_zynqmp_pinctrl {} {
 
 
 proc generate_sdt {} {
+        if {[llength $args]!= 0} {
+                set help_string "sdtgen generate_sdt
+Generates system device tree based on args given in:
+\tsdtgen set_dt_param --board <board file> --dir <output directory path> --xsa <xsa file>"
+
+                return $help_string
+        } 
 
 	global env
 	set path $env(REPO)
