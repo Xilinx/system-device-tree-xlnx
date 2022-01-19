@@ -6,7 +6,13 @@
 #ifndef _DT_BINDINGS_ZYNQMP_POWER_H
 #define _DT_BINDINGS_ZYNQMP_POWER_H
 
-#define		PD_USB_0	22
+#define 	NODE_APU_0      2U
+#define 	NODE_APU_1      3U
+#define 	NODE_APU_2      4U
+#define 	NODE_APU_3      5U
+#define 	NODE_RPU_0      7U
+#define 	NODE_RPU_1      8U
+#define	        PD_USB_0	22
 #define		PD_USB_1	23
 #define		PD_TTC_0	24
 #define		PD_TTC_1	25

@@ -6,6 +6,10 @@
 #ifndef _DT_BINDINGS_VERSAL_POWER_H
 #define _DT_BINDINGS_VERSAL_POWER_H
 
+#define PM_DEV_ACPU_0				(0x1810c003U)
+#define PM_DEV_ACPU_1				(0x1810c004U)
+#define PM_DEV_RPU0_0				(0x18110005U)
+#define PM_DEV_RPU0_1				(0x18110006U)
 #define PM_POWER_PMC				(0x4208001U)
 #define PM_POWER_LPD				(0x4210002U)
 #define PM_POWER_FPD				(0x420c003U)

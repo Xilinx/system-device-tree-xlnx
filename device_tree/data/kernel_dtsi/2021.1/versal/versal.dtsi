@@ -27,6 +27,7 @@
 			operating-points-v2 = <&cpu_opp_table>;
 			reg = <0>;
 			cpu-idle-states = <&CPU_SLEEP_0>;
+                        power-domains = <&versal_firmware 0x18110003>;
 		};
 
 		a72_cpu1: cpu@1 {
@@ -36,6 +37,7 @@
 			operating-points-v2 = <&cpu_opp_table>;
 			reg = <1>;
 			cpu-idle-states = <&CPU_SLEEP_0>;
+                        power-domains = <&versal_firmware 0x18110004>;
 		};
 		idle-states {
 			entry-method = "psci";
@@ -82,6 +84,7 @@
                         device_type = "cpu";
                         reg = <0x4>;
                         operating-points-v2 = <&cpu_opp_table>;
+                        power-domains = <&versal_firmware 0x18110005>;
                 };
 
                 r5_cpu1: cpu@1 {
@@ -89,6 +92,7 @@
                         device_type = "cpu";
                         reg = <0x5>;
                         operating-points-v2 = <&cpu_opp_table>;
+                        power-domains = <&versal_firmware 0x18110006>;
                 };
 	};
 
