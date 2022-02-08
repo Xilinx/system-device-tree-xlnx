@@ -31,28 +31,22 @@ The generated dts has the following files.
 ## DTS generation
 			
 ```bash
-Repository setup
-----------------
-	linux# git clone https://gitenterprise.xilinx.com/decoupling/system-device-tree-xlnx.git
-
-	Change the directory to the cloned tree system-device-tree.
-	linux# cd system-device-tree-xlnx
-
-Vivado Setup:
+XSCT Setup:
 -------------
-	Setup the Vivado tool and launch the Vivado in tcl mode
-	linux# vivado -mode tcl
+        Launch XSCT tool
+        linux# xsct
 
+Once xsct launched, at xsct prompt enter sdtgen commands as hown below for
+generating system device tree.
 SDT Command:
 ------------
-	Vivado% source -notrace device_tree/data/device_tree.tcl
-	Vivado% set_dt_param --board_dts <board file> --dir <directory name>
-		--xsa <Vivado XSA file>
+	xsct% sdtgen set_dt_param -board_dts <board file> -dir <directory name>
+		-xsa <Vivado XSA file>
 	Ex:
-	Vivado% set_dt_param --board_dts versal-vck190-reva --dir sdt
-		--xsa design_1_wrapper.xsa
-	Vivado% generate_sdt
-	Vivado% ls sdt/
+	xsct% sdtgen set_dt_param -board_dts versal-vck190-reva -dir sdt
+		-xsa design_1_wrapper.xsa
+	xsct% sdtgen generate_sdt
+	xsct% ls sdt/
 ```
 
 ## Optional command line arguments
@@ -61,16 +55,16 @@ Setting the dt parameters individually instead of
 Single line command mentioned above DTS generation, it is useful if
 we want to change only one parameter.
 ```bash
-Vivado% set_dt_param --dir output_dts
-Vivado% set_dt_param --xsa design_1_wrapper.xsa
-Vivado% set_dt_param --board_dts versal-vck190-reva
+xsct% sdtgen set_dt_param -dir output_dts
+xsct% sdtgen set_dt_param -xsa design_1_wrapper.xsa
+xsct% sdtgen set_dt_param -board_dts versal-vck190-reva
 ```
 
 ### Enabling the debug:
 The below command enables the debug, like warnings.
 The default debug option is disabled, so there won't be any warnings
 ```bash
-Vivado% set_dt_param --debug enable
+xsct% sdtgen set_dt_param -debug enable
 ```
 
 ### Enabling the trace:
@@ -78,43 +72,43 @@ The below command enables the tracing.
 i.e. The flow of tcl procs that are getting invoked during sdt generation
 The default trace option is disabled
 ```bash
-Vivado% set_dt_param --trace enable
+xsct% sdtgen set_dt_param -trace enable
 ```
  
 ### Checking the dt parameters:
 ```bash
-Vivado% get_dt_param --board_dts
+xsct% sdtgen get_dt_param -board_dts
 versal-vck190-reva
-Vivado% get_dt_param --dir
+xsct% sdtgen get_dt_param -dir
 output_dts
-Vivado% get_dt_param --xsa
+xsct% sdtgen get_dt_param -xsa
 design_1_wrapper.xsa
 ``` 
 
 ### Command Help:
 ```bash
-Vivado% set_dt_param --help
+xsct% sdtgen set_dt_param -help
 Usage: set/get_dt_param [OPTION]
-	--repo                  system device tree repo source
-	--xsa                   Vivado hw design file
-	--board_dts             board specific file
-	--mainline_kernel       mainline kernel version
-	--kernel_ver            kernel version
-	--dir                   Directory where the dt files will be
-				generated
-	--debug                 Enable DTG++ debug
-	--trace                 Enable DTG++ traces
-Vivado% get_dt_param --help
+	-repo                  system device tree repo source
+	-xsa                   Vivado hw design file
+	-board_dts             board specific file
+	-mainline_kernel       mainline kernel version
+	-kernel_ver            kernel version
+	-dir                   Directory where the dt files will be
+	                       generated
+	-debug                 Enable DTG++ debug
+	-trace                 Enable DTG++ traces
+xsct% sdtgen get_dt_param -help
 Usage: set/get_dt_param [OPTION]
-	--repo                  system device tree repo source
-	--xsa                   Vivado hw design file
-	--board_dts             board specific file
-	--mainline_kernel       mainline kernel version
-	--kernel_ver            kernel version
-	--dir                   Directory where the dt files will be
-				generated
-	--debug                 Enable DTG++ debug
-	--trace                 Enable DTG++ traces
+	-repo                  system device tree repo source
+	-xsa                   Vivado hw design file
+	-board_dts             board specific file
+	-mainline_kernel       mainline kernel version
+	-kernel_ver            kernel version
+	-dir                   Directory where the dt files will be
+	                       generated
+	-debug                 Enable DTG++ debug
+	-trace                 Enable DTG++ traces
 ``` 
 ### Notes
 1. Support added for Versal and ZynqMP.
