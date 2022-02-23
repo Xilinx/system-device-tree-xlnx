@@ -65,7 +65,7 @@ proc generate {drv_handle} {
 	}
 
 	add_prop $node "xlnx,atg-mode-l2" $atg_mode_value_l2 int "pl.dtsi" 1
-	set axi_mode_name [get_property "CONFIG.C_AXIS_MODE" [hsi::get_cells -hier $drv_handle]]
+	set axi_mode_name [hsi get_property "CONFIG.C_AXIS_MODE" [hsi::get_cells -hier $drv_handle]]
 	set master_name [string match -nocase $axi_mode_name "Master Only"]
 	set slave_name [string match -nocase $axi_mode_name "Slave Only"]
 	set master_loop_name [string match -nocase $axi_mode_name "Master Loop back"]
