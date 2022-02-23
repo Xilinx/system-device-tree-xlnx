@@ -26,24 +26,24 @@ proc generate {drv_handle} {
 		return
 	}
 	set zynq_periph [hsi::get_cells -hier -filter {IP_NAME == zynq_ultra_ps_e}]
-	set avail_param [list_property [hsi::get_cells -hier $zynq_periph]]
+	set avail_param [hsi list_property [hsi::get_cells -hier $zynq_periph]]
 	if {[lsearch -nocase $avail_param "CONFIG.PSU__DDRC__DDR4_ADDR_MAPPING"] >= 0} {
-		set val [get_property CONFIG.PSU__DDRC__DDR4_ADDR_MAPPING [hsi::get_cells -hier $zynq_periph]]
+		set val [hsi get_property CONFIG.PSU__DDRC__DDR4_ADDR_MAPPING [hsi::get_cells -hier $zynq_periph]]
 		if {[string match -nocase $val "NA"]} {
 		} else {
 			add_prop $node "xlnx,addr-mapping" $val hexint $dts_file
 		}
 	}
 	if {[lsearch -nocase $avail_param "CONFIG.PSU__ACT_DDR_FREQ_MHZ"] >= 0} {
-		set val [get_property CONFIG.PSU__ACT_DDR_FREQ_MHZ [hsi::get_cells -hier $zynq_periph]]
+		set val [hsi get_property CONFIG.PSU__ACT_DDR_FREQ_MHZ [hsi::get_cells -hier $zynq_periph]]
 		add_prop $node "xlnx,ddr-freq" [scan [expr $val * 1000000] "%d"] int $dts_file
 	}
 	if {[lsearch -nocase $avail_param "CONFIG.PSU__DDRC__VIDEO_BUFFER_SIZE"] >= 0} {
-		set val [get_property CONFIG.PSU__DDRC__VIDEO_BUFFER_SIZE [hsi::get_cells -hier $zynq_periph]]
+		set val [hsi get_property CONFIG.PSU__DDRC__VIDEO_BUFFER_SIZE [hsi::get_cells -hier $zynq_periph]]
 		add_prop $node "xlnx,video-buf-size" $val hexint $dts_file
 	}
 	if {[lsearch -nocase $avail_param "CONFIG.PSU__DDRC__BRC_MAPPING"] >= 0} {
-		set val [get_property CONFIG.PSU__DDRC__BRC_MAPPING [hsi::get_cells -hier $zynq_periph]]
+		set val [hsi get_property CONFIG.PSU__DDRC__BRC_MAPPING [hsi::get_cells -hier $zynq_periph]]
 		if { [string match -nocase $val "ROW_BANK_COL"] } {
 			add_prop $node "xlnx,brc-mapping" "0" hexint $dts_file
 		} else {

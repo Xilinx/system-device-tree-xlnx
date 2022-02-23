@@ -19,11 +19,11 @@ proc generate {drv_handle} {
 		return
 	}
 	pldt append $node compatible "\ \, \"xlnx,dsi\""
-	set dsi_num_lanes [get_property CONFIG.DSI_LANES [hsi::get_cells -hier $drv_handle]]
+	set dsi_num_lanes [hsi get_property CONFIG.DSI_LANES [hsi::get_cells -hier $drv_handle]]
 	add_prop "$node" "xlnx,dsi-num-lanes" $dsi_num_lanes int $dts_file
-	set dsi_pixels_perbeat [get_property CONFIG.DSI_PIXELS [hsi::get_cells -hier $drv_handle]]
+	set dsi_pixels_perbeat [hsi get_property CONFIG.DSI_PIXELS [hsi::get_cells -hier $drv_handle]]
 	add_prop "$node" "xlnx,dsi-pixels-perbeat" $dsi_pixels_perbeat int $dts_file
-	set dsi_datatype [get_property CONFIG.DSI_DATATYPE [hsi::get_cells -hier $drv_handle]]
+	set dsi_datatype [hsi get_property CONFIG.DSI_DATATYPE [hsi::get_cells -hier $drv_handle]]
 	if {[string match -nocase $dsi_datatype "RGB888"]} {
 		add_prop "$node" "xlnx,dsi-data-type" 0 int $dts_file
 	} elseif {[string match -nocase $dsi_datatype "RGB666_L"]} {

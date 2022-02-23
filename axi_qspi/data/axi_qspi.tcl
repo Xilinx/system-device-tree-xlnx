@@ -28,14 +28,14 @@ proc generate {drv_handle} {
 	set_drv_conf_prop $drv_handle "C_FIFO_DEPTH" "fifo-size" int
 	set_drv_conf_prop $drv_handle "C_SPI_MODE" "xlnx,spi-mode" int
 	set_drv_conf_prop $drv_handle "C_USE_STARTUP" "xlnx,startup-block" boolean
-	set avail_param [list_property [hsi::get_cells -hier $drv_handle]]
-	set value [get_property CONFIG.C_FIFO_EXIST [hsi::get_cells -hier $drv_handle]]
+	set avail_param [hsi list_property [hsi::get_cells -hier $drv_handle]]
+	set value [hsi get_property CONFIG.C_FIFO_EXIST [hsi::get_cells -hier $drv_handle]]
 	if {[llength $value] == 0} {
-		set value1 [get_property CONFIG.C_FIFO_DEPTH [hsi::get_cells -hier $drv_handle]]
+		set value1 [hsi get_property CONFIG.C_FIFO_DEPTH [hsi::get_cells -hier $drv_handle]]
 		if {[llength $value1] == 0} {
 			set value1 0
 		} else {
-			set value1 [common::get_property CONFIG.C_FIFO_DEPTH $drv_handle]
+			set value1 [hsi get_property CONFIG.C_FIFO_DEPTH $drv_handle]
 			if {$value1 == 0} {
 				set value1 0
 			} else {
@@ -46,14 +46,14 @@ proc generate {drv_handle} {
 		set value1 $value
 	}
 	add_prop $node "xlnx,hasfifos" $value1 int "pl.dtsi"
-	set value [get_property CONFIG.C_SPI_SLAVE_ONLY [hsi::get_cells -hier $drv_handle]]
+	set value [hsi get_property CONFIG.C_SPI_SLAVE_ONLY [hsi::get_cells -hier $drv_handle]]
 	if {[llength $value] == 0} {
 		add_prop $node "xlnx,slaveonly" 0 int "pl.dtsi"
 	} else {
 		add_prop $node "xlnx,slaveonly" $value int "pl.dtsi"
 	}
 	set_drv_conf_prop $drv_handle "C_TYPE_OF_AXI4_INTERFACE" "xlnx,axi-interface" int
-	set value [get_property CONFIG.C_S_AXI4_BASEADDR [hsi::get_cells -hier $drv_handle]]
+	set value [hsi get_property CONFIG.C_S_AXI4_BASEADDR [hsi::get_cells -hier $drv_handle]]
 	if {[llength $value] == 0} {
 		add_prop $node "xlnx,Axi4-address" 0 int "pl.dtsi"
 	} else {

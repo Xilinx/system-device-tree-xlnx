@@ -17,14 +17,14 @@ proc generate {drv_handle} {
 	set dts_file [set_drv_def_dts $drv_handle]
 	set count 0
 	foreach handle [hsi::get_cells -hier] {
-		set ip_name [get_property IP_NAME $handle]
+		set ip_name [hsi get_property IP_NAME $handle]
 		if {[string match -nocase $ip_name "usp_rf_data_converter"] } {
 			set count [expr $count + 1]
 		}
 	}
 	add_prop $node "num-insts" $count hexlist $dts_file
 	add_new_property $drv_handle "num-insts" hexlist $instances
-	add_param_list_property $drv_handle "DEVICE_ID" "C_BASEADDR" "C_High_Speed_ADC" "C_Sysref_Master" "C_Sysref_Master" "C_Sysref_Source" "C_Sysref_Source" "C_IP_Type" "C_Silicon_Revision" "C_DAC0_Enable" "C_DAC0_PLL_Enable" "C_DAC0_Sampling_Rate" "C_DAC0_Refclk_Freq" "C_DAC0_Fabric_Freq" "C_DAC0_FBDIV" "C_DAC0_OutDiv" "C_DAC0_Refclk_Div" "C_DAC0_Band" "C_DAC0_Fs_Max" "C_DAC0_Slices" "C_DAC_Slice00_Enable" "C_DAC_Invsinc_Ctrl00" "C_DAC_Mixer_Mode00" "C_DAC_Decoder_Mode00" "C_DAC_Slice01_Enable" "C_DAC_Invsinc_Ctrl01" "C_DAC_Mixer_Mode01" "C_DAC_Decoder_Mode01" "C_DAC_Slice02_Enable" "C_DAC_Invsinc_Ctrl02" "C_DAC_Mixer_Mode02" "C_DAC_Decoder_Mode02" "C_DAC_Slice03_Enable" "C_DAC_Invsinc_Ctrl03" "C_DAC_Mixer_Mode03" "C_DAC_Decoder_Mode03" "C_DAC_Data_Type00" "C_DAC_Data_Width00" "C_DAC_Interpolation_Mode00" "C_DAC_Fifo00_Enable" "C_DAC_Adder00_Enable" "C_DAC_Mixer_Type00" "C_DAC_Data_Type01" "C_DAC_Data_Width01" "C_DAC_Interpolation_Mode01" "C_DAC_Fifo01_Enable" \
+	add_param_hsi list_property $drv_handle "DEVICE_ID" "C_BASEADDR" "C_High_Speed_ADC" "C_Sysref_Master" "C_Sysref_Master" "C_Sysref_Source" "C_Sysref_Source" "C_IP_Type" "C_Silicon_Revision" "C_DAC0_Enable" "C_DAC0_PLL_Enable" "C_DAC0_Sampling_Rate" "C_DAC0_Refclk_Freq" "C_DAC0_Fabric_Freq" "C_DAC0_FBDIV" "C_DAC0_OutDiv" "C_DAC0_Refclk_Div" "C_DAC0_Band" "C_DAC0_Fs_Max" "C_DAC0_Slices" "C_DAC_Slice00_Enable" "C_DAC_Invsinc_Ctrl00" "C_DAC_Mixer_Mode00" "C_DAC_Decoder_Mode00" "C_DAC_Slice01_Enable" "C_DAC_Invsinc_Ctrl01" "C_DAC_Mixer_Mode01" "C_DAC_Decoder_Mode01" "C_DAC_Slice02_Enable" "C_DAC_Invsinc_Ctrl02" "C_DAC_Mixer_Mode02" "C_DAC_Decoder_Mode02" "C_DAC_Slice03_Enable" "C_DAC_Invsinc_Ctrl03" "C_DAC_Mixer_Mode03" "C_DAC_Decoder_Mode03" "C_DAC_Data_Type00" "C_DAC_Data_Width00" "C_DAC_Interpolation_Mode00" "C_DAC_Fifo00_Enable" "C_DAC_Adder00_Enable" "C_DAC_Mixer_Type00" "C_DAC_Data_Type01" "C_DAC_Data_Width01" "C_DAC_Interpolation_Mode01" "C_DAC_Fifo01_Enable" \
 	"C_DAC_Adder01_Enable" "C_DAC_Mixer_Type01" "C_DAC_Data_Type02" "C_DAC_Data_Width02" "C_DAC_Interpolation_Mode02" "C_DAC_Fifo02_Enable" "C_DAC_Adder02_Enable" "C_DAC_Mixer_Type02" "C_DAC_Data_Type03" "C_DAC_Data_Width03" "C_DAC_Interpolation_Mode03" "C_DAC_Fifo03_Enable" "C_DAC_Adder03_Enable" "C_DAC_Mixer_Type03" "C_DAC1_Enable" "C_DAC1_PLL_Enable" "C_DAC1_Sampling_Rate" "C_DAC1_Refclk_Freq" "C_DAC1_Fabric_Freq" "C_DAC1_FBDIV" "C_DAC1_OutDiv" "C_DAC1_Refclk_Div" "C_DAC1_Band" "C_DAC1_Fs_Max" "C_DAC1_Slices" "C_DAC_Slice10_Enable" "C_DAC_Invsinc_Ctrl10" "C_DAC_Mixer_Mode10" "C_DAC_Decoder_Mode10" "C_DAC_Slice11_Enable" "C_DAC_Invsinc_Ctrl11" "C_DAC_Mixer_Mode11" "C_DAC_Decoder_Mode11" "C_DAC_Slice12_Enable" "C_DAC_Invsinc_Ctrl12" "C_DAC_Mixer_Mode12" "C_DAC_Decoder_Mode12" "C_DAC_Slice13_Enable" "C_DAC_Invsinc_Ctrl13" "C_DAC_Mixer_Mode13" "C_DAC_Decoder_Mode13" "C_DAC_Data_Type10" "C_DAC_Data_Width10" "C_DAC_Interpolation_Mode10" \
 	"C_DAC_Fifo10_Enable" "C_DAC_Adder10_Enable" "C_DAC_Mixer_Type10" "C_DAC_Data_Type11" "C_DAC_Data_Width11" "C_DAC_Interpolation_Mode11" "C_DAC_Fifo11_Enable" "C_DAC_Adder11_Enable" "C_DAC_Mixer_Type11" "C_DAC_Data_Type12" "C_DAC_Data_Width12" "C_DAC_Interpolation_Mode12" "C_DAC_Fifo12_Enable" "C_DAC_Adder12_Enable" "C_DAC_Mixer_Type12" "C_DAC_Data_Type13" "C_DAC_Data_Width13" "C_DAC_Interpolation_Mode13" "C_DAC_Fifo13_Enable" "C_DAC_Adder13_Enable" "C_DAC_Mixer_Type13" "C_DAC2_Enable" "C_DAC2_PLL_Enable" "C_DAC2_Sampling_Rate" "C_DAC2_Refclk_Freq" "C_DAC2_Fabric_Freq" "C_DAC2_FBDIV" "C_DAC2_OutDiv" "C_DAC2_Refclk_Div" "C_DAC2_Band" "C_DAC2_Fs_Max" "C_DAC2_Slices" "C_DAC_Slice20_Enable" "C_DAC_Invsinc_Ctrl20" "C_DAC_Mixer_Mode20" "C_DAC_Decoder_Mode20" "C_DAC_Slice21_Enable" "C_DAC_Invsinc_Ctrl21" "C_DAC_Mixer_Mode21" "C_DAC_Decoder_Mode21" "C_DAC_Slice22_Enable" "C_DAC_Invsinc_Ctrl22" "C_DAC_Mixer_Mode22" "C_DAC_Decoder_Mode22" \
 	"C_DAC_Slice23_Enable" "C_DAC_Invsinc_Ctrl23" "C_DAC_Mixer_Mode23" "C_DAC_Decoder_Mode23" "C_DAC_Data_Type20" "C_DAC_Data_Width20" "C_DAC_Interpolation_Mode20" "C_DAC_Fifo20_Enable" "C_DAC_Adder20_Enable" "C_DAC_Mixer_Type20" "C_DAC_Data_Type21" "C_DAC_Data_Width21" "C_DAC_Interpolation_Mode21" "C_DAC_Fifo21_Enable" "C_DAC_Adder21_Enable" "C_DAC_Mixer_Type21" "C_DAC_Data_Type22" "C_DAC_Data_Width22" "C_DAC_Interpolation_Mode22" "C_DAC_Fifo22_Enable" "C_DAC_Adder22_Enable" "C_DAC_Mixer_Type22" "C_DAC_Data_Type23" "C_DAC_Data_Width23" "C_DAC_Interpolation_Mode23" "C_DAC_Fifo23_Enable" "C_DAC_Adder23_Enable" "C_DAC_Mixer_Type23" "C_DAC3_Enable" "C_DAC3_PLL_Enable" "C_DAC3_Sampling_Rate" "C_DAC3_Refclk_Freq" "C_DAC3_Fabric_Freq" "C_DAC3_FBDIV" "C_DAC3_OutDiv" "C_DAC3_Refclk_Div" "C_DAC3_Band" "C_DAC3_Fs_Max" "C_DAC3_Slices" "C_DAC_Slice30_Enable" "C_DAC_Invsinc_Ctrl30" "C_DAC_Mixer_Mode30" "C_DAC_Decoder_Mode30" "C_DAC_Slice31_Enable" \
@@ -57,7 +57,7 @@ proc convert_int_to_le_byte_code_format {var} {
 # Given a list of arguments, add them in param-list property,
 # in byte code format
 #
-proc add_param_list_property {drv_handle args} {
+proc add_param_hsi list_property {drv_handle args} {
 	set args [get_exact_arg_list $args]
 
 	# Get all peripherals connected to this driver
@@ -74,7 +74,7 @@ proc add_param_list_property {drv_handle args} {
 		if {[string compare -nocase "DEVICE_ID" $arg] == 0} {
 			set value $device_id
 		} else {
-			set value [common::get_property CONFIG.$arg $periph]
+			set value [hsi get_property CONFIG.$arg $periph]
 		}
 		if {[llength $value] == 0} {
 			set value 0

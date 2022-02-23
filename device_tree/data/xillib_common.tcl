@@ -19,7 +19,7 @@ namespace export *
 # Note: Mostly it is used when some new file need to be generated through HSI
 #
 proc get_sw_build_version { } {
-    set ret [common::version -short]
+    set ret [common::hsi version -short]
 }
 
 #

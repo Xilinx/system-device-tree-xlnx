@@ -26,16 +26,16 @@ proc generate {drv_handle} {
 	}
 	pldt append $node compatible "\ \, \"xlnx,v-tpg-8.0\""	
 	set ip [hsi::get_cells -hier $drv_handle]
-	set s_axi_ctrl_addr_width [get_property CONFIG.C_S_AXI_CTRL_ADDR_WIDTH [hsi::get_cells -hier $drv_handle]]
+	set s_axi_ctrl_addr_width [hsi get_property CONFIG.C_S_AXI_CTRL_ADDR_WIDTH [hsi::get_cells -hier $drv_handle]]
 	add_prop "${node}" "xlnx,s-axi-ctrl-addr-width" $s_axi_ctrl_addr_width int $dts_file 1
-	set s_axi_ctrl_data_width [get_property CONFIG.C_S_AXI_CTRL_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
+	set s_axi_ctrl_data_width [hsi get_property CONFIG.C_S_AXI_CTRL_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
 	add_prop "${node}" "xlnx,s-axi-ctrl-data-width" $s_axi_ctrl_data_width int $dts_file 1
-	set max_data_width [get_property CONFIG.MAX_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
-	set pixels_per_clock [get_property CONFIG.SAMPLES_PER_CLOCK [hsi::get_cells -hier $drv_handle]]
+	set max_data_width [hsi get_property CONFIG.MAX_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
+	set pixels_per_clock [hsi get_property CONFIG.SAMPLES_PER_CLOCK [hsi::get_cells -hier $drv_handle]]
 	add_prop "${node}" "xlnx,ppc" $pixels_per_clock int $dts_file
-	set max_cols [get_property CONFIG.MAX_COLS [hsi::get_cells -hier $drv_handle]]
+	set max_cols [hsi get_property CONFIG.MAX_COLS [hsi::get_cells -hier $drv_handle]]
 	add_prop "${node}" "xlnx,max-width" $max_cols int $dts_file
-	set max_rows [get_property CONFIG.MAX_ROWS [hsi::get_cells -hier $drv_handle]]
+	set max_rows [hsi get_property CONFIG.MAX_ROWS [hsi::get_cells -hier $drv_handle]]
 	add_prop "${node}" "xlnx,max-height" $max_rows int $dts_file
 	set proctype [get_hw_family]
 	set ports_node [create_node -n "ports" -l tpg_ports$drv_handle -p $node -d $dts_file]
@@ -52,7 +52,7 @@ proc generate {drv_handle} {
 	}
 	foreach connected_ip $connect_ip {
 		if {[llength $connected_ip] != 0} {
-			set connected_ip_type [get_property IP_NAME $connected_ip]
+			set connected_ip_type [hsi get_property IP_NAME $connected_ip]
 			set ports_node ""
 			set sink_periph ""
 			if {[llength $connected_ip_type] != 0} {
@@ -64,7 +64,7 @@ proc generate {drv_handle} {
 				puts "pins:$pins"
                                 foreach pin $pins {
                                         set sink_periph [hsi::get_cells -of_objects $pin]
-					set sink_ip [get_property IP_NAME $sink_periph]
+					set sink_ip [hsi get_property IP_NAME $sink_periph]
 					if {[string match -nocase $sink_ip "v_tc"]} {
 						add_prop "$node" "xlnx,vtc" "$sink_periph" reference $dts_file
 						}
@@ -81,7 +81,7 @@ proc generate {drv_handle} {
 
 	foreach out_ip $connect_out_ip {
 		if {[llength $out_ip] != 0} {
-		set connected_out_ip_type [get_property IP_NAME $out_ip]
+		set connected_out_ip_type [hsi get_property IP_NAME $out_ip]
                 if {[llength $connected_out_ip_type] != 0} {
                         if {[string match -nocase $connected_out_ip_type "system_ila"] || [string match -nocase $connected_out_ip_type "axi_dbg_hub"]} {
                                 continue
@@ -89,7 +89,7 @@ proc generate {drv_handle} {
                         set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $out_ip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
                         set ip_mem_handles [hsi::get_mem_ranges $out_ip]
                         if {[llength $ip_mem_handles]} {
-                                set ip_name [get_property IP_NAME $out_ip]
+                                set ip_name [hsi get_property IP_NAME $out_ip]
                                 set tpg_node [create_node -n "endpoint" -l tpg_out$drv_handle -p $port1_node -d $dts_file]
                                 gen_endpoint $drv_handle "tpg_out$drv_handle"
                                 gen_remoteendpoint $drv_handle "$out_ip$drv_handle"
@@ -97,13 +97,13 @@ proc generate {drv_handle} {
                                         continue
                                 }
                                 add_prop "$tpg_node" "remote-endpoint" $out_ip$drv_handle reference $dts_file
-                                if {[string match -nocase [get_property IP_NAME $out_ip] "v_frmbuf_wr"] || [string match -nocase [get_property IP_NAME $out_ip] "axi_vdma"]} {
+                                if {[string match -nocase [hsi get_property IP_NAME $out_ip] "v_frmbuf_wr"] || [string match -nocase [hsi get_property IP_NAME $out_ip] "axi_vdma"]} {
                                         gen_frmbuf_node $out_ip $drv_handle $dts_file
                                 }
                          } else {
                                 set connectip [get_connect_ip $out_ip $master_intf $dts_file]
 				if {[llength $connectip]} {
-					if {[string match -nocase [get_property IP_NAME $connectip] "axi_dbg_hub"]} {
+					if {[string match -nocase [hsi get_property IP_NAME $connectip] "axi_dbg_hub"]} {
 						continue
 					}
 				}
@@ -114,7 +114,7 @@ proc generate {drv_handle} {
                                                 gen_endpoint $drv_handle "tpg_out$drv_handle"
                                                 add_prop "$tpg_node" "remote-endpoint" $connectip$drv_handle reference $dts_file
                                                 gen_remoteendpoint $drv_handle "$connectip$drv_handle"
-                                                if {[string match -nocase [get_property IP_NAME $connectip] "v_frmbuf_wr"] || [string match -nocase [get_property IP_NAME $connectip] "axi_vdma"]} {
+                                                if {[string match -nocase [hsi get_property IP_NAME $connectip] "v_frmbuf_wr"] || [string match -nocase [hsi get_property IP_NAME $connectip] "axi_vdma"]} {
                                                         gen_frmbuf_node $connectip $drv_handle $dts_file
                                                 }
                                         }

@@ -20,17 +20,17 @@ proc generate {drv_handle} {
 	}
 	pldt append $node compatible "\ \, \"xlnx,v-scd\""
 	set ip [hsi::get_cells -hier $drv_handle]
-	set max_data_width [get_property CONFIG.MAX_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
+	set max_data_width [hsi get_property CONFIG.MAX_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
 	add_prop "${node}" "xlnx,max-data-width" $max_data_width int $dts_file
-	set memory_scd [get_property CONFIG.MEMORY_BASED [hsi::get_cells -hier $drv_handle]]
+	set memory_scd [hsi get_property CONFIG.MEMORY_BASED [hsi::get_cells -hier $drv_handle]]
 	if {$memory_scd == 1} {
-		set max_nr_streams [get_property CONFIG.MAX_NR_STREAMS [hsi::get_cells -hier $drv_handle]]
+		set max_nr_streams [hsi get_property CONFIG.MAX_NR_STREAMS [hsi::get_cells -hier $drv_handle]]
 		add_prop "$node" "xlnx,numstreams" $max_nr_streams int $dts_file
 		add_prop $node "#address-cells" 1 int $dts_file
 		add_prop $node "#size-cells" 0 int $dts_file
 		add_prop $node "xlnx,memorybased" boolean $dts_file
 		add_prop "$node" "#dma-cells" 1 int $dts_file
-		set aximm_addr_width [get_property CONFIG.AXIMM_ADDR_WIDTH [hsi::get_cells -hier $drv_handle]]
+		set aximm_addr_width [hsi get_property CONFIG.AXIMM_ADDR_WIDTH [hsi::get_cells -hier $drv_handle]]
 		add_prop "$node" "xlnx,addrwidth" $aximm_addr_width hexint $dts_file
 		for {set stream 0} {$stream < $max_nr_streams} {incr stream} {
 			set scd_node [create_node -n "subdev" -u $stream -p $node -d $dts_file]
@@ -62,7 +62,7 @@ proc generate {drv_handle} {
 			add_prop "$vcap_endpoint" "remote-endpoint" scd_in$stream reference $dts_file
 		}
 	} else {
-		set max_nr_streams [get_property CONFIG.MAX_NR_STREAMS [hsi::get_cells -hier $drv_handle]]
+		set max_nr_streams [hsi get_property CONFIG.MAX_NR_STREAMS [hsi::get_cells -hier $drv_handle]]
 		add_prop "$node" "xlnx,numstreams" $max_nr_streams int $dts_file
 		add_prop $node "#address-cells" 1 int $dts_file
 		add_prop $node "#size-cells" 0 int $dts_file
@@ -75,7 +75,7 @@ proc generate {drv_handle} {
 		}
 		foreach connected_out_ip $connect_out_ip {
 			if {[llength $connected_out_ip]} {
-				if {[string match -nocase [get_property IP_NAME $connected_out_ip] "system_ila"]} {
+				if {[string match -nocase [hsi get_property IP_NAME $connected_out_ip] "system_ila"]} {
 					continue
 				}
 				set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $connected_out_ip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
@@ -85,7 +85,7 @@ proc generate {drv_handle} {
 					add_prop "$scd_port1_node" "reg" 1 int $dts_file
 					set scd_node [create_node -n "endpoint" -l scd_out$drv_handle -p $scd_port1_node -d $dts_file]
 					add_prop "$scd_node" "remote-endpoint" $connected_out_ip$drv_handle reference $dts_file
-					if {[string match -nocase [get_property IP_NAME $connected_out_ip] "v_frmbuf_wr"]} {
+					if {[string match -nocase [hsi get_property IP_NAME $connected_out_ip] "v_frmbuf_wr"]} {
 						gen_frmbuf_node $connected_out_ip $drv_handle $dts_file
 					}
 				} else {
@@ -95,7 +95,7 @@ proc generate {drv_handle} {
 						add_prop "$scd_port1_node" "reg" 1 int $dts_file
 						set scd_node [create_node -n "endpoint" -l scd_out$drv_handle -p $scd_port1_node -d $dts_file]
 						add_prop "$scd_node" "remote-endpoint" $connectip$drv_handle reference $dts_file
-						if {[string match -nocase [get_property IP_NAME $connectip] "v_frmbuf_wr"]} {
+						if {[string match -nocase [hsi get_property IP_NAME $connectip] "v_frmbuf_wr"]} {
 							gen_frmbuf_node $connectip $drv_handle $dts_file
 						}
 					}
@@ -157,7 +157,7 @@ proc generate_dmas {vcap_scd dmas dts_file} {
 proc add_handles {drv_handle} {
 set node [get_node $drv_handle]
 set dts_file [set_drv_def_dts $drv_handle]
-set prop [get_property CONFIG.MEMORY_BASED [hsi::get_cells -hier $drv_handle]]
+set prop [hsi get_property CONFIG.MEMORY_BASED [hsi::get_cells -hier $drv_handle]]
 if {$prop == 0} {
 	set tpg [hsi::get_cells -hier -filter {IP_NAME==v_tpg}]
 	if {$tpg != ""} {

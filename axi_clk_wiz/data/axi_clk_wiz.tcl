@@ -25,10 +25,10 @@ proc generate {drv_handle} {
 	gen_speedgrade $drv_handle
 	set output_names ""
 	for {set i 1} {$i < 8} {incr i} {
-		if {[get_property CONFIG.C_CLKOUT${i}_USED $ip] != 0} {
-			set freq [get_property CONFIG.C_CLKOUT${i}_OUT_FREQ $ip]
-			set pin_name [get_property CONFIG.C_CLK_OUT${i}_PORT $ip]
-			set basefrq [string tolower [get_property CONFIG.C_BASEADDR $ip]]
+		if {[hsi get_property CONFIG.C_CLKOUT${i}_USED $ip] != 0} {
+			set freq [hsi get_property CONFIG.C_CLKOUT${i}_OUT_FREQ $ip]
+			set pin_name [hsi get_property CONFIG.C_CLK_OUT${i}_PORT $ip]
+			set basefrq [string tolower [hsi get_property CONFIG.C_BASEADDR $ip]]
 			set pin_name "$basefrq-$pin_name"
 			lappend output_names $pin_name
 		}
@@ -45,7 +45,7 @@ proc generate {drv_handle} {
 }
 
 proc gen_speedgrade {drv_handle} {
-	set speedgrade [get_property SPEEDGRADE [hsi::get_hw_designs]]
+	set speedgrade [hsi get_property SPEEDGRADE [hsi::get_hw_designs]]
 	set num [regexp -all -inline -- {[0-9]} $speedgrade]
 	if {![string equal $num ""]} {
 		set node [get_node $drv_handle]

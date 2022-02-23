@@ -23,7 +23,7 @@ proc generate {drv_handle} {
 	}
 	pldt append $node compatible "\ \, \"xlnx,usb2-device-4.00.a\""
 	set ip [hsi::get_cells -hier $drv_handle]
-	set include_dma [get_property CONFIG.C_INCLUDE_DMA $ip]
+	set include_dma [hsi get_property CONFIG.C_INCLUDE_DMA $ip]
 	if { $include_dma eq "1"} {
 		set_drv_conf_prop $drv_handle C_INCLUDE_DMA xlnx,has-builtin-dma boolean
 	}

@@ -33,12 +33,12 @@ proc special_handling_for_ps7_interrupt { periph_name} {
 
     #current processor should be ps7_cortexa9
 #    set sw_core [hsi::get_sw_processor]
- #   set proc_name [common::get_property HW_INSTANCE $sw_core]
+ #   set proc_name [hsi get_property HW_INSTANCE $sw_core]
 	set proc_list "psv_cortexa72 psu_cortexa53 ps7_cortexa9"
-	set ip_name [common::get_property IP_NAME [hsi::get_cells -hier $periph_name]]
+	set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $periph_name]]
 	if { [lsearch -nocase $proc_list $ip_name] != 0 } {
 #    set hw_core [hsi::get_cells -hier -filter "NAME==$proc_name" ]
- #   set proc_type [common::get_property IP_NAME $hw_core ]
+ #   set proc_type [hsi get_property IP_NAME $hw_core ]
     if { [string compare -nocase "$ip_name"  ps7_cortexa9] != 0} {
         return 0
     }
@@ -51,7 +51,7 @@ proc special_handling_for_ps7_interrupt { periph_name} {
     }
 	}
     #peripheral name should have ps7 name 
-    set ip_name [common::get_property IP_NAME $periph]
+    set ip_name [hsi get_property IP_NAME $periph]
     if { [string match -nocase ps7* "$ip_name"] } {
         return 1
     }
@@ -63,7 +63,7 @@ proc get_concat_interrupt_sources { concat_ip_obj {lsb -1} {msb -1} } {
     lappend source_pins
     if {$lsb == -1 } {
         set i 0
-        set num_ports [common::get_property CONFIG.NUM_PORTS $concat_ip_obj]
+        set num_ports [hsi get_property CONFIG.NUM_PORTS $concat_ip_obj]
     } else {
         set i $lsb
         set num_ports $msb
@@ -74,7 +74,7 @@ proc get_concat_interrupt_sources { concat_ip_obj {lsb -1} {msb -1} } {
         foreach pin $pins {
             set source_cell [hsi::get_cells -of_objects $pin]
             if { [llength $source_cell] } {
-                set ip_name [common::get_property IP_NAME $source_cell]
+                set ip_name [hsi get_property IP_NAME $source_cell]
                 #Cascading case of concat IP
                 if { [string match -nocase $ip_name "xlconcat"] } {
                     set source_pins [list {*}$source_pins {*}[get_concat_interrupt_sources $source_cell]]
@@ -101,13 +101,13 @@ proc get_slice_interrupt_sources { slice_ip_obj } {
     foreach pin $pins {
         set source_cell [hsi::get_cells -of_objects $pin]
         if { [llength $source_cell] } {
-            set ip_name [common::get_property IP_NAME $source_cell]
+            set ip_name [hsi get_property IP_NAME $source_cell]
             #Cascading case of xlslice IP
             if { [string match -nocase $ip_name "xlslice"] } {
                 set source_pins [list {*}$source_pins {*}[get_slice_interrupt_sources $source_cell]]
             } elseif { [string match -nocase $ip_name "xlconcat"] } {
-                set from [::common::get_property CONFIG.DIN_FROM $slice_ip_obj]
-                set to [::common::get_property CONFIG.DIN_TO $slice_ip_obj]
+                set from [::hsi get_property CONFIG.DIN_FROM $slice_ip_obj]
+                set to [::hsi get_property CONFIG.DIN_TO $slice_ip_obj]
                 set lsb [expr $from < $to ? $from : $to]
                 set msb [expr $from > $to ? $from : $to]
                 incr msb
@@ -132,7 +132,7 @@ proc get_util_reduced_logic_interrupt_sources { url_ip_obj } {
     foreach pin $pins {
         set source_cell [hsi::get_cells -of_objects $pin]
         if { [llength $source_cell] } {
-            set ip_name [common::get_property IP_NAME $source_cell]
+            set ip_name [hsi get_property IP_NAME $source_cell]
             
             if { [string match -nocase $ip_name "xlslice"] } {
                 set source_pins [list {*}$source_pins {*}[get_slice_interrupt_sources $source_cell]]
@@ -156,8 +156,8 @@ proc get_intc_cascade_id_offset { intc } {
 #proc get_intc_cascade_id_offset { intc } 
     set cascade_offset 0
     set cascade 0
-    set intc_type [::common::get_property IP_NAME $intc]
-    set intc_name [::common::get_property NAME $intc]
+    set intc_type [::hsi get_property IP_NAME $intc]
+    set intc_name [::hsi get_property NAME $intc]
     set other_intc_periphs [hsi::get_cells -hier -filter "NAME!=$intc_name&&IP_NAME==$intc_type"] 
     foreach other_intc_periph $other_intc_periphs {
         set intc_src_ports [get_interrupt_sources $other_intc_periph]
@@ -166,10 +166,10 @@ proc get_intc_cascade_id_offset { intc } {
             set periph [hsi::get_cells -of_objects $src_port]
             set intr_width [get_port_width $src_port]
             if { [llength $periph] } {
-                if {[common::get_property IS_PL $periph] == 0} {
+                if {[hsi get_property IS_PL $periph] == 0} {
                     continue
                 }
-                set periph_name [::common::get_property NAME $periph]
+                set periph_name [::hsi get_property NAME $periph]
                 if { [string match -nocase "$periph_name" "$intc_name"] } {
                     set cascade 1
                 }
@@ -287,7 +287,7 @@ proc get_ip_sub_type { ip_inst_object} {
 # Deprecated TCL procs for backward compatibility
 #############################################################################
 proc is_it_in_pl_1 {ip} {
-	set ip_type [common::get_property IP_NAME $ip]
+	set ip_type [hsi get_property IP_NAME $ip]
 	if {![regexp "ps7_*" "$ip_type" match]} {
 		return 1
 	}

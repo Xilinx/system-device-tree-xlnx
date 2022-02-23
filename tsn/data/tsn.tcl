@@ -20,7 +20,7 @@ proc generate {drv_handle} {
 		return
 	}
 	set eth_ip [hsi::get_cells -hier $drv_handle]
-	set ip_name [get_property IP_NAME $eth_ip]
+	set ip_name [hsi get_property IP_NAME $eth_ip]
 
 	global tsn_ep_node
 	global tsn_emac0_node
@@ -57,12 +57,12 @@ proc generate {drv_handle} {
 			set target_handle $ip
 		}
 	}
-	set connectedrx_ipname [get_property IP_NAME $end_ip]
+	set connectedrx_ipname [hsi get_property IP_NAME $end_ip]
 	set id 1
 	set queue ""
 	if {$connectedrx_ipname == "axi_mcdma"} {
-		set num_queues [get_property CONFIG.c_num_s2mm_channels $end_ip]
-		set rx_queues  [get_property CONFIG.c_num_mm2s_channels $end_ip]
+		set num_queues [hsi get_property CONFIG.c_num_s2mm_channels $end_ip]
+		set rx_queues  [hsi get_property CONFIG.c_num_mm2s_channels $end_ip]
 		if {$num_queues > $rx_queues} {
 			set queue $num_queues
 		} else {
@@ -74,9 +74,9 @@ proc generate {drv_handle} {
 			append id ",\"" $i
 			set i [expr 0x$i]
 		}
-		set int1 [get_property CONFIG.interrupts $target_handle]
-		set int2 [get_property CONFIG.interrupt-parent $target_handle]
-		set int3  [get_property CONFIG.interrupt-names $target_handle]
+		set int1 [hsi get_property CONFIG.interrupts $target_handle]
+		set int2 [hsi get_property CONFIG.interrupt-parent $target_handle]
+		set int3  [hsi get_property CONFIG.interrupt-names $target_handle]
 	}
 	set inhex [format %x $queue]
 	append queues "/bits/ 16 <0x$inhex>"
@@ -120,7 +120,7 @@ proc generate {drv_handle} {
 	}
 
 	set baseaddr [get_baseaddr $eth_ip no_prefix]
-	set num_queues [get_property CONFIG.NUM_PRIORITIES $eth_ip]
+	set num_queues [hsi get_property CONFIG.NUM_PRIORITIES $eth_ip]
 	if {[string match -nocase $proc_type "zynqmp"] || [string match -nocase $proc_type "zynquplus"]} {
 		add_prop $node "#address-cells" 2 int $dts_file
 		add_prop $node "#size-cells" 2 int $dts_file
@@ -133,7 +133,7 @@ proc generate {drv_handle} {
 	set freq ""
 	set clk [hsi::get_pins -of_objects $eth_ip "S_AXI_ACLK"]
 	if {[llength $clk] } {
-		set freq [get_property CLK_FREQ $clk]
+		set freq [hsi get_property CLK_FREQ $clk]
 	}
 	set inhex [format %x $num_queues]
 	append numqueues "/bits/ 16 <0x$inhex>"
@@ -165,8 +165,8 @@ proc generate {drv_handle} {
    set tsn_inst_name [hsi::get_cells -filter {IP_NAME =~ "*tsn*"}]
 	foreach periph $periph_list {
 		if {[string match -nocase "${tsn_inst_name}_switch_core_top_0" $periph] } {
-			set switch_offset [get_property CONFIG.SWITCH_OFFSET $eth_ip]
-			set high_addr [get_property CONFIG.C_HIGHADDR $eth_ip]
+			set switch_offset [hsi get_property CONFIG.SWITCH_OFFSET $eth_ip]
+			set high_addr [hsi get_property CONFIG.C_HIGHADDR $eth_ip]
 			set one 0x1
 			set switch_present 0x1
 			set switch_addr [format %08x [expr 0x$baseaddr + $switch_offset]]
@@ -176,7 +176,7 @@ proc generate {drv_handle} {
 		}
 		if {[string match -nocase "${tsn_inst_name}" $periph] } {
 			set baseaddr [get_baseaddr $eth_ip no_prefix]
-			set tmac0_size [get_property CONFIG.TEMAC_1_SIZE $eth_ip]
+			set tmac0_size [hsi get_property CONFIG.TEMAC_1_SIZE $eth_ip]
 			if { $switch_present != 1 } {
 				gen_mac0_node $periph $baseaddr $tmac0_size $node $proc_type $drv_handle $numqueues $freq $intr_parent $mac0intr $eth_ip $queues $id $end1 $end_point_ip $connectrx_ip $connecttx_ip $tsn_inst_name
 			} else {
@@ -188,16 +188,16 @@ proc generate {drv_handle} {
 		}
 		if {[string match -nocase "${tsn_inst_name}_tsn_temac_2" $periph] } {
 			set baseaddr [get_baseaddr $eth_ip no_prefix]
-			set tmac1_offset [get_property CONFIG.TEMAC_2_OFFSET $eth_ip]
-			set tmac1_size [get_property CONFIG.TEMAC_2_SIZE $eth_ip]
+			set tmac1_offset [hsi get_property CONFIG.TEMAC_2_OFFSET $eth_ip]
+			set tmac1_size [hsi get_property CONFIG.TEMAC_2_SIZE $eth_ip]
 			set addr_off [format %08x [expr 0x$baseaddr + $tmac1_offset]]
 			gen_mac1_node $periph $addr_off $tmac1_size $numqueues $intr_parent $node $drv_handle $proc_type $freq $eth_ip $mac1intr $baseaddr $queues $tsn_inst_name
 		}
 		if {[string match -nocase "${tsn_inst_name}_tsn_endpoint_block_0" $periph]} {
-			set ep_offset [get_property CONFIG.EP_SCHEDULER_OFFSET $eth_ip]
+			set ep_offset [hsi get_property CONFIG.EP_SCHEDULER_OFFSET $eth_ip]
 			if {[llength $ep_offset] != 0} {
 				set ep_addr [format %08x [expr 0x$baseaddr + $ep_offset]]
-				set ep_size [get_property CONFIG.EP_SCHEDULER_SIZE $eth_ip]
+				set ep_size [hsi get_property CONFIG.EP_SCHEDULER_SIZE $eth_ip]
 				if { $switch_present == 1 } {
 					gen_ep_node $periph $ep_addr $ep_size $numqueues $node $drv_handle $proc_type $ep_sched_irq $eth_ip $intr_parent $int3 $int1 $id $end1 $end_point_ip $connectrx_ip $connecttx_ip
 				} else {
@@ -238,7 +238,7 @@ proc get_phytype {value} {
 }
 
 proc pcspma_phy_node {slave tsn_inst_name} {
-	set phyaddr [get_property CONFIG.PHYADDR $slave]
+	set phyaddr [hsi get_property CONFIG.PHYADDR $slave]
 	set phyaddr [convert_binary_to_decimal $phyaddr]
 	if {[string match -nocase $slave "${tsn_inst_name}_tsn_temac_2"]} {
 		set phyaddr "2"
@@ -291,7 +291,7 @@ proc gen_ep_node {periph ep_addr ep_size numqueues parent_node drv_handle proc_t
 	add_prop $ep_node "local-mac-address" ${mac_addr} bytelist $dts_file
 	add_prop "$ep_node" "xlnx,eth-hasnobuf" boolean $dts_file
 	global tsn_ex_ep_node
-	set tsn_ex_ep [get_property CONFIG.EN_EP_PORT_EXTN $eth_ip]
+	set tsn_ex_ep [hsi get_property CONFIG.EN_EP_PORT_EXTN $eth_ip]
 	if {[string match -nocase $tsn_ex_ep "true"]} {
 		set tsn_ex_ep_node [create_node -n "tsn_ex_ep" -l $tsn_ex_ep_node -p $parent_node -d $dts_file]
 		add_prop "${tsn_ex_ep_node}" "compatible" "xlnx,tsn-ex-ep" string
@@ -386,8 +386,8 @@ proc gen_ep_node {periph ep_addr ep_size numqueues parent_node drv_handle proc_t
 proc gen_switch_node {periph addr size numqueues parent_node drv_handle proc_type eth_ip} {
 	set dts_file [set_drv_def_dts $drv_handle]
 	set switch_node [create_node -n "tsn_switch" -l epswitch -u $addr -p $parent_node -d $dts_file]
-	set hwaddr_learn [get_property CONFIG.EN_HW_ADDR_LEARNING $eth_ip]
-	set mgmt_tag [get_property CONFIG.EN_INBAND_MGMT_TAG $eth_ip]
+	set hwaddr_learn [hsi get_property CONFIG.EN_HW_ADDR_LEARNING $eth_ip]
+	set mgmt_tag [hsi get_property CONFIG.EN_INBAND_MGMT_TAG $eth_ip]
 	if {[string match -nocase $proc_type "zynq"]} {
 		set switch_reg "0x$addr 0x$size"
 	} else {
@@ -447,13 +447,13 @@ proc gen_mac0_node {periph addr size parent_node proc_type drv_handle numqueues 
 	set mdionode [create_node -l ${drv_handle}_mdio0 -n mdio -p $tsn_mac_node -d $dts_file]
 	add_prop "${mdionode}" "#address-cells" 1 int ""
 	add_prop "${mdionode}" "#size-cells" 0 int ""
-	set phytype [string tolower [get_property CONFIG.PHYSICAL_INTERFACE $periph]]
+	set phytype [string tolower [hsi get_property CONFIG.PHYSICAL_INTERFACE $periph]]
 	set txcsum "0"
 	set rxcsum "0"
 	set mac_addr "00 0A 35 00 01 0e"
 	set phy_type [get_phytype $phytype]
-	set qbv_offset [get_property CONFIG.TEMAC_1_SCHEDULER_OFFSET $periph]
-	set qbv_size [get_property CONFIG.TEMAC_1_SCHEDULER_SIZE $periph]
+	set qbv_offset [hsi get_property CONFIG.TEMAC_1_SCHEDULER_OFFSET $periph]
+	set qbv_size [hsi get_property CONFIG.TEMAC_1_SCHEDULER_SIZE $periph]
 	add_prop $tsn_mac_node "local-mac-address" ${mac_addr} bytelist $dts_file
 	add_prop "$tsn_mac_node" "xlnx,txsum" $txcsum int $dts_file
 	add_prop "$tsn_mac_node" "xlnx,rxsum" $rxcsum int $dts_file
@@ -591,15 +591,15 @@ proc gen_mac1_node {periph addr size numqueues intr_parent parent_node drv_handl
 	set mdionode [create_node -l ${drv_handle}_mdio1 -n mdio -p $tsn_mac_node -d $dts_file]
 	add_prop "${mdionode}" "#address-cells" 1 int $dts_file
 	add_prop "${mdionode}" "#size-cells" 0 int $dts_file
-	set tsn_emac2_ip [get_property IP_NAME $periph]
+	set tsn_emac2_ip [hsi get_property IP_NAME $periph]
 	set tsn_ip [hsi::get_cells -hier -filter {IP_NAME == $tsn_emac2_ip}]
-	set phytype [string tolower [get_property CONFIG.Physical_Interface $periph]]
+	set phytype [string tolower [hsi get_property CONFIG.Physical_Interface $periph]]
 	set txcsum "0"
 	set rxcsum "0"
 	set mac_addr "00 0A 35 00 01 0f"
 	set phy_type [get_phytype $phytype]
-	set qbv_offset [get_property CONFIG.TEMAC_2_SCHEDULER_OFFSET $eth_ip]
-	set qbv_size [get_property CONFIG.TEMAC_2_SCHEDULER_SIZE $eth_ip]
+	set qbv_offset [hsi get_property CONFIG.TEMAC_2_SCHEDULER_OFFSET $eth_ip]
+	set qbv_size [hsi get_property CONFIG.TEMAC_2_SCHEDULER_SIZE $eth_ip]
 	add_prop $tsn_mac_node "local-mac-address" ${mac_addr} bytelist $dts_file
 	add_prop "$tsn_mac_node" "xlnx,txsum" $txcsum int $dts_file
 	add_prop "$tsn_mac_node" "xlnx,rxsum" $rxcsum int $dts_file

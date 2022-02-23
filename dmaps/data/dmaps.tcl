@@ -17,7 +17,7 @@ proc generate {drv_handle} {
     set dts_file [set_drv_def_dts $drv_handle]
     set ip [hsi::get_cells -hier $drv_handle]
 
-    set ip_name [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+    set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
     set req_dma_list "psu_gdma psu_adma psu_csudma"
     if {[lsearch  -nocase $req_dma_list $ip_name] >= 0} {
 	set_drv_conf_prop $drv_handle C_DMA_MODE xlnx,dma-type int

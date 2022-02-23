@@ -50,7 +50,7 @@ proc generate {drv_handle} {
 
     # Generate child encoder
     set ver [get_ipdetails $drv_handle "ver"]
-    set encoder_enable [get_property CONFIG.ENABLE_ENCODER [hsi::get_cells -hier $drv_handle]]
+    set encoder_enable [hsi get_property CONFIG.ENABLE_ENCODER [hsi::get_cells -hier $drv_handle]]
     if {[string match -nocase $encoder_enable "TRUE"]} {
 	    set encoder_node [create_node -l "encoder" -n "al5e" -u $baseaddr -p $node -d $dts_file]
 	    set encoder_comp "al,al5e-${ver}"
@@ -61,7 +61,7 @@ proc generate {drv_handle} {
 	    add_prop "${encoder_node}" "interrupts" $intr_val intlist $dts_file
 	    add_prop "${encoder_node}" "interrupt-parent" $intr_parent reference  $dts_file
     }
-    set decoder_enable [get_property CONFIG.ENABLE_DECODER [hsi::get_cells -hier $drv_handle]]
+    set decoder_enable [hsi get_property CONFIG.ENABLE_DECODER [hsi::get_cells -hier $drv_handle]]
     if {[string match -nocase $decoder_enable "TRUE"]} {
 	    # Fenerate child decoder
 	    set decoder_offset 0x20000
@@ -82,14 +82,14 @@ proc generate {drv_handle} {
 	foreach pin $pins {
 		set sink_periph [hsi::get_cells -of_objects $pin]
 		if {[llength $sink_periph]} {
-			set sink_ip [get_property IP_NAME $sink_periph]
+			set sink_ip [hsi get_property IP_NAME $sink_periph]
 			if {[string match -nocase $sink_ip "xlslice"]} {
-				set gpio [get_property CONFIG.DIN_FROM $sink_periph]
+				set gpio [hsi get_property CONFIG.DIN_FROM $sink_periph]
 				set pins [hsi::get_pins -of_objects [hsi::get_nets -of_objects [hsi::get_pins -of_objects $sink_periph "Din"]]]
 				foreach pin $pins {
 					set periph [hsi::get_cells -of_objects $pin]
 					if {[llength $periph]} {
-						set ip [get_property IP_NAME $periph]
+						set ip [hsi get_property IP_NAME $periph]
 						set proc_type [get_hw_family]
 						if {[string match -nocase $proc_type "versal"] } {
 							if {[string match -nocase $ip "versal_cips"]} {
@@ -122,7 +122,7 @@ proc generate {drv_handle} {
 
 proc get_ipdetails {drv_handle arg} {
     set slave [hsi::get_cells -hier ${drv_handle}]
-    set vlnv [split [get_property VLNV $slave] ":"]
+    set vlnv [split [hsi get_property VLNV $slave] ":"]
     set ver [lindex $vlnv 3]
     set name [lindex $vlnv 2]
     set ver [lindex $vlnv 3]

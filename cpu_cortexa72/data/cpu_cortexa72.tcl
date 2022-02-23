@@ -21,8 +21,8 @@ proc generate {drv_handle} {
 	set common_tcl_file "$path/device_tree/data/common_proc.tcl"
 	set hw_file "$path/device_tree/data/xillib_hw.tcl"
 	if {[file exists $common_tcl_file]} {
-	    source -notrace $common_tcl_file
-	    source -notrace $hw_file
+	    source $common_tcl_file
+	    source $hw_file
 	}
 
 	# create root node

@@ -26,7 +26,7 @@ proc is_gmii2rgmii_conv_present {slave} {
     set ipconv 0
 
     set ips [hsi::get_cells -hier -filter {IP_NAME == "gmii_to_rgmii"}]
-    set ip_name [get_property NAME $slave]
+    set ip_name [hsi get_property NAME $slave]
     set slave_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $slave]]
 
     foreach ip $ips {
@@ -35,7 +35,7 @@ proc is_gmii2rgmii_conv_present {slave} {
                 set number [regexp -all -inline -- {[0-3]+} $ipconv2eth_pins]
                 if {[string match -nocase $slave "psu_ethernet_$number"] || [string match -nocase $slave "ps7_ethernet_$number"]} {
                         set ipconv $ip
-                        set phy_addr [get_property "CONFIG.C_PHYADDR" $ipconv]
+                        set phy_addr [hsi get_property "CONFIG.C_PHYADDR" $ipconv]
                         break
                }
         }
@@ -43,7 +43,7 @@ proc is_gmii2rgmii_conv_present {slave} {
             # check if it is connected to the slave IP
             if { [lsearch ${slave_pins} $gmii_pin] >= 0 } {
                 set ipconv $ip
-                set phy_addr [get_property "CONFIG.C_PHYADDR" $ipconv]
+                set phy_addr [hsi get_property "CONFIG.C_PHYADDR" $ipconv]
                 break
             }
         }
@@ -85,7 +85,7 @@ proc generate {drv_handle} {
     ps7_reset_handle $drv_handle CONFIG.C_ENET_RESET CONFIG.enet-reset
 
     # only generate the mdio node if it has mdio
-    set has_mdio [get_property CONFIG.C_HAS_MDIO $slave]
+    set has_mdio [hsi get_property CONFIG.C_HAS_MDIO $slave]
     if { $has_mdio == "0" } {
         return 0
     }
@@ -93,15 +93,15 @@ proc generate {drv_handle} {
 	set proc_type [get_hw_family]
     if {[string match -nocase $proc_type "zynqmp"] || [string match -nocase $proc_type "zynquplus"]} {
         set zynq_periph [hsi::get_cells -hier -filter {IP_NAME == zynq_ultra_ps_e}]
-        set avail_param [list_property [hsi::get_cells -hier $zynq_periph]]
+        set avail_param [hsi list_property [hsi::get_cells -hier $zynq_periph]]
         if {[lsearch -nocase $avail_param "CONFIG.PSU__GEM__TSU__ENABLE"] >= 0} {
-            set val [get_property CONFIG.PSU__GEM__TSU__ENABLE [hsi::get_cells -hier $zynq_periph]]
+            set val [hsi get_property CONFIG.PSU__GEM__TSU__ENABLE [hsi::get_cells -hier $zynq_periph]]
             if {$val == 1} {
 		set default_dts "pcw.dtsi"
                 set tsu_node [create_node -n "tsu_ext_clk" -l "tsu_ext_clk" -d $default_dts -p root]
 		add_prop $tsu_node "compatible" "fixed-clock" stringlist $default_dts
 		add_prop $tsu_node "#clock-cells" 0 int $default_dts
-                set tsu-clk-freq [get_property CONFIG.C_ENET_TSU_CLK_FREQ_HZ [hsi::get_cells -hier $drv_handle]]
+                set tsu-clk-freq [hsi get_property CONFIG.C_ENET_TSU_CLK_FREQ_HZ [hsi::get_cells -hier $drv_handle]]
 		add_prop "${tsu_node}" "clock-frequency" ${tsu-clk-freq} int $default_dts
                 set_drv_prop_if_empty $drv_handle "clock-names" "pclk hclk tx_clk rx_clk tsu_clk" stringlist
                 set_drv_prop_if_empty $drv_handle "clocks" "zynqmp_clk 31>, <&zynqmp_clk 107>, <&zynqmp_clk 48>, <&zynqmp_clk 52>, <&tsu_ext_clk" reference
@@ -120,15 +120,15 @@ proc generate {drv_handle} {
 
     if {[string match -nocase $proc_type "versal"] } {
 	set versal_periph [hsi::get_cells -hier -filter {IP_NAME == versal_cips}]
-	set avail_param [list_property [hsi::get_cells -hier $versal_periph]]
+	set avail_param [hsi list_property [hsi::get_cells -hier $versal_periph]]
 	if {[lsearch -nocase $avail_param "CONFIG.PS_GEM_TSU_ENABLE"] >= 0} {
-		set val [get_property CONFIG.PS_GEM_TSU_ENABLE [hsi::get_cells -hier $versal_periph]]
+		set val [hsi get_property CONFIG.PS_GEM_TSU_ENABLE [hsi::get_cells -hier $versal_periph]]
 		if {$val == 1} {
 			set default_dts [set_drv_def_dts $drv_handle]
 			set tsu_node [create_node -n "tsu_ext_clk" -l "tsu_ext_clk" -d $default_dts -p root]
 			add_prop "${tsu_node}" "compatible" "fixed-clock" stringlist $default_dts
 			add_prop "${tsu_node}" "#clock-cells" 0 int $default_dts
-			set tsu-clk-freq [get_property CONFIG.C_ENET_TSU_CLK_FREQ_HZ [hsi::get_cells -hier $drv_handle]]
+			set tsu-clk-freq [hsi get_property CONFIG.C_ENET_TSU_CLK_FREQ_HZ [hsi::get_cells -hier $drv_handle]]
 			add_prop "${tsu_node}" "clock-frequency" ${tsu-clk-freq} int $default_dts
 			set_drv_prop_if_empty $drv_handle "clock-names" "pclk hclk tx_clk rx_clk tsu_clk" stringlist
 			if {[string match -nocase $node "gem0: ethernet@ff0c0000"]} {
@@ -153,7 +153,7 @@ proc generate {drv_handle} {
 		      if {[string match -nocase $node "&gem0"]} {
 	      set connected_ip [get_connected_stream_ip $zynq_periph "MDIO_ENET0"]
 	      if {[llength $connected_ip]} {
-		      set ip_name [get_property IP_NAME $connected_ip]
+		      set ip_name [hsi get_property IP_NAME $connected_ip]
 	      }
 	      if {[string match -nocase $ip_name "gig_ethernet_pcs_pma"]} {
 		      set pin [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $connected_ip] "phyaddr"]]
@@ -161,13 +161,13 @@ proc generate {drv_handle} {
 			      set sink_periph [hsi::get_cells -of_objects $pin]
 		      }
 		      if {[llength $sink_periph]} {
-			      set val [get_property CONFIG.CONST_VAL $sink_periph]
+			      set val [hsi get_property CONFIG.CONST_VAL $sink_periph]
 			      set inhex [format %x $val]
 			      set_drv_prop $drv_handle phy-handle "phy$inhex" reference
 			      set pcspma_phy_node [create_node -l phy$inhex -n phy -u $inhex -p $node -d $dts_file]
 			      add_prop "${pcspma_phy_node}" "reg" $val int $dts_file
-			      set phy_type [get_property CONFIG.Standard $connected_ip]
-			      set is_sgmii [get_property CONFIG.c_is_sgmii $connected_ip]
+			      set phy_type [hsi get_property CONFIG.Standard $connected_ip]
+			      set is_sgmii [hsi get_property CONFIG.c_is_sgmii $connected_ip]
 			      if {$phy_type == "1000BASEX"} {
 				      add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x5 int $dts_file
 			      } elseif { $is_sgmii == "true"} {
@@ -181,7 +181,7 @@ proc generate {drv_handle} {
 			if {[string match -nocase $node "&gem1"]} {
 	       set connected_ip [get_connected_stream_ip $zynq_periph "MDIO_ENET1"]
 	       if {[llength $connected_ip]} {
-		       set ip_name [get_property IP_NAME $connected_ip]
+		       set ip_name [hsi get_property IP_NAME $connected_ip]
 	       }
 	       if {[string match -nocase $ip_name "gig_ethernet_pcs_pma"]} {
 		       set pin [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $connected_ip] "phyaddr"]]
@@ -189,13 +189,13 @@ proc generate {drv_handle} {
 			       set sink_periph [hsi::get_cells -of_objects $pin]
 		       }
 		       if {[llength $sink_periph]} {
-			       set val [get_property CONFIG.CONST_VAL $sink_periph]
+			       set val [hsi get_property CONFIG.CONST_VAL $sink_periph]
 			       set inhex [format %x $val]
 			       set_drv_prop $drv_handle phy-handle "phy$inhex" reference
 			       set pcspma_phy_node [create_node -l phy$inhex -n phy -u $inhex -p $node -d $dts_file]
 			       add_prop "${pcspma_phy_node}" "reg" $val int $dts_fil
-			       set phy_type [get_property CONFIG.Standard $connected_ip]
-			       set is_sgmii [get_property CONFIG.c_is_sgmii $connected_ip]
+			       set phy_type [hsi get_property CONFIG.Standard $connected_ip]
+			       set is_sgmii [hsi get_property CONFIG.c_is_sgmii $connected_ip]
 			       if {$phy_type == "1000BASEX"} {
 				       add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x5 int $dts_fil
 			       } elseif { $is_sgmii == "true"} {
@@ -209,7 +209,7 @@ proc generate {drv_handle} {
 			               if {[string match -nocase $node "&gem2"]} {
 	                       set connected_ip [get_connected_stream_ip $zynq_periph "MDIO_ENET2"]
 	                       if {[llength $connected_ip]} {
-	                               set ip_name [get_property IP_NAME $connected_ip]
+	                               set ip_name [hsi get_property IP_NAME $connected_ip]
 	                       }
 	                       if {[string match -nocase $ip_name "gig_ethernet_pcs_pma"]} {
 	                               set pin [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $connected_ip] "phyaddr"]]
@@ -217,13 +217,13 @@ proc generate {drv_handle} {
 			       set sink_periph [hsi::get_cells -of_objects $pin]
 		       }
 		       if {[llength $sink_periph]} {
-			       set val [get_property CONFIG.CONST_VAL $sink_periph]
+			       set val [hsi get_property CONFIG.CONST_VAL $sink_periph]
 			       set inhex [format %x $val]
 			       set_drv_prop $drv_handle phy-handle "phy$inhex" reference
 			       set pcspma_phy_node [create_node -l phy$inhex -n phy -u $inhex -p $node -d $dts_file]
 			       add_prop "${pcspma_phy_node}" "reg" $val int $dts_file
-			       set phy_type [get_property CONFIG.Standard $connected_ip]
-			       set is_sgmii [get_property CONFIG.c_is_sgmii $connected_ip]
+			       set phy_type [hsi get_property CONFIG.Standard $connected_ip]
+			       set is_sgmii [hsi get_property CONFIG.c_is_sgmii $connected_ip]
 			       if {$phy_type == "1000BASEX"} {
 				       add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x5 int $dts_file
 			       } elseif { $is_sgmii == "true"} {
@@ -237,7 +237,7 @@ proc generate {drv_handle} {
 	if {[string match -nocase $node "&gem3"]} {
 	       set connected_ip [get_connected_stream_ip $zynq_periph "MDIO_ENET3"]
 	       if {[llength $connected_ip]} {
-		       set ip_name [get_property IP_NAME $connected_ip]
+		       set ip_name [hsi get_property IP_NAME $connected_ip]
 	       }
 	       if {[string match -nocase $ip_name "gig_ethernet_pcs_pma"]} {
 		       set pin [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $connected_ip] "phyaddr"]]
@@ -245,13 +245,13 @@ proc generate {drv_handle} {
 			       set sink_periph [hsi::get_cells -of_objects $pin]
 		       }
 		       if {[llength $sink_periph]} {
-			       set val [get_property CONFIG.CONST_VAL $sink_periph]
+			       set val [hsi get_property CONFIG.CONST_VAL $sink_periph]
 			       set inhex [format %x $val]
 			       set_drv_prop $drv_handle phy-handle "phy$inhex" reference
 			       set pcspma_phy_node [create_node -l phy$inhex -n phy -u $inhex -p $node -d $dts_file]
 			       add_prop "${pcspma_phy_node}" "reg" $val int $dts_file
-			       set phy_type [get_property CONFIG.Standard $connected_ip]
-			       set is_sgmii [get_property CONFIG.c_is_sgmii $connected_ip]
+			       set phy_type [hsi get_property CONFIG.Standard $connected_ip]
+			       set is_sgmii [hsi get_property CONFIG.c_is_sgmii $connected_ip]
 			       if {$phy_type == "1000BASEX"} {
 				       add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x5 int $dts_file
 			       } elseif { $is_sgmii == "true"} {

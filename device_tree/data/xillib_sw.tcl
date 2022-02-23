@@ -213,9 +213,9 @@ proc get_drivers_sw args {
 	if {[string match -nocase $val "1"]} {
 		set drivers ""
 		foreach drv_handle [hsi::get_cells -hier] {
-			set ipname [get_property IP_NAME $drv_handle]
+			set ipname [hsi get_property IP_NAME $drv_handle]
 			set val [hsi::get_mem_ranges $drv_handle]
-			if {[string match -nocase [get_property IP_TYPE [hsi::get_cells -hier $drv_handle]] "processor"]} {
+			if {[string match -nocase [hsi get_property IP_TYPE [hsi::get_cells -hier $drv_handle]] "processor"]} {
 				if {[string match -nocase $ipname "psv_cortexa72"] || [string match -nocase $ipname "psu_cortexa53"]} {
 					set index [string index $drv_handle end]
 					if {$index == 0} {
@@ -242,7 +242,7 @@ proc get_drivers_sw args {
 		}
 		return $drivers
 	} else {
-		set ipname [get_property IP_NAME [hsi::get_cells -hier $val]]
+		set ipname [hsi get_property IP_NAME [hsi::get_cells -hier $val]]
 		if {[catch {set tmp [dict get $driverlist $ipname]} msg]} {
 			set drivers "generic"
 			return "generic"
@@ -257,7 +257,7 @@ proc get_drivers_sw args {
 # Use peripheral name to form the parameter name
 #
 proc get_ip_param_name {periph_handle param} {
-   set name [common::get_property NAME $periph_handle ]
+   set name [hsi get_property NAME $periph_handle ]
    set name [string toupper $name]
    set name [string map { "/" "_" } $name]
    set name [format "XPAR_%s_" $name]
@@ -304,7 +304,7 @@ proc define_include_file {drv_handle file_name drv_string args} {
     set arg "NUM_INSTANCES"
     set posn [lsearch -exact $args $arg]
     if {$posn > -1} {
-        puts $file_handle "/* Definitions for driver [string toupper [common::get_property name $drv_handle]] */"
+        puts $file_handle "/* Definitions for driver [string toupper [hsi get_property name $drv_handle]] */"
         # Define NUM_INSTANCES
         puts $file_handle "#define [get_driver_param_name $drv_string $arg] [llength $periphs]"
         set args [lreplace $args $posn $posn]
@@ -313,11 +313,11 @@ proc define_include_file {drv_handle file_name drv_string args} {
     # Check if it is a driver parameter
     lappend newargs 
     foreach arg $args {
-        set value [common::get_property CONFIG.$arg $drv_handle]
+        set value [hsi get_property CONFIG.$arg $drv_handle]
         if {[llength $value] == 0} {
             lappend newargs $arg
         } else {
-            puts $file_handle "#define [get_driver_param_name $drv_string $arg] [common::get_property $arg $drv_handle]"
+            puts $file_handle "#define [get_driver_param_name $drv_string $arg] [hsi get_property $arg $drv_handle]"
         }
     }
     set args $newargs
@@ -326,13 +326,13 @@ proc define_include_file {drv_handle file_name drv_string args} {
     set device_id 0
     foreach periph $periphs {
         puts $file_handle ""
-        puts $file_handle "/* Definitions for peripheral [string toupper [common::get_property NAME $periph]] */"
+        puts $file_handle "/* Definitions for peripheral [string toupper [hsi get_property NAME $periph]] */"
         foreach arg $args {
             if {[string compare -nocase "DEVICE_ID" $arg] == 0} {
                 set value $device_id
                 incr device_id
             } else {
-                set value [common::get_property CONFIG.$arg $periph]
+                set value [hsi get_property CONFIG.$arg $periph]
             }
             if {[llength $value] == 0} {
                 set value 0
@@ -367,7 +367,7 @@ proc define_zynq_include_file {drv_handle file_name drv_string args} {
    set arg "NUM_INSTANCES"
    set posn [lsearch -exact $args $arg]
    if {$posn > -1} {
-       puts $file_handle "/* Definitions for driver [string toupper [common::get_property name $drv_handle]] */"
+       puts $file_handle "/* Definitions for driver [string toupper [hsi get_property name $drv_handle]] */"
        # Define NUM_INSTANCES
        puts $file_handle "#define [get_driver_param_name $drv_string $arg] [llength $periphs]"
        set args [lreplace $args $posn $posn]
@@ -376,11 +376,11 @@ proc define_zynq_include_file {drv_handle file_name drv_string args} {
    # Check if it is a driver parameter
    lappend newargs 
    foreach arg $args {
-       set value [common::get_property CONFIG.$arg $drv_handle ]
+       set value [hsi get_property CONFIG.$arg $drv_handle ]
        if {[llength $value] == 0} {
            lappend newargs $arg
        } else {
-           puts $file_handle "#define [get_driver_param_name $drv_string $arg] [common::get_property CONFIG.$arg $drv_handle ]"
+           puts $file_handle "#define [get_driver_param_name $drv_string $arg] [hsi get_property CONFIG.$arg $drv_handle ]"
        }
    }
    set args $newargs
@@ -389,13 +389,13 @@ proc define_zynq_include_file {drv_handle file_name drv_string args} {
    set device_id 0
    foreach periph $periphs {
        puts $file_handle ""
-       puts $file_handle "/* Definitions for peripheral [string toupper [common::get_property NAME $periph]] */"
+       puts $file_handle "/* Definitions for peripheral [string toupper [hsi get_property NAME $periph]] */"
        foreach arg $args {
            if {[string compare -nocase "DEVICE_ID" $arg] == 0} {
                set value $device_id
                incr device_id
            } else {
-               set value [common::get_property CONFIG.$arg $periph]
+               set value [hsi get_property CONFIG.$arg $periph]
            }
            if {[llength $value] == 0} {
                set value 0
@@ -494,9 +494,9 @@ proc define_config_file {drv_handle file_name drv_string args} {
                 continue
             }
             # Check if this is a driver parameter or a peripheral parameter
-            set value [common::get_property CONFIG.$arg $drv_handle]
+            set value [hsi get_property CONFIG.$arg $drv_handle]
             if {[llength $value] == 0} {
-                set local_value [common::get_property CONFIG.$arg $periph ]
+                set local_value [hsi get_property CONFIG.$arg $periph ]
                 # If a parameter isn't found locally (in the current
                 # peripheral), we will (for some obscure and ancient reason)
                 # look in peripherals connected via point to point links
@@ -552,9 +552,9 @@ proc define_zynq_config_file {drv_handle file_name drv_string args} {
        set comma ""
        foreach arg $args {
            # Check if this is a driver parameter or a peripheral parameter
-           set value [common::get_property CONFIG.$arg $drv_handle]
+           set value [hsi get_property CONFIG.$arg $drv_handle]
            if {[llength $value] == 0} {
-            set local_value [common::get_property CONFIG.$arg $periph ]
+            set local_value [hsi get_property CONFIG.$arg $periph ]
             # If a parameter isn't found locally (in the current
             # peripheral), we will (for some obscure and ancient reason)
             # look in peripherals connected via point to point links
@@ -622,7 +622,7 @@ proc define_with_names {drv_handle periph_handle file_name args} {
 #   incr count 
 #   puts -nonewline $file_handle "\t\{" 
 #   foreach field $args { 
-#       set field_value [common::get_property CONFIG.$field $ele] 
+#       set field_value [hsi get_property CONFIG.$field $ele] 
 #       if { $field == [lindex $args end] } { 
 #   	puts -nonewline $file_handle "$field_value" 
 #       } else { 
@@ -663,7 +663,7 @@ proc define_include_file_membank {drv_handle file_name args} {
        for { set i 0 } { $i <  $len} { incr i 2} {
            set base [lindex $args $i]
            set high [lindex $args [expr $i+1]]
-           set baseval [common::get_property CONFIG.$base $periph]
+           set baseval [hsi get_property CONFIG.$base $periph]
            set baseval [string map {_ ""} $baseval]
            # Check to see if value starts with 0b or 0x
            if {[string match -nocase 0b* $baseval]} {
@@ -671,7 +671,7 @@ proc define_include_file_membank {drv_handle file_name args} {
            } else {
             set baseval [format "0x%08X" $baseval]
            }
-           set highval [common::get_property CONFIG.$high $periph]
+           set highval [hsi get_property CONFIG.$high $periph]
            set highval [string map {_ ""} $highval]
            # Check to see if value starts with 0b or 0x
            if {[string match -nocase 0b* $highval]} {
@@ -702,10 +702,10 @@ proc define_membank { periph file_name args } {
    # Open include file
    set file_handle [open_include_file $file_name]
 
-   puts $file_handle "/* Definitions for peripheral [string toupper [common::get_property NAME $periph]] */"
+   puts $file_handle "/* Definitions for peripheral [string toupper [hsi get_property NAME $periph]] */"
    
    foreach arg $newargs {
-       set value [common::get_property CONFIG.$arg $periph]
+       set value [hsi get_property CONFIG.$arg $periph]
        set value [format_addr_string $value $arg]
        puts $file_handle "#define [get_ip_param_name $periph $arg] $value"
    }
@@ -726,13 +726,13 @@ proc find_addr_params {periph} {
    #get the mem_ranges which belongs to this peripheral
    if { [llength $periph] != 0 } {
    set sw_proc_handle [hsi::get_sw_processor]
-   set hw_proc_handle [hsi::get_cells -hier [common::get_property hw_instance $sw_proc_handle]]
+   set hw_proc_handle [hsi::get_cells -hier [hsi get_property hw_instance $sw_proc_handle]]
    set mem_ranges [hsi::get_mem_ranges -of_objects $hw_proc_handle -filter "INSTANCE==$periph"]
    foreach mem_range $mem_ranges {
-       set bparam_name [common::get_property BASE_NAME $mem_range]
-       set bparam_value [common::get_property BASE_VALUE $mem_range]
-       set hparam_name [common::get_property HIGH_NAME $mem_range]
-       set hparam_value [common::get_property HIGH_VALUE $mem_range]
+       set bparam_name [hsi get_property BASE_NAME $mem_range]
+       set bparam_value [hsi get_property BASE_VALUE $mem_range]
+       set hparam_name [hsi get_property HIGH_NAME $mem_range]
+       set hparam_value [hsi get_property HIGH_VALUE $mem_range]
 
        # Check if already added
        set bposn [lsearch -exact $addr_params $bparam_name]
@@ -764,7 +764,7 @@ proc define_addr_params {drv_handle file_name} {
    # Print all parameters for all peripherals
    foreach periph $periphs {
    puts $file_handle ""
-   puts $file_handle "/* Definitions for peripheral [string toupper [common::get_property NAME $periph]] */"
+   puts $file_handle "/* Definitions for peripheral [string toupper [hsi get_property NAME $periph]] */"
 
    set addr_params ""
    set addr_params [find_addr_params $periph]
@@ -800,14 +800,14 @@ proc define_all_params {drv_handle file_name} {
    # Print all parameters for all peripherals
    foreach periph $periphs {
        puts $file_handle ""
-       puts $file_handle "/* Definitions for peripheral [string toupper [common::get_property NAME $periph]] */"
+       puts $file_handle "/* Definitions for peripheral [string toupper [hsi get_property NAME $periph]] */"
        set params ""
-       set params [common::list_property $periph CONFIG.*]
+       set params [common::hsi list_property $periph CONFIG.*]
        foreach param $params {
            set param_name [string range $param [string length "CONFIG."] [string length $param]]
            set posn [lsearch -exact $reserved_param_list $param_name]
            if {$posn == -1 } {
-               set param_value [common::get_property $param $periph]
+               set param_value [hsi get_property $param $periph]
                 if {$param_value != ""} {
                     set param_value [format_addr_string $param_value $param_name]
                     puts $file_handle "#define [get_ip_param_name $periph $param_name] $param_value"
@@ -834,7 +834,7 @@ proc define_canonical_xpars {drv_handle file_name drv_string args} {
 
    # Get the names of all the peripherals connected to this driver
    foreach periph $periphs {
-       set peripheral_name [string toupper [common::get_property NAME $periph]]
+       set peripheral_name [string toupper [hsi get_property NAME $periph]]
        lappend peripherals $peripheral_name
    }
 
@@ -856,7 +856,7 @@ proc define_canonical_xpars {drv_handle file_name drv_string args} {
 
    set i 0
    foreach periph $periphs {
-       set periph_name [string toupper [common::get_property NAME $periph]]
+       set periph_name [string toupper [hsi get_property NAME $periph]]
 
        # Generate canonical definitions only for the peripherals whose
        # canonical name is not the same as hardware instance name
@@ -903,7 +903,7 @@ proc define_zynq_canonical_xpars {drv_handle file_name drv_string args} {
 
    # Get the names of all the peripherals connected to this driver
    foreach periph $periphs {
-       set peripheral_name [string toupper [common::get_property NAME $periph]]
+       set peripheral_name [string toupper [hsi get_property NAME $periph]]
        lappend peripherals $peripheral_name
    }
 
@@ -925,7 +925,7 @@ proc define_zynq_canonical_xpars {drv_handle file_name drv_string args} {
 
    set i 0
    foreach periph $periphs {
-       set periph_name [string toupper [common::get_property NAME $periph]]
+       set periph_name [string toupper [hsi get_property NAME $periph]]
 
        # Generate canonical definitions only for the peripherals whose
        # canonical name is not the same as hardware instance name
@@ -963,7 +963,7 @@ proc define_zynq_canonical_xpars {drv_handle file_name drv_string args} {
 #----------------------------------------------------
 proc define_processor_params {drv_handle file_name} {
    set sw_proc_handle [hsi::get_sw_processor]
-   set proc_name [common::get_property hw_instance $sw_proc_handle]
+   set proc_name [hsi get_property hw_instance $sw_proc_handle]
    set hw_proc_handle [hsi::get_cells -hier $proc_name ]
 
    set lprocs [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
@@ -979,9 +979,9 @@ proc define_processor_params {drv_handle file_name} {
    # Print all parameters for all peripherals
    foreach periph $periphs {
    
-       set name [common::get_property IP_NAME $periph]
+       set name [hsi get_property IP_NAME $periph]
        set name [string toupper $name]
-       set iname [common::get_property NAME $periph]
+       set iname [hsi get_property NAME $periph]
    #--------------------------------	
    # Set CPU ID & CORE_CLOCK_FREQ_HZ
    #--------------------------------		
@@ -996,17 +996,17 @@ proc define_processor_params {drv_handle file_name} {
    }
 
    set params ""
-   set params [common::list_property $periph CONFIG.*]
+   set params [common::hsi list_property $periph CONFIG.*]
 
    foreach param $params {
        set param_name [string toupper [string range $param [string length "CONFIG."] [string length $param]]]
        set posn [lsearch -exact $reserved_param_list $param_name]
        if {$posn == -1 } {
-        set param_value [common::get_property  $param $periph]
+        set param_value [hsi get_property  $param $periph]
        
         if {$param_value != ""} {
             set param_value [format_addr_string $param_value $param_name]
-            set name [common::get_property IP_NAME $periph]
+            set name [hsi get_property IP_NAME $periph]
             set name [string toupper $name]
             set name [format "XPAR_%s_" $name]
             set param [string toupper $param_name]
@@ -1035,7 +1035,7 @@ proc define_processor_params {drv_handle file_name} {
 proc get_ip_mem_ranges {periph} {
 	puts "ipmem ranges"
     set sw_proc_handle [hsi::get_sw_processor]
-    set hw_proc_handle [hsi::get_cells -hier [common::get_property hw_instance $sw_proc_handle]]
+    set hw_proc_handle [hsi::get_cells -hier [hsi get_property hw_instance $sw_proc_handle]]
 	if { [llength $periph] != 0 } {
     set mem_ranges [hsi::get_mem_ranges -of_objects $hw_proc_handle -filter "INSTANCE==$periph"]
 	}
@@ -1047,11 +1047,11 @@ proc get_ip_mem_ranges {periph} {
 #
 proc handle_stdin_proc {drv_handle} {
 
-   set stdin [common::get_property CONFIG.stdin $drv_handle]
+   set stdin [hsi get_property CONFIG.stdin $drv_handle]
    set sw_proc_handle [hsi::get_sw_processor]
-   set hw_proc_handle [hsi::get_cells -hier [common::get_property hw_instance $sw_proc_handle]]
+   set hw_proc_handle [hsi::get_cells -hier [hsi get_property hw_instance $sw_proc_handle]]
 
-   set processor [common::get_property hw_instance $sw_proc_handle]
+   set processor [hsi get_property hw_instance $sw_proc_handle]
    if {[llength $stdin] == 1 && [string compare -nocase "none" $stdin] != 0} {
        set stdin_drv_handle [hsi::get_drivers -filter "HW_INSTANCE==$stdin"]
        if {[llength $stdin_drv_handle] == 0} {
@@ -1064,11 +1064,11 @@ proc handle_stdin_proc {drv_handle} {
            error "No stdin interface available for driver for peripheral $stdin" "" "hsi_error"
        }
 
-       set inbyte_name [common::get_property FUNCTION.inbyte $interface_handle ]
+       set inbyte_name [hsi get_property FUNCTION.inbyte $interface_handle ]
        if {[llength $inbyte_name] == 0} {
          error "No inbyte function available for driver for peripheral $stdin" "" "hsi_error"
        }
-       set header [common::get_property PROPERTY.header $interface_handle]
+       set header [hsi get_property PROPERTY.header $interface_handle]
        if {[llength $header] == 0} {
          error "No header property available in stdin interface for driver for peripheral $stdin" "" "hsi_error"
        }
@@ -1097,8 +1097,8 @@ proc handle_stdin_proc {drv_handle} {
            error "No mem range of type DATA found." "" "hsi_error"
 	   return
        }
-       set base_name [common::get_property BASE_NAME $stdin_mem_range]
-       set base_value [lindex [common::get_property BASE_VALUE $stdin_mem_range] 0]
+       set base_name [hsi get_property BASE_NAME $stdin_mem_range]
+       set base_value [lindex [hsi get_property BASE_VALUE $stdin_mem_range] 0]
        puts $config_file "\#define STDIN_BASEADDRESS [format_addr_string $base_value $base_name]"
        close $config_file
    }
@@ -1109,10 +1109,10 @@ proc handle_stdin_proc {drv_handle} {
 # Handle the stdout parameter of a processor
 #
 proc handle_stdout {drv_handle} {
-   set stdout [common::get_property CONFIG.stdout $drv_handle]
+   set stdout [hsi get_property CONFIG.stdout $drv_handle]
    set sw_proc_handle [hsi::get_sw_processor]
-   set hw_proc_handle [hsi::get_cells -hier [common::get_property hw_instance $sw_proc_handle]]
-   set processor [common::get_property NAME $hw_proc_handle]
+   set hw_proc_handle [hsi::get_cells -hier [hsi get_property hw_instance $sw_proc_handle]]
+   set processor [hsi get_property NAME $hw_proc_handle]
 
    if {[llength $stdout] == 1 && [string compare -nocase "none" $stdout] != 0} {
        set stdout_drv_handle [hsi::get_drivers -filter "HW_INSTANCE==$stdout"]
@@ -1125,11 +1125,11 @@ proc handle_stdout {drv_handle} {
        if {[llength $interface_handle] == 0} {
          error "No stdout interface available for driver for peripheral $stdout" "" "hsi_error"
        }
-       set outbyte_name [common::get_property FUNCTION.outbyte $interface_handle]
+       set outbyte_name [hsi get_property FUNCTION.outbyte $interface_handle]
        if {[llength $outbyte_name] == 0} {
          error "No outbyte function available for driver for peripheral $stdout" "" "hsi_error"
        }
-       set header [common::get_property PROPERTY.header $interface_handle]
+       set header [hsi get_property PROPERTY.header $interface_handle]
        if {[llength $header] == 0} {
          error "No header property available in stdout interface for driver for peripheral $stdout" "" "hsi_error"
        }
@@ -1157,8 +1157,8 @@ proc handle_stdout {drv_handle} {
            error "No mem range of type DATA found." "" "hsi_error"
 	   return
        }
-       set base_name [common::get_property BASE_NAME $stdout_mem_range]
-       set base_value [lindex [common::get_property BASE_VALUE $stdout_mem_range] 0]
+       set base_name [hsi get_property BASE_NAME $stdout_mem_range]
+       set base_value [lindex [hsi get_property BASE_VALUE $stdout_mem_range] 0]
        puts $config_file "\#define STDOUT_BASEADDRESS [format_addr_string $base_value $base_name]"
        close $config_file
    }
@@ -1168,16 +1168,16 @@ proc get_common_driver_ips {driver_handle} {
 	puts "inside"
   set retlist ""
   set drs { }
-  set class [common::get_property CLASS $driver_handle]
+  set class [hsi get_property CLASS $driver_handle]
   if { [string match -nocase $class "sw_proc"] } {
-      set hw_instance [common::get_property HW_INSTANCE $driver_handle]
+      set hw_instance [hsi get_property HW_INSTANCE $driver_handle]
       lappend retlist [hsi::get_cells -hier $hw_instance]
   } else {
-      set driver_name [common::get_property NAME $driver_handle]
+      set driver_name [hsi get_property NAME $driver_handle]
 	  if { [llength $driver_name] != 0 } {
       set drs [get_drivers_sw -filter "NAME==$driver_name"]
       foreach driver $drs {
-           set hw_instance [common::get_property hw_instance $driver]
+           set hw_instance [hsi get_property hw_instance $driver]
            set cell [hsi::get_cells -hier $hw_instance]
            lappend retlist $cell
       }
@@ -1210,7 +1210,7 @@ proc is_pin_interrupting_current_proc { periph_name intr_pin_name} {
 #and is available processor memory map
 #
 proc get_current_proc_intr_cntrl { } {
-    set current_proc [common::get_property HW_INSTANCE [hsi::get_sw_processor] ]
+    set current_proc [hsi get_property HW_INSTANCE [hsi::get_sw_processor] ]
     set proc_handle [hsi::get_cells -hier $current_proc]
     set proc_ips [get_proc_slave_periphs $proc_handle]
     foreach ip $proc_ips {
@@ -1242,7 +1242,7 @@ proc is_ip_interrupting_current_proc { periph_name} {
         if { [llength $cntrl_driver] != 1} {
             return 0
         }
-        #set current_proc [common::get_property HW_INSTANCE [hsi::get_sw_processor]]
+        #set current_proc [hsi get_property HW_INSTANCE [hsi::get_sw_processor]]
 	set proc_list "psv_cortexa72 psu_cortexa53 ps7_cortexa9"
 #        set current_proc "psv_cortexa72_0"
 #	set current_proc [get_hw_family]
@@ -1253,7 +1253,7 @@ proc is_ip_interrupting_current_proc { periph_name} {
                 set connected_ip [hsi::get_cells -of_objects $sink_pin]
                 #Connected interface should be IP Instance
                 #Connected IP should be current_processor
-                set ip_name [common::get_property IP_NAME $connected_ip]
+                set ip_name [hsi get_property IP_NAME $connected_ip]
 		if {[lsearch -nocase $proc_list $ip_name] >= 0} {
                     return 1
                 }
@@ -1266,7 +1266,7 @@ proc is_ip_interrupting_current_proc { periph_name} {
                 set connected_ip [hsi::get_cells -of_objects $connected_intf] 
                 #Connected interface should be IP Instance
                 #Connected IP should be current_processor
-                set ip_name [common::get_property IP_NAME $connected_ip]
+                set ip_name [hsi get_property IP_NAME $connected_ip]
 		if {[lsearch -nocase $proc_list $ip_name] >= 0} {
                     return 1
                 }
@@ -1281,7 +1281,7 @@ proc is_ip_interrupting_current_proc { periph_name} {
                 set connected_ip [hsi::get_cells -of_objects $sink_pin]
                 #Connected interface should be IP Instance
                 #Connected IP should be current_processor
-                set ip_name [common::get_property IP_NAME $connected_ip]
+                set ip_name [hsi get_property IP_NAME $connected_ip]
 		if {[lsearch -nocase $proc_list $ip_name] >= 0} {
 #			puts "return3"
                     return 1
@@ -1291,7 +1291,7 @@ proc is_ip_interrupting_current_proc { periph_name} {
    } else {
        set intrs [hsi::get_pins -of_objects $periph -filter "TYPE==INTERRUPT&&DIRECTION==O"]
        foreach intr $intrs {
-           set intr_name [common::get_property NAME $intr]
+           set intr_name [hsi get_property NAME $intr]
            set flag [is_pin_interrupting_current_proc "$periph_name" "$intr_name"]
            if { $flag } {
                return 1
@@ -1328,7 +1328,7 @@ proc add_new_dts_param { node  param_name param_value param_type {param_decripti
                 error "param_value can only be empty if the param_type is boolean"
         }
 	common::set_property $param_name $param_value $node
-	set param [common::get_property CONFIG.$param_name $node]
+	set param [hsi get_property CONFIG.$param_name $node]
 	common::set_property TYPE $param_type $param
 	common::set_property DESC $param_decription $param
     return $param
@@ -1337,9 +1337,9 @@ proc add_new_dts_param { node  param_name param_value param_type {param_decripti
 proc add_driver_properties { node driver } {
 	set props [hsi::get_comp_params -of_objects $driver]
 	foreach prop $props {
-	    set name [common::get_property NAME $prop]
-	    set value [common::get_property VALUE $prop]
-	    set type [common::get_property CONFIG.TYPE $prop]
+	    set name [hsi get_property NAME $prop]
+	    set value [hsi get_property VALUE $prop]
+	    set type [hsi get_property CONFIG.TYPE $prop]
 	    add_new_dts_param $node "$name" "$value" "$type"
 	}
 }
@@ -1348,7 +1348,7 @@ proc get_os_parameter_value { param_name } {
     set value ""
     set global_params_node [hsi::get_nodes -of_objects [::hsi::get_os] "global_params"]
     if { [llength $global_params_node] } {
-        set value [common::get_property CONFIG.$param_name $global_params_node]
+        set value [hsi get_property CONFIG.$param_name $global_params_node]
     }
     return $value
 }
@@ -1382,7 +1382,7 @@ proc get_dtg_interrupt_info { ip_name intr_port_name } {
     }
     set intc [get_connected_intr_cntrl $ip_name $intr_port_name]
     set intr_type [get_dtg_interrupt_type $intc $ip $intr_port_name] 
-    if { [string match "[common::get_property IP_NAME $intc]" "ps7_scugic"] } {
+    if { [string match "[hsi get_property IP_NAME $intc]" "ps7_scugic"] } {
         if { $intr_id > 32 } {
             set intr_id [expr $intr_id -32]
         }
@@ -1402,9 +1402,9 @@ proc get_dtg_interrupt_type { intc_name ip_name port_name } {
     set intr_pin [hsi::get_pins -of_objects $ip $port_name]
     set sensitivity ""
     if { [llength $intr_pin] } {
-        set sensitivity [common::get_property SENSITIVITY $intr_pin]
+        set sensitivity [hsi get_property SENSITIVITY $intr_pin]
     }
-    set intc_type [common::get_property IP_NAME $intc ]
+    set intc_type [hsi get_property IP_NAME $intc ]
     if { [string match -nocase $intc_type "ps7_scugic"] } {
 		# Follow the openpic specification
 		if { [string match -nocase $sensitivity "EDGE_FALLING"] } {
@@ -1444,7 +1444,7 @@ proc get_connected_stream_ip { ip_name intf_name } {
     if { [llength $intf] == 0 } {
         return ""
     }
-    set intf_type [common::get_property TYPE $intf]
+    set intf_type [hsi get_property TYPE $intf]
 
     set intf_net [hsi::get_intf_nets -of_objects $intf]
     if { [llength $intf_net] == 0 } {
@@ -1481,7 +1481,7 @@ proc get_interrupt_id { ip_name port_name } {
         if { [llength $intr_pin] == 0 } {
             return $ret
         }
-        set pin_dir [common::get_property DIRECTION $intr_pin]
+        set pin_dir [hsi get_property DIRECTION $intr_pin]
         if { [string match -nocase $pin_dir "I"] } {
           return $ret
         }
@@ -1491,7 +1491,7 @@ proc get_interrupt_id { ip_name port_name } {
         if { [llength $intr_pin] == 0 } {
             return $ret
         }
-        set pin_dir [common::get_property DIRECTION $intr_pin]
+        set pin_dir [hsi get_property DIRECTION $intr_pin]
         if { [string match -nocase $pin_dir "O"] } {
           return $ret
         }
@@ -1502,8 +1502,8 @@ proc get_interrupt_id { ip_name port_name } {
         return $ret
     }
 
-    set intc_type [common::get_property IP_NAME $intc_periph]
-    set irqid [common::get_property IRQID $intr_pin]
+    set intc_type [hsi get_property IP_NAME $intc_periph]
+    set irqid [hsi get_property IRQID $intr_pin]
     if { [llength $irqid] != 0 && [string match -nocase $intc_type "ps7_scugic"] } {
         set irqid [split $irqid ":"]
         return $irqid
@@ -1511,7 +1511,7 @@ proc get_interrupt_id { ip_name port_name } {
 
     # For zynq the intc_src_ports are in reverse order
     if { [string match -nocase "$intc_type" "ps7_scugic"]  } {
-        set ip_param [common::get_property CONFIG.C_IRQ_F2P_MODE $intc_periph]
+        set ip_param [hsi get_property CONFIG.C_IRQ_F2P_MODE $intc_periph]
         set ip_intr_pin [hsi::get_pins -of_objects $intc_periph "IRQ_F2P"]
         if { [string match -nocase "$ip_param" "REVERSE"] } {
             set intc_src_ports [lreverse [get_intr_src_pins $ip_intr_pin]]
@@ -1524,7 +1524,7 @@ proc get_interrupt_id { ip_name port_name } {
             set intr_width [get_port_width $intc_src_port]
             if { [llength $intr_periph] } {
                 #case where an a pin of IP is interrupt
-                if {[common::get_property IS_PL $intr_periph] == 0} {
+                if {[hsi get_property IS_PL $intr_periph] == 0} {
                     continue
                 }
             }
@@ -1550,7 +1550,7 @@ proc get_interrupt_id { ip_name port_name } {
         set intr_width [get_port_width $intc_src_port]
         set intr_periph [hsi::get_cells -of_objects $intc_src_port]
         if { [string match -nocase $intc_type "ps7_scugic"] && [llength $intr_periph]} {
-            if {[common::get_property IS_PL $intr_periph] == 0 } {
+            if {[hsi get_property IS_PL $intr_periph] == 0 } {
                 continue
             }
         }
@@ -1571,7 +1571,7 @@ proc get_interrupt_id { ip_name port_name } {
         lappend intr_pin_name;
         foreach sink_pin $sink_pins {
             set connected_ip [hsi::get_cells -of_objects $sink_pin]
-            set ip_name [common::get_property NAME $connected_ip]
+            set ip_name [hsi get_property NAME $connected_ip]
             if { [string match -nocase "$ip_name" "ps7_scugic"] == 0 } {
                 set intr_pin_name $sink_pin
             }
@@ -1591,7 +1591,7 @@ proc get_interrupt_id { ip_name port_name } {
     for {set i 1 } { $i <= $port_width } { incr i } {
       if { [string match -nocase $intc_type "ps7_scugic"] && $found == 1  } {
         set ps7_scugic_flow 1
-        set ip_param [common::get_property CONFIG.C_IRQ_F2P_MODE $intc_periph]
+        set ip_param [hsi get_property CONFIG.C_IRQ_F2P_MODE $intc_periph]
         if { [string compare -nocase "$ip_param" "DIRECT"]} {
             # if (total_intr_count - id) is < 16 then it needs to be subtracted from 76 
             # and if (total_intr_count - id) < 8 it needs to be subtracted from 91
@@ -1646,11 +1646,11 @@ proc get_connected_bus { periph_name intfs_pin} {
 		return ""
 	}
 	
-	set version [common::get_property VIVADO_VERSION [hsi::current_hw_design]]
+	set version [hsi get_property VIVADO_VERSION [hsi::current_hw_design]]
 	if { [llength $version] <= 0 } {
 		return ""
 	}
-	set is_pl [common::get_property IS_PL [hsi::get_cells -hier $periph_name]]
+	set is_pl [hsi get_property IS_PL [hsi::get_cells -hier $periph_name]]
 	set is_ps true
 	if { [string match -nocase $is_pl "true"] || [string match -nocase $is_pl "1"]} {
 		set is_ps false
@@ -1664,7 +1664,7 @@ proc get_connected_bus { periph_name intfs_pin} {
 		if { [llength [hsi::get_cells -hier $intf_pins]] == 0} {
 			return ""
 		}
-		set type [common::get_property IP_TYPE [hsi::get_cells -hier $intf_pins]]
+		set type [hsi get_property IP_TYPE [hsi::get_cells -hier $intf_pins]]
 		if { $type == "BUS" } {
 			set bus $intf_pins
 			return $bus
@@ -1683,7 +1683,7 @@ proc get_connected_bus { periph_name intfs_pin} {
 		if { [string match -nocase $second_pin $intfs_pin] } {
 			set second_pin [lindex $got_pins 1]
 		}
-		set type [common::get_property IP_TYPE [hsi::get_cells -of_objects $second_pin]]
+		set type [hsi get_property IP_TYPE [hsi::get_cells -of_objects $second_pin]]
 		if { $type == "BUS" } {
 			set bus [hsi::get_cells -of_objects $second_pin]
 			return $bus
@@ -1701,8 +1701,8 @@ proc get_rp_rm_for_drv { drv_handle } {
 	if { [llength $config] == 0 } {
 		return ""
 	}
-	set mappingProp [common::get_property PARTITION_CELL_RMS $config]
-	set name [common::get_property NAME $config]
+	set mappingProp [hsi get_property PARTITION_CELL_RMS $config]
+	set name [hsi get_property NAME $config]
 
 	set bdcvarmaps [split $mappingProp ";"]
 	set mappingSize [llength $bdcvarmaps ]
@@ -1736,7 +1736,7 @@ proc get_rp_rm_for_drv { drv_handle } {
 		return [list $bdc $var $name ];
 
 	}
-	#puts "Driver not found in config: [get_property name $config]"
+	#puts "Driver not found in config: [hsi get_property name $config]"
         return ""
 
 }

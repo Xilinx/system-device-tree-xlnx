@@ -23,7 +23,7 @@ proc generate {drv_handle} {
 	}
 
 	pldt append $node compatible "\ \, \"xlnx,xps-gpio-1.00.a\""
-	set intr_present [get_property CONFIG.C_INTERRUPT_PRESENT [hsi::get_cells -hier $drv_handle]]
+	set intr_present [hsi get_property CONFIG.C_INTERRUPT_PRESENT [hsi::get_cells -hier $drv_handle]]
 	if {[string match $intr_present "1"]} {
 		if {$node != 0} {
 			add_prop $node "#interrupt-cells" 2 int "pl.dtsi"
@@ -41,8 +41,8 @@ proc generate {drv_handle} {
        if {[llength $ips]} {
                set mem_ranges [hsi::get_ip_mem_ranges [get_cells -hier $drv_handle]]
                foreach mem_range $mem_ranges {
-                       set base_addr [string tolower [get_property BASE_VALUE $mem_range]]
-                       set high_addr [string tolower [get_property HIGH_VALUE $mem_range]]
+                       set base_addr [string tolower [hsi get_property BASE_VALUE $mem_range]]
+                       set high_addr [string tolower [hsi get_property HIGH_VALUE $mem_range]]
                        if {[string match -nocase $base_addr "0xa4010000"]} {
                                set reg "0x0 0xa4010000 0x0 0x40000"
 			       add_prop $node "reg" $reg inthexlist "pl.dtsi"

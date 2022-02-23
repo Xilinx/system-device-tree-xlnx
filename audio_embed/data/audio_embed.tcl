@@ -20,7 +20,7 @@ proc generate {drv_handle} {
 	pldt append $node compatible "\ \, \"xlnx,v-uhdsdi-audio-2.0\""
 	set connected_embed_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "SDI_EMBED_ANC_DS_IN"]
 	if {[llength $connected_embed_ip] != 0} {
-		set connected_embed_ip_type [get_property IP_NAME $connected_embed_ip]
+		set connected_embed_ip_type [hsi get_property IP_NAME $connected_embed_ip]
 		if {[string match -nocase $connected_embed_ip_type "v_smpte_uhdsdi_tx_ss"]} {
 			set sdi_av_port [create_node -n "port" -l sdi_av_port -u 0 -p $node -d $dts_file]
 			add_prop "$sdi_av_port" "reg" 0 int $dts_file

@@ -23,7 +23,7 @@ proc gen_clocks_node {parent_node dts_file} {
     set clocks_child_name "clkc"
     set clkc_node [create_node -l $clocks_child_name -n $clocks_child_name -u 100 -p $parent_node -d $dts_file]
 
-    if {[catch {set ps_clk_freq [get_property CONFIG.C_INPUT_CRYSTAL_FREQ_HZ [hsi::get_cells -hier ps7_clockc_0]]} msg]} {
+    if {[catch {set ps_clk_freq [hsi get_property CONFIG.C_INPUT_CRYSTAL_FREQ_HZ [hsi::get_cells -hier ps7_clockc_0]]} msg]} {
 	set ps_clk_freq ""
     }
     if {[string_is_empty ${ps_clk_freq}]} {

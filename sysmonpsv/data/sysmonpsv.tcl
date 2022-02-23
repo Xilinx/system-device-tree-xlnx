@@ -29,10 +29,10 @@ proc generate {drv_handle} {
     for {set supply_num 0} {$supply_num < 160} {incr supply_num} {
 	    set meas "C_MEAS_${supply_num}"
 	    set id "${meas}_ROOT_ID"
-	    set value [get_property CONFIG.$meas [hsi::get_cells -hier $drv_handle]]
+	    set value [hsi get_property CONFIG.$meas [hsi::get_cells -hier $drv_handle]]
 	    if {[llength $value] != 0} {
-		    set local_value [string tolower [get_property CONFIG.$meas [hsi::get_cells -hier $drv_handle]]]
-		    set id_value [get_property CONFIG.$id [hsi::get_cells -hier $drv_handle]]
+		    set local_value [string tolower [hsi get_property CONFIG.$meas [hsi::get_cells -hier $drv_handle]]]
+		    set id_value [hsi get_property CONFIG.$id [hsi::get_cells -hier $drv_handle]]
 		    set supply_node [create_node -n "supply@$id_value" -p $node -d $dts_file]
 		    add_prop "$supply_node" "reg" "$id_value" int $dts_file
 		    add_prop "$supply_node" "xlnx,name" "$local_value" string $dts_file

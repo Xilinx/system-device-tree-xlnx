@@ -22,12 +22,12 @@ proc generate {drv_handle} {
 	set dts_file [set_drv_def_dts $drv_handle]
 	pldt append $node compatible "\ \, \"xlnx,xps-uartlite-1.00.a\""
 	set ip [hsi::get_cells -hier $drv_handle]
-	set ip_type [get_property IP_NAME $ip]
-	set avail_param [list_property [hsi::get_cells -hier $drv_handle]]
+	set ip_type [hsi get_property IP_NAME $ip]
+	set avail_param [hsi list_property [hsi::get_cells -hier $drv_handle]]
 	# This check is needed because BAUDRATE parameter for psuart is available from
 	# 2017.1 onwards
 	if {[lsearch -nocase $avail_param "CONFIG.C_BAUDRATE"] >= 0} {
-	    set baud [get_property CONFIG.C_BAUDRATE [hsi::get_cells -hier $drv_handle]]
+	    set baud [hsi get_property CONFIG.C_BAUDRATE [hsi::get_cells -hier $drv_handle]]
 	} else {
 	    set baud "115200"
 	}

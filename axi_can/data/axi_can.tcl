@@ -23,8 +23,8 @@ proc generate {drv_handle} {
 	}
 
 	set keyval [pldt append $node compatible "\ \, \"xlnx,axi-can-1.00.a\""]
-    	set ip_name [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
-	    set version [string tolower [common::get_property VLNV $drv_handle]]
+    	set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+	    set version [string tolower [hsi get_property VLNV $drv_handle]]
 	    if {[string match -nocase $ip_name "canfd"]} {
 		if {[string compare -nocase "xilinx.com:ip:canfd:1.0" $version] == 0} {
 			set keyval [pldt append $node compatible "\ \, \"xlnx,canfd-1.0\""]

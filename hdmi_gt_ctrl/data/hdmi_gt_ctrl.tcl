@@ -19,12 +19,12 @@ proc generate {drv_handle} {
 		return
 	}
 
-	set tx_no_of_channels [get_property CONFIG.C_Tx_No_Of_Channels [hsi::get_cells -hier $drv_handle]]
+	set tx_no_of_channels [hsi get_property CONFIG.C_Tx_No_Of_Channels [hsi::get_cells -hier $drv_handle]]
 	for {set ch 0} {$ch < $tx_no_of_channels} {incr ch} {
 		set phy_node [create_node -n "vphy_lane" -u $ch -l vphy_lane$ch -p $node -d $dts_file]
 		add_prop "$phy_node" "#phy-cells" 4 int $dts_file
 	}
-	set transceiver [get_property CONFIG.Transceiver [hsi::get_cells -hier $drv_handle]]
+	set transceiver [hsi get_property CONFIG.Transceiver [hsi::get_cells -hier $drv_handle]]
 	switch $transceiver {
 			"GTXE2" {
 				add_prop "${node}" "xlnx,transceiver-type" 1 int $dts_file

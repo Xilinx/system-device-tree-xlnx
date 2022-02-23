@@ -33,7 +33,7 @@ proc get_connected_intf { periph_name intf_name} {
     }
     
     set connected_intf [get_other_intf_pin $intf_net $intf_pin ] 
-    set intf_type [common::get_property TYPE $intf_pin]
+    set intf_type [hsi get_property TYPE $intf_pin]
     set conn_busif_handle [get_intf_pin_oftype $connected_intf $intf_type 0]
     return $conn_busif_handle
 }
@@ -46,7 +46,7 @@ proc get_net_name {ip_inst ip_pin} {
     set port [hsi::get_pins -of_objects $ip_inst -filter "NAME==$ip_pin"]
     if { [llength $port] != 0 } {
         set pin [hsi::get_nets -of_objects $port ] 
-        set ret [common::get_property NAME $pin]
+        set ret [hsi get_property NAME $pin]
     }
     }
    return $ret
@@ -61,7 +61,7 @@ proc get_intfnet_name {ip_inst ip_busif} {
     set bus_if [hsi::get_intf_pins -of_objects $ip_inst -filter "NAME==$ip_busif"]
     if { [llength $bus_if] != 0 } {
        set intf_net [hsi::get_intf_nets -of_objects $bus_if]
-       set ret [common::get_property NAME $intf_net]
+       set ret [hsi get_property NAME $intf_net]
     }
     }
     return $ret
@@ -72,7 +72,7 @@ proc get_intfnet_name {ip_inst ip_busif} {
 # It will return all the peripheral objects which are connected to processor
 #
 proc get_proc_slave_periphs {proc_handle} {
-   set periphlist [common::get_property slaves $proc_handle]
+   set periphlist [hsi get_property slaves $proc_handle]
    if { $periphlist != "" } {
        foreach periph $periphlist {
         set periph1 [string trim $periph]
@@ -91,10 +91,10 @@ proc get_proc_slave_periphs {proc_handle} {
 proc get_clk_pin_freq { cell_obj clk_port} {
     set clk_port_obj [hsi::get_pins $clk_port -of_objects $cell_obj]
     if {$clk_port_obj ne "" } {
-        set port_type [common::get_property TYPE $clk_port_obj]
+        set port_type [hsi get_property TYPE $clk_port_obj]
         if { [string compare -nocase $port_type  "CLK"] == 0 } {
             
-            set clockValue [common::get_property CLK_FREQ $clk_port_obj]
+            set clockValue [hsi get_property CLK_FREQ $clk_port_obj]
             # Temp solution handle to exponential representaion  
             set isExponentFormate "e"
             if {[string first $isExponentFormate $clockValue] != -1} {
@@ -102,7 +102,7 @@ proc get_clk_pin_freq { cell_obj clk_port} {
               return $retVal
             }
             
-            return [common::get_property CLK_FREQ $clk_port_obj]
+            return [hsi get_property CLK_FREQ $clk_port_obj]
         } else {
             error "ERROR:Trying to access frequency value from non-clock port \"$clk_port\" of IP \"$cell_obj\""
         }
@@ -117,7 +117,7 @@ proc get_clk_pin_freq { cell_obj clk_port} {
 # associated to a cell then it is internal otherise it is external
 #
 proc is_external_pin { pin_obj } {
-    set pin_class [common::get_property CLASS $pin_obj]
+    set pin_class [hsi get_property CLASS $pin_obj]
     if { [string compare -nocase "$pin_class" port] == 0 } {
         set ip [hsi::get_cells -of_objects $pin_obj]
         if {[llength $ip]} {
@@ -134,8 +134,8 @@ proc is_external_pin { pin_obj } {
 # port does not have width property
 #
 proc get_port_width { port_handle} {
-    set left [common::get_property LEFT $port_handle]
-    set right [common::get_property RIGHT $port_handle]
+    set left [hsi get_property LEFT $port_handle]
+    set right [hsi get_property RIGHT $port_handle]
     if {[llength $left] == 0 && [llength $right] == 0} {
         return 1  
     }
@@ -218,8 +218,8 @@ proc get_other_intf_pin { intf_net given_intf_pin} {
             lappend return_pin_list $other_intf_pin
         }
         
-        #set cell_type [common::get_property IP_NAME $other_cell]
-        set cell_type [common::get_property BD_TYPE $other_cell]
+        #set cell_type [hsi get_property IP_NAME $other_cell]
+        set cell_type [hsi get_property BD_TYPE $other_cell]
         if { [ string match -nocase $cell_type "block_container" ] } {
             set other_bdry_intf_net [get_other_intf_net $other_intf_pin $intf_net]
             if { [llength $other_bdry_intf_net] == 0 } {
@@ -257,12 +257,12 @@ proc get_intf_pin_oftype { given_intf_pins type isOf} {
     lappend return_pin_list
     foreach given_intf_pin $given_intf_pins {
         if { $isOf } {
-            set given_pin_type [common::get_property TYPE $given_intf_pin]
+            set given_pin_type [hsi get_property TYPE $given_intf_pin]
             if { [ string match -nocase $$given_pin_type $type ]} {
                 lappend return_pin_list $given_intf_pin
             }
         } else {
-            set given_pin_type [common::get_property TYPE $given_intf_pin]
+            set given_pin_type [hsi get_property TYPE $given_intf_pin]
             if { ![ string match -nocase $$given_pin_type $type ]} {
                 lappend return_pin_list $given_intf_pin
             }
@@ -309,7 +309,7 @@ proc get_intr_src_pins {interrupt_pin} {
         set source_cell [hsi::get_cells -of_objects $source_pin]
         if { [llength $source_cell ] } {
             #For concat IP, we need to bring pin source for other end
-            set ip_name [common::get_property IP_NAME $source_cell]
+            set ip_name [hsi get_property IP_NAME $source_cell]
             if { [string match -nocase $ip_name "xlconcat" ] } {
                 set interrupt_sources [list {*}$interrupt_sources {*}[get_concat_interrupt_sources $source_cell]]
             } elseif { [string match -nocase $ip_name "xlslice"] } {
@@ -334,7 +334,7 @@ proc get_source_pins {periph_pin} {
    if { [llength $net] == 0} {
        return [lappend return_value] 
    } else {
-        set signals [split [common::get_property NAME $net] "&"]
+        set signals [split [hsi get_property NAME $net] "&"]
         lappend source_pins
         if { [llength $signals] == 1 } {
           foreach signal $signals {
@@ -437,8 +437,8 @@ proc get_real_source_pin_traverse_in { pin } {
       return $source_pins
     }
     
-    #set source_type [common::get_property IP_NAME [hsi::get_cells -of_objects $pin]]
-    set source_type [common::get_property BD_TYPE [hsi::get_cells -of_objects $pin]]
+    #set source_type [hsi get_property IP_NAME [hsi::get_cells -of_objects $pin]]
+    set source_type [hsi get_property BD_TYPE [hsi::get_cells -of_objects $pin]]
     if { [ string match -nocase $source_type "block_container" ] } {
         
         set lower_net [hsi::get_nets -boundary_type lower -of_objects $pin]
@@ -515,7 +515,7 @@ proc get_sink_pins {periph_pin} {
    if { [llength $net] == 0} {
        return [lappend return_value] 
    } else {
-       set signals [split [common::get_property NAME $net] "&"]
+       set signals [split [hsi get_property NAME $net] "&"]
        lappend source_pins
        if { [llength $signals] == 1 } {
        foreach signal $signals {
@@ -594,8 +594,8 @@ proc get_real_sink_pins_traverse_in { test_pin } {
     if { [ llength $hasCells] == 0 } {
       return $source_pins
     }
-    #set source_type [common::get_property IP_NAME [hsi::get_cells -of_objects $test_pin]]
-    set source_type [common::get_property BD_TYPE [hsi::get_cells -of_objects $test_pin]]
+    #set source_type [hsi get_property IP_NAME [hsi::get_cells -of_objects $test_pin]]
+    set source_type [hsi get_property BD_TYPE [hsi::get_cells -of_objects $test_pin]]
     if { [ string match -nocase $source_type "block_container" ] } {
     
         set lower_net [hsi::get_nets -boundary_type lower -of_objects $test_pin]
@@ -654,8 +654,8 @@ proc get_real_sink_pins_traverse_out { periph_pin } {
             if { [ llength $hasCells] == 0 } {
               continue
             }
-            #set source_type [common::get_property IP_NAME [hsi::get_cells -of_objects $test_pin]]
-            set source_type [common::get_property BD_TYPE [hsi::get_cells -of_objects $test_pin]]
+            #set source_type [hsi get_property IP_NAME [hsi::get_cells -of_objects $test_pin]]
+            set source_type [hsi get_property BD_TYPE [hsi::get_cells -of_objects $test_pin]]
             if { [ string match -nocase $source_type "block_container" ] } {
             
                set lower_net [hsi::get_nets -boundary_type lower -of_objects $test_pin]
@@ -758,7 +758,7 @@ proc get_param_value {periph_handle param_name} {
             # return the name pattern used in printing the device_id for the device_id parameter
             return [get_ip_param_name $periph_handle $param_name]
         } else {
-            set value [common::get_property CONFIG.$param_name $periph_handle]
+            set value [hsi get_property CONFIG.$param_name $periph_handle]
             set value [string map {_ ""} $value]
             return $value
     }
@@ -784,7 +784,7 @@ proc get_p2p_name {periph arg} {
            if { [string compare -nocase $conn_busif_handle ""] != 0} { 
                set p2p_periph [hsi::get_cells -of_objects $conn_busif_handle]
                if { $p2p_periph ne "" } {
-                   set value [common::get_property $arg $p2p_periph]
+                   set value [hsi get_property $arg $p2p_periph]
                    if { [string compare -nocase $value ""] != 0} { 
                        return [get_ip_param_name $p2p_periph $arg]
                    }
@@ -817,8 +817,8 @@ proc is_intr_cntrl { periph_name } {
     if { [llength $periph_name] != 0 } {
     set periph [hsi::get_cells -hier -filter "NAME==$periph_name"]
     if { [llength $periph] == 1 } {
-        set special [common::get_property CONFIG.EDK_SPECIAL $periph]
-        set ip_type [common::get_property IP_TYPE $periph]
+        set special [hsi get_property CONFIG.EDK_SPECIAL $periph]
+        set ip_type [hsi get_property IP_TYPE $periph]
         if {[string compare -nocase $special "interrupt_controller"] == 0  || 
             [string compare -nocase $special "INTR_CTRL"] == 0 || 
             [string compare -nocase $ip_type "INTERRUPT_CNTLR"] == 0 } {
@@ -850,7 +850,7 @@ proc get_connected_intr_cntrl { periph_name intr_pin_name } {
         if { [llength $intr_pin] == 0 } {
             return $intr_cntrl
         }
-        set pin_dir [common::get_property DIRECTION $intr_pin]
+        set pin_dir [hsi get_property DIRECTION $intr_pin]
         if { [string match -nocase $pin_dir "I"] } {
           return $intr_cntrl
         }
@@ -860,7 +860,7 @@ proc get_connected_intr_cntrl { periph_name intr_pin_name } {
         if { [llength $intr_pin] == 0 } {
             return $intr_cntrl
         }
-        set pin_dir [common::get_property DIRECTION $intr_pin]
+        set pin_dir [hsi get_property DIRECTION $intr_pin]
         if { [string match -nocase $pin_dir "O"] } {
           return $intr_cntrl
         }
@@ -872,13 +872,13 @@ proc get_connected_intr_cntrl { periph_name intr_pin_name } {
         set sink_periph [lindex [hsi::get_cells -of_objects $intr_sink] 0]
         if { [llength $sink_periph ] && [is_intr_cntrl $sink_periph] == 1 } {
             lappend intr_cntrl $sink_periph
-        } elseif { [llength $sink_periph] && [string match -nocase [common::get_property IP_NAME $sink_periph] "xlconcat"] } {
+        } elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "xlconcat"] } {
             #this the case where interrupt port is connected to XLConcat IP.
             #changes made to fix CR 933826 
             set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "dout"]]
-        } elseif { [llength $sink_periph] && [string match -nocase [common::get_property IP_NAME $sink_periph] "xlslice"] } {
+        } elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "xlslice"] } {
             set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "Dout"]]
-        } elseif { [llength $sink_periph] && [string match -nocase [common::get_property IP_NAME $sink_periph] "util_reduced_logic"] } {
+        } elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "util_reduced_logic"] } {
             set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "Res"]]
         }
     }
@@ -895,13 +895,13 @@ proc get_ip_version { ip_name } {
         error "ERROR:IP $ip_name does not exist in design"
         return ""
     }
-    set vlnv [common::get_property VLNV $ip_handle]
+    set vlnv [hsi get_property VLNV $ip_handle]
     set splitted_vlnv [split $vlnv ":"]
     if { [llength $splitted_vlnv] == 4 } {
         set version [lindex $splitted_vlnv 3]
     } else {
         #TODO: Keeping older EDK xml support. It should be removed
-        set version [common::get_property HW_VER $ip_handle]
+        set version [hsi get_property HW_VER $ip_handle]
     }
     return $version
 }
@@ -910,11 +910,11 @@ proc get_ip_version { ip_name } {
 # It will return IP param value
 #
 proc get_ip_param_value { ip param} {
-    set value [common::get_property $param $ip]
+    set value [hsi get_property $param $ip]
     if {[llength $value] != 0} {
         return $value
     }
-    set value [common::get_property CONFIG.$param $ip] 
+    set value [hsi get_property CONFIG.$param $ip] 
     if {[llength $value] != 0} {
         return $value
     }
@@ -925,7 +925,7 @@ proc get_ip_param_value { ip param} {
 #
 proc get_board_name { } {
     global board_name
-    set board_name [common::get_property BOARD [hsi::current_hw_design] ]
+    set board_name [hsi get_property BOARD [hsi::current_hw_design] ]
      if { [llength $board_name] == 0 } {
         set board_name "."
     }
@@ -942,16 +942,16 @@ proc get_trimmed_param_name { param } {
 # It returns the ip subtype. First its check for special type of EDK_SPECIAL parameter
 #
 proc get_ip_sub_type { ip_inst_object} {
-    if { [string compare -nocase cell [common::get_property CLASS $ip_inst_object]] != 0 } {
+    if { [string compare -nocase cell [hsi get_property CLASS $ip_inst_object]] != 0 } {
         error "get_mem_type API expect only mem_range type object whereas $class type object is passed"
     }
 
-    set ip_type [common::get_property CONFIG.EDK_SPECIAL $ip_inst_object]
+    set ip_type [hsi get_property CONFIG.EDK_SPECIAL $ip_inst_object]
     if { [llength $ip_type] != 0 } {
         return $ip_type
     }
 
-    set ip_name [common::get_property IP_NAME $ip_inst_object]
+    set ip_name [hsi get_property IP_NAME $ip_inst_object]
     if { [string compare -nocase "$ip_name"  "lmb_bram_if_cntlr"] == 0
         || [string compare -nocase "$ip_name" "isbram_if_cntlr"] == 0
         || [string compare -nocase "$ip_name" "axi_bram_ctrl"] == 0
@@ -969,7 +969,7 @@ proc get_ip_sub_type { ip_inst_object} {
                 || [string compare -nocase "$ip_name" "psv_ocm_ram_0"] == 0 } {
          set ip_type "OCM_CTRL"
      } else {
-         set ip_type [common::get_property IP_TYPE $ip_inst_object]
+         set ip_type [hsi get_property IP_TYPE $ip_inst_object]
      }
      return $ip_type
 }
@@ -977,7 +977,7 @@ proc get_ip_sub_type { ip_inst_object} {
 proc generate_psinit { } {
     set obj [hsi::get_cells -hier -filter {CONFIGURABLE == 1}]
     if { [llength $obj] == 0 } {
-      set xmlpath [common::get_property PATH [hsi::current_hw_design]]
+      set xmlpath [hsi get_property PATH [hsi::current_hw_design]]
       if { $xmlpath != "" } {
         set xmldir [file dirname $xmlpath]
         set file "$xmldir[file separator]ps7_init.c"

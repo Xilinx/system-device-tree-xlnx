@@ -31,18 +31,18 @@ proc generate {drv_handle} {
 	set sdirxip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "VIDEO_OUT"]
 	foreach ip $sdirxip {
 	if {[llength $ip]} {
-                if {[string match -nocase [get_property IP_NAME $ip] "system_ila"]} {
+                if {[string match -nocase [hsi get_property IP_NAME $ip] "system_ila"]} {
                         continue
                 }
                 set intfpins [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
                 set ip_mem_handles [hsi::get_mem_ranges $ip]
                 if {[llength $ip_mem_handles]} {
-                        set base [string tolower [get_property BASE_VALUE $ip_mem_handles]]
+                        set base [string tolower [hsi get_property BASE_VALUE $ip_mem_handles]]
                         set sdi_rx_node [create_node -n "endpoint" -l sdirx_out$drv_handle -p $port_node -d $dts_file]
                         gen_endpoint $drv_handle "sdirx_out$drv_handle"
                         add_prop "$sdi_rx_node" "remote-endpoint" $ip$drv_handle reference $dts_file
                         gen_remoteendpoint $drv_handle $ip$drv_handle
-                        if {[string match -nocase [get_property IP_NAME $ip] "v_frmbuf_wr"]} {
+                        if {[string match -nocase [hsi get_property IP_NAME $ip] "v_frmbuf_wr"]} {
                                 gen_frmbuf_wr_node $ip $drv_handle $dts_file
                         }
                 } else {
@@ -52,7 +52,7 @@ proc generate {drv_handle} {
                                 gen_endpoint $drv_handle "sdirx_out$drv_handle"
                                 add_prop "$sdi_rx_node" "remote-endpoint" $connectip$drv_handle reference $dts_file
                                 gen_remoteendpoint $drv_handle $connectip$drv_handle
-                                if {[string match -nocase [get_property IP_NAME $connectip] "axi_vdma"] || [string match -nocase [get_property IP_NAME $connectip] "v_frmbuf_wr"]} {
+                                if {[string match -nocase [hsi get_property IP_NAME $connectip] "axi_vdma"] || [string match -nocase [hsi get_property IP_NAME $connectip] "v_frmbuf_wr"]} {
                                         gen_frmbuf_wr_node $connectip $drv_handle $dts_file
                                 }
                         }

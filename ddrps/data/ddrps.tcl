@@ -35,7 +35,7 @@ proc gen_ps7_ddr_reg_property {drv_handle system_node} {
     } else {
 	foreach mem_handle ${ip_mem_handles} {
 	    set base 0x0
-	    set high [get_property HIGH_VALUE $mem_handle]
+	    set high [hsi get_property HIGH_VALUE $mem_handle]
 	    set mem_size [format 0x%x [expr {${high} - ${base} + 1}]]
 	    if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
 		# Check if memory crossing 4GB map, then split 2GB below 32 bit limit
@@ -81,33 +81,33 @@ proc generate_secure_memory {drv_handle} {
     if {$index == "-1"} {
 	continue
     }
-    set avail_param [list_property [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
+    set avail_param [hsi list_property [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
     set addr_64 "0"
     set size_64 "0"
 	foreach bank ${ip_mem_handles} {
-	if {$r5 == 1 && [string match -nocase [get_property IP_NAME $procc] "psu_cortexr5"]} {
+	if {$r5 == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"]} {
 		continue
 	}
-	if {[string match -nocase [get_property IP_NAME $procc] "psu_cortexr5"]} {
+	if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"]} {
 		set r5 1
 	}
-	if {$a53 == 1 && [string match -nocase [get_property IP_NAME $procc] "psu_cortexa53"]} {
+	if {$a53 == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexa53"]} {
 		continue
 	}
-	if {[string match -nocase [get_property IP_NAME $procc] "psu_cortexa53"]} {
+	if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexa53"]} {
 		set a53 1
 	}
-	if {$pmu == 1 && [string match -nocase [get_property IP_NAME $procc] "psu_pmu"]} {
+	if {$pmu == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psu_pmu"]} {
 		continue
 	}
-	if {[string match -nocase [get_property IP_NAME $procc] "psu_pmu"]} {
+	if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_pmu"]} {
 		set pmu 1
 	}
 
-	    set state [get_property TRUSTZONE [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
+	    set state [hsi get_property TRUSTZONE [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
 		set index [lsearch -start $index [hsi::get_mem_ranges -of_objects $procc] [hsi::get_cells -hier $bank]]
-		set base [get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
-		set high [get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
+		set base [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
+		set high [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
 		set mem_size [format 0x%x [expr {${high} - ${base} + 1}]]
 		if {[string match -nocase $name "psu_r5_ddr_0"]} {
                         set mem_size $high
@@ -154,16 +154,16 @@ proc generate_secure_memory {drv_handle} {
 			append regprop ">, " "<0x0 ${base} 0x0 ${mem_size}"
 		    }
 		}
-		if {[string match -nocase [get_property IP_NAME $procc] "psu_cortexr5"]} {
+		if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"]} {
 			set_memmap "${drv_handle}_memory" r5 $regprop
 		}
-		if {[string match -nocase [get_property IP_NAME $procc] "psu_cortexa53"]} {
+		if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexa53"]} {
 			set_memmap "${drv_handle}_memory" a53 $regprop
 		}
-		if {[string match -nocase [get_property IP_NAME $procc] "psu_pmu"]} {
+		if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_pmu"]} {
 			set_memmap "${drv_handle}_memory" pmu $regprop
 		}
-		if {[string match -nocase [get_property IP_NAME $procc] "microblaze"]} {
+		if {[string match -nocase [hsi get_property IP_NAME $procc] "microblaze"]} {
 			set_memmap "${drv_handle}_memory" $procc $regprop
 		}
 
@@ -181,16 +181,16 @@ proc generate_secure_memory_pmu {drv_handle} {
     set ip_mem_handles [get_ip_mem_ranges $slave]
     set firstelement [lindex $ip_mem_handles 0]
     set index [lsearch [get_mem_ranges -of_objects [get_cells -hier psu_pmu_0]] [get_cells $firstelement]]
-    set avail_param [list_property [lindex [get_mem_ranges -of_objects [get_cells -hier psu_pmu_0]] $index]]
+    set avail_param [hsi list_property [lindex [get_mem_ranges -of_objects [get_cells -hier psu_pmu_0]] $index]]
     set addr_64 "0"
     set size_64 "0"
     if {[lsearch -nocase $avail_param "TRUSTZONE"] >= 0} {
 	foreach bank ${ip_mem_handles} {
-	    set state [get_property TRUSTZONE [lindex [get_mem_ranges -of_objects [get_cells -hier psu_pmu_0]] $index]]
+	    set state [hsi get_property TRUSTZONE [lindex [get_mem_ranges -of_objects [get_cells -hier psu_pmu_0]] $index]]
 	    if {[string match -nocase $state "NonSecure"]} {
 		set index [lsearch -start $index [get_mem_ranges -of_objects [get_cells -hier psu_pmu_0]] [get_cells -hier $bank]]
-		set base [get_property BASE_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier psu_pmu_0]] $index]]
-		set high [get_property HIGH_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier psu_pmu_0]] $index]]
+		set base [hsi get_property BASE_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier psu_pmu_0]] $index]]
+		set high [hsi get_property HIGH_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier psu_pmu_0]] $index]]
 		set mem_size [format 0x%x [expr {${high} - ${base} + 1}]]
 		if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 		    set addr_64 "1"
@@ -251,16 +251,16 @@ proc generate_secure_memory_r5 {drv_handle} {
     set ip_mem_handles [get_ip_mem_ranges $slave]
     set firstelement [lindex $ip_mem_handles 0]
     set index [lsearch [get_mem_ranges -of_objects [get_cells -hier psu_cortexr5_0]] [get_cells $firstelement]]
-    set avail_param [list_property [lindex [get_mem_ranges -of_objects [get_cells -hier psu_cortexr5_0]] $index]]
+    set avail_param [hsi list_property [lindex [get_mem_ranges -of_objects [get_cells -hier psu_cortexr5_0]] $index]]
     set addr_64 "0"
     set size_64 "0"
     if {[lsearch -nocase $avail_param "TRUSTZONE"] >= 0} {
 	foreach bank ${ip_mem_handles} {
-	    set state [get_property TRUSTZONE [lindex [get_mem_ranges -of_objects [get_cells -hier psu_cortexr5_0]] $index]]
+	    set state [hsi get_property TRUSTZONE [lindex [get_mem_ranges -of_objects [get_cells -hier psu_cortexr5_0]] $index]]
 	    if {[string match -nocase $state "NonSecure"]} {
 		set index [lsearch -start $index [get_mem_ranges -of_objects [get_cells -hier psu_cortexr5_0]] [get_cells -hier $bank]]
-		set base [get_property BASE_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier psu_cortexr5_0]] $index]]
-		set high [get_property HIGH_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier psu_cortexr5_0]] $index]]
+		set base [hsi get_property BASE_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier psu_cortexr5_0]] $index]]
+		set high [hsi get_property HIGH_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier psu_cortexr5_0]] $index]]
 		set mem_size [format 0x%x [expr {${high} - ${base} + 1}]]
 		if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 		    set addr_64 "1"
@@ -321,7 +321,7 @@ proc generate {drv_handle} {
 	set dts_file "system-top.dts"
 	add_prop $system_node "device_type" "memory" string $dts_file
 	set slave [hsi::get_cells -hier ${drv_handle}] 
-	set vlnv [split [get_property VLNV $slave] ":"] 
+	set vlnv [split [hsi get_property VLNV $slave] ":"] 
 	set name [lindex $vlnv 2] 
 	set ver [lindex $vlnv 3] 
 	set comp_prop "xlnx,${name}-${ver}" 

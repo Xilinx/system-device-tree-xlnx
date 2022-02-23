@@ -18,7 +18,7 @@ proc generate {drv_handle} {
 	set psm 0
 	set pmc 0
 	set slave [hsi::get_cells -hier ${drv_handle}]
-	set addr [get_property CONFIG.C_BASEADDR [hsi::get_cells -hier $drv_handle]]
+	set addr [hsi get_property CONFIG.C_BASEADDR [hsi::get_cells -hier $drv_handle]]
 	if {[string match -nocase $addr ""]} {
 		return
 	}
@@ -29,7 +29,7 @@ proc generate {drv_handle} {
 	if {[string_is_empty $dev_type]} {set dev_type memory}
 	add_prop "${memory_node}" "device_type" $dev_type string $dts_file
 	set slave [hsi::get_cells -hier ${drv_handle}]
-	set vlnv [split [get_property VLNV $slave] ":"]
+	set vlnv [split [hsi get_property VLNV $slave] ":"]
 	set name [lindex $vlnv 2]
 	set ver [lindex $vlnv 3]
 	set comp_prop "xlnx,${name}-${ver}"
@@ -46,105 +46,105 @@ proc generate {drv_handle} {
 		set is_ddr_ch_3 0
 		
 		set periph [hsi::get_cells -hier $drv_handle]
-		if {[catch {set interface_block_names [get_property ADDRESS_BLOCK [hsi::get_mem_ranges -of_objects $procc $periph]]} msg]} {
-			if {[catch {set interface_block_names [get_property ADDRESS_BLOCK [hsi::get_mem_ranges $procc $periph]]} msg]} {
+		if {[catch {set interface_block_names [hsi get_property ADDRESS_BLOCK [hsi::get_mem_ranges -of_objects $procc $periph]]} msg]} {
+			if {[catch {set interface_block_names [hsi get_property ADDRESS_BLOCK [hsi::get_mem_ranges $procc $periph]]} msg]} {
 				set interface_block_names ""
 			} 
 		}
-		if {$a72 == 1 && [string match -nocase [get_property IP_NAME $procc] "psv_cortexa72"]} {
+		if {$a72 == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexa72"]} {
 			continue
 		}
-	    	if {[string match -nocase [get_property IP_NAME $procc] "psv_cortexa72"]} {
+	    	if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexa72"]} {
 		       set a72 1
 		}
-		if {$r5 == 1 && [string match -nocase [get_property IP_NAME $procc] "psv_cortexr5"]} {
+		if {$r5 == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"]} {
 			continue
 		}
-	        if {[string match -nocase [get_property IP_NAME $procc] "psv_cortexr5"]} {
+	        if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"]} {
 		      set r5 1
 		}
-		if {$pmc == 1 && [string match -nocase [get_property IP_NAME $procc] "psv_pmc"]} {
+		if {$pmc == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psv_pmc"]} {
 			continue
 		}
-		if {[string match -nocase [get_property IP_NAME $procc] "psv_pmc"]} {
+		if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_pmc"]} {
 			set pmc 1
 		}
-		if {$psm == 1 && [string match -nocase [get_property IP_NAME $procc] "psv_psm"]} {
+		if {$psm == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psv_psm"]} {
 			continue
 		}
-		if {[string match -nocase [get_property IP_NAME $procc] "psv_psm"]} {
+		if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_psm"]} {
 			set psm 1
 		}
 		set i 0
 		foreach block_name $interface_block_names {
 			if {[string match "C*_DDR_LOW0*" $block_name]} {
 				if {$is_ddr_low_0 == 0} {
-					if {[catch {set base_value_0 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-						set base_value_0 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
+					if {[catch {set base_value_0 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
+						set base_value_0 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
 					}
 				}
-				if {[catch {set high_value_0 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-					set high_value_0 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
+				if {[catch {set high_value_0 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
+					set high_value_0 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
 				}
 				set is_ddr_low_0 1
 			} elseif {[string match "C*_DDR_LOW1*" $block_name]} {
 				if {$is_ddr_low_1 == 0} {
-					if {[catch {set base_value_1 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-						set base_value_1 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
+					if {[catch {set base_value_1 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
+						set base_value_1 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
 					}
 				}
-				if {[catch {set high_value_1 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-					set high_value_1 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
+				if {[catch {set high_value_1 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
+					set high_value_1 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
 				}
 				set is_ddr_low_1 1
 			} elseif {[string match "C*_DDR_LOW2*" $block_name]} {
 				if {$is_ddr_low_2 == 0} {
-					if {[catch {set base_value_2 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-						set base_value_2 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
+					if {[catch {set base_value_2 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
+						set base_value_2 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
 					}
 				}
-				if {[catch {set high_value_2 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-					set high_value_2 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
+				if {[catch {set high_value_2 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
+					set high_value_2 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
 				}
 				set is_ddr_low_2 1
 			} elseif {[string match "C*_DDR_LOW3*" $block_name] } {
 				if {$is_ddr_low_3 == "0"} {
-					if {[catch {set base_value_3 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-						set base_value_3 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
+					if {[catch {set base_value_3 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
+						set base_value_3 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
 					}
 				}
-				if {[catch {set high_value_3 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-					set high_value_3 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
+				if {[catch {set high_value_3 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
+					set high_value_3 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
 				}
 				set is_ddr_low_3 1
 			} elseif {[string match "C*_DDR_CH1*" $block_name]} {
 				if {$is_ddr_ch_1 == "0"} {
-					if {[catch {set base_value_4 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-						set base_value_4 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
+					if {[catch {set base_value_4 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
+						set base_value_4 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
 					}
 				}
-				if {[catch {set high_value_4 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-					set high_value_4 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
+				if {[catch {set high_value_4 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
+					set high_value_4 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
 				}
 				set is_ddr_ch_1 1
 			} elseif {[string match "C*_DDR_CH2*" $block_name]} {
 				if {$is_ddr_ch_2 == "0"} {
-					if {[catch {set base_value_5 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-						set base_value_5 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
+					if {[catch {set base_value_5 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
+						set base_value_5 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
 					}
 				}
-				if {[catch {set high_value_5 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-					set high_value_5 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
+				if {[catch {set high_value_5 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
+					set high_value_5 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
 				}
 				set is_ddr_ch_2 1
 			} elseif {[string match "C*_DDR_CH3*" $block_name]} {
 				if {$is_ddr_ch_3 == "0"} {
-					if {[catch {set base_value_6 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-						set base_value_6 [common::get_property BASE_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
+					if {[catch {set base_value_6 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
+						set base_value_6 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
 					}
 				}
-				if {[catch {set high_value_6 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-					set high_value_6 [common::get_property HIGH_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
+				if {[catch {set high_value_6 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
+					set high_value_6 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
 				}
 				set is_ddr_ch_3 1
 			}
@@ -224,35 +224,35 @@ proc generate {drv_handle} {
 			}
 			}
 			if {$len} {
-				if {[string match -nocase [get_property IP_NAME $procc] "psv_cortexr5"]} {
+				if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"]} {
 					set val [get_count "psv_cortexr5"]
 					set map [get_mc_map $drv_handle]
 					if {$val == 0 || $map == 1} {
 						set_memmap "${drv_handle}_memory" r5 $reg_val
 					}
 				}
-				if {[string match -nocase [get_property IP_NAME $procc] "psv_cortexa72"] } {
+				if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexa72"] } {
 					set val [get_count "psv_cortexa72"]
 					set map [get_mc_map $drv_handle]
 					if {$val == 0 || $map == 1} {
 						set_memmap "${drv_handle}_memory" a53 $reg_val
 					}
 				}
-				if {[string match -nocase [get_property IP_NAME $procc] "psv_pmc"] } {
+				if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_pmc"] } {
 					set val [get_count "psv_pmc"]
 					set map [get_mc_map $drv_handle]
 					if {$val == 0 || $map == 1} {
 						set_memmap "${drv_handle}_memory" pmc $reg_val
 					}
 				}
-				if {[string match -nocase [get_property IP_NAME $procc] "psv_psm"] } {
+				if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_psm"] } {
 					set val [get_count "psv_psm"]
 					set map [get_mc_map $drv_handle]
 					if {$val == 0 || $map == 1} {
 						set_memmap "${drv_handle}_memory" psm $reg_val
 					}
 				}
-				if {[string match -nocase [get_property IP_NAME $procc] "microblaze"] } {
+				if {[string match -nocase [hsi get_property IP_NAME $procc] "microblaze"] } {
 					set val [get_count "microblaze"]
 					set map [get_mc_map $drv_handle]
 					if {$val == 0 || $map == 1} {
@@ -296,8 +296,8 @@ proc generate_reg_property {base high} {
 }
 
 proc update_mc_ranges {drv_handle reg} {
-	set num_mc [get_property CONFIG.NUM_MC [hsi::get_cells -hier $drv_handle]]
-	set intrleave_size [get_property CONFIG.MC_INTERLEAVE_SIZE [hsi::get_cells -hier $drv_handle]]
+	set num_mc [hsi get_property CONFIG.NUM_MC [hsi::get_cells -hier $drv_handle]]
+	set intrleave_size [hsi get_property CONFIG.MC_INTERLEAVE_SIZE [hsi::get_cells -hier $drv_handle]]
 	if {$num_mc >= 1} {
 		if {[catch {set value [pcwdt get "&mc0" ranges]} msg]} {
 			set node [create_node -n "&mc0" -d "pcw.dtsi" -p root]		

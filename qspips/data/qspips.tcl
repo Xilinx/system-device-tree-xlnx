@@ -30,7 +30,7 @@ proc generate {drv_handle} {
 	if {$is_stacked} {
 		add_prop $node "is-stacked" $is_stacked int $dts_file
 	}
-	set bus_width [get_property CONFIG.C_QSPI_BUS_WIDTH [hsi::get_cells -hier $drv_handle]]
+	set bus_width [hsi get_property CONFIG.C_QSPI_BUS_WIDTH [hsi::get_cells -hier $drv_handle]]
 
 	switch $bus_width {
 		"3" {

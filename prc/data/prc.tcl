@@ -24,12 +24,12 @@ proc prc_generate_params {drv_handle} {
  
         set api_file "$path/$drvname/data/api.tcl" 
         if {[file exists $common_file]} { 
-                source -notrace $api_file 
+                source $api_file 
         }
 
 
 	set ip [hsi::get_cells -hier $drv_handle]
-	set configuration [common::get_property CONFIG.ALL_PARAMS $ip]
+	set configuration [hsi get_property CONFIG.ALL_PARAMS $ip]
 
 	# Use the PRC's API to get the number of VSMs that the user configured in this instance of the PRC
 	set num_vs  [prc_v1_2::priv::get_num_vs configuration]

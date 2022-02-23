@@ -19,7 +19,7 @@ proc generate {drv_handle} {
 	set cs-num 0
 	# SPI PS only have chip select range 0 - 2
 	foreach n {0 1 2} {
-		set cs_en [get_property CONFIG.C_HAS_SS${n} $ip]
+		set cs_en [hsi get_property CONFIG.C_HAS_SS${n} $ip]
 		if {[string equal "1" $cs_en]} {
 			incr cs-num
 		}

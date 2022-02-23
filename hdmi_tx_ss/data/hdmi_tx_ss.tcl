@@ -19,9 +19,9 @@ proc generate {drv_handle} {
 		return
 	}
 	pldt append $node compatible "\ \, \"xlnx,v-hdmi-tx-ss-3.1\""
-	set input_pixels_per_clock [get_property CONFIG.C_INPUT_PIXELS_PER_CLOCK [hsi::get_cells -hier $drv_handle]]
-	set max_bits_per_component [get_property CONFIG.C_MAX_BITS_PER_COMPONENT [hsi::get_cells -hier $drv_handle]]
-        set vid_interface [get_property CONFIG.C_VID_INTERFACE [hsi::get_cells -hier $drv_handle]]
+	set input_pixels_per_clock [hsi get_property CONFIG.C_INPUT_PIXELS_PER_CLOCK [hsi::get_cells -hier $drv_handle]]
+	set max_bits_per_component [hsi get_property CONFIG.C_MAX_BITS_PER_COMPONENT [hsi::get_cells -hier $drv_handle]]
+        set vid_interface [hsi get_property CONFIG.C_VID_INTERFACE [hsi::get_cells -hier $drv_handle]]
         add_prop "${node}" "xlnx,vid-interface" $vid_interface int $dts_file 1
 	set phy_names ""
 	set phys ""
@@ -29,7 +29,7 @@ proc generate {drv_handle} {
 	if {[llength $link_data0]} {
 		set ip_mem_handles [hsi::get_mem_ranges $link_data0]
 		if {[llength $ip_mem_handles]} {
-			set link_data0 [get_property IP_NAME $link_data0]
+			set link_data0 [hsi get_property IP_NAME $link_data0]
 			if {[string match -nocase $link_data0 "vid_phy_controller"] || [string match -nocase $link_data0 "hdmi_gt_controller"]} {
 				append phy_names " " "hdmi-phy0"
 				append phys  "vphy_lane0 0 1 1 1>,"
@@ -42,7 +42,7 @@ proc generate {drv_handle} {
 	if {[llength $link_data1]} {
 		set ip_mem_handles [hsi::get_mem_ranges $link_data1]
 		if {[llength $ip_mem_handles]} {
-			set link_data1 [get_property IP_NAME $link_data1]
+			set link_data1 [hsi get_property IP_NAME $link_data1]
 			if {[string match -nocase $link_data1 "vid_phy_controller"] || [string match -nocase $link_data1 "hdmi_gt_controller"]} {
 				append phy_names " " "hdmi-phy1"
 				append phys  " <&vphy_lane1 0 1 1 1>,"
@@ -55,7 +55,7 @@ proc generate {drv_handle} {
 	if {[llength $link_data2]} {
 		set ip_mem_handles [hsi::get_mem_ranges $link_data2]
 		if {[llength $ip_mem_handles]} {
-			set link_data2 [get_property IP_NAME $link_data2]
+			set link_data2 [hsi get_property IP_NAME $link_data2]
 			if {[string match -nocase $link_data2 "vid_phy_controller"] || [string match -nocase $link_data2 "hdmi_gt_controller"]} {
 				append phy_names " " "hdmi-phy2"
 				append phys " <&vphy_lane2 0 1 1 1"
@@ -71,11 +71,11 @@ proc generate {drv_handle} {
 	if {![string match -nocase $phys ""]} {
 		add_prop "$node" "phys" $phys reference $dts_file
 	}
-	set include_hdcp_1_4 [get_property CONFIG.C_INCLUDE_HDCP_1_4 [hsi::get_cells -hier $drv_handle]]
+	set include_hdcp_1_4 [hsi get_property CONFIG.C_INCLUDE_HDCP_1_4 [hsi::get_cells -hier $drv_handle]]
 	if {[string match -nocase $include_hdcp_1_4 "true"]} {
 		add_prop "${node}" "xlnx,include-hdcp-1-4" "" boolean $dts_file
 	}
-	set include_hdcp_2_2 [get_property CONFIG.C_INCLUDE_HDCP_2_2 [hsi::get_cells -hier $drv_handle]]
+	set include_hdcp_2_2 [hsi get_property CONFIG.C_INCLUDE_HDCP_2_2 [hsi::get_cells -hier $drv_handle]]
 	if {[string match -nocase $include_hdcp_2_2 "true"]} {
 		add_prop "${node}" "xlnx,include-hdcp-2-2" "" boolean $dts_file
 	}
@@ -85,7 +85,7 @@ proc generate {drv_handle} {
 	}
 	set audio_in_connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "AUDIO_IN"]
 	if {[llength $audio_in_connect_ip] != 0} {
-		set audio_in_connect_ip_type [get_property IP_NAME $audio_in_connect_ip]
+		set audio_in_connect_ip_type [hsi get_property IP_NAME $audio_in_connect_ip]
 		if {[string match -nocase $audio_in_connect_ip_type "axis_switch"]} {
 			set connected_ip [get_connected_stream_ip $audio_in_connect_ip "S00_AXIS"]
 			if {[llength $connected_ip] != 0} {
@@ -102,7 +102,7 @@ proc generate {drv_handle} {
 	set pins [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier [hsi::get_cells -hier $drv_handle]] "acr_cts"]]
        foreach pin $pins {
        set sink_periph [hsi::get_cells -of_objects $pin]
-       if {[string match -nocase "[get_property IP_NAME $sink_periph]" "hdmi_acr_ctrl"]} {
+       if {[string match -nocase "[hsi get_property IP_NAME $sink_periph]" "hdmi_acr_ctrl"]} {
                add_prop "$node" "xlnx,xlnx-hdmi-acr-ctrl" $sink_periph reference $dts_file
        }
 }

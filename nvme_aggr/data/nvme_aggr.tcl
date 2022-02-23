@@ -20,7 +20,7 @@ proc generate {drv_handle} {
 		return
 	}
 	set nvme_ip [hsi::get_cells -hier $drv_handle]
-	set ip_name [get_property IP_NAME $nvme_ip]
+	set ip_name [hsi get_property IP_NAME $nvme_ip]
 
 	if {[string match -nocase $proc_type "zynqmp"] || [string match -nocase $proc_type "zynquplus"] || \
 	    [string match -nocase $proc_type "versal"]} {
@@ -34,9 +34,9 @@ proc generate {drv_handle} {
 		add_prop "${node}" "ranges" boolean $dts_file
 	}
 
-	set intr_val [get_property CONFIG.interrupts $drv_handle]
-	set intr_parent [get_property CONFIG.interrupt-parent $drv_handle]
-	set intr_names [get_property CONFIG.interrupt-names $drv_handle]
+	set intr_val [hsi get_property CONFIG.interrupts $drv_handle]
+	set intr_parent [hsi get_property CONFIG.interrupt-parent $drv_handle]
+	set intr_names [hsi get_property CONFIG.interrupt-names $drv_handle]
 
 	set ha_intr ""
 	set tc_intr ""
@@ -57,17 +57,17 @@ proc generate {drv_handle} {
   set nvme_inst_name [hsi::get_cells -filter {IP_NAME =~ "*nvme*"}]
 	foreach periph $periph_list {
 		if {[string match -nocase "${nvme_inst_name}_nvmeha_0" $periph] } {
-      set addr [get_property CONFIG.HA_S_AXI_LITE_OFFSET $nvme_ip]
+      set addr [hsi get_property CONFIG.HA_S_AXI_LITE_OFFSET $nvme_ip]
       set addr [format %0x $addr]
 			gen_ha_node $periph $addr $node $drv_handle $proc_type $nvme_ip $intr_parent $ha_intr
 		}
 		if {[string match -nocase "${nvme_inst_name}_nvme_tc_0" $periph] } {
-      set addr [get_property CONFIG.TC_S_AXI_LITE_OFFSET $nvme_ip]
+      set addr [hsi get_property CONFIG.TC_S_AXI_LITE_OFFSET $nvme_ip]
       set addr [format %0x $addr]
 			gen_tc_node $periph $addr $node $drv_handle $proc_type $nvme_ip $intr_parent $tc_intr
     }
 		if {[string match -nocase "${nvme_inst_name}_nvme_mapper_0" $periph] } {
-      set addr [get_property CONFIG.MAPER_S_AXI_LITE_OFFSET $nvme_ip]
+      set addr [hsi get_property CONFIG.MAPER_S_AXI_LITE_OFFSET $nvme_ip]
       set addr [format %0x $addr]
 			gen_mapper_node $periph $addr $node $drv_handle $proc_type $nvme_ip $intr_parent $mapper_intr
     }
@@ -77,11 +77,11 @@ proc generate {drv_handle} {
 proc gen_ha_node {periph addr parent_node drv_handle proc_type nvme_ip intr_parent intr} {
 	set dts_file [set_drv_def_dts $drv_handle]
 	set ha_node [create_node -n "nvme_ha" -l nvme_ha_0 -u $addr -p $parent_node -d $dts_file]
-	set lite_size [get_property CONFIG.HA_S_AXI_LITE_SIZE $nvme_ip]
-	set full_off [get_property CONFIG.HA_SW_S_AXI_OFFSET $nvme_ip]
-	set full_size [get_property CONFIG.HA_SW_S_AXI_SIZE $nvme_ip]
-	set ssd_off [get_property CONFIG.HA_S_AXI_SSD_OFFSET $nvme_ip]
-	set ssd_size [get_property CONFIG.HA_S_AXI_SSD_SIZE $nvme_ip]
+	set lite_size [hsi get_property CONFIG.HA_S_AXI_LITE_SIZE $nvme_ip]
+	set full_off [hsi get_property CONFIG.HA_SW_S_AXI_OFFSET $nvme_ip]
+	set full_size [hsi get_property CONFIG.HA_SW_S_AXI_SIZE $nvme_ip]
+	set ssd_off [hsi get_property CONFIG.HA_S_AXI_SSD_OFFSET $nvme_ip]
+	set ssd_size [hsi get_property CONFIG.HA_S_AXI_SSD_SIZE $nvme_ip]
 	if {[string match -nocase $proc_type "ps7_cortexa9"] ||
       [string match -nocase $proc_type "microblaze"]} {
 		set ha_reg "0x$addr $lite_size $full_off $full_size $ssd_off $ssd_size"
@@ -174,9 +174,9 @@ proc gen_ha_node {periph addr parent_node drv_handle proc_type nvme_ip intr_pare
 proc gen_tc_node {periph addr parent_node drv_handle proc_type nvme_ip intr_parent intr} {
 	set dts_file [set_drv_def_dts $drv_handle]
 	set tc_node [create_node -n "nvme_tc" -l nvme_tc_0 -u $addr -p $parent_node -d $dts_file]
-	set lite_size [get_property CONFIG.TC_S_AXI_LITE_SIZE $nvme_ip]
-	set full_off [get_property CONFIG.TC_SW_S_AXI_OFFSET $nvme_ip]
-	set full_size [get_property CONFIG.TC_SW_S_AXI_SIZE $nvme_ip]
+	set lite_size [hsi get_property CONFIG.TC_S_AXI_LITE_SIZE $nvme_ip]
+	set full_off [hsi get_property CONFIG.TC_SW_S_AXI_OFFSET $nvme_ip]
+	set full_size [hsi get_property CONFIG.TC_SW_S_AXI_SIZE $nvme_ip]
 	if {[string match -nocase $proc_type "ps7_cortexa9"] ||
       [string match -nocase $proc_type "microblaze"]} {
 		set tc_reg "0x$addr $lite_size $full_off $full_size"
@@ -196,7 +196,7 @@ proc gen_tc_node {periph addr parent_node drv_handle proc_type nvme_ip intr_pare
 	add_prop "${tc_node}" "interrupt-parent" $intr_parent reference $dts_file
 	add_prop "${tc_node}" "interrupt-names" $intr stringlist $dts_file
   
-  set debug_en [get_property CONFIG.DEBUG_EN $nvme_ip]
+  set debug_en [hsi get_property CONFIG.DEBUG_EN $nvme_ip]
   if {[string match -nocase $debug_en "true"]} {
     add_prop "${tc_node}" "xlnx,debug-en" "0x1" int $dts_file
   } else {
@@ -224,9 +224,9 @@ proc gen_tc_node {periph addr parent_node drv_handle proc_type nvme_ip intr_pare
 proc gen_mapper_node {periph addr parent_node drv_handle proc_type nvme_ip intr_parent intr} {
 	set dts_file [set_drv_def_dts $drv_handle]
 	set mapper_node [create_node -n "nvme_mapper" -l nvme_mapper_0 -u $addr -p $parent_node -d $dts_file]
-	set lite_size [get_property CONFIG.MAPPER_S_AXI_LITE_SIZE $nvme_ip]
-	set full_off [get_property CONFIG.MAPPER_SW_S_AXI_OFFSET $nvme_ip]
-	set full_size [get_property CONFIG.MAPPER_SW_S_AXI_SIZE $nvme_ip]
+	set lite_size [hsi get_property CONFIG.MAPPER_S_AXI_LITE_SIZE $nvme_ip]
+	set full_off [hsi get_property CONFIG.MAPPER_SW_S_AXI_OFFSET $nvme_ip]
+	set full_size [hsi get_property CONFIG.MAPPER_SW_S_AXI_SIZE $nvme_ip]
 	if {[string match -nocase $proc_type "ps7_cortexa9"] ||
       [string match -nocase $proc_type "microblaze"]} {
 		set mapper_reg "0x$addr $lite_size $full_off $full_size"
@@ -236,7 +236,7 @@ proc gen_mapper_node {periph addr parent_node drv_handle proc_type nvme_ip intr_
 	add_prop "${mapper_node}" "reg" $mapper_reg int $dts_file
 	add_prop "${mapper_node}" "compatible" "xlnx,nvme-mapper-1.0" string $dts_file
 
-	set en_p2p [get_property CONFIG.EN_P2P_BUFFERS $nvme_ip]
+	set en_p2p [hsi get_property CONFIG.EN_P2P_BUFFERS $nvme_ip]
 	if {[string match -nocase $en_p2p "true"]} {
 	    add_prop "${mapper_node}" "xlnx,en-p2p-buffer" boolean $dts_file
     }
@@ -246,7 +246,7 @@ proc gen_mapper_node {periph addr parent_node drv_handle proc_type nvme_ip intr_
 }
 
 proc gen_property {property pro_dt_name nvme_ip node} {
-  set num_sgls [get_property $property $nvme_ip]
+  set num_sgls [hsi get_property $property $nvme_ip]
   set num_sgls 0x[format %0x $num_sgls] 
   add_prop "$node" $pro_dt_name $num_sgls int $dts_file
 }

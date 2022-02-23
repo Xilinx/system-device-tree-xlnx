@@ -31,7 +31,7 @@ proc generate {drv_handle} {
 	set hw_design [hsi::current_hw_design]
     	set board_name ""
    		if {[llength $hw_design]} {
-		set board [split [get_property BOARD $hw_design] ":"]
+		set board [split [hsi get_property BOARD $hw_design] ":"]
         	set board_name [lindex $board 1]
    		}
 	global env
@@ -53,8 +53,8 @@ proc generate {drv_handle} {
 	}
 	# search for a valid bus interface name
 	# This is required to work with Vivado 2015.1 due to IP PIN naming change
-	set hasbuf [get_property CONFIG.processor_mode $eth_ip]
-	set ip_name [get_property IP_NAME $eth_ip]
+	set hasbuf [hsi get_property CONFIG.processor_mode $eth_ip]
+	set ip_name [hsi get_property IP_NAME $eth_ip]
 	if {$ip_name == "axi_ethernet"} {
 		pldt append $node compatible "\ \, \"xlnx,axi-ethernet-1.00.a\""
 	}
@@ -63,7 +63,7 @@ proc generate {drv_handle} {
 		set ip_mem_handles [hsi::get_mem_ranges [hsi::get_cells -hier $drv_handle]]
 		set num 0
 		generate_reg_property $node $ip_mem_handles $num
-		set num_cores [get_property CONFIG.NUM_OF_CORES [hsi::get_cells -hier $drv_handle]]
+		set num_cores [hsi get_property CONFIG.NUM_OF_CORES [hsi::get_cells -hier $drv_handle]]
 	}
 	set new_label ""
 	set clk_label ""
@@ -83,7 +83,7 @@ proc generate {drv_handle} {
 			set dts_file "pl.dtsi"
 			set ipmem_len [llength $ip_mem_handles]
 			if {$ipmem_len > 1} {
-				set base_addr [string tolower [get_property BASE_VALUE [lindex $ip_mem_handles $core]]]
+				set base_addr [string tolower [hsi get_property BASE_VALUE [lindex $ip_mem_handles $core]]]
 				regsub -all {^0x} $base_addr {} base_addr
 				append new_label $drv_handle "_" $core
 				append clk_label $drv_handle "_" $core
@@ -183,14 +183,14 @@ proc generate {drv_handle} {
 		}
 
 		if {$ip_name == "axi_ethernet"} {
-			set txcsum [get_property CONFIG.TXCSUM $eth_ip]
+			set txcsum [hsi get_property CONFIG.TXCSUM $eth_ip]
 			set txcsum [get_checksum $txcsum]
-			set rxcsum [get_property CONFIG.RXCSUM $eth_ip]
+			set rxcsum [hsi get_property CONFIG.RXCSUM $eth_ip]
 			set rxcsum [get_checksum $rxcsum]
-			set phytype [get_property CONFIG.PHY_TYPE $eth_ip]
+			set phytype [hsi get_property CONFIG.PHY_TYPE $eth_ip]
 			set phytype [get_phytype $phytype]
-			set phyaddr [get_property CONFIG.PHYADDR $eth_ip]
-			set rxmem [get_property CONFIG.RXMEM $eth_ip]
+			set phyaddr [hsi get_property CONFIG.PHYADDR $eth_ip]
+			set rxmem [hsi get_property CONFIG.RXMEM $eth_ip]
 			set rxmem [get_memrange $rxmem]
 			add_prop $node "xlnx,txcsum" $txcsum hexint "pl.dtsi" 1
 			add_prop $node "xlnx,rxcsum" $rxcsum hexint "pl.dtsi" 1
@@ -201,9 +201,9 @@ proc generate {drv_handle} {
 
 		set is_nobuf 0
 		if {$ip_name == "axi_ethernet"} {
-			set avail_param [list_property [hsi::get_cells -hier $drv_handle]]
+			set avail_param [hsi list_property [hsi::get_cells -hier $drv_handle]]
 			if {[lsearch -nocase $avail_param "CONFIG.speed_1_2p5"] >= 0} {
-				if {[get_property CONFIG.speed_1_2p5 [hsi::get_cells -hier $drv_handle]] == "2p5G"} {
+				if {[hsi get_property CONFIG.speed_1_2p5 [hsi::get_cells -hier $drv_handle]] == "2p5G"} {
 					set is_nobuf 1
 					pldt append $node compatible "\ \, \"xlnx,axi-2_5-gig-ethernet-1.0\""	
 		    		}
@@ -216,7 +216,7 @@ proc generate {drv_handle} {
 		#adding clock frequency
 		set clk [hsi::get_pins -of_objects $eth_ip "S_AXI_ACLK"]
 		if {[llength $clk] } {
-			set freq [get_property CLK_FREQ $clk]
+			set freq [hsi get_property CLK_FREQ $clk]
 			add_prop $node clock-frequency "$freq" int "pl.dtsi"
 			if {$ip_name == "xxv_ethernet" && [llength $eth_node]} {
 				add_prop $eth_node "clock-frequency" "$freq" int "pl.dtsi"
@@ -224,7 +224,7 @@ proc generate {drv_handle} {
 		}
 
 		set mdio_node [gen_mdio_node $drv_handle $node]
-		set phytype [string tolower [get_property CONFIG.PHY_TYPE $eth_ip]]
+		set phytype [string tolower [hsi get_property CONFIG.PHY_TYPE $eth_ip]]
 		if {$phytype == "rgmii" && $board_name == "kc705"} {
 			set phytype "rgmii-rxid"
 		} elseif {$phytype == "1000basex"} {
@@ -251,13 +251,13 @@ proc generate {drv_handle} {
 			set new_label ""
 		}
 		if {$ip_name == "axi_10g_ethernet"} {
-			set phytype [string tolower [get_property CONFIG.base_kr $eth_ip]]
+			set phytype [string tolower [hsi get_property CONFIG.base_kr $eth_ip]]
 			add_prop $node phy-mode "$phytype" string "pl.dtsi"
 			add_prop $node "phy-mode" $phytype string "pl.dtsi"
 			pldt append $node compatible "\ \, \"xlnx,ten-gig-eth-mac\""
 		}
 		if {$ip_name == "xxv_ethernet"} {
-			set phytype [string tolower [get_property CONFIG.BASE_R_KR $eth_ip]]
+			set phytype [string tolower [hsi get_property CONFIG.BASE_R_KR $eth_ip]]
 			add_prop $node phy-mode "$phytype" string $dts_file
 			if {$core == 0} {
 				pldt append $node compatible "\ \, \"xlnx,xxv-ethernet-1.0\""
@@ -285,9 +285,9 @@ proc generate {drv_handle} {
 		set ver [split $hsi_version "."]
 		set version [lindex $ver 0]
 		if {![string_is_empty $connected_ip]} {
-			set connected_ipname [get_property IP_NAME $connected_ip]
+			set connected_ipname [hsi get_property IP_NAME $connected_ip]
 			if {$connected_ipname == "axi_mcdma" || $connected_ipname == "axi_dma"} {
-		    	set num_queues [get_property CONFIG.c_num_mm2s_channels $connected_ip]
+		    	set num_queues [hsi get_property CONFIG.c_num_mm2s_channels $connected_ip]
 				set inhex [format %x $num_queues]
 				set numqueues "/bits/ 16 <0x$inhex>"
 				add_prop $node "xlnx,num-queues" $numqueues stringlist "pl.dtsi"
@@ -547,7 +547,7 @@ proc generate {drv_handle} {
 }
 
 proc pcspma_phy_node {slave} {
-	set phyaddr [get_property CONFIG.PHYADDR $slave]
+	set phyaddr [hsi get_property CONFIG.PHYADDR $slave]
 	set phymode "phy$phyaddr"
 
 	return "$phyaddr $phymode"
@@ -658,7 +658,7 @@ proc gen_phy_node args {
 }
 
 proc is_ethsupported_target {connected_ip} {
-   set connected_ipname [get_property IP_NAME $connected_ip]
+   set connected_ipname [hsi get_property IP_NAME $connected_ip]
    if {$connected_ipname == "axi_dma" || $connected_ipname == "axi_fifo_mm_s" || $connected_ipname == "axi_mcdma"} {
       return "true"
    } else {
@@ -674,14 +674,14 @@ proc get_targetip {ip} {
    set p2p_busifs_i [hsi::get_intf_pins -of_objects $ip -filter "TYPE==INITIATOR || TYPE==MASTER"]
    set target_periph ""
    foreach p2p_busif $p2p_busifs_i {
-      set busif_name [string toupper [get_property NAME  $p2p_busif]]
+      set busif_name [string toupper [hsi get_property NAME  $p2p_busif]]
       set conn_busif_handle [get_connected_intf $ip $busif_name]
       if {[string_is_empty $conn_busif_handle] != 0} {
 	  continue
       }
       set target_periph [hsi::get_cells -of_objects $conn_busif_handle]
       set cell_name [hsi::get_cells -hier $target_periph]
-      set target_name [get_property IP_NAME [hsi::get_cells -hier $target_periph]]
+      set target_name [hsi get_property IP_NAME [hsi::get_cells -hier $target_periph]]
       if {$target_name == "axis_data_fifo" || $target_name == "Ethernet_filter"} {
 	  set master_slaves [hsi::get_intf_pins -of [hsi::get_cells -hier $cell_name]]
 	  if {[llength $master_slaves] == 0} {
@@ -689,7 +689,7 @@ proc get_targetip {ip} {
 	  }
 	  set master_intf ""
 	  foreach periph_intf $master_slaves {
-	      set prop [get_property TYPE $periph_intf]
+	      set prop [hsi get_property TYPE $periph_intf]
 	      if {$prop == "INITIATOR"} {
 		  set master_intf $periph_intf
 	      }
@@ -706,7 +706,7 @@ proc get_targetip {ip} {
 		   set connected_ip [hsi::get_cells -of_objects $target_intf]
 		   if {[llength $connected_ip]} {
 			 set cell [hsi::get_cells -hier $connected_ip]
-			 set target_name [get_property IP_NAME [hsi::get_cells -hier $cell]]
+			 set target_name [hsi get_property IP_NAME [hsi::get_cells -hier $cell]]
 			 if {$target_name == "axis_data_fifo"} {
 				  return [get_targetip $connected_ip]
 			 }
@@ -735,16 +735,16 @@ proc get_connectedip {intf} {
 	 if { [llength $target_intf] } {
 	    set connected_ip [hsi::get_cells -of_objects $target_intf]
 	    if {[llength $connected_ip]} {
-		  set target_ipname [get_property IP_NAME $connected_ip]
+		  set target_ipname [hsi get_property IP_NAME $connected_ip]
 		  if {$target_ipname == "ila"} {
 			 return
 		  }
 		  if {$target_ipname == "axis_data_fifo"} {
-			set fifo_width_bytes [get_property CONFIG.TDATA_NUM_BYTES $connected_ip]
+			set fifo_width_bytes [hsi get_property CONFIG.TDATA_NUM_BYTES $connected_ip]
 			if {[string_is_empty $fifo_width_bytes]} {
 			      set fifo_width_bytes 1
 			}
-			set rxethmem [get_property CONFIG.FIFO_DEPTH $connected_ip]
+			set rxethmem [hsi get_property CONFIG.FIFO_DEPTH $connected_ip]
 			# FIFO can be other than 8 bits, and we need the rxmem in bytes
 			set rxethmem [expr $rxethmem * $fifo_width_bytes]
 		 } else {
@@ -791,8 +791,8 @@ proc generate_reg_property {node ip_mem_handles num} {
        if {[llength $ip_mem_handles] == 0} {
 		 return
        }
-       set base [string tolower [get_property BASE_VALUE [lindex $ip_mem_handles $num]]]
-       set high [string tolower [get_property HIGH_VALUE [lindex $ip_mem_handles $num]]]
+       set base [string tolower [hsi get_property BASE_VALUE [lindex $ip_mem_handles $num]]]
+       set high [string tolower [hsi get_property HIGH_VALUE [lindex $ip_mem_handles $num]]]
        set size [format 0x%x [expr {${high} - ${base} + 1}]]
 
 	set proctype [get_hw_family]
@@ -855,7 +855,7 @@ proc ip2_prop {ip_name ip_prop_name drv_handle} {
 	regsub -all {CONFIG.C_} $drv_prop_name {xlnx,} drv_prop_name
 	regsub -all {_} $drv_prop_name {-} drv_prop_name
 	set drv_prop_name [string tolower $drv_prop_name]
-	set prop [get_property ${ip_prop_name} [hsi::get_cells -hier $drv_handle]]
+	set prop [hsi get_property ${ip_prop_name} [hsi::get_cells -hier $drv_handle]]
 	if {[llength $prop]} {
 		if {$prop != "-1" && [llength $prop] !=0} {
 			if {[regexp -nocase {0x([0-9a-f])} $prop match]} {

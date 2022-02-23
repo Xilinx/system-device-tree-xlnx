@@ -22,11 +22,11 @@ proc generate {drv_handle} {
     set dts_file [set_drv_def_dts $drv_handle]
     set ip [hsi::get_cells -hier $drv_handle]
     set port_number 0
-	set avail_param [list_property [hsi::get_cells -hier $drv_handle]]
+	set avail_param [hsi list_property [hsi::get_cells -hier $drv_handle]]
 	# This check is needed because BAUDRATE parameter for psuart is available from
 	# 2017.1 onwards
 	if {[lsearch -nocase $avail_param "CONFIG.C_BAUDRATE"] >= 0} {
-	    set baud [get_property CONFIG.C_BAUDRATE [hsi::get_cells -hier $drv_handle]]
+	    set baud [hsi get_property CONFIG.C_BAUDRATE [hsi::get_cells -hier $drv_handle]]
 	} else {
 	    set baud "115200"
 	}
@@ -44,11 +44,11 @@ proc generate {drv_handle} {
 	}
 	set val [systemdt get $chosen_node "stdout-path"]
 	add_prop $node "port-number" $port_number int $dts_file
-    set uboot_prop [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+    set uboot_prop [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
     if {[string match -nocase $uboot_prop "psu_uart"] || [string match -nocase $uboot_prop "psv_sbsauart"]} {
 	set_drv_prop $drv_handle "u-boot,dm-pre-reloc" "" boolean
     }
-    set has_modem [get_property CONFIG.C_HAS_MODEM [hsi::get_cells -hier $drv_handle]]
+    set has_modem [hsi get_property CONFIG.C_HAS_MODEM [hsi::get_cells -hier $drv_handle]]
     if {$has_modem == 0} {
 	 add_prop $node "cts-override" boolean $dts_file
     }

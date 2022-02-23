@@ -24,12 +24,12 @@ proc set_pcie_ranges {drv_handle proctype} {
 	add_prop $node "#address-cells" 3 int "pl.dtsi"
 	add_prop $node "#size-cells" 2 int "pl.dtsi"
 	add_prop $node "#interrupt-cells" 1 int "pl.dtsi"
-	if {[string match -nocase [get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "xdma"]} {
+	if {[string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "xdma"]} {
 		set axibar_num [get_ip_property $drv_handle "CONFIG.axibar_num"]
 	} else {
 		set axibar_num [get_ip_property $drv_handle "CONFIG.AXIBAR_NUM"]
 	}
-	if {[string match -nocase [get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "pcie_dma_versal"]} {
+	if {[string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "pcie_dma_versal"]} {
                set axibar_num [get_ip_property $drv_handle "CONFIG.C_AXIBAR_NUM"]
 	}
 	set range_type 0x02000000
@@ -37,7 +37,7 @@ proc set_pcie_ranges {drv_handle proctype} {
 	set high_64bit 0x00000000
 	set ranges ""
 	for {set x 0} {$x < $axibar_num} {incr x} {
-		if {[string match -nocase [get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "xdma"] || [string match -nocase [get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "axi_pcie3"] || [string match -nocase [get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "pcie_dma_versal"]} {
+		if {[string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "xdma"] || [string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "axi_pcie3"] || [string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "pcie_dma_versal"]} {
 			set axi_baseaddr [get_ip_property $drv_handle [format "CONFIG.axibar_%d" $x]]
 			set pcie_baseaddr [get_ip_property $drv_handle [format "CONFIG.axibar2pciebar_%d" $x]]
 			set axi_highaddr [get_ip_property $drv_handle [format "CONFIG.axibar_highaddr_%d" $x]]
@@ -62,7 +62,7 @@ proc set_pcie_ranges {drv_handle proctype} {
 			set range_type 0x43000000
 		}
 
-		if {[string match -nocase [get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "xdma"] || [string match -nocase [get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "pcie_dma_versal"]} {
+		if {[string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "xdma"] || [string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "pcie_dma_versal"]} {
 			if {[regexp -nocase {([0-9a-f]{9})} "$pcie_baseaddr" match]} {
 				set temp $pcie_baseaddr
 				set temp [string trimleft [string trimleft $temp 0] x]
@@ -106,7 +106,7 @@ proc set_pcie_ranges {drv_handle proctype} {
 
 proc set_pcie_reg {drv_handle proctype} {
 	set node [get_node $drv_handle]
-	if {[string match -nocase [get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "xdma"] || [string match -nocase [get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "axi_pcie3"] || [string match -nocase [get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "pcie_dma_versal"]} {
+	if {[string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "xdma"] || [string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "axi_pcie3"] || [string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "pcie_dma_versal"]} {
 		set baseaddr [get_ip_property $drv_handle CONFIG.baseaddr]
 		set highaddr [get_ip_property $drv_handle CONFIG.highaddr]
 		set size [format 0x%X [expr $highaddr -$baseaddr + 1]]
@@ -159,9 +159,9 @@ proc generate {drv_handle} {
 	if {[string match -nocase $family "versal"]} {
 		pldt append $node compatible "\ \, \"xlnx,axi-pcie-host-1.00.a\""
 	}
-	if {[string match -nocase [get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "xdma"]} {
+	if {[string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "xdma"]} {
 		pldt append $node compatible "\ \, \"xlnx,xdma-host-3.00\""
-		set msi_rx_pin_en [get_property CONFIG.msi_rx_pin_en [hsi::get_cells -hier $drv_handle]]
+		set msi_rx_pin_en [hsi get_property CONFIG.msi_rx_pin_en [hsi::get_cells -hier $drv_handle]]
 		if {[string match -nocase $msi_rx_pin_en "true"]} {
 			set intr_names "misc msi0 msi1"
 			set_drv_prop $drv_handle "interrupt-names" $intr_names stringlist
@@ -197,7 +197,7 @@ proc generate {drv_handle} {
 	add_prop "${pcie_child_intc_node}" "interrupt-controller" boolean "pl.dtsi"
 	add_prop "${pcie_child_intc_node}" "#address-cells" 0 int "pl.dtsi"
 	add_prop "${pcie_child_intc_node}" "#interrupt-cells" 1 int "pl.dtsi"
-	set prop [get_property CONFIG.device_port_type [hsi::get_cells -hier $drv_handle]]
+	set prop [hsi get_property CONFIG.device_port_type [hsi::get_cells -hier $drv_handle]]
 	if {[string match -nocase $prop "Root_Port_of_PCI_Express_Root_Complex"]} {
 		add_prop $node "xlnx,device-port-type" 1 hexint "pl.dtsi"
 	}

@@ -14,7 +14,7 @@
 
 proc generate {drv_handle} {
 	set dts_file [set_drv_def_dts $drv_handle]
-	set ip_name [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+	set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
 	if {[string match -nocase $ip_name "psu_pmu"]} {
 		set node "&ub1_cpu"
 	} elseif {[string match -nocase $ip_name "psv_pmc"]} {
@@ -30,14 +30,14 @@ proc generate {drv_handle} {
 	set common_file "$path/device_tree/data/config.yaml"
 	set mainline_ker [get_user_config $common_file --mainline_kernel]
 	global dtsi_fname
-	set proc_type [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+	set proc_type [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
 	set master_root_node [gen_root_node $drv_handle]
 	set nodes [gen_cpu_nodes $drv_handle]
 	set ip [hsi::get_cells -hier $drv_handle]
 	set clk ""
 	set clkhandle [hsi::get_pins -of_objects $ip "CLK"]
 	if { [string compare -nocase $clkhandle ""] != 0 } {
-		set clk [get_property CLK_FREQ $clkhandle]
+		set clk [hsi get_property CLK_FREQ $clkhandle]
 	}
 	if { [llength $ip]  } {
 		if {$clk != ""} {
@@ -46,7 +46,7 @@ proc generate {drv_handle} {
 		}
 	}
 	if {[string match -nocase $proc_type "psu_pmu"] } {
-		add_prop $node "clock-frequency" [get_property CONFIG.C_FREQ $ip] hexint $dts_file
+		add_prop $node "clock-frequency" [hsi get_property CONFIG.C_FREQ $ip] hexint $dts_file
 	}
 	set icache_size [get_ip_param_value $ip "C_CACHE_BYTE_SIZE"]
 	set icache_base [get_ip_param_value $ip "C_ICACHE_BASEADDR"]

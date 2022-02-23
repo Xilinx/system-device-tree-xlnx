@@ -32,7 +32,7 @@ proc generate {drv_handle} {
 	set clk ""
 	set clkhandle [hsi::get_pins -of_objects $ip "CLK"]
 	if { [string compare -nocase $clkhandle ""] != 0 } {
-		set clk [get_property CLK_FREQ $clkhandle]
+		set clk [hsi get_property CLK_FREQ $clkhandle]
 	}
 	if { [llength $ip]  } {
 		add_prop $node "clock-frequency" $clk int $dts_file
@@ -66,9 +66,9 @@ proc generate {drv_handle} {
 		add_prop $node "d-cache-size" $dsize int $dts_file
 		add_prop $node "d-cache-line-size" $dcache_line_size int $dts_file
 	}
-	set model "[get_property IP_NAME $ip],[get_ip_version $ip]"
+	set model "[hsi get_property IP_NAME $ip],[get_ip_version $ip]"
 	add_prop $node "model" $model string $dts_file
-	set family [get_property C_FAMILY [hsi::get_cells -hier $drv_handle]]
+	set family [hsi get_property C_FAMILY [hsi::get_cells -hier $drv_handle]]
 	add_prop $node "xlnx,family" $family string $dts_file
 	# create root node
 	set master_root_node [gen_root_node $drv_handle]

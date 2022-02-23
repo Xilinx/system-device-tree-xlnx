@@ -24,7 +24,7 @@ proc gen_xadc_driver_prop {drv_handle} {
 
 	pldt append $node compatible "\ \, \"xlnx,axi-xadc-1.00.a\""
 	set adc_ip [hsi::get_cells -hier $drv_handle]
-	set has_dma [get_property CONFIG.C_HAS_EXTERNAL_MUX $adc_ip]
+	set has_dma [hsi get_property CONFIG.C_HAS_EXTERNAL_MUX $adc_ip]
 	if {$has_dma == 0} {
 		set has_dma_str "none"
 	} elseif {$has_dma == 1} {
@@ -32,7 +32,7 @@ proc gen_xadc_driver_prop {drv_handle} {
 	}
 	add_prop $node "xlnx,external-mux" $has_dma_str string $dts_file
 	if {$has_dma != 0} {
-		set ext_mux_chan [get_property CONFIG.EXTERNAL_MUX_CHANNEL $adc_ip]
+		set ext_mux_chan [hsi get_property CONFIG.EXTERNAL_MUX_CHANNEL $adc_ip]
 		if {[string match -nocase $ext_mux_chan "VP_VN"] } {
 			set chan_nr 0
 		} else {

@@ -28,7 +28,7 @@ proc generate {drv_handle} {
 	add_prop "$port_node" "reg" 0 int $dts_file
 	set outip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "VIDEO_OUT"]
 	if {[llength $outip]} {
-		if {[string match -nocase [get_property IP_NAME $outip] "axis_broadcaster"]} {
+		if {[string match -nocase [hsi get_property IP_NAME $outip] "axis_broadcaster"]} {
 			set hdmirxnode [create_node -n "endpoint" -l hdmirx_out$drv_handle -p $port_node -d $dts_file]
 			gen_endpoint $drv_handle "hdmirx_out$drv_handle"
 			add_prop "$hdmirxnode" "remote-endpoint" $outip$drv_handle reference $dts_file
@@ -44,11 +44,11 @@ proc generate {drv_handle} {
                         gen_endpoint $drv_handle "hdmirx_out$drv_handle"
                         add_prop "$hdmi_rx_node" "remote-endpoint" $ip$drv_handle reference $dts_file
                         gen_remoteendpoint $drv_handle $ip$drv_handle
-                        if {[string match -nocase [get_property IP_NAME $ip] "v_frmbuf_wr"]} {
+                        if {[string match -nocase [hsi get_property IP_NAME $ip] "v_frmbuf_wr"]} {
                                 gen_frmbuf_node $ip $drv_handle $dts_file
                         }
                 } else {
-                        if {[string match -nocase [get_property IP_NAME $ip] "system_ila"]} {
+                        if {[string match -nocase [hsi get_property IP_NAME $ip] "system_ila"]} {
                                 continue
                         }
                         set connectip [get_connect_ip $ip $master_intf $dts_file]
@@ -57,7 +57,7 @@ proc generate {drv_handle} {
                                 gen_endpoint $drv_handle "hdmirx_out$drv_handle"
                                 add_prop "$hdmi_rx_node" "remote-endpoint" $connectip$drv_handle reference $dts_file
                                 gen_remoteendpoint $drv_handle $connectip$drv_handle
-                                if {[string match -nocase [get_property IP_NAME $connectip] "v_frmbuf_wr"]} {
+                                if {[string match -nocase [hsi get_property IP_NAME $connectip] "v_frmbuf_wr"]} {
                                         gen_frmbuf_node $connectip $drv_handle $dts_file
                                 }
                         }
@@ -68,7 +68,7 @@ set link_data1 [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "LINK
 if {[llength $link_data1]} {
 	set ip_mem_handles [hsi::get_mem_ranges $link_data1]
 	if {[llength $ip_mem_handles]} {
-		set link_data1 [get_property IP_NAME $link_data1]
+		set link_data1 [hsi get_property IP_NAME $link_data1]
 		if {[string match -nocase $link_data1 "vid_phy_controller"] || [string match -nocase $link_data1 "hdmi_gt_controller"]} {
 			append phy_names " " "hdmi-phy1"
 			append phys  "vphy_lane1 0 1 1 0>,"
@@ -81,7 +81,7 @@ set link_data2 [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "LINK
 if {[llength $link_data2]} {
 	set ip_mem_handles [hsi::get_mem_ranges $link_data2]
 	if {[llength $ip_mem_handles]} {
-		set link_data2 [get_property IP_NAME $link_data2]
+		set link_data2 [hsi get_property IP_NAME $link_data2]
 		if {[string match -nocase $link_data2 "vid_phy_controller"] || [string match -nocase $link_data2 "hdmi_gt_controller"]} {
 			append phy_names " " "hdmi-phy2"
 			append phys " <&vphy_lane2 0 1 1 0"
@@ -94,7 +94,7 @@ set link_data3 [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "LINK
 if {[llength $link_data3]} {
 	set ip_mem_handles [hsi::get_mem_ranges $link_data3]
 	if {[llength $ip_mem_handles]} {
-		set link_data3 [get_property IP_NAME $link_data3]
+		set link_data3 [hsi get_property IP_NAME $link_data3]
 		if {[string match -nocase $link_data3 "vid_phy_controller"] || [string match -nocase $link_data3 "hdmi_gt_controller"]} {
 			append phy_names " " "hdmi-phy3"
 			append phys " <&vphy_lane3 0 1 1 0"
@@ -109,18 +109,18 @@ if {![string match -nocase $phy_names ""]} {
 if {![string match -nocase $phys ""]} {
 	add_prop "$node" "phys" $phys reference $dts_file
 }
-set edid_ram_size [get_property CONFIG.C_EDID_RAM_SIZE [hsi::get_cells -hier $drv_handle]]
-set include_hdcp_1_4 [get_property CONFIG.C_INCLUDE_HDCP_1_4 [hsi::get_cells -hier $drv_handle]]
+set edid_ram_size [hsi get_property CONFIG.C_EDID_RAM_SIZE [hsi::get_cells -hier $drv_handle]]
+set include_hdcp_1_4 [hsi get_property CONFIG.C_INCLUDE_HDCP_1_4 [hsi::get_cells -hier $drv_handle]]
 if {[string match -nocase $include_hdcp_1_4 "true"]} {
 	add_prop "${node}" "xlnx,include-hdcp-1-4" "" boolean $dts_file
 }
-set include_hdcp_2_2 [get_property CONFIG.C_INCLUDE_HDCP_2_2 [hsi::get_cells -hier $drv_handle]]
+set include_hdcp_2_2 [hsi get_property CONFIG.C_INCLUDE_HDCP_2_2 [hsi::get_cells -hier $drv_handle]]
 if {[string match -nocase $include_hdcp_2_2 "true"]} {
 	add_prop "${node}" "xlnx,include-hdcp-2-2" "" boolean $dts_file
 }
 set audio_out_connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "AUDIO_OUT"]
 if {[llength $audio_out_connect_ip] != 0} {
-	set audio_out_connect_ip_type [get_property IP_NAME $audio_out_connect_ip]
+	set audio_out_connect_ip_type [hsi get_property IP_NAME $audio_out_connect_ip]
 	if {[string match -nocase $audio_out_connect_ip_type "axis_switch"]} {
 		 set connected_ip [get_connected_stream_ip $audio_out_connect_ip "M00_AXIS"]
                 if {[llength $connected_ip] != 0} {

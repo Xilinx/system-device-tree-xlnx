@@ -24,96 +24,96 @@ proc generate {drv_handle} {
 	set_drv_conf_prop $drv_handle C_S_AXI_CTRL_ADDR_WIDTH xlnx,s-axi-ctrl-addr-width
 	set_drv_conf_prop $drv_handle C_S_AXI_CTRL_DATA_WIDTH xlnx,s-axi-ctrl-data-width
 	set vid_formats ""
-	set has_bgr8 [get_property CONFIG.HAS_BGR8 [hsi::get_cells -hier $drv_handle]]
+	set has_bgr8 [hsi get_property CONFIG.HAS_BGR8 [hsi::get_cells -hier $drv_handle]]
 	if {$has_bgr8 == 1} {
 		append vid_formats " " "rgb888"
 	}
-	set has_rgbx8 [get_property CONFIG.HAS_RGBX8 [hsi::get_cells -hier $drv_handle]]
+	set has_rgbx8 [hsi get_property CONFIG.HAS_RGBX8 [hsi::get_cells -hier $drv_handle]]
 	if {$has_rgbx8 == 1} {
 		append vid_formats " " "xbgr8888"
 	}
-	set has_bgra8 [get_property CONFIG.HAS_BGRA8 [hsi::get_cells -hier $drv_handle]]
+	set has_bgra8 [hsi get_property CONFIG.HAS_BGRA8 [hsi::get_cells -hier $drv_handle]]
 	if {$has_bgra8 == 1} {
 		append vid_formats " " "argb8888"
 	}
-	set has_bgrx8 [get_property CONFIG.HAS_BGRX8 [hsi::get_cells -hier $drv_handle]]
+	set has_bgrx8 [hsi get_property CONFIG.HAS_BGRX8 [hsi::get_cells -hier $drv_handle]]
 	if {$has_bgrx8 == 1} {
 		append vid_formats " " "xrgb8888"
 	}
-	set has_rgb8 [get_property CONFIG.HAS_RGB8 [hsi::get_cells -hier $drv_handle]]
+	set has_rgb8 [hsi get_property CONFIG.HAS_RGB8 [hsi::get_cells -hier $drv_handle]]
 	if {$has_rgb8 == 1} {
 		append vid_formats " " "bgr888"
 	}
-	set has_rgba8 [get_property CONFIG.HAS_RGBA8 [hsi::get_cells -hier $drv_handle]]
+	set has_rgba8 [hsi get_property CONFIG.HAS_RGBA8 [hsi::get_cells -hier $drv_handle]]
 	if {$has_rgba8 == 1} {
 		append vid_formats " " "abgr8888"
 	}
-	set has_bgrx10 [get_property CONFIG.HAS_RGBX10 [hsi::get_cells -hier $drv_handle]]
+	set has_bgrx10 [hsi get_property CONFIG.HAS_RGBX10 [hsi::get_cells -hier $drv_handle]]
 	if {$has_bgrx10 == 1} {
 		append vid_formats " " "xbgr2101010"
 	}
-	set has_uyvy8 [get_property CONFIG.HAS_UYVY8 [hsi::get_cells -hier $drv_handle]]
+	set has_uyvy8 [hsi get_property CONFIG.HAS_UYVY8 [hsi::get_cells -hier $drv_handle]]
 	if {$has_uyvy8 == 1} {
 		append vid_formats " " "uyvy"
 	}
-	set has_y8 [get_property CONFIG.HAS_Y8 [hsi::get_cells -hier $drv_handle]]
+	set has_y8 [hsi get_property CONFIG.HAS_Y8 [hsi::get_cells -hier $drv_handle]]
 	if {$has_y8 == 1} {
 		append vid_formats " " "y8"
 	}
-	set has_y10 [get_property CONFIG.HAS_Y10 [hsi::get_cells -hier $drv_handle]]
+	set has_y10 [hsi get_property CONFIG.HAS_Y10 [hsi::get_cells -hier $drv_handle]]
 	if {$has_y10 == 1} {
 		append vid_formats " " "y10"
 	}
-	set has_yuv8 [get_property CONFIG.HAS_YUV8 [hsi::get_cells -hier $drv_handle]]
+	set has_yuv8 [hsi get_property CONFIG.HAS_YUV8 [hsi::get_cells -hier $drv_handle]]
 	if {$has_yuv8 == 1} {
 		append vid_formats " " "vuy888"
 	}
-	set has_yuvx8 [get_property CONFIG.HAS_YUVX8 [hsi::get_cells -hier $drv_handle]]
+	set has_yuvx8 [hsi get_property CONFIG.HAS_YUVX8 [hsi::get_cells -hier $drv_handle]]
 	if {$has_yuvx8 == 1} {
 		append vid_formats " " "xvuy8888"
 	}
-	set has_yuvx10 [get_property CONFIG.HAS_YUVX10 [hsi::get_cells -hier $drv_handle]]
+	set has_yuvx10 [hsi get_property CONFIG.HAS_YUVX10 [hsi::get_cells -hier $drv_handle]]
 	if {$has_yuvx10 == 1} {
 		append vid_formats " " "yuvx2101010"
 	}
-	set has_yuyv8 [get_property CONFIG.HAS_YUYV8 [hsi::get_cells -hier $drv_handle]]
+	set has_yuyv8 [hsi get_property CONFIG.HAS_YUYV8 [hsi::get_cells -hier $drv_handle]]
 	if {$has_yuyv8 == 1} {
 		append vid_formats " " "yuyv"
 	}
-	set has_y_uv8_420 [get_property CONFIG.HAS_Y_UV8_420 [hsi::get_cells -hier $drv_handle]]
+	set has_y_uv8_420 [hsi get_property CONFIG.HAS_Y_UV8_420 [hsi::get_cells -hier $drv_handle]]
 	if {$has_y_uv8_420 == 1} {
 		append vid_formats " " "nv12"
 	}
-	set has_y_uv8 [get_property CONFIG.HAS_Y_UV8 [hsi::get_cells -hier $drv_handle]]
+	set has_y_uv8 [hsi get_property CONFIG.HAS_Y_UV8 [hsi::get_cells -hier $drv_handle]]
 	if {$has_y_uv8 == 1} {
 		append vid_formats " " "nv16"
 	}
-	set has_y_uv10 [get_property CONFIG.HAS_Y_UV10 [hsi::get_cells -hier $drv_handle]]
+	set has_y_uv10 [hsi get_property CONFIG.HAS_Y_UV10 [hsi::get_cells -hier $drv_handle]]
 	if {$has_y_uv10 == 1} {
 		append vid_formats " " "xv20"
 	}
-	set has_y_uv10_420 [get_property CONFIG.HAS_Y_UV10_420 [hsi::get_cells -hier $drv_handle]]
+	set has_y_uv10_420 [hsi get_property CONFIG.HAS_Y_UV10_420 [hsi::get_cells -hier $drv_handle]]
 	if {$has_y_uv10_420 == 1} {
 		append vid_formats " " "xv15"
 	}
 	if {![string match $vid_formats ""]} {
 		add_prop "${node}" "xlnx,vid-formats" $vid_formats stringlist $dts_file
 	}
-	set samples_per_clk [get_property CONFIG.SAMPLES_PER_CLOCK [hsi::get_cells -hier $drv_handle]]
+	set samples_per_clk [hsi get_property CONFIG.SAMPLES_PER_CLOCK [hsi::get_cells -hier $drv_handle]]
 	add_prop "$node" "xlnx,pixels-per-clock" $samples_per_clk int $dts_file
 	set dma_align [expr $samples_per_clk * 8]
 	add_prop "$node" "xlnx,dma-align" $dma_align int $dts_file
-	set has_interlaced [get_property CONFIG.HAS_INTERLACED [hsi::get_cells -hier $drv_handle]]
+	set has_interlaced [hsi get_property CONFIG.HAS_INTERLACED [hsi::get_cells -hier $drv_handle]]
 	if {$has_interlaced == 1} {
 		add_prop "$node" "xlnx,fid" boolean $dts_file
 	}
-	set dma_addr_width [get_property CONFIG.AXIMM_ADDR_WIDTH [hsi::get_cells -hier $drv_handle]]
+	set dma_addr_width [hsi get_property CONFIG.AXIMM_ADDR_WIDTH [hsi::get_cells -hier $drv_handle]]
 	add_prop "$node" "xlnx,dma-addr-width" $dma_addr_width int $dts_file
 	add_prop "$node" "#dma-cells" 1 int $dts_file
-	set max_data_width [get_property CONFIG.MAX_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
+	set max_data_width [hsi get_property CONFIG.MAX_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
 	add_prop "$node" "xlnx,video-width" $max_data_width int $dts_file
-	set max_rows [get_property CONFIG.MAX_ROWS [hsi::get_cells -hier $drv_handle]]
+	set max_rows [hsi get_property CONFIG.MAX_ROWS [hsi::get_cells -hier $drv_handle]]
 	add_prop "$node" "xlnx,max-height" $max_rows int $dts_file
-	set max_cols [get_property CONFIG.MAX_COLS [hsi::get_cells -hier $drv_handle]]
+	set max_cols [hsi get_property CONFIG.MAX_COLS [hsi::get_cells -hier $drv_handle]]
 	add_prop "$node" "xlnx,max-width" $max_cols int $dts_file
 }

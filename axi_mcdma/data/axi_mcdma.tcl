@@ -32,7 +32,7 @@ proc generate {drv_handle} {
 	set axiethernetfound 0
 	set connected_ip [get_connected_stream_ip $mcdma_ip "M_AXIS_MM2S"]
 	if { [llength $connected_ip] } {
-		set connected_ip_type [get_property IP_NAME $connected_ip]
+		set connected_ip_type [hsi get_property IP_NAME $connected_ip]
 		if { [string match -nocase $connected_ip_type axi_ethernet ] || [string match -nocase $connected_ip_type axi_ethernet_buffer ] } {
 			set axiethernetfound 1
 		}
@@ -53,7 +53,7 @@ proc generate {drv_handle} {
 		set tx_chan [get_ip_param_value $mcdma_ip C_INCLUDE_MM2S]
 		if { $tx_chan == 1 } {
 			set tx_chan_node [add_dma_channel $drv_handle $node "axi-dma" $baseaddr "MM2S" $dma_count ]
-			set num_mm2s_channles [get_property CONFIG.c_num_mm2s_channels [hsi::get_cells -hier $drv_handle]]
+			set num_mm2s_channles [hsi get_property CONFIG.c_num_mm2s_channels [hsi::get_cells -hier $drv_handle]]
 			set intr_info [get_interrupt_info $drv_handle "MM2S"]
 			if { [llength $intr_info] && ![string match -nocase $intr_info "-1"] } {
 				add_prop $tx_chan_node "interrupts" $intr_info intlist "pl.dtsi"
@@ -96,7 +96,7 @@ proc generate {drv_handle} {
 	} else {
 		set ip_prop CONFIG.c_include_mm2s_dre
 		add_cross_property $drv_handle $ip_prop $drv_handle "xlnx,include-dre" boolean
-		set addr_width [get_property CONFIG.c_addr_width $mcdma_ip]
+		set addr_width [hsi get_property CONFIG.c_addr_width $mcdma_ip]
 		set inhex [format %x $addr_width]
 		append addrwidth "/bits/ 8 <0x$inhex>"
 		add_prop $node "xlnx,addrwidth" $addrwidth stringlist "pl.dtsi"
@@ -108,9 +108,9 @@ proc generate {drv_handle} {
 
 proc get_interrupt_info {drv_handle chan_name} {
 	if {[string match -nocase $chan_name "MM2S"]} {
-		set num_channles [get_property CONFIG.c_num_mm2s_channels [hsi::get_cells -hier $drv_handle]]
+		set num_channles [hsi get_property CONFIG.c_num_mm2s_channels [hsi::get_cells -hier $drv_handle]]
 	} else {
-		set num_channles [get_property CONFIG.c_num_s2mm_channels [hsi::get_cells -hier $drv_handle]]
+		set num_channles [hsi get_property CONFIG.c_num_s2mm_channels [hsi::get_cells -hier $drv_handle]]
 	}
 	set intr_info ""
 	for {set i 1} {$i <= $num_channles} {incr i} {
@@ -143,7 +143,7 @@ proc get_connected_ip {drv_handle dma_pin} {
 		dtg_warning "$drv_handle connected ip is NULL for the pin $intf"
 		return 0
 	}
-	set iptype [get_property IP_NAME [hsi::get_cells -hier $connected_ip]]
+	set iptype [hsi get_property IP_NAME [hsi::get_cells -hier $connected_ip]]
 	if {[string match -nocase $iptype "axis_data_fifo"] } {
 		# here dma connected to data fifo
 		set dma_pin "M_AXIS"
@@ -163,16 +163,16 @@ proc is_mrmac_connected {drv_handle dma_pin} {
         if {[llength $intf]} {
        		set connected_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $intf]
                	if {[llength $connected_ip]} {
-        	       if {[string match -nocase [get_property IP_NAME $connected_ip] "axis_data_fifo"]} {
+        	       if {[string match -nocase [hsi get_property IP_NAME $connected_ip] "axis_data_fifo"]} {
                 	       set mux_ip [get_connected_stream_ip [hsi::get_cells -hier $connected_ip] "M_AXIS"]
                        		if {[llength $mux_ip]} {
-                               		if {[string match -nocase [get_property IP_NAME $mux_ip] "mrmac_10g_mux"]} {
+                               		if {[string match -nocase [hsi get_property IP_NAME $mux_ip] "mrmac_10g_mux"]} {
                                        		set data_fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mux_ip] "tx_m_axis_tdata"]]
 	                                        set data_fifo_per [hsi::get_cells -of_objects $data_fifo_pin]
-        	                               	if {[string match -nocase [get_property IP_NAME $data_fifo_per] "axis_data_fifo"]} {
+        	                               	if {[string match -nocase [hsi get_property IP_NAME $data_fifo_per] "axis_data_fifo"]} {
                 	                               set fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $data_fifo_per] "m_axis_tdata"]]
                         	                       set mrmac_per [hsi::get_cells -of_objects $fifo_pin]
-                                	               if {[string match -nocase [get_property IP_NAME $mrmac_per] "mrmac"]} {
+                                	               if {[string match -nocase [hsi get_property IP_NAME $mrmac_per] "mrmac"]} {
                                         	               return 1
                                                		}
                                        		}
@@ -197,9 +197,9 @@ proc add_dma_channel {drv_handle parent_node xdma addr mode devid} {
 	set datawidth_list "[format "CONFIG.C_%s_AXIS_%s_DATA_WIDTH" $modeIndex $mode] [format "CONFIG.C_%s_AXIS_%s_TDATA_WIDTH" $modeIndex $mode]"
 	add_cross_property_to_dtnode $drv_handle $datawidth_list $dma_channel "xlnx,datawidth"
 	if {[string match -nocase $mode "MM2S"]} {
-		set num_channles [get_property CONFIG.c_num_mm2s_channels [hsi::get_cells -hier $drv_handle]]
+		set num_channles [hsi get_property CONFIG.c_num_mm2s_channels [hsi::get_cells -hier $drv_handle]]
 	} else {
-		set num_channles [get_property CONFIG.c_num_s2mm_channels [hsi::get_cells -hier $drv_handle]]
+		set num_channles [hsi get_property CONFIG.c_num_s2mm_channels [hsi::get_cells -hier $drv_handle]]
 	}
 	add_prop $dma_channel "dma-channels" $num_channles hexint "pl.dtsi"
 	return $dma_channel
@@ -212,8 +212,8 @@ proc add_dma_coherent_prop {drv_handle intf} {
 	if {[llength $connectedip] == 0} {
 		return
 	}
-	set intrconnect [get_property IP_NAME [hsi::get_cells -hier $connectedip]]
-	set num_master [get_property CONFIG.NUM_MI $connectedip]
+	set intrconnect [hsi get_property IP_NAME [hsi::get_cells -hier $connectedip]]
+	set num_master [hsi get_property CONFIG.NUM_MI $connectedip]
 	set done 0
 
 	# check whether dma connected to interconnect ip, loop until you get the

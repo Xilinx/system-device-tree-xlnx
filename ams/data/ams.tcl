@@ -26,7 +26,7 @@ proc generate {drv_handle} {
 	set mainline_ker [get_user_config $common_file --mainline_kernel]
 	if {[string match -nocase $mainline_ker "none"]} {
 	  set ams_list "ams_ps ams_pl"
-	set family [get_property FAMILY [hsi::current_hw_design]]
+	set family [hsi get_property FAMILY [hsi::current_hw_design]]
 	set dts [set_drv_def_dts $drv_handle]
 	if {[string match -nocase $family "versal"]} {
 	} elseif {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {

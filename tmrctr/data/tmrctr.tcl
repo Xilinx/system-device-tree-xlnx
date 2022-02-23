@@ -20,7 +20,7 @@ proc generate {drv_handle} {
     set ip [hsi::get_cells -hier $drv_handle]
     set clk [hsi::get_pins -of_objects $ip "S_AXI_ACLK"]
     if {[llength $clk] } {
-	set freq [get_property CLK_FREQ $clk]
+	set freq [hsi get_property CLK_FREQ $clk]
 	add_prop $node "clock-frequency" $freq hexint $dts_file
     }
     set proctype [get_hw_family]

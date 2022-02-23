@@ -22,14 +22,14 @@ proc generate_dp_param {drv_handle node} {
 	set node [get_node $drv_handle]
 	set dts_file [set_drv_def_dts $drv_handle]
 	foreach periph $periph_list {
-	set zynq_ultra_ps [get_property IP_NAME $periph]
+	set zynq_ultra_ps [hsi get_property IP_NAME $periph]
 		if {[string match -nocase $zynq_ultra_ps "zynq_ultra_ps_e"] } {
-			set dp_sel [get_property CONFIG.PSU__DP__LANE_SEL [hsi::get_cells -hier $periph]]
+			set dp_sel [hsi get_property CONFIG.PSU__DP__LANE_SEL [hsi::get_cells -hier $periph]]
 			set mode [lindex $dp_sel 0]
 			set lan_sel [lindex $dp_sel 1]
-			set dp_freq [get_property CONFIG.PSU__DP__REF_CLK_FREQ [hsi::get_cells -hier $periph]]
+			set dp_freq [hsi get_property CONFIG.PSU__DP__REF_CLK_FREQ [hsi::get_cells -hier $periph]]
 			set dp_freq "${dp_freq}000000"
-			set ref_clk_list [get_property CONFIG.PSU__DP__REF_CLK_SEL [hsi::get_cells -hier $periph]]
+			set ref_clk_list [hsi get_property CONFIG.PSU__DP__REF_CLK_SEL [hsi::get_cells -hier $periph]]
 			regsub -all {[^0-9]} [lindex $ref_clk_list 1] "" val
 			if {[string match -nocase $mode "Single"]} {
 				if {[string match -nocase $lan_sel "Lower"]} {

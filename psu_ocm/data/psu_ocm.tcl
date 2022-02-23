@@ -34,49 +34,49 @@ proc generate {drv_handle} {
 
 		set main_memory "none"
 		if {![string match -nocase $main_memory "none"]} {
-			set ocm_ip [get_property IP_NAME [hsi::get_cells -hier $main_memory]]
+			set ocm_ip [hsi get_property IP_NAME [hsi::get_cells -hier $main_memory]]
 		}
 
 		foreach bank ${ip_mem_handles} {
-			if {[string match -nocase [get_property IP_NAME $procc] "psu_cortexr5"] || [string match -nocase [get_property IP_NAME $procc] "psv_cortexr5"]} {
+			if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"]} {
 				if {$r5 == 1} {
 					 continue
 				}
 			}
-			if {[string match -nocase [get_property IP_NAME $procc] "psu_cortexr5"] || [string match -nocase [get_property IP_NAME $procc] "psv_cortexr5"]} {
+			if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"]} {
 				set r5 1
 			}
 
-			if {[string match -nocase [get_property IP_NAME $procc] "psu_cortexa53"] || [string match -nocase [get_property IP_NAME $procc] "psv_cortexa72"]} {
+			if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexa53"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexa72"]} {
 				if {$a53 == 1} {
 					continue
 				}
 			}
-			if {[string match -nocase [get_property IP_NAME $procc] "psu_cortexa53"] || [string match -nocase [get_property IP_NAME $procc] "psv_cortexa72"]} {
+			if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexa53"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexa72"]} {
 				set a53 1
 			}
-			if {$pmu == 1 && [string match -nocase [get_property IP_NAME $procc] "psu_pmu"]} {
+			if {$pmu == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psu_pmu"]} {
 				continue
 			}
-			if {[string match -nocase [get_property IP_NAME $procc] "psu_pmu"]} {
+			if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_pmu"]} {
 				set pmu 1
 			}
-			if {$pmc == 1 && [string match -nocase [get_property IP_NAME $procc] "psv_pmc"]} {
+			if {$pmc == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psv_pmc"]} {
 				continue
 			}
-			if {[string match -nocase [get_property IP_NAME $procc] "psv_pmc"]} {
+			if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_pmc"]} {
 				set pmc 1
 			}
-			if {$psm == 1 && [string match -nocase [get_property IP_NAME $procc] "psv_psm"]} {
+			if {$psm == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psv_psm"]} {
 				continue
 			}
-			if {[string match -nocase [get_property IP_NAME $procc] "psv_psm"]} {
+			if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_psm"]} {
 				set psm 1
 			}
 
 			set index [lsearch -start $index [hsi::get_mem_ranges -of_objects $procc] [hsi::get_cells -hier $bank]]
-			set base [get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
-			set high [get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
+			set base [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
+			set high [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
 
 			set dts_file "system-top.dts"
 			set proctype [get_hw_family]
@@ -110,19 +110,19 @@ proc generate {drv_handle} {
 			} else {
 				set reg "$base $size"
 			}
-			if {[string match -nocase [get_property IP_NAME $procc] "psu_cortexr5"] || [string match -nocase [get_property IP_NAME $procc] "psv_cortexr5"]} {
+			if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"]} {
 				set_memmap "${drv_handle}_memory" r5 $reg
 			}
-			if {[string match -nocase [get_property IP_NAME $procc] "psu_cortexa53"] || [string match -nocase [get_property IP_NAME $procc] "psv_cortexa72"]} {
+			if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexa53"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexa72"]} {
 				set_memmap "${drv_handle}_memory" a53 $reg
 			}
-			if {[string match -nocase [get_property IP_NAME $procc] "psu_pmu"]} {
+			if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_pmu"]} {
 				set_memmap "${drv_handle}_memory" pmu $reg
 			}
-			if {[string match -nocase [get_property IP_NAME $procc] "psv_pmc"]} {
+			if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_pmc"]} {
 				set_memmap "${drv_handle}_memory" pmc $reg
 			}
-			if {[string match -nocase [get_property IP_NAME $procc] "psv_psm"]} {
+			if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_psm"]} {
 				set_memmap "${drv_handle}_memory" psm $reg
 			}
 		}
@@ -132,7 +132,7 @@ proc generate {drv_handle} {
 		
 	}
 	set slave [hsi::get_cells -hier ${drv_handle}]
-	set vlnv [split [get_property VLNV $slave] ":"]
+	set vlnv [split [hsi get_property VLNV $slave] ":"]
 	set name [lindex $vlnv 2]
 	set ver [lindex $vlnv 3]
 	if {[string match -nocase $ver ""]} {

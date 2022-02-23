@@ -18,7 +18,7 @@ proc generate {drv_handle} {
 		return
 	}
 	set ernic_ip [hsi::get_cells -hier $drv_handle]
-	set ip_name [get_property IP_NAME $ernic_ip]
+	set ip_name [hsi get_property IP_NAME $ernic_ip]
 
 	set ethip [get_connected_ip $drv_handle "rx_pkt_hndler_s_axis"]
 	if {[llength $ethip]} {
@@ -38,7 +38,7 @@ proc get_connected_ip {drv_handle dma_pin} {
 		dtg_warning "$drv_handle connected ip is NULL for the pin $intf"
 		return 0
 	}
-	set iptype [get_property IP_NAME [hsi::get_cells -hier $connected_ip]]
+	set iptype [hsi get_property IP_NAME [hsi::get_cells -hier $connected_ip]]
 	if {[string match -nocase $iptype "axis_data_fifo"] } {
 		set dma_pin "M_AXIS"
 		get_connected_ip $connected_ip $dma_pin
