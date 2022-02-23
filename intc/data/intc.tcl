@@ -23,7 +23,7 @@ proc generate {drv_handle} {
     global env
     set path $env(REPO)
     set common_file "$path/device_tree/data/config.yaml"
-    set zocl [get_user_config $common_file --dt_zocl]
+    set zocl [get_user_config $common_file -dt_zocl]
     pldt append $node compatible "\ \, \"xlnx,xps-intc-1.00.a\""
     add_prop $node "#interrupt-cells" 2 int "pl.dtsi"
     set ip [hsi::get_cells -hier $drv_handle]

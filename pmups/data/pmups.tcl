@@ -28,7 +28,7 @@ proc generate {drv_handle} {
 	set drvname [get_drivers $drv_handle]
 
 	set common_file "$path/device_tree/data/config.yaml"
-	set mainline_ker [get_user_config $common_file --mainline_kernel]
+	set mainline_ker [get_user_config $common_file -mainline_kernel]
 	global dtsi_fname
 	set proc_type [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
 	set master_root_node [gen_root_node $drv_handle]
