@@ -7479,6 +7479,16 @@ proc update_endpoints {drv_handle} {
 		set max_data_width [hsi get_property CONFIG.MAX_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
                 add_prop "$port_node" "xlnx,video-width" $max_data_width int $dts_file
 		set demo_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video"]
+		set len [llength $demo_inip]
+		if {$len > 1} {
+			for {set i 0 } {$i < $len} {incr i} {
+                		set temp_ip [lindex $demo_inip $i]
+                		if {[regexp -nocase "ila" $temp_ip match]} {
+                        		continue
+               	 		}
+                	set demo_inip "$temp_ip"
+        		}
+		}	
 		foreach inip $demo_inip {
 			if {[llength $inip]} {
 				set ip_mem_handles [hsi::get_mem_ranges $inip]
@@ -8501,6 +8511,16 @@ proc gen_axis_switch {ip} {
 	set count 0
 	foreach intf $master_intf {
 	       set connectip [get_connected_stream_ip [hsi::get_cells -hier $ip] $intf]
+	       set len [llength $connectip]
+               if {$len > 1} {
+                       for {set i 0 } {$i < $len} {incr i} {
+                              set temp_ip [lindex $connectip $i]
+                              if {[regexp -nocase "ila" $temp_ip match]} {
+                                      continue
+                              }
+                              set connectip "$temp_ip"
+                      }
+               }
 	       puts "connectip:$connectip intf:$intf"
 	       if {[llength $connectip]} {
 		       incr count
