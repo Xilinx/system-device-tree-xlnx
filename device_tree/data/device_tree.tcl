@@ -746,6 +746,20 @@ proc gen_versal_clk {} {
 
 }
 
+proc gen_fpga_pwrdomain {} {
+       set default_dts [hsi get_property CONFIG.pcw_dts [get_os]]
+       set fpga_full   [create_node -n "&fpga_full" -d $default_dts -p root]
+       set hw_design [hsi::current_hw_design]
+       if {[llength $hw_design]} {
+               set device [hsi get_property DEVICE $hw_design]
+               if {[string match -nocase $device "xck26"]} {
+                       set power_domains "zynqmp_firmware PD_PL"
+                        add_prop "${fpga_full}" "power-domains" "$power_domains" reference $default_dts
+               }
+       }
+}
+
+
 proc gen_zynqmp_opp_freq {} {
        set default_dts "pcw.dtsi"
        set cpu_opp_table [create_node -n "&cpu_opp_table" -d $default_dts -p root]
@@ -1127,6 +1141,7 @@ Generates system device tree based on args given in:
 			gen_zynqmp_opp_freq
 			gen_zynqmp_pinctrl
 			gen_zocl_node
+			gen_fpga_pwrdomain
 		}
     	}
     	if {[string match -nocase $proctype "zynq"]} {
