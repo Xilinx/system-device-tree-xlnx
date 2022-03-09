@@ -7150,6 +7150,9 @@ proc check_ip_trustzone_state { drv_handle } {
 	proc_called_by
     set proctype [hsi get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]]
     if {[string match -nocase $proctype "psu_cortexa53"]} {
+    	if {$index == -1 } {
+		return 0
+	}
         set index [lsearch [get_mem_ranges -of_objects [hsi::get_cells -hier [get_sw_processor]]] $drv_handle]
         set avail_param [hsi list_property [lindex [get_mem_ranges -of_objects [hsi::get_cells -hier [get_sw_processor]]] $index]]
         if {[lsearch -nocase $avail_param "TRUSTZONE"] >= 0} {
