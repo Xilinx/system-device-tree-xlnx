@@ -27,10 +27,3 @@ proc generate {drv_handle} {
 	set_drv_prop $drv_handle compatible "$compatible" stringlist
 }
 
-proc get_comp_ver {drv_handle} {
-       set slave [hsi get_cells -hier ${drv_handle}]
-       set vlnv [split [hsi get_property VLNV $slave] ":"]
-       set ver [lindex $vlnv 3]
-       return $ver
-}
-
