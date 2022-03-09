@@ -20,16 +20,23 @@
 proc generate {drv_handle} {
     set node [get_node $drv_handle]
     set dts_file [set_drv_def_dts $drv_handle]
+    set proctype [hsi get_property IP_NAME [hsi get_cells -hier [hsi get_sw_processor]]]
     set ip [hsi::get_cells -hier $drv_handle]
+    set config_baud [get_property CONFIG.dt_setbaud [get_os]]
     set port_number 0
 	set avail_param [hsi list_property [hsi::get_cells -hier $drv_handle]]
 	# This check is needed because BAUDRATE parameter for psuart is available from
 	# 2017.1 onwards
-	if {[lsearch -nocase $avail_param "CONFIG.C_BAUDRATE"] >= 0} {
-	    set baud [hsi get_property CONFIG.C_BAUDRATE [hsi::get_cells -hier $drv_handle]]
+	if { !$config_baud } {
+		if {[lsearch -nocase $avail_param "CONFIG.C_BAUDRATE"] >= 0} {
+	   		 set baud [hsi get_property CONFIG.C_BAUDRATE [hsi::get_cells -hier $drv_handle]]
+		} else {
+	    		set baud "115200"
+		}
 	} else {
-	    set baud "115200"
+		set baud "$config_baud"
 	}
+		
 	set chosen_node [create_node -n "chosen" -d "system-top.dts" -p root]
 	set bootargs "earlycon"
 	set proctype [get_hw_family]
