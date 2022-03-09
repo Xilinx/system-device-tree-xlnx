@@ -67,18 +67,18 @@ proc generate {drv_handle} {
 	set ports_node [create_node -n "ports" -l mipi_csi_ports$drv_handle -p $node -d $dts_file]
 	add_prop "$ports_node" "#address-cells" 1 int $dts_file
 	add_prop "$ports_node" "#size-cells" 0 int $dts_file
-	set port_node [create_node -n "port" -l mipi_csi_port0$drv_handle -u 1 -p $ports_node -d $dts_file]
+	set port_node [create_node -n "port" -l mipi_csi_port1$drv_handle -u 1 -p $ports_node -d $dts_file]
 	add_prop "$port_node" "reg" 1 int $dts_file
 	add_prop "$port_node" "xlnx,video-format" 12 int $dts_file
 	add_prop "$port_node" "xlnx,video-width" 8 int $dts_file
 	add_prop "$port_node" "xlnx,cfa-pattern" rggb string $dts_file
 
-	set port1_node [create_node -n "port" -l mipi_csi_port1$drv_handle -u 0 -p $ports_node -d $dts_file]
-	add_prop "$port1_node" "reg" 0 int $dts_file
-add_prop "$port1_node" "xlnx,video-format" 12 int $dts_file
-add_prop "$port1_node" "xlnx,video-width" 8 int $dts_file
-add_prop "$port1_node" "xlnx,cfa-pattern" rggb string $dts_file
-set csiss_rx_node [create_node -n "endpoint" -l mipi_csi_in$drv_handle -p $port1_node -d $dts_file]
+	set port0_node [create_node -n "port" -l mipi_csi_port0$drv_handle -u 0 -p $ports_node -d $dts_file]
+	add_prop "$port0_node" "reg" 0 int $dts_file
+	add_prop "$port0_node" "xlnx,video-format" 12 int $dts_file
+	add_prop "$port0_node" "xlnx,video-width" 8 int $dts_file
+	add_prop "$port0_node" "xlnx,cfa-pattern" rggb string $dts_file
+	set csiss_rx_node [create_node -n "endpoint" -l mipi_csi_in$drv_handle -p $port0_node -d $dts_file]
 if {[llength $lanes]} {
        add_prop "${csiss_rx_node}" "data-lanes" $lanes int $dts_file
 }
