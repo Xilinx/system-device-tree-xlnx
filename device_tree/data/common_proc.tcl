@@ -4164,6 +4164,7 @@ proc gen_clk_property {drv_handle} {
 	global bus_clk_list
 	set clocknames ""
 
+	dtg_verbose "gen_clk_property:$drv_handle"
 	proc_called_by
 	set proctype [get_hw_family]
 	if {[regexp "kintex*" $proctype match]} {
@@ -4171,6 +4172,7 @@ proc gen_clk_property {drv_handle} {
 	}
 
 	set clk_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $drv_handle] -filter {TYPE==clk&&DIRECTION==I}]
+	dtg_verbose "clk_pins:$clk_pins"
 	set ip [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
 	set ignore_list "lmb_bram_if_cntlr PERIPHERAL axi_noc mrmac"
 	if {[lsearch $ignore_list $ip] >= 0 } {
@@ -4312,10 +4314,18 @@ proc gen_clk_property {drv_handle} {
 		switch $proctype {
 			"zynqmp" - \
 			"zynquplus" - \
-			"zynquplusRFSOC" - \
-			"versal" {
+			"zynquplusRFSOC" {
 				set clklist "pl_clk0 pl_clk1 pl_clk2 pl_clk3"
 			}
+			"versal" {
+				set versal_periph [get_cells -hier -filter {IP_NAME == versal_cips}]
+				set ver [get_comp_ver $versal_periph]
+				if {$ver >= 3.0} {
+                               		set clklist "pl0_ref_clk pl1_ref_clk pl2_ref_clk pl3_ref_clk"
+                       		} else {
+                               		set clklist "pl_clk0 pl_clk1 pl_clk2 pl_clk3"
+				}
+                       	}
 			"zynq" {
 				set clklist "FCLK_CLK FCLK_CLK1 FCLK_CLK2 FCLK_CLK3"
 			} default {
@@ -4328,6 +4338,35 @@ proc gen_clk_property {drv_handle} {
 			}
 		}
 		if {[string match -nocase $proctype "versal"]} {
+                       set versal_periph [get_cells -hier -filter {IP_NAME == versal_cips}]
+                       set ver [get_comp_ver $versal_periph]
+                       if {$ver >= 3.0} {
+                       switch $pl_clk {
+                               "pl0_ref_clk" {
+                                               set pl_clk0 "versal_clk 65"
+                                               set clocks [lappend clocks $pl_clk0]
+                                               set updat  [lappend updat $pl_clk0]
+                               }
+                               "pl1_ref_clk" {
+                                               set pl_clk1 "versal_clk 66"
+                                               set clocks [lappend clocks $pl_clk1]
+                                               set updat  [lappend updat $pl_clk1]
+                               }
+                               "pl2_ref_clk" {
+                                               set pl_clk2 "versal_clk 67"
+                                               set clocks [lappend clocks $pl_clk2]
+                                               set updat [lappend updat $pl_clk2]
+                               }
+                               "pl3_ref_clk" {
+                                               set pl_clk3 "versal_clk 68"
+                                               set clocks [lappend clocks $pl_clk3]
+                                               set updat [lappend updat $pl_clk3]
+                               }
+                               default {
+                                               dtg_warning  "Clock pin \"$clk\" of IP block \"$drv_handle\" is not connected to any of the pl_clk\"\n\r"
+                               }
+                       }
+                     } else {
 			switch $pl_clk {
 				"pl_clk0" {
 						set pl_clk0 "versal_clk 65"
@@ -4355,6 +4394,7 @@ proc gen_clk_property {drv_handle} {
 						dtg_warning  "Clock pin \"$clk\" of IP block \"$drv_handle\" is not connected to any of the pl_clk\"\n\r"
 				}
 			}
+		}
 		}
 		if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] || [string match -nocase $proctype "zynquplusRFSOC"]} {
 			switch $pl_clk {
@@ -4559,6 +4599,13 @@ proc gen_clk_property {drv_handle} {
 proc overwrite_clknames {clknames drv_handle} {
 	set node [get_node $drv_handle]
 	add_prop $node clock-names $clknames stringlist [set_drv_def_dts $drv_handle] 1
+}
+
+proc get_comp_ver {drv_handle} {
+       set slave [hsi::get_cells -hier ${drv_handle}]
+       set vlnv  [split [hsi::get_property VLNV $slave] ":"]
+       set ver   [lindex $vlnv 3]
+       return $ver
 }
 
 proc get_comp_str {drv_handle} {
