@@ -726,6 +726,26 @@ proc gen_versal_clk {} {
        foreach periph $periph_list {
                set versal_ps [hsi get_property IP_NAME $periph]
                if {[string match -nocase $versal_ps "versal_cips"] } {
+                       set ver [get_comp_ver $periph]
+                       if {$ver < 3.0} {
+                               set avail_param [hsi list_property [hsi get_cells -hier $periph]]
+                               if {[lsearch -nocase $avail_param "CONFIG.PMC_REF_CLK_FREQMHZ"] >= 0} {
+                                       set freq [hsi get_property CONFIG.PMC_REF_CLK_FREQMHZ [hsi get_cells -hier $periph]]
+                                       if {![string match -nocase $freq "33.333"]} {
+                                               dtg_warning "Frequency $freq used instead of 33.333"
+                                               add_prop "${ref_node}" "clock-frequency" [scan [expr $freq * 1000000] "%d"] int $default_dts
+                                       }
+                               }
+                               if {[lsearch -nocase $avail_param "CONFIG.PMC_PL_ALT_REF_CLK_FREQMHZ"] >= 0} {
+                                       set freq [hsi get_property CONFIG.PMC_PL_ALT_REF_CLK_FREQMHZ [hsi get_cells -hier $periph]]
+                                       if {![string match -nocase $freq "33.333"]} {
+                                               dtg_warning "Frequency $freq used instead of 33.333"
+                                               add_prop "${pl_alt_ref_node}" "clock-frequency" [scan [expr $freq * 1000000] "%d"] int $default_dts
+                                       }
+                               }
+                       }
+               }
+               if {[string match -nocase $versal_ps "pspmc"] } {
                        set avail_param [hsi list_property [hsi::get_cells -hier $periph]]
                        if {[lsearch -nocase $avail_param "CONFIG.PMC_REF_CLK_FREQMHZ"] >= 0} {
                                set freq [hsi get_property CONFIG.PMC_REF_CLK_FREQMHZ [hsi::get_cells -hier $periph]]
