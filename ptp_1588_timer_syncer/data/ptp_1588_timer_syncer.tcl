@@ -18,6 +18,6 @@ proc generate {drv_handle} {
 		return
 	}
 	set dts_file [set_drv_def_dts $drv_handle]
-	set keyval [pldt append $node compatible "\ \, \"xlnx,timer-syncer-1588-1.0\""]
+	set keyval [pldt append $node compatible "\ \, \"xlnx,timer-syncer-1588-2.0\""]
 	set_drv_prop $drv_handle compatible "$compatible" stringlist
 }
