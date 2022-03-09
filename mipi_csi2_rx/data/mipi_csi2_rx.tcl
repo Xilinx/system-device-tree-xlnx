@@ -90,6 +90,16 @@ if {[llength $outip]} {
                 add_prop "$mipi_node" "remote-endpoint" $outip$drv_handle reference $dts_file
                 gen_remoteendpoint $drv_handle "$outip$drv_handle"
         }
+               if {[string match -nocase [hsi get_property IP_NAME $outip] "axis_switch"]} {
+                       set ip_mem_handles [get_ip_mem_ranges $ip]
+                       if {[llength $ip_mem_handles]} {
+                               set mipi_node [create_node -n "endpoint" -l mipi_csirx_out$drv_handle -p $port_node -d $dts_file]
+                               gen_axis_switch_in_endpoint $drv_handle "mipi_csirx_out$drv_handle"
+                               add_prop "$mipi_node" "remote-endpoint" $outip$drv_handle reference $dts_file
+                               gen_axis_switch_in_remo_endpoint $drv_handle "$outip$drv_handle"
+                       }
+               }
+
 }
 foreach ip $outip {
 	if {[llength $ip]} {
@@ -107,6 +117,16 @@ foreach ip $outip {
                 } else {
                         set connectip [get_connect_ip $ip $intfpins $dts_file]
                         if {[llength $connectip]} {
+                                if {[string match -nocase [hsi get_property IP_NAME $connectip] "axis_switch"]} {
+                                        set ip_mem_handles [get_ip_mem_ranges $connectip]
+                                        if {[llength $ip_mem_handles]} {
+                                                set mipi_node [create_node -n "endpoint" -l mipi_csirx_out$drv_handle -p $port_node -d $dts_file]
+                                                gen_axis_switch_in_endpoint $drv_handle "mipi_csirx_out$drv_handle"
+                                                add_prop "$mipi_node" "remote-endpoint" $connectip$drv_handle reference $dts_file
+                                                gen_axis_switch_in_remo_endpoint $drv_handle "$connectip$drv_handle"
+                                        }
+                                } else {
+
                                 set csi_rx_node [create_node -n "endpoint" -l mipi_csirx_out$drv_handle -p $port_node -d $dts_file]
                                 gen_endpoint $drv_handle "mipi_csirx_out$drv_handle"
                                 add_prop "$csi_rx_node" "remote-endpoint" $connectip$drv_handle reference $dts_file
@@ -114,6 +134,7 @@ foreach ip $outip {
                                 if {[string match -nocase [hsi get_property IP_NAME $connectip] "v_frmbuf_wr"]} {
                                         gen_frmbuf_node $connectip $drv_handle $dts_file
                                 }
+				}
                         }
                 }
         }
