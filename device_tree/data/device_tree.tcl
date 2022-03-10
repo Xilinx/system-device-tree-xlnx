@@ -1059,6 +1059,7 @@ Generates system device tree based on args given in:
 	       			gen_clk_property $drv_handle
 				set driver_name [get_drivers $drv_handle]
 				gen_xppu $drv_handle
+				gen_power_domains $drv_handle
     			}
 			set non_val_list "psv_cortexa72 psu_cortexa53 ps7_cortexa9 versal_cips noc_nmu noc_nsu ila psu_iou_s noc_nsw pspmc"
 			set non_val_ip_types "MONITOR BUS"
@@ -4071,3 +4072,68 @@ proc gen_xppu {drv_handle} {
 	}
 }
 
+proc gen_power_domains {drv_handle} {
+        global env
+        set path $env(REPO)
+        set common_file "$path/device_tree/data/config.yaml"
+        set dt_overlay [get_user_config $common_file --dt_overlay]
+        set ip [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+        if {[string match -nocase $ip "axi_noc"] && $dt_overlay} {
+                return
+        }
+        set node [get_node $drv_handle]
+        set baseaddr [get_baseaddr $drv_handle noprefix]
+        set node_id [dict create]
+        set family [get_hw_family]
+
+        if {[string match -nocase $family "versal"] && [is_ps_ip $drv_handle]} {
+               dict set node_id FFE00000 id 0x1831800b
+               dict set node_id FFE20000 id 0x1831800c
+               dict set node_id FFE90000 id 0x1831800d
+               dict set node_id FFEB0000 id 0x1831800e
+               dict set node_id psv_tcm_global id 0x1831800b
+               dict set node_id psv_r5_0_atcm_lockstep id 0x1831800b
+               dict set node_id psv_r5_0_btcm_lockstep id 0x1831800c
+               dict set node_id psv_r5_1_atcm_lockstep id 0x1831800d
+               dict set node_id psv_r5_1_btcm_lockstep id 0x1831800e
+               dict set node_id psv_ocm id 0x18314007
+               set baseaddr [string toupper $baseaddr]
+               set tmp ""
+               if {[catch {set tmp [dict get $node_id $ip id]} msg]} {
+               }
+               if {[catch {set tmp [dict get $node_id $baseaddr id]} msg]} {
+               }
+               set prop "versal_firmware $tmp"
+
+               if {![string match -nocase $tmp ""]} {
+                       add_prop $node "power-domains" $prop reference "pcw.dtsi"
+               }
+       } elseif {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
+               dict set node_id psu_r5_0_atcm_global id 15
+               dict set node_id psu_r5_0_btcm_global id 16
+               dict set node_id psu_r5_1_atcm_global id 17
+               dict set node_id psu_r5_1_btcm_global id 18
+               dict set node_id psu_r5_0_atcm id 15
+               dict set node_id psu_r5_0_btcm id 16
+               dict set node_id psu_r5_1_atcm id 17
+               dict set node_id psu_r5_1_btcm id 18
+               dict set node_id psu_r5_tcm_ram_0 15
+               dict set node_id psu_r5_0_atcm_lockstep id 15
+               dict set node_id psu_r5_0_btcm_lockstep id 16
+               dict set node_id psu_r5_tcm_ram_global id 15
+               dict set node_id psu_r5_0_atcm id 15
+               dict set node_id psu_r5_0_btcm id 16
+               dict set node_id psu_r5_1_atcm id 17
+               dict set node_id psu_r5_1_btcm id 18
+               dict set node_id psu_r5_tcm_ram id 15
+               dict set node_id psu_ocm_ram_0 id 11
+               set tmp ""
+               if {[catch {set tmp [dict get $node_id $ip id]} msg]} {
+               }
+               set prop "zynqmp_firmware $tmp"
+
+               if {![string match -nocase $tmp ""]} {
+                       add_prop $node "power-domains" $prop reference "pcw.dtsi"
+               }
+       }
+}
