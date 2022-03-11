@@ -17,9 +17,12 @@ proc generate {drv_handle} {
 	set dts_file [set_drv_def_dts $drv_handle]
 	set slave [hsi::get_cells -hier $drv_handle]
 	set qspi_mode [get_ip_param_value $slave "C_QSPI_MODE"]
-	set fbclk [hsi get_property CONFIG.PMC_QSPI_FBCLK [hsi get_cells -hier -filter {IP_NAME =~ "*pspmc*"}]]
-	if {[regexp "ENABLE 1" $fbclk matched]} {
-        	add_new_property $drv_handle fbclk int 1
+	set pspmc [hsi get_cells -hier -filter {IP_NAME =~ "*pspmc*"}]
+	if {[string compare -nocase $pspmc ""] != 0} {
+		set fbclk [hsi get_property CONFIG.PMC_QSPI_FBCLK [hsi get_cells -hier -filter {IP_NAME =~ "*pspmc*"}]]
+		if {[regexp "ENABLE 1" $fbclk matched]} {
+			add_new_property $drv_handle fbclk int 1
+		}
 	}
 	set is_stacked 0
 	if { $qspi_mode == 2} {
