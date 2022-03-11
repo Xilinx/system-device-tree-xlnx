@@ -42,7 +42,8 @@ proc generate {drv_handle} {
 
 	set is_xxv [get_connected_ip $drv_handle "M_AXIS_MM2S"]
         set is_mrmac [is_mrmac_connected $drv_handle "M_AXIS_MM2S"]
-        if { $axiethernetfound || $is_xxv == 1 || $is_mrmac == 1} {
+	set tsn_inst_name [hsi get_cells -filter {IP_NAME =~ "*tsn*"}]
+	if { $axiethernetfound || $is_xxv == 1 || $is_mrmac == 1 || [llength $tsn_inst_name] } {
 		pldt append $node compatible "\ \, \"xlnx,eth-dma\""	
 	}
         if { $axiethernetfound != 1 && $is_xxv != 1 && $is_mrmac != 1} {
