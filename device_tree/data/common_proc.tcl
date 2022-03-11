@@ -6407,6 +6407,10 @@ proc gen_cpu_nodes {drv_handle} {
 			set proctype [get_hw_family]
 			set bus_name [detect_bus_name $drv_handle]
 			set count [get_microblaze_nr $drv_handle]
+			# Generate the node only for the single core
+			if {$cpu_no >= 1} {
+				break
+			}
 			if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
 				set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d ${default_dts} -p $bus_name]
 			} elseif {[string match -nocase $proctype "versal"]} {
