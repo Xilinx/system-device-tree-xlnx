@@ -62,7 +62,8 @@ proc generate {drv_handle} {
                        generate_reg_property $ptp_3_node $base_addr $high_addr
                }
 	       if {[string match -nocase $slave_intf "s_axi"]} {
-                       generate_reg_property $node $base_addr $high_addr
+			set mrmac0_highaddr_hex [format 0x%x [expr $base_addr + 0xFFF]]
+			generate_reg_property $node $base_addr $mrmac0_highaddr_hex
                }
         }
         set connected_ip [get_connected_stream_ip $mrmac_ip "tx_axis_tdata0"]
