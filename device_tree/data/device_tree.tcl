@@ -581,6 +581,27 @@ proc gen_afi_node {} {
 	
 }
 
+proc gen_include_dtfile {args} {
+	set kernel_dtsi [lindex $args 0]
+	set fp [open $kernel_dtsi r]
+	set file_data [read $fp]
+	set data [split $file_data "\n"]
+	set include_regexp {^#include \".*\.dts.*\"$}
+	foreach line $data {
+		if {[regexp $include_regexp $line matched]} {
+			set include_dt [lindex [split $line " "] 1]
+			regsub -all " |\t|;|\"" $include_dt {} include_dt
+			foreach file [glob [file normalize [file dirname ${kernel_dtsi}]/*]] {
+				# NOTE: ./ works only if we did not change our directory
+				if {[regexp $include_dt $file match]} {
+					file copy -force $file ./
+					break
+				}
+			}
+		}
+	}
+}
+
 proc gen_board_info {} {
 	global env
 	set path $env(REPO)
@@ -674,6 +695,8 @@ proc gen_board_info {} {
 					file copy -force $file $dir_path
 					update_system_dts_include [file tail $file]
 					set valid_board_file 1
+					gen_include_dtfile "${file}"
+					break
 				}
 			}
 			if {$valid_board_file == 0} {
