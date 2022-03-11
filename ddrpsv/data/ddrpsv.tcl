@@ -18,23 +18,13 @@ proc generate {drv_handle} {
 	set psm 0
 	set pmc 0
 	set slave [hsi::get_cells -hier ${drv_handle}]
-	set addr [hsi get_property CONFIG.C_BASEADDR [hsi::get_cells -hier $drv_handle]]
-	if {[string match -nocase $addr ""]} {
-		return
-	}
 	set dts_file "system-top.dts"
-	regsub -all {^0x} $addr {} addr
-	set memory_node [create_node -n memory -l "${drv_handle}_memory" -u $addr -p root -d "system-top.dts"]
-		set dev_type memory
-	if {[string_is_empty $dev_type]} {set dev_type memory}
-	add_prop "${memory_node}" "device_type" $dev_type string $dts_file
 	set slave [hsi::get_cells -hier ${drv_handle}]
 	set vlnv [split [hsi get_property VLNV $slave] ":"]
 	set name [lindex $vlnv 2]
 	set ver [lindex $vlnv 3]
 	set comp_prop "xlnx,${name}-${ver}"
 	regsub -all {_} $comp_prop {-} comp_prop
-	add_prop "${memory_node}" "compatible" $comp_prop string $dts_file
 	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
         foreach procc $proclist {
 		set is_ddr_low_0 0
@@ -183,46 +173,56 @@ proc generate {drv_handle} {
 		switch $len {
 			"1" {
 				set reg_val [lindex $updat 0]
-				add_prop "${memory_node}" "reg" $reg_val hexlist $dts_file 1
 				update_mc_ranges $drv_handle $reg_val
 			}
 			"2" {
 				set reg_val [lindex $updat 0]
 				append reg_val ">, <[lindex $updat 1]"
-				add_prop "${memory_node}" "reg" $reg_val hexlist $dts_file 1
 				update_mc_ranges $drv_handle $reg_val
 			}
 			"3" {
 				set reg_val [lindex $updat 0]
 				append reg_val ">, <[lindex $updat 1]>, <[lindex $updat 2]"
-				add_prop "${memory_node}" "reg" $reg_val hexlist $dts_file 1
 				update_mc_ranges $drv_handle $reg_val
 			}
 			"4" {
 				set reg_val [lindex $updat 0]
 				append reg_val ">, <[lindex $updat 1]>, <[lindex $updat 2]>, <[lindex $updat 3]"
-				add_prop "${memory_node}" "reg" $reg_val hexlist $dts_file 1
 				update_mc_ranges $drv_handle $reg_val
 			}
 			"5" {
 				set reg_val [lindex $updat 0]
 				append reg_val ">, <[lindex $updat 1]>, <[lindex $updat 2]>, <[lindex $updat 3]>, <[lindex $updat 4]"
-				add_prop "${memory_node}" "reg" $reg_val hexlist $dts_file 1
 				update_mc_ranges $drv_handle $reg_val
 			}
 			"6" {
 				set reg_val [lindex $updat 0]
 				append reg_val ">, <[lindex $updat 1]>, <[lindex $updat 2]>, <[lindex $updat 3]>, <[lindex $updat 4]>, <[lindex $updat 5]"
-				add_prop "${memory_node}" "reg" $reg_val hexlist $dts_file 1
 				update_mc_ranges $drv_handle $reg_val
 			}
 			"7" {
 				set reg_val [lindex $updat 0]
 				append reg_val ">, <[lindex $updat 1]>, <[lindex $updat 2]>, <[lindex $updat 3]>, <[lindex $updat 4]>, <[lindex $updat 5]>, <[lindex $updat 6]"
-				add_prop "${memory_node}" "reg" $reg_val hexlist $dts_file 1
 				update_mc_ranges $drv_handle $reg_val
 			}
 			}
+
+		if {[llength $reg_val]} {
+			set higheraddr [expr [lindex $reg_val 0] << 32]
+			set loweraddr [lindex $reg_val 1]
+			set baseaddr [format 0x%x [expr {${higheraddr} + ${loweraddr}}]]
+			regsub -all {^0x} $baseaddr {} baseaddr
+			set memory_node [create_node -n memory -l "${drv_handle}_memory" -u $baseaddr -p root -d "system-top.dts"]
+			if {[catch {set dev_type [hsi get_property CONFIG.device_type $drv_handle]} msg]} {
+				set dev_type memory
+			}
+			if {[string_is_empty $dev_type]} {set dev_type memory}
+			add_prop "${memory_node}" "compatible" $comp_prop string $dts_file
+			add_prop "${memory_node}" "device_type" $dev_type string $dts_file
+			add_prop "${memory_node}" "reg" $reg_val inthexlist $dts_file
+		}
+
+
 			if {$len} {
 				if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"]} {
 					set val [get_count "psv_cortexr5"]
