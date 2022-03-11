@@ -1868,9 +1868,11 @@ proc gen_mrmac_clk_property {drv_handle} {
 			for {set i 0} { $i < $port_width} {incr i} {
 				set peri [hsi::get_cells -of_objects $pins]
 				set mrclk "$clk$i"
-				if {[string match -nocase [hsi get_property IP_NAME $peri] "xlconcat"]} {
-					set pins [hsi::get_pins -of_objects [hsi::get_nets -of_objects [hsi::get_pins -of_objects [hsi::get_cells -hier $peri] In$i]] -filter "DIRECTION==O"]
-					set clk_peri [hsi::get_cells -of_objects $pins]
+				if {[llength $peri]} {
+                                       if {[string match -nocase [hsi get_property IP_NAME $peri] "xlconcat"]} {
+                                               set pins [hsi::get_pins -of_objects [hsi::get_nets -of_objects [hsi::get_pins -of_objects [hsi::get_cells $peri] In$i]] -filter "DIRECTION==O"]
+                                               set clk_peri [hsi::get_cells -of_objects $pins]
+                                       }
 				}
 				set valid_clk_list "clk_out0 clk_out1 clk_out2 clk_out3 clk_out4 clk_out5 clk_out6 clk_out7 clk_out8 clk_out9"
 				set pl_clk ""
