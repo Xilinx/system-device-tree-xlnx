@@ -20,6 +20,20 @@ proc generate {drv_handle} {
 	if {$node == 0} {
 		return
 	}
+	set dt_overlay [hsi get_property CONFIG.dt_overlay [get_os]]
+	if {$dt_overlay} {
+		set RpRm [get_rp_rm_for_drv $drv_handle]
+		regsub -all { } $RpRm "" RpRm
+		if {[llength $RpRm]} {
+			set bus_node "overlay2_$RpRm"
+		} else  {
+			set bus_node "overlay2"
+		}
+	} else {
+		set bus_node "amba_pl"
+	}
+	set clocks "aie_core_ref_clk_0"
+	set_drv_prop $drv_handle clocks "$clocks" reference
 	set keyval [pldt append $node compatible "\ \, \"xlnx,ai_engine-v1.0\""]	
 	set intr_names "interrupt1"
 	set intr_num "<0x0 0x94 0x1>, <0x0 0x95 0x1>, <0x0 0x96 0x1>"
@@ -37,16 +51,9 @@ proc generate {drv_handle} {
 	set ai_part_node [create_node -n "aie_partition" -u "${ai_part_id}" -l "aie_partition${ai_part_id}" -p ${node} -d "pl.dtsi"]
 	add_prop "${ai_part_node}" "reg" "0 0 50 9" intlist "pl.dtsi"
 	add_prop "${ai_part_node}" "xlnx,partition-id" "${ai_part_nid}" intlist "pl.dtsi"
-	set dt_overlay 0
-       	if {$dt_overlay} {
-		set RpRm [get_rp_rm_for_drv $drv_handle]
-               regsub -all { } $RpRm "" RpRm
-       	        if {[llength $RpRm]} {
-       	                set bus_node "overlay2_$RpRm"
-       	        } else  {
-       	                set bus_node "overlay2"
-       	        }
-	} else {
-	       	       set bus_node "amba_pl"
-	}
+	set ai_clk_node [add_or_get_dt_node -n "aie_core_ref_clk_0" -l "aie_core_ref_clk_0" -p ${bus_node}]
+	set clk_freq [hsi get_property CONFIG.AIE_CORE_REF_CTRL_FREQMHZ [hsi get_cells -hier $drv_handle]]
+	add_prop "${ai_clk_node}" "compatible" "fixed-clock" stringlist "pl.dtsi"
+	add_prop "${ai_clk_node}" "#clock-cells" 0 int "pl.dtsi"
+	add_prop "${ai_clk_node}" "clock-frequency" $clk_freq int "pl.dtsi"
 }
