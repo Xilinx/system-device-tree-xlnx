@@ -5017,7 +5017,10 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 			set intc $handle_value
 		}
 	}
-	set_drv_prop $drv_handle interrupt-parent $intc reference
+	set index [lsearch [hsi::get_mem_ranges -of_objects [hsi get_cells -hier [get_sw_processor]]] $intc]
+	if {$index != -1 } {
+		set_drv_prop $drv_handle interrupt-parent $intc reference
+	}
 	if {[string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "xdma"]} {
 		set msi_rx_pin_en [hsi get_property CONFIG.msi_rx_pin_en [hsi::get_cells -hier $drv_handle]]
 		if {[string match -nocase $msi_rx_pin_en "true"]} {
