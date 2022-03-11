@@ -145,10 +145,10 @@ gen_gpio_reset $drv_handle $node
 proc gen_pixel_format {node pxl_format dts_file} {
 set pixel_format ""
 switch $pxl_format {
-       "YUV4228B" {
-               set pixel_format 0x1e
+       "YUV422_8bit" {
+               set pixel_format 0x18
        }
-       "YUV42210B" {
+       "YUV422_10bit" {
                set pixel_format 0x1f
        }
        "RGB444" {
