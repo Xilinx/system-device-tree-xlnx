@@ -16,11 +16,15 @@ proc generate_aie_array_device_info {node drv_handle bus_node} {
 	set aie_array_id 0
 	set compatible [get_comp_str $drv_handle]
 	set keyval [pldt append $node compatible "\ \, \"xlnx,ai_engine-v2.0\""]
-	
+
+	append aiegen "/bits/ 8 <0x1>"
+	add_prop "${node}" "xlnx,aie-gen" $aiegen noformating "pl.dtsi"
 	append shimrows "/bits/ 8 <0 1>"
 	add_prop "${node}" "xlnx,shim-rows" $shimrows noformating "pl.dtsi"
 	append corerows "/bits/ 8 <1 8>"
 	add_prop "${node}" "xlnx,core-rows" $corerows noformating "pl.dtsi"
+	append memrows "/bits/ 8 <0 0>"
+	add_prp "${node}" "xlnx,mem-rows" $memrows noformating "pl.dtsi"
 	set power_domain "&versal_firmware 0x18224072"
 	add_prop "${node}" "power-domains" $power_domain intlist "pl.dtsi"
 	add_prop "${node}" "#address-cells" "2" intlist "pl.dtsi"
