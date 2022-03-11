@@ -165,7 +165,8 @@ proc generate {drv_handle} {
      			} else {
        				 set port_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $eth_ip] "tx_ptp_tag_field_in_0"]]
        				if {[llength $port_pins]} {
-                			set periph [::hsi::get_cells -of_objects $port_pins]
+					set periph [::hsi::get_cells -of_objects $port_pins]
+					if {[llength $periph]} {
                 			if {[string match -nocase [hsi get_property IP_NAME $periph] "xlslice"]} {
                      				set intf "Din"
                      				set in1_pin [::hsi::get_pins -of_objects $periph -filter "NAME==$intf"]
@@ -182,10 +183,12 @@ proc generate {drv_handle} {
                      				}
               				}
         			}
+				}
     			}
     			set rxfifo_port_pins [get_sink_pins [hsi get_pins -of_objects [hsi get_cells -hier $eth_ip] "rx_ptp_tstamp_out_0"]]
     			if {[llength $rxfifo_port_pins]} {
         			set periph [::hsi::get_cells -of_objects $rxfifo_port_pins]
+				if {[llength $periph]} {
         			if {[string match -nocase [hsi get_property IP_NAME $periph] "xlconcat"]} {
             				set intf "dout"
             				set in1_pin [::hsi::get_pins -of_objects $periph -filter "NAME==$intf"]
@@ -204,7 +207,8 @@ proc generate {drv_handle} {
                      					}
                  				}
             				}
-         			}				
+				}
+				}
 			}
 			if {![string_is_empty $connected_ip]} {
 				add_prop $node axistream-connected "$connected_ip" reference $dts_file 1
