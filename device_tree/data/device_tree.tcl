@@ -4076,8 +4076,8 @@ proc gen_power_domains {drv_handle} {
         global env
         set path $env(REPO)
         set common_file "$path/device_tree/data/config.yaml"
-        set dt_overlay [get_user_config $common_file --dt_overlay]
-        set ip [get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+        set dt_overlay [get_user_config $common_file -dt_overlay]
+        set ip [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
         if {[string match -nocase $ip "axi_noc"] && $dt_overlay} {
                 return
         }
