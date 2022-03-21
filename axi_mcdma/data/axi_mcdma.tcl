@@ -230,8 +230,7 @@ proc add_dma_coherent_prop {drv_handle intf} {
 			set intrconnect [get_connected_stream_ip $connectedip $interface]
 			if {![string_is_empty $intf_port] && [string match -nocase $intf_port "S_AXI_ACP"]} {
 				set node [get_node $drv_handle]
-				add_prop $node "dma-coherent" boolean "pl.dtsi"
-				add_new_property $drv_handle "dma-coherent" boolean ""
+				add_prop $node "dma-coherent" "" boolean "pl.dtsi"
 				# here dma connected to ACP port
 				set done 1
 				break;

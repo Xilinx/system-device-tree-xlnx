@@ -20,9 +20,8 @@
 proc generate {drv_handle} {
     set node [get_node $drv_handle]
     set dts_file [set_drv_def_dts $drv_handle]
-    set proctype [hsi get_property IP_NAME [hsi get_cells -hier [hsi get_sw_processor]]]
     set ip [hsi::get_cells -hier $drv_handle]
-    set config_baud [get_property CONFIG.dt_setbaud [get_os]]
+    set config_baud 0
     set port_number 0
 	set avail_param [hsi list_property [hsi::get_cells -hier $drv_handle]]
 	# This check is needed because BAUDRATE parameter for psuart is available from

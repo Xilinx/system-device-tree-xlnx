@@ -21,7 +21,7 @@ proc generate {drv_handle} {
 	if {[string compare -nocase $pspmc ""] != 0} {
 		set fbclk [hsi get_property CONFIG.PMC_QSPI_FBCLK [hsi get_cells -hier -filter {IP_NAME =~ "*pspmc*"}]]
 		if {[regexp "ENABLE 1" $fbclk matched]} {
-			add_new_property $drv_handle fbclk int 1
+			add_prop $node fbclk 1 int $dts_file
 		}
 	}
 	set is_stacked 0

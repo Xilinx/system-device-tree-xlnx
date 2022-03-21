@@ -2164,8 +2164,9 @@ proc dtg_debug msg {
 }
 
 proc dtg_verbose msg {
-       set verbose [get_property CONFIG.dt_verbose [get_os]]
-       if {$verbose} {
+       global env
+       set verbose $env(verbose)
+       if {[string match -nocase $verbose "enable"]} {
                puts "VERBOSE: $msg"
        }
 }
@@ -3558,7 +3559,7 @@ proc zynq_gen_pl_clk_binding {drv_handle} {
 	}
 }
 
-	proc gen_dfx_reg_property {drv_handle dfx_node} {
+proc gen_dfx_reg_property {drv_handle dfx_node} {
        set ip_name  [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
        set reg ""
        set slave [hsi::get_cells -hier ${drv_handle}]
@@ -4328,7 +4329,7 @@ proc gen_clk_property {drv_handle} {
 				set clklist "pl_clk0 pl_clk1 pl_clk2 pl_clk3"
 			}
 			"versal" {
-				set versal_periph [get_cells -hier -filter {IP_NAME == versal_cips}]
+				set versal_periph [hsi::get_cells -hier -filter {IP_NAME == versal_cips}]
 				set ver [get_comp_ver $versal_periph]
 				if {$ver >= 3.0} {
                                		set clklist "pl0_ref_clk pl1_ref_clk pl2_ref_clk pl3_ref_clk"
@@ -4348,7 +4349,7 @@ proc gen_clk_property {drv_handle} {
 			}
 		}
 		if {[string match -nocase $proctype "versal"]} {
-                       set versal_periph [get_cells -hier -filter {IP_NAME == versal_cips}]
+                       set versal_periph [hsi::get_cells -hier -filter {IP_NAME == versal_cips}]
                        set ver [get_comp_ver $versal_periph]
                        if {$ver >= 3.0} {
                        switch $pl_clk {
@@ -5017,14 +5018,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 			set intc $handle_value
 		}
 	}
-	if {$intc == "gic"} {
-		set_drv_prop $drv_handle interrupt-parent $intc reference
-	} else {
-	set index [lsearch [hsi::get_mem_ranges -of_objects [hsi get_cells -hier [get_sw_processor]]] $intc]
-		if {$index != -1 } {
-			set_drv_prop $drv_handle interrupt-parent $intc reference
-		}
-	}
+	set_drv_prop $drv_handle interrupt-parent $intc reference
 	if {[string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "xdma"]} {
 		set msi_rx_pin_en [hsi get_property CONFIG.msi_rx_pin_en [hsi::get_cells -hier $drv_handle]]
 		if {[string match -nocase $msi_rx_pin_en "true"]} {
@@ -7216,8 +7210,8 @@ proc get_psu_interrupt_id { ip_name port_name } {
 
 proc check_ip_trustzone_state { drv_handle } {
 	proc_called_by
-    set proctype [hsi get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]]
-    if {[string match -nocase $proctype "psu_cortexa53"]} {
+    	set proctype [hsi get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]]
+   	if {[string match -nocase $proctype "psu_cortexa53"]} {
     	if {$index == -1 } {
 		return 0
 	}

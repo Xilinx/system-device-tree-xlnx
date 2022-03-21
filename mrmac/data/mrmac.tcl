@@ -437,7 +437,7 @@ proc generate {drv_handle} {
                                                        set num_queues [hsi get_property CONFIG.c_num_mm2s_channels $fiforx_connect_ip]
                                                        set inhex [format %x $num_queues]
                                                        append numqueues "/bits/ 16 <0x$inhex>"
-                                                       add_prop $node "xlnx,num-queues" $numqueues noformating $dts_file
+                                                       add_prop $node "xlnx,num-queues" $numqueues stringlist $dts_file
                                                        set id 1
                                                        for {set i 2} {$i <= $num_queues} {incr i} {
                                                                set i [format "%" $i]
@@ -445,7 +445,7 @@ proc generate {drv_handle} {
                                                                append id ",\"" $i
                                                                set i [expr 0x$i]
                                                        }
-                                                       add_prop $node "xlnx,num-queues" $numqueues noformating $dts_file
+                                                       add_prop $node "xlnx,num-queues" $numqueues stringlist $dts_file
                                                        add_prop $node "xlnx,channel-ids" $id stringlist $dts_file
                                                        generate_intr_info $drv_handle $node $fiforx_connect_ip
                                                }
@@ -671,7 +671,7 @@ proc generate {drv_handle} {
                                                        set num_queues [hsi get_property CONFIG.c_num_mm2s_channels $fiforx_connect_ip1]
                                                        set inhex [format %x $num_queues]
                                                        append numqueues1 "/bits/ 16 <0x$inhex>"
-                                                       add_prop $mrmac1_node "xlnx,num-queues" $numqueues1 noformating $dts_file
+                                                       add_prop $mrmac1_node "xlnx,num-queues" $numqueues1 stringlist $dts_file
                                                        set id 1
                                                        for {set i 2} {$i <= $num_queues} {incr i} {
                                                                set i [format "%" $i]
@@ -679,7 +679,7 @@ proc generate {drv_handle} {
                                                                append id ",\"" $i
                                                                set i [expr 0x$i]
                                                        }
-                                                       add_prop $mrmac1_node "xlnx,num-queues" $numqueues1 noformating $dts_file
+                                                       add_prop $mrmac1_node "xlnx,num-queues" $numqueues1 stringlist $dts_file
                                                        add_prop $mrmac1_node "xlnx,channel-ids" $id stringlist $dts_file
                                                        generate_intr_info $drv_handle $mrmac1_node $fiforx_connect_ip1
                                                }
@@ -1069,7 +1069,7 @@ proc generate {drv_handle} {
                                                        set num_queues [hsi get_property CONFIG.c_num_mm2s_channels $fiforx_connect_ip2]
                                                        set inhex [format %x $num_queues]
                                                        append numqueues2 "/bits/ 16 <0x$inhex>"
-                                                       add_prop $mrmac2_node "xlnx,num-queues" $numqueues2 noformating
+                                                       add_prop $mrmac2_node "xlnx,num-queues" $numqueues2 stringlist $dts_file
                                                        set id 1
                                                        for {set i 2} {$i <= $num_queues} {incr i} {
                                                                set i [format "%" $i]
@@ -1077,7 +1077,7 @@ proc generate {drv_handle} {
                                                                append id ",\"" $i
                                                                set i [expr 0x$i]
                                                        }
-                                                       add_prop $mrmac2_node "xlnx,num-queues" $numqueues2 noformating $dts_file
+                                                       add_prop $mrmac2_node "xlnx,num-queues" $numqueues2 stringlist $dts_file
                                                        add_prop $mrmac2_node "xlnx,channel-ids" $id stringlist $dts_file
                                                        generate_intr_info $drv_handle $mrmac2_node $fiforx_connect_ip2
                                                }
@@ -1435,7 +1435,7 @@ proc generate {drv_handle} {
                                                        set num_queues [hsi get_property CONFIG.c_num_mm2s_channels $fiforx_connect_ip3]
                                                        set inhex [format %x $num_queues]
                                                        append numqueues3 "/bits/ 16 <0x$inhex>"
-                                                       add_prop $mrmac3_node "xlnx,num-queues" $numqueues3 noformating
+                                                       add_prop $mrmac3_node "xlnx,num-queues" $numqueues3 stringlist $dts_file
                                                        set id 1
                                                        for {set i 2} {$i <= $num_queues} {incr i} {
                                                                set i [format "%" $i]
@@ -1443,7 +1443,7 @@ proc generate {drv_handle} {
                                                                append id ",\"" $i
                                                                set i [expr 0x$i]
                                                        }
-                                                       add_prop $mrmac3_node "xlnx,num-queues" $numqueues3 noformating $dts_file
+                                                       add_prop $mrmac3_node "xlnx,num-queues" $numqueues3 stringlist $dts_file
                                                        add_prop $mrmac3_node "xlnx,channel-ids" $id stringlist $dts_file
                                                        generate_intr_info $drv_handle $mrmac3_node $fiforx_connect_ip3
                                                }

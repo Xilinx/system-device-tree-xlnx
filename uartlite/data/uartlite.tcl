@@ -21,7 +21,7 @@ proc generate {drv_handle} {
 	set node [get_node $drv_handle]
 	set dts_file [set_drv_def_dts $drv_handle]
 	pldt append $node compatible "\ \, \"xlnx,xps-uartlite-1.00.a\""
-	set config_baud [hsi get_property CONFIG.dt_setbaud [get_os]]
+	set config_baud 0
 	set ip [hsi::get_cells -hier $drv_handle]
 	set ip_type [hsi get_property IP_NAME $ip]
 	set avail_param [hsi list_property [hsi::get_cells -hier $drv_handle]]

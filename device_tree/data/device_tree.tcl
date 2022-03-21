@@ -58,7 +58,7 @@ proc set_dt_param args {
         set val [lindex $args 1]
         set xsa ""
         set sdt_path $env(XILINX_VITIS)
-        set env(REPO) $sdt_path/data/system-device-tree-xlnx/
+	set env(REPO) $sdt_path/data/system-device-tree-xlnx/
         set board ""
         set dt_overlay ""
         set mainline_kernel ""
@@ -84,6 +84,7 @@ proc set_dt_param args {
                         -dir {set env(dir) [Pop args 1]}
                         -dt_zocl {set env(dir) [Pop args 1]}
                         -debug {set env(debug) [Pop args 1]}
+			-verbose {set env(verbose) [Pop args 1]}
                         -trace {set env(trace) [Pop args 1]}
 			-help {return [print_usage]}
                         -  {Pop args ; break}
@@ -797,7 +798,7 @@ proc gen_versal_clk {} {
 }
 
 proc gen_fpga_pwrdomain {} {
-       set default_dts [hsi get_property CONFIG.pcw_dts [get_os]]
+       set default_dts "pcw.dtsi"
        set fpga_full   [create_node -n "&fpga_full" -d $default_dts -p root]
        set hw_design [hsi::current_hw_design]
        if {[llength $hw_design]} {
@@ -1021,6 +1022,9 @@ Generates system device tree based on args given in:
 	if {[catch {set debug $env(debug)} msg]} {
 		set env(debug) "disable"
 	}
+	if {[catch {set verbose $env(verbose)} msg]} {
+                set env(verbose) "disable"
+        }
 	if {[catch {set trace $env(trace)} msg]} {
 		set env(trace) "disable"
 	}
@@ -1073,7 +1077,6 @@ Generates system device tree based on args given in:
 	foreach procc $proclist {
 		set index [string index $procc end]
 		set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $procc]]
-
 		if {[lsearch $val_proclist $ip_name] >= 0 && $index == 0 } {
 			set drvname [get_drivers $procc]
 			set proc_file "$path/${drvname}/data/${drvname}.tcl"
@@ -1114,12 +1117,14 @@ Generates system device tree based on args given in:
 				if {[lsearch -nocase $non_val_ip_types $ip_type] >= 0 } {
 					continue
 				}
+				set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
  	       			gen_peripheral_nodes $drv_handle "create_node_only"
 	        		gen_reg_property $drv_handle
 	        		gen_compatible_property $drv_handle
 				gen_ctrl_compatible $drv_handle
 	        		set val [time {gen_drv_prop_from_ip $drv_handle}]
 	       			gen_interrupt_property $drv_handle
+
 	       			gen_clk_property $drv_handle
 				set driver_name [get_drivers $drv_handle]
 				gen_xppu $drv_handle

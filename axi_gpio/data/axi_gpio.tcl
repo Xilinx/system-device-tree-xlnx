@@ -45,7 +45,7 @@ proc generate {drv_handle} {
                        set high_addr [string tolower [hsi get_property HIGH_VALUE $mem_range]]
                        if {[string match -nocase $base_addr "0xa4010000"]} {
                                set reg "0x0 0xa4010000 0x0 0x40000"
-			       add_prop $node "reg" $reg inthexlist "pl.dtsi"
+			       add_prop $node "reg" $reg hexlist "pl.dtsi"
                        }
                }
        }

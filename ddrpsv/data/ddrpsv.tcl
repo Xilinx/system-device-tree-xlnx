@@ -208,22 +208,6 @@ proc generate {drv_handle} {
 			}
 			}
 
-		if {[llength $reg_val]} {
-			set higheraddr [expr [lindex $reg_val 0] << 32]
-			set loweraddr [lindex $reg_val 1]
-			set baseaddr [format 0x%x [expr {${higheraddr} + ${loweraddr}}]]
-			regsub -all {^0x} $baseaddr {} baseaddr
-			set memory_node [create_node -n memory -l "${drv_handle}_memory" -u $baseaddr -p root -d "system-top.dts"]
-			if {[catch {set dev_type [hsi get_property CONFIG.device_type $drv_handle]} msg]} {
-				set dev_type memory
-			}
-			if {[string_is_empty $dev_type]} {set dev_type memory}
-			add_prop "${memory_node}" "compatible" $comp_prop string $dts_file
-			add_prop "${memory_node}" "device_type" $dev_type string $dts_file
-			add_prop "${memory_node}" "reg" $reg_val inthexlist $dts_file
-		}
-
-
 			if {$len} {
 				if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"]} {
 					set val [get_count "psv_cortexr5"]
@@ -262,6 +246,23 @@ proc generate {drv_handle} {
 				}
 			}
 	}
+
+
+		if {[llength $reg_val]} {
+			set higheraddr [expr [lindex $reg_val 0] << 32]
+			set loweraddr [lindex $reg_val 1]
+			set baseaddr [format 0x%x [expr {${higheraddr} + ${loweraddr}}]]
+			regsub -all {^0x} $baseaddr {} baseaddr
+			set memory_node [create_node -n memory -l "${drv_handle}_memory" -u $baseaddr -p root -d "system-top.dts"]
+			if {[catch {set dev_type [hsi get_property CONFIG.device_type $drv_handle]} msg]} {
+				set dev_type memory
+			}
+			if {[string_is_empty $dev_type]} {set dev_type memory}
+			add_prop "${memory_node}" "compatible" $comp_prop string $dts_file
+			add_prop "${memory_node}" "device_type" $dev_type string $dts_file
+			add_prop "${memory_node}" "reg" $reg_val hexlist $dts_file
+		}
+
 }
 
 proc generate_reg_property {base high} {

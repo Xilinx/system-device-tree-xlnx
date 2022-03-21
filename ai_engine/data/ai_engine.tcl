@@ -15,29 +15,29 @@
 proc generate_aie_array_device_info {node drv_handle bus_node} {
 	set aie_array_id 0
 	set compatible [get_comp_str $drv_handle]
-	set keyval [pldt append $node compatible "\ \, \"xlnx,ai_engine-v2.0\""]
+	set keyval [pldt append $node compatible "\ \ , \"xlnx,ai_engine-v2.0\" \,"]
+        set_drv_prop $drv_handle compatible "$compatible" stringlist
 
-	append aiegen "/bits/ 8 <0x1>"
-	add_prop "${node}" "xlnx,aie-gen" $aiegen noformating "pl.dtsi"
-	append shimrows "/bits/ 8 <0 1>"
-	add_prop "${node}" "xlnx,shim-rows" $shimrows noformating "pl.dtsi"
-	append corerows "/bits/ 8 <1 8>"
-	add_prop "${node}" "xlnx,core-rows" $corerows noformating "pl.dtsi"
-	append memrows "/bits/ 8 <0 0>"
-	add_prp "${node}" "xlnx,mem-rows" $memrows noformating "pl.dtsi"
+	set aiegen "01"
+	add_prop "${node}" "xlnx,aie-gen" $aiegen bytesequence "pl.dtsi"
+	set shimrows "00 01"
+	add_prop "${node}" "xlnx,shim-rows" $shimrows bytesequence "pl.dtsi"
+	set corerows "1 8"
+	add_prop "${node}" "xlnx,core-rows" $corerows bytesequence "pl.dtsi"
+	set memrows "00 00"
+	add_prop "${node}" "xlnx,mem-rows" $memrows bytesequence "pl.dtsi"
 	set power_domain "&versal_firmware 0x18224072"
-	add_prop "${node}" "power-domains" $power_domain intlist "pl.dtsi"
-	add_prop "${node}" "#address-cells" "2" intlist "pl.dtsi"
-	add_prop "${node}" "#size-cells" "2" intlist "pl.dtsi"
-	add_prop "${node}" "ranges" "" boolean "pl.dtsi"
+	add_prop "${node}" "power-domains" $power_domain stringlist "pl.dtsi"
+	add_prop "${node}" "#address-cells" 2 hexlist "pl.dtsi"
+	add_prop "${node}" "#size-cells" 2 hexlist "pl.dtsi"
+	add_prop "${node}" "ranges" 0 boolean "pl.dtsi"
 
-	set ai_clk_node [create_node -n "aie_core_ref_clk_0" -l "aie_core_ref_clk_0" -p ${bus_node}]
+	set ai_clk_node [create_node -n "aie_core_ref_clk_0" -l "aie_core_ref_clk_0" -p ${bus_node} -d "pl.dtsi"]
 	set clk_freq [hsi get_property CONFIG.AIE_CORE_REF_CTRL_FREQMHZ [hsi get_cells -hier $drv_handle]]
 	set clk_freq [expr ${clk_freq} * 1000000]
 	add_prop "${ai_clk_node}" "compatible" "fixed-clock" stringlist "pl.dtsi"
 	add_prop "${ai_clk_node}" "#clock-cells" 0 int "pl.dtsi"
 	add_prop "${ai_clk_node}" "clock-frequency" $clk_freq int "pl.dtsi"
-
 	set clocks "aie_core_ref_clk_0"
 	set_drv_prop $drv_handle clocks "$clocks" reference
 	add_prop "${node}" "clock-names" "aclk0" stringlist "pl.dtsi"
@@ -55,7 +55,8 @@ proc generate {drv_handle} {
 	if {$node == 0} {
 		return
 	}
-	set dt_overlay [hsi get_property CONFIG.dt_overlay [get_os]]
+	set dt_overlay 0
+	#set dt_overlay [hsi get_property CONFIG.dt_overlay [get_os]]
 	if {$dt_overlay} {
 		set RpRm [get_rp_rm_for_drv $drv_handle]
 		regsub -all { } $RpRm "" RpRm
@@ -65,7 +66,7 @@ proc generate {drv_handle} {
 			set bus_node "overlay2"
 		}
 	} else {
-		set bus_node "amba_pl"
+		set bus_node "amba_pl: amba_pl"
 	}
 	generate_aie_array_device_info ${node} ${drv_handle} ${bus_node}
 	set ip [hsi get_cells -hier $drv_handle]
@@ -73,20 +74,19 @@ proc generate {drv_handle} {
 	set aperture_id 0
 	set aperture_node [create_node -n "aie_aperture" -u "${unit_addr}" -l "aie_aperture_${aperture_id}" -p ${node} -d "pl.dtsi"]
 	set reg [hsi get_property CONFIG.reg ${drv_handle}]
-	add_prop "${aperture_node}" "reg" $reg noformat "pl.dtsi"
+	add_prop "${aperture_node}" "reg" $reg hexlist "pl.dtsi"
 
 	set intr_names "interrupt1"
 	set intr_num "<0x0 0x94 0x1>, <0x0 0x95 0x1>, <0x0 0x96 0x1>"
 	set power_domain "&versal_firmware 0x18224072"
-	add_prop "${aperture_node}" "interrupt-names" $intr_names stringlist "pl.dtsi"
+	add_prop "${aperture_node}" "interrupt-names" $intr_names string "pl.dtsi"
 	add_prop "${aperture_node}" "interrupts" $intr_num intlist "pl.dtsi"
-	add_prop "${aperture_node}" "interrupt-parent" gic reference "pl.dtsi"
-	add_prop "${aperture_node}" "power-domains" $power_domain intlist "pl.dtsi"
-	add_prop "${aperture_node}" "#address-cells" "2" intlist "pl.dtsi"
-	add_prop "${aperture_node}" "#size-cells" "2" intlist "pl.dtsi"
+	add_prop "${aperture_node}" "interrupt-parent" imux reference "pl.dtsi"
+	add_prop "${aperture_node}" "power-domains" $power_domain string "pl.dtsi"
+	add_prop "${aperture_node}" "#address-cells" "2" hexlist "pl.dtsi"
+	add_prop "${aperture_node}" "#size-cells" "2" hexlist "pl.dtsi"
 
 	set aperture_nodeid 0x18800000
 	add_prop "${aperture_node}" "xlnx,columns" "0 50" intlist "pl.dtsi"
-	add_prop "${aperture_node}" "xlnx,node-id" "${aperture_nodeid}" intlist "pl.dtsi"
-
+	add_prop "${aperture_node}" "xlnx,node-id" "${aperture_nodeid}" hexlist "pl.dtsi"
 }
