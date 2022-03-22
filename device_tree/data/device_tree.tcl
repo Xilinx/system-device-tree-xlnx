@@ -82,6 +82,7 @@ proc set_dt_param args {
                         -mainline_kernel {set env(kernel) [Pop args 1] }
                         -kernel_ver {set env(kernel_ver) [Pop args 1]}
                         -dir {set env(dir) [Pop args 1]}
+			-repo {set env(REPO) [Pop args 1]}
                         -dt_zocl {set env(dir) [Pop args 1]}
                         -debug {set env(debug) [Pop args 1]}
 			-verbose {set env(verbose) [Pop args 1]}
