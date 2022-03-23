@@ -39,7 +39,7 @@ proc generate_aie_array_device_info {node drv_handle bus_node} {
 	add_prop "${ai_clk_node}" "#clock-cells" 0 int "pl.dtsi"
 	add_prop "${ai_clk_node}" "clock-frequency" $clk_freq int "pl.dtsi"
 	set clocks "aie_core_ref_clk_0"
-	set_drv_prop $drv_handle clocks "$clocks" reference
+	set_drv_prop_if_empty $drv_handle clocks "$clocks" reference
 	add_prop "${node}" "clock-names" "aclk0" stringlist "pl.dtsi"
 
 	return ${node}

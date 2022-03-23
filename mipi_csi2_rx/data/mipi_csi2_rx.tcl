@@ -192,7 +192,7 @@ switch $pxl_format {
        }
 }
 if {[llength $pixel_format]} {
-       add_prop "${node}" "xlnx,csi-pxl-format" $pixel_format hex $dts_file
+       add_prop "${node}" "xlnx,csi-pxl-format" $pixel_format hexint $dts_file
 }
 }
 proc gen_frmbuf_node {outip drv_handle dts_file} {
