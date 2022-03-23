@@ -3129,7 +3129,7 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping f11c0000 label "dma0: pmcdma"
 		dict set def_ps_mapping f11d0000 label "dma1: pmcdma"
 		dict set def_ps_mapping f0920000 label "apm: performance-monitor"
-		dict set def_ps_mapping f1270000 label "sysmon: sysmon"
+		dict set def_ps_mapping f1270000 label "sysmon0: sysmon"
 		dict set def_ps_mapping ff990000 label "lpd_xppu: xppu"
 		dict set def_ps_mapping f1310000 label "pmc_xppu: xppu"
 		dict set def_ps_mapping f1300000 label "pmc_xppu_npi: xppu"
