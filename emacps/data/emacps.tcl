@@ -191,7 +191,27 @@ proc generate {drv_handle} {
 		      set ip_name [hsi get_property IP_NAME $connected_ip]
 	      }
 	      if {[llength $ip_name] && [string match -nocase $ip_name "gig_ethernet_pcs_pma"]} {
-		      set pin [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $connected_ip] "phyaddr"]]
+
+			set intf_pins [::hsi::get_intf_pins -of_objects [hsi get_cells $zynq_periph] "MDIO_ENET0"]
+			set connected_pin ""
+			set intf_nets ""
+			if {[llength $intf_pins]} {
+				set intf_nets [::hsi::get_intf_nets -of_objects $intf_pins]
+			}
+			if {[llength $intf_nets]} {
+				set connected_pin [::hsi::get_intf_pins -of_objects $intf_nets -filter {TYPE==SLAVE || TYPE==TARGET}]
+			}
+			set phyaddr_suffix ""
+			if {[llength $connected_pin]} {
+				set phyaddr_suffix [string trim $connected_pin "mdio_pcs_pma"]
+			}
+			set phyaddr "phyaddr"
+			if {[llength $phyaddr_suffix]} {
+				append phyaddr "_$phyaddr_suffix"
+			}
+
+			set pin [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $connected_ip] $phyaddr]]
+
 		      if {[llength $pin]} {
 			      set sink_periph [hsi::get_cells -of_objects $pin]
 		      }
@@ -219,7 +239,26 @@ proc generate {drv_handle} {
 		       set ip_name [hsi get_property IP_NAME $connected_ip]
 	       }
 	       if {[llength $ip_name] && [string match -nocase $ip_name "gig_ethernet_pcs_pma"]} {
-		       set pin [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $connected_ip] "phyaddr"]]
+
+			set intf_pins [::hsi::get_intf_pins -of_objects [hsi get_cells $zynq_periph] "MDIO_ENET1"]
+			set connected_pin ""
+			set intf_nets ""
+			if {[llength $intf_pins]} {
+			        set intf_nets [::hsi::get_intf_nets -of_objects $intf_pins]
+			}
+			if {[llength $intf_nets]} {
+			        set connected_pin [::hsi::get_intf_pins -of_objects $intf_nets -filter {TYPE==SLAVE || TYPE==TARGET}]
+			}
+			set phyaddr_suffix ""
+			if {[llength $connected_pin]} {
+			        set phyaddr_suffix [string trim $connected_pin "mdio_pcs_pma"]
+			}
+			set phyaddr "phyaddr"
+			if {[llength $phyaddr_suffix]} {
+        			append phyaddr "_$phyaddr_suffix"
+			}
+			set pin [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $connected_ip] $phyaddr]]
+
 		       if {[llength $pin]} {
 			       set sink_periph [hsi::get_cells -of_objects $pin]
 		       }
@@ -247,7 +286,25 @@ proc generate {drv_handle} {
 	                               set ip_name [hsi get_property IP_NAME $connected_ip]
 	                       }
 	                       if {[llength $ip_name] && [string match -nocase $ip_name "gig_ethernet_pcs_pma"]} {
-	                               set pin [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $connected_ip] "phyaddr"]]
+				set intf_pins [::hsi::get_intf_pins -of_objects [hsi get_cells $zynq_periph] "MDIO_ENET2"]
+				set connected_pin ""
+				set intf_nets ""
+				if {[llength $intf_pins]} {
+				        set intf_nets [::hsi::get_intf_nets -of_objects $intf_pins]
+				}
+				if {[llength $intf_nets]} {
+				        set connected_pin [::hsi::get_intf_pins -of_objects $intf_nets -filter {TYPE==SLAVE || TYPE==TARGET}]
+				}
+				set phyaddr_suffix ""
+				if {[llength $connected_pin]} {
+				        set phyaddr_suffix [string trim $connected_pin "mdio_pcs_pma"]
+				}
+				set phyaddr "phyaddr"
+				if {[llength $phyaddr_suffix]} {
+				        append phyaddr "_$phyaddr_suffix"
+				}
+				set pin [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $connected_ip] $phyaddr]]
+
 		       if {[llength $pin]} {
 			       set sink_periph [hsi::get_cells -of_objects $pin]
 		       }
@@ -275,7 +332,26 @@ proc generate {drv_handle} {
 		       set ip_name [hsi get_property IP_NAME $connected_ip]
 	       }
 	       if {[llength $ip_name] && [string match -nocase $ip_name "gig_ethernet_pcs_pma"]} {
-		       set pin [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $connected_ip] "phyaddr"]]
+
+			set intf_pins [::hsi::get_intf_pins -of_objects [hsi get_cells $zynq_periph] "MDIO_ENET3"]
+			set connected_pin ""
+			set intf_nets ""
+			if {[llength $intf_pins]} {
+        			set intf_nets [::hsi::get_intf_nets -of_objects $intf_pins]
+			}
+			if {[llength $intf_nets]} {
+        			set connected_pin [::hsi::get_intf_pins -of_objects $intf_nets -filter {TYPE==SLAVE || TYPE==TARGET}]
+			}
+			set phyaddr_suffix ""
+			if {[llength $connected_pin]} {
+        			set phyaddr_suffix [string trim $connected_pin "mdio_pcs_pma"]
+			}
+			set phyaddr "phyaddr"
+			if {[llength $phyaddr_suffix]} {
+			        append phyaddr "_$phyaddr_suffix"
+			}
+			set pin [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $connected_ip] $phyaddr]]
+
 		       if {[llength $pin]} {
 			       set sink_periph [hsi::get_cells -of_objects $pin]
 		       }
