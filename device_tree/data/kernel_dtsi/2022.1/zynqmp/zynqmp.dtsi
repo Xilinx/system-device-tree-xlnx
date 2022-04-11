@@ -1483,42 +1483,62 @@
                 ipi0_1: mailbox@1 {
                         xlnx,ipi-id = <0>;
                         xlnx,ipi-bitmask = <0x100>;
+			xlnx,ipi-req-msg-buf = <0xff990400>;
+			xlnx,ipi-rsp-msg-buf = <0xff990420>;
                 };
                 ipi0_2: mailbox@2 {
                         xlnx,ipi-id = <1>;
                         xlnx,ipi-bitmask = <0x200>;
+			xlnx,ipi-req-msg-buf = <0xff990440>;
+			xlnx,ipi-rsp-msg-buf = <0xff990460>;
                 };
                 ipi0_3: mailbox@3 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x10000>;
+			xlnx,ipi-req-msg-buf = <0xff9905c0>;
+			xlnx,ipi-rsp-msg-buf = <0xff9905e0>;
                 };
                 ipi0_4: mailbox@4 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x20000>;
+			xlnx,ipi-req-msg-buf = <0xff9905c0>;
+			xlnx,ipi-rsp-msg-buf = <0xff9905e0>;
                 };
                 ipi0_5: mailbox@5 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x40000>;
+			xlnx,ipi-req-msg-buf = <0xff9905c0>;
+			xlnx,ipi-rsp-msg-buf = <0xff9905e0>;
                 };
                 ipi0_6: mailbox@6 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x80000>;
+			xlnx,ipi-req-msg-buf = <0xff9905c0>;
+			xlnx,ipi-rsp-msg-buf = <0xff9905e0>;
                 };
                 ipi0_7: mailbox@7 {
                         xlnx,ipi-id = <3>;
                         xlnx,ipi-bitmask = <0x1000000>;
+			xlnx,ipi-req-msg-buf = <0xff9904c0>;
+			xlnx,ipi-rsp-msg-buf = <0xff9904e0>;
                 };
                 ipi0_8: mailbox@8 {
                         xlnx,ipi-id = <4>;
                         xlnx,ipi-bitmask = <0x2000000>;
+			xlnx,ipi-req-msg-buf = <0xff990500>;
+			xlnx,ipi-rsp-msg-buf = <0xff990520>;
                 };
                 ipi0_9: mailbox@9 {
                         xlnx,ipi-id = <5>;
                         xlnx,ipi-bitmask = <0x4000000>;
+			xlnx,ipi-req-msg-buf = <0xff990540>;
+			xlnx,ipi-rsp-msg-buf = <0xff990560>;
                 };
                 ipi0_10: mailbox@10 {
                         xlnx,ipi-id = <6>;
                         xlnx,ipi-bitmask = <0x8000000>;
+			xlnx,ipi-req-msg-buf = <0xff990580>;
+			xlnx,ipi-rsp-msg-buf = <0xff9905a0>;
                 };
         };
 
@@ -1538,46 +1558,68 @@
                 ipi1_0: mailbox@0 {
                         xlnx,ipi-id = <2>;
                         xlnx,ipi-bitmask = <0x1>;
+			xlnx,ipi-req-msg-buf = <0xff990080>;
+			xlnx,ipi-rsp-msg-buf = <0xff9900a0>;
                 };
                 ipi1_1: mailbox@1 {
                         xlnx,ipi-id = <0>;
                         xlnx,ipi-bitmask = <0x100>;
+			xlnx,ipi-req-msg-buf = <0xff990000>;
+			xlnx,ipi-rsp-msg-buf = <0xff990020>;
                 };
                 ipi1_2: mailbox@2 {
                         xlnx,ipi-id = <1>;
                         xlnx,ipi-bitmask = <0x200>;
+			xlnx,ipi-req-msg-buf = <0xff990040>;
+			xlnx,ipi-rsp-msg-buf = <0xff990060>;
                 };
                 ipi1_3: mailbox@3 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x10000>;
+			xlnx,ipi-req-msg-buf = <0xff9901c0>;
+			xlnx,ipi-rsp-msg-buf = <0xff9901e0>;
                 };
                 ipi1_4: mailbox@4 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x20000>;
+			xlnx,ipi-req-msg-buf = <0xff9901c0>;
+			xlnx,ipi-rsp-msg-buf = <0xff9901e0>;
                 };
                 ipi1_5: mailbox@5 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x40000>;
+			xlnx,ipi-req-msg-buf = <0xff9901c0>;
+			xlnx,ipi-rsp-msg-buf = <0xff9901e0>;
                 };
                 ipi1_6: mailbox@6 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x80000>;
+			xlnx,ipi-req-msg-buf = <0xff9901c0>;
+			xlnx,ipi-rsp-msg-buf = <0xff9901e0>;
                 };
                 ipi1_7: mailbox@7 {
                         xlnx,ipi-id = <3>;
                         xlnx,ipi-bitmask = <0x1000000>;
+			xlnx,ipi-req-msg-buf = <0xff9900c0>;
+			xlnx,ipi-rsp-msg-buf = <0xff9900e0>;
                 };
                 ipi1_8: mailbox@8 {
                         xlnx,ipi-id = <4>;
                         xlnx,ipi-bitmask = <0x2000000>;
+			xlnx,ipi-req-msg-buf = <0xff990100>;
+			xlnx,ipi-rsp-msg-buf = <0xff990120>;
                 };
                 ipi1_9: mailbox@9 {
                         xlnx,ipi-id = <5>;
                         xlnx,ipi-bitmask = <0x4000000>;
+			xlnx,ipi-req-msg-buf = <0xff990140>;
+			xlnx,ipi-rsp-msg-buf = <0xff990160>;
                 };
                 ipi1_10: mailbox@10 {
                         xlnx,ipi-id = <6>;
                         xlnx,ipi-bitmask = <0x8000000>;
+			xlnx,ipi-req-msg-buf = <0xff990180>;
+			xlnx,ipi-rsp-msg-buf = <0xff9901a0>;
                 };
         };
         ipi2: ipi@ff320000 {
@@ -1597,46 +1639,68 @@
                 ipi2_0: mailbox@0 {
                         xlnx,ipi-id = <2>;
                         xlnx,ipi-bitmask = <0x1>;
+			xlnx,ipi-req-msg-buf = <0xff990280>;
+			xlnx,ipi-rsp-msg-buf = <0xff9902a0>;
                 };
                 ipi2_1: mailbox@1 {
                         xlnx,ipi-id = <0>;
                         xlnx,ipi-bitmask = <0x100>;
+			xlnx,ipi-req-msg-buf = <0xff990200>;
+			xlnx,ipi-rsp-msg-buf = <0xff990220>;
                 };
                 ipi2_2: mailbox@2 {
                         xlnx,ipi-id = <1>;
                         xlnx,ipi-bitmask = <0x200>;
+			xlnx,ipi-req-msg-buf = <0xff990240>;
+			xlnx,ipi-rsp-msg-buf = <0xff990260>;
                 };
                 ipi2_3: mailbox@3 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x10000>;
+			xlnx,ipi-req-msg-buf = <0xff9903c0>;
+			xlnx,ipi-rsp-msg-buf = <0xff9903e0>;
                 };
                 ipi2_4: mailbox@4 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x20000>;
+			xlnx,ipi-req-msg-buf = <0xff9903c0>;
+			xlnx,ipi-rsp-msg-buf = <0xff9903e0>;
                 };
                 ipi2_5: mailbox@5 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x40000>;
+			xlnx,ipi-req-msg-buf = <0xff9903c0>;
+			xlnx,ipi-rsp-msg-buf = <0xff9903e0>;
                 };
                 ipi2_6: mailbox@6 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x80000>;
+			xlnx,ipi-req-msg-buf = <0xff9903c0>;
+			xlnx,ipi-rsp-msg-buf = <0xff9903e0>;
                 };
                 ipi2_7: mailbox@7 {
                         xlnx,ipi-id = <3>;
                         xlnx,ipi-bitmask = <0x1000000>;
+			xlnx,ipi-req-msg-buf = <0xff9902c0>;
+			xlnx,ipi-rsp-msg-buf = <0xff9902e0>;
                 };
                 ipi2_8: mailbox@8 {
                         xlnx,ipi-id = <4>;
                         xlnx,ipi-bitmask = <0x2000000>;
+			xlnx,ipi-req-msg-buf = <0xff990300>;
+			xlnx,ipi-rsp-msg-buf = <0xff990320>;
                 };
                 ipi2_9: mailbox@9 {
                         xlnx,ipi-id = <5>;
                         xlnx,ipi-bitmask = <0x4000000>;
+			xlnx,ipi-req-msg-buf = <0xff990340>;
+			xlnx,ipi-rsp-msg-buf = <0xff990360>;
                 };
                 ipi2_10: mailbox@10 {
                         xlnx,ipi-id = <6>;
                         xlnx,ipi-bitmask = <0x8000000>;
+			xlnx,ipi-req-msg-buf = <0xff990380>;
+			xlnx,ipi-rsp-msg-buf = <0xff9903a0>;
                 };
         };
 
@@ -1655,46 +1719,68 @@
                 ipi3_0: mailbox@0 {
                         xlnx,ipi-id = <2>;
                         xlnx,ipi-bitmask = <0x1>;
+			xlnx,ipi-req-msg-buf = <0xff990e80>;
+			xlnx,ipi-rsp-msg-buf = <0xff990ea0>;
                 };
                 ipi3_1: mailbox@1 {
                         xlnx,ipi-id = <0>;
                         xlnx,ipi-bitmask = <0x100>;
+			xlnx,ipi-req-msg-buf = <0xff990e00>;
+			xlnx,ipi-rsp-msg-buf = <0xff990e20>;
                 };
                 ipi3_2: mailbox@2 {
                         xlnx,ipi-id = <1>;
                         xlnx,ipi-bitmask = <0x200>;
+			xlnx,ipi-req-msg-buf = <0xff990e40>;
+			xlnx,ipi-rsp-msg-buf = <0xff990e60>;
                 };
                 ipi3_3: mailbox@3 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x10000>;
+			xlnx,ipi-req-msg-buf = <0xff990fc0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990fe0>;
                 };
                 ipi3_4: mailbox@4 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x20000>;
+			xlnx,ipi-req-msg-buf = <0xff990fc0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990fe0>;
                 };
                 ipi3_5: mailbox@5 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x40000>;
+			xlnx,ipi-req-msg-buf = <0xff990fc0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990fe0>;
                 };
                 ipi3_6: mailbox@6 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x80000>;
+			xlnx,ipi-req-msg-buf = <0xff990fc0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990fe0>;
                 };
                 ipi3_7: mailbox@7 {
                         xlnx,ipi-id = <3>;
                         xlnx,ipi-bitmask = <0x1000000>;
+			xlnx,ipi-req-msg-buf = <0xff990ec0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990ee0>;
                 };
                 ipi3_8: mailbox@8 {
                         xlnx,ipi-id = <4>;
                         xlnx,ipi-bitmask = <0x2000000>;
+			xlnx,ipi-req-msg-buf = <0xff990f00>;
+			xlnx,ipi-rsp-msg-buf = <0xff990f20>;
                 };
                 ipi3_9: mailbox@9 {
                         xlnx,ipi-id = <5>;
                         xlnx,ipi-bitmask = <0x4000000>;
+			xlnx,ipi-req-msg-buf = <0xff990f40>;
+			xlnx,ipi-rsp-msg-buf = <0xff990f60>;
                 };
                 ipi3_10: mailbox@10 {
                         xlnx,ipi-id = <6>;
                         xlnx,ipi-bitmask = <0x8000000>;
+			xlnx,ipi-req-msg-buf = <0xff990f80>;
+			xlnx,ipi-rsp-msg-buf = <0xff990fa0>;
                 };
         };
 
@@ -1713,46 +1799,68 @@
                 ipi4_0: mailbox@0 {
                         xlnx,ipi-id = <2>;
                         xlnx,ipi-bitmask = <0x1>;
+			xlnx,ipi-req-msg-buf = <0xff990e80>;
+			xlnx,ipi-rsp-msg-buf = <0xff990ea0>;
                 };
                 ipi4_1: mailbox@1 {
                         xlnx,ipi-id = <0>;
                         xlnx,ipi-bitmask = <0x100>;
+			xlnx,ipi-req-msg-buf = <0xff990e00>;
+			xlnx,ipi-rsp-msg-buf = <0xff990e20>;
                 };
                 ipi4_2: mailbox@2 {
                         xlnx,ipi-id = <1>;
                         xlnx,ipi-bitmask = <0x200>;
+			xlnx,ipi-req-msg-buf = <0xff990e40>;
+			xlnx,ipi-rsp-msg-buf = <0xff990e60>;
                 };
                 ipi4_3: mailbox@3 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x10000>;
+			xlnx,ipi-req-msg-buf = <0xff990fc0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990fe0>;
                 };
                 ipi4_4: mailbox@4 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x20000>;
+			xlnx,ipi-req-msg-buf = <0xff990fc0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990fe0>;
                 };
                 ipi4_5: mailbox@5 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x40000>;
+			xlnx,ipi-req-msg-buf = <0xff990fc0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990fe0>;
                 };
                 ipi4_6: mailbox@6 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x80000>;
+			xlnx,ipi-req-msg-buf = <0xff990fc0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990fe0>;
                 };
                 ipi4_7: mailbox@7 {
                         xlnx,ipi-id = <3>;
                         xlnx,ipi-bitmask = <0x1000000>;
+			xlnx,ipi-req-msg-buf = <0xff990ec0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990ee0>;
                 };
                 ipi4_8: mailbox@8 {
                         xlnx,ipi-id = <4>;
                         xlnx,ipi-bitmask = <0x2000000>;
+			xlnx,ipi-req-msg-buf = <0xff990f00>;
+			xlnx,ipi-rsp-msg-buf = <0xff990f20>;
                 };
                 ipi4_9: mailbox@9 {
                         xlnx,ipi-id = <5>;
                         xlnx,ipi-bitmask = <0x4000000>;
+			xlnx,ipi-req-msg-buf = <0xff990f40>;
+			xlnx,ipi-rsp-msg-buf = <0xff990f60>;
                 };
                 ipi4_10: mailbox@10 {
                         xlnx,ipi-id = <6>;
                         xlnx,ipi-bitmask = <0x8000000>;
+			xlnx,ipi-req-msg-buf = <0xff990f80>;
+			xlnx,ipi-rsp-msg-buf = <0xff990fa0>;
                 };
 
                 };
@@ -1771,46 +1879,68 @@
                 ipi5_0: mailbox@0 {
                         xlnx,ipi-id = <2>;
                         xlnx,ipi-bitmask = <0x1>;
+			xlnx,ipi-req-msg-buf = <0xff990e80>;
+			xlnx,ipi-rsp-msg-buf = <0xff990ea0>;
                 };
                 ipi5_1: mailbox@1 {
                         xlnx,ipi-id = <0>;
                         xlnx,ipi-bitmask = <0x100>;
+			xlnx,ipi-req-msg-buf = <0xff990e00>;
+			xlnx,ipi-rsp-msg-buf = <0xff990e20>;
                 };
                 ipi5_2: mailbox@2 {
                         xlnx,ipi-id = <1>;
                         xlnx,ipi-bitmask = <0x200>;
+			xlnx,ipi-req-msg-buf = <0xff990e40>;
+			xlnx,ipi-rsp-msg-buf = <0xff990e60>;
                 };
                 ipi5_3: mailbox@3 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x10000>;
+			xlnx,ipi-req-msg-buf = <0xff990fc0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990fe0>;
                 };
                 ipi5_4: mailbox@4 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x20000>;
+			xlnx,ipi-req-msg-buf = <0xff990fc0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990fe0>;
                 };
                 ipi5_5: mailbox@5 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x40000>;
+			xlnx,ipi-req-msg-buf = <0xff990fc0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990fe0>;
                 };
                 ipi5_6: mailbox@6 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x80000>;
+			xlnx,ipi-req-msg-buf = <0xff990fc0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990fe0>;
                 };
                 ipi5_7: mailbox@7 {
                         xlnx,ipi-id = <3>;
                         xlnx,ipi-bitmask = <0x1000000>;
+			xlnx,ipi-req-msg-buf = <0xff990ec0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990ee0>;
                 };
                 ipi5_8: mailbox@8 {
                         xlnx,ipi-id = <4>;
                         xlnx,ipi-bitmask = <0x2000000>;
+			xlnx,ipi-req-msg-buf = <0xff990f00>;
+			xlnx,ipi-rsp-msg-buf = <0xff990f20>;
                 };
                 ipi5_9: mailbox@9 {
                         xlnx,ipi-id = <5>;
                         xlnx,ipi-bitmask = <0x4000000>;
+			xlnx,ipi-req-msg-buf = <0xff990f40>;
+			xlnx,ipi-rsp-msg-buf = <0xff990f60>;
                 };
                 ipi5_10: mailbox@10 {
                         xlnx,ipi-id = <6>;
                         xlnx,ipi-bitmask = <0x8000000>;
+			xlnx,ipi-req-msg-buf = <0xff990f80>;
+			xlnx,ipi-rsp-msg-buf = <0xff990fa0>;
                 };
         };
 
@@ -1829,46 +1959,68 @@
                 ipi6_0: mailbox@0 {
                         xlnx,ipi-id = <2>;
                         xlnx,ipi-bitmask = <0x1>;
+			xlnx,ipi-req-msg-buf = <0xff990e80>;
+			xlnx,ipi-rsp-msg-buf = <0xff990ea0>;
                 };
                 ipi6_1: mailbox@1 {
                         xlnx,ipi-id = <0>;
                         xlnx,ipi-bitmask = <0x100>;
+			xlnx,ipi-req-msg-buf = <0xff990e00>;
+			xlnx,ipi-rsp-msg-buf = <0xff990e20>;
                 };
                 ipi6_2: mailbox@2 {
                         xlnx,ipi-id = <1>;
                         xlnx,ipi-bitmask = <0x200>;
+			xlnx,ipi-req-msg-buf = <0xff990e40>;
+			xlnx,ipi-rsp-msg-buf = <0xff990e60>;
                 };
                 ipi6_3: mailbox@3 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x10000>;
+			xlnx,ipi-req-msg-buf = <0xff990fc0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990fe0>;
                 };
                 ipi6_4: mailbox@4 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x20000>;
+			xlnx,ipi-req-msg-buf = <0xff990fc0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990fe0>;
                 };
                 ipi6_5: mailbox@5 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x40000>;
+			xlnx,ipi-req-msg-buf = <0xff990fc0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990fe0>;
                 };
                 ipi6_6: mailbox@6 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x80000>;
+			xlnx,ipi-req-msg-buf = <0xff990fc0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990fe0>;
                 };
                 ipi6_7: mailbox@7 {
                         xlnx,ipi-id = <3>;
                         xlnx,ipi-bitmask = <0x1000000>;
+			xlnx,ipi-req-msg-buf = <0xff990ec0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990ee0>;
                 };
                 ipi6_8: mailbox@8 {
                         xlnx,ipi-id = <4>;
                         xlnx,ipi-bitmask = <0x2000000>;
+			xlnx,ipi-req-msg-buf = <0xff990f00>;
+			xlnx,ipi-rsp-msg-buf = <0xff990f20>;
                 };
                 ipi6_9: mailbox@9 {
                         xlnx,ipi-id = <5>;
                         xlnx,ipi-bitmask = <0x4000000>;
+			xlnx,ipi-req-msg-buf = <0xff990f40>;
+			xlnx,ipi-rsp-msg-buf = <0xff990f60>;
                 };
                 ipi6_10: mailbox@10 {
                         xlnx,ipi-id = <6>;
                         xlnx,ipi-bitmask = <0x8000000>;
+			xlnx,ipi-req-msg-buf = <0xff990f80>;
+			xlnx,ipi-rsp-msg-buf = <0xff990fa0>;
                 };
         };
 
@@ -1889,46 +2041,68 @@
                 ipi7_0: mailbox@0 {
                         xlnx,ipi-id = <2>;
                         xlnx,ipi-bitmask = <0x1>;
+			xlnx,ipi-req-msg-buf = <0xff990680>;
+			xlnx,ipi-rsp-msg-buf = <0xff9906a0>;
                 };
                 ipi7_1: mailbox@1 {
                         xlnx,ipi-id = <0>;
                         xlnx,ipi-bitmask = <0x100>;
+			xlnx,ipi-req-msg-buf = <0xff990600>;
+			xlnx,ipi-rsp-msg-buf = <0xff990620>;
                 };
                 ipi7_2: mailbox@2 {
                         xlnx,ipi-id = <1>;
                         xlnx,ipi-bitmask = <0x200>;
+			xlnx,ipi-req-msg-buf = <0xff990640>;
+			xlnx,ipi-rsp-msg-buf = <0xff990660>;
                 };
                 ipi7_3: mailbox@3 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x10000>;
+			xlnx,ipi-req-msg-buf = <0xff9907c0>;
+			xlnx,ipi-rsp-msg-buf = <0xff9907e0>;
                 };
                 ipi7_4: mailbox@4 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x20000>;
+			xlnx,ipi-req-msg-buf = <0xff9907c0>;
+			xlnx,ipi-rsp-msg-buf = <0xff9907e0>;
                 };
                 ipi7_5: mailbox@5 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x40000>;
+			xlnx,ipi-req-msg-buf = <0xff9907c0>;
+			xlnx,ipi-rsp-msg-buf = <0xff9907e0>;
                 };
                 ipi7_6: mailbox@6 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x80000>;
+			xlnx,ipi-req-msg-buf = <0xff9907c0>;
+			xlnx,ipi-rsp-msg-buf = <0xff9907e0>;
                 };
                 ipi7_7: mailbox@7 {
                         xlnx,ipi-id = <3>;
                         xlnx,ipi-bitmask = <0x1000000>;
+			xlnx,ipi-req-msg-buf = <0xff9906c0>;
+			xlnx,ipi-rsp-msg-buf = <0xff9906e0>;
                 };
                 ipi7_8: mailbox@8 {
                         xlnx,ipi-id = <4>;
                         xlnx,ipi-bitmask = <0x2000000>;
+			xlnx,ipi-req-msg-buf = <0xff990700>;
+			xlnx,ipi-rsp-msg-buf = <0xff990720>;
                 };
                 ipi7_9: mailbox@9 {
                         xlnx,ipi-id = <5>;
                         xlnx,ipi-bitmask = <0x4000000>;
+			xlnx,ipi-req-msg-buf = <0xff990740>;
+			xlnx,ipi-rsp-msg-buf = <0xff990760>;
                 };
                 ipi7_10: mailbox@10 {
                         xlnx,ipi-id = <6>;
                         xlnx,ipi-bitmask = <0x8000000>;
+			xlnx,ipi-req-msg-buf = <0xff990780>;
+			xlnx,ipi-rsp-msg-buf = <0xff9907a0>;
                 };
 
         };
@@ -1949,46 +2123,68 @@
                 ipi8_0: mailbox@0 {
                         xlnx,ipi-id = <2>;
                         xlnx,ipi-bitmask = <0x1>;
+			xlnx,ipi-req-msg-buf = <0xff990880>;
+			xlnx,ipi-rsp-msg-buf = <0xff9908a0>;
                 };
                 ipi8_1: mailbox@1 {
                         xlnx,ipi-id = <0>;
                         xlnx,ipi-bitmask = <0x100>;
+			xlnx,ipi-req-msg-buf = <0xff990800>;
+			xlnx,ipi-rsp-msg-buf = <0xff990820>;
                 };
                 ipi8_2: mailbox@2 {
                         xlnx,ipi-id = <1>;
                         xlnx,ipi-bitmask = <0x200>;
+			xlnx,ipi-req-msg-buf = <0xff990840>;
+			xlnx,ipi-rsp-msg-buf = <0xff990860>;
                 };
                 ipi8_3: mailbox@3 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x10000>;
+			xlnx,ipi-req-msg-buf = <0xff9909c0>;
+			xlnx,ipi-rsp-msg-buf = <0xff9909e0>;
                 };
                 ipi8_4: mailbox@4 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x20000>;
+			xlnx,ipi-req-msg-buf = <0xff9909c0>;
+			xlnx,ipi-rsp-msg-buf = <0xff9909e0>;
                 };
                 ipi8_5: mailbox@5 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x40000>;
+			xlnx,ipi-req-msg-buf = <0xff9909c0>;
+			xlnx,ipi-rsp-msg-buf = <0xff9909e0>;
                 };
                 ipi8_6: mailbox@6 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x80000>;
+			xlnx,ipi-req-msg-buf = <0xff9909c0>;
+			xlnx,ipi-rsp-msg-buf = <0xff9909e0>;
                 };
                 ipi8_7: mailbox@7 {
                         xlnx,ipi-id = <3>;
                         xlnx,ipi-bitmask = <0x1000000>;
+			xlnx,ipi-req-msg-buf = <0xff9908c0>;
+			xlnx,ipi-rsp-msg-buf = <0xff9908e0>;
                 };
                 ipi8_8: mailbox@8 {
                         xlnx,ipi-id = <4>;
                         xlnx,ipi-bitmask = <0x2000000>;
+			xlnx,ipi-req-msg-buf = <0xff990900>;
+			xlnx,ipi-rsp-msg-buf = <0xff990920>;
                 };
                 ipi8_9: mailbox@9 {
                         xlnx,ipi-id = <5>;
                         xlnx,ipi-bitmask = <0x4000000>;
+			xlnx,ipi-req-msg-buf = <0xff990940>;
+			xlnx,ipi-rsp-msg-buf = <0xff990960>;
                 };
                 ipi8_10: mailbox@10 {
                         xlnx,ipi-id = <6>;
                         xlnx,ipi-bitmask = <0x8000000>;
+			xlnx,ipi-req-msg-buf = <0xff990980>;
+			xlnx,ipi-rsp-msg-buf = <0xff9909a0>;
                 };
 
         };
@@ -2009,46 +2205,68 @@
                 ipi9_0: mailbox@0 {
                         xlnx,ipi-id = <2>;
                         xlnx,ipi-bitmask = <0x1>;
+			xlnx,ipi-req-msg-buf = <0xff990a80>;
+			xlnx,ipi-rsp-msg-buf = <0xff990aa0>;
                 };
                 ipi9_1: mailbox@1 {
                         xlnx,ipi-id = <0>;
                         xlnx,ipi-bitmask = <0x100>;
+			xlnx,ipi-req-msg-buf = <0xff990a00>;
+			xlnx,ipi-rsp-msg-buf = <0xff990a20>;
                 };
                 ipi9_2: mailbox@2 {
                         xlnx,ipi-id = <1>;
                         xlnx,ipi-bitmask = <0x200>;
+			xlnx,ipi-req-msg-buf = <0xff990a40>;
+			xlnx,ipi-rsp-msg-buf = <0xff990a60>;
                 };
                 ipi9_3: mailbox@3 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x10000>;
+			xlnx,ipi-req-msg-buf = <0xff990bc0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990be0>;
                 };
                 ipi9_4: mailbox@4 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x20000>;
+			xlnx,ipi-req-msg-buf = <0xff990bc0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990be0>;
                 };
                 ipi9_5: mailbox@5 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x40000>;
+			xlnx,ipi-req-msg-buf = <0xff990bc0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990be0>;
                 };
                 ipi9_6: mailbox@6 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x80000>;
+			xlnx,ipi-req-msg-buf = <0xff990bc0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990be0>;
                 };
                 ipi9_7: mailbox@7 {
                         xlnx,ipi-id = <3>;
                         xlnx,ipi-bitmask = <0x1000000>;
+			xlnx,ipi-req-msg-buf = <0xff990ac0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990ae0>;
                 };
                 ipi9_8: mailbox@8 {
                         xlnx,ipi-id = <4>;
                         xlnx,ipi-bitmask = <0x2000000>;
+			xlnx,ipi-req-msg-buf = <0xff990b00>;
+			xlnx,ipi-rsp-msg-buf = <0xff990b20>;
                 };
                 ipi9_9: mailbox@9 {
                         xlnx,ipi-id = <5>;
                         xlnx,ipi-bitmask = <0x4000000>;
+			xlnx,ipi-req-msg-buf = <0xff990b40>;
+			xlnx,ipi-rsp-msg-buf = <0xff990b60>;
                 };
                 ipi9_10: mailbox@10 {
                         xlnx,ipi-id = <6>;
                         xlnx,ipi-bitmask = <0x8000000>;
+			xlnx,ipi-req-msg-buf = <0xff990b80>;
+			xlnx,ipi-rsp-msg-buf = <0xff990ba0>;
                 };
 
         };
@@ -2069,46 +2287,68 @@
                 ipi10_0: mailbox@0 {
                         xlnx,ipi-id = <2>;
                         xlnx,ipi-bitmask = <0x1>;
+			xlnx,ipi-req-msg-buf = <0xff990c80>;
+			xlnx,ipi-rsp-msg-buf = <0xff990ca0>;
                 };
                 ipi10_1: mailbox@1 {
                         xlnx,ipi-id = <0>;
                         xlnx,ipi-bitmask = <0x100>;
+			xlnx,ipi-req-msg-buf = <0xff990c00>;
+			xlnx,ipi-rsp-msg-buf = <0xff990c20>;
                 };
                 ipi10_2: mailbox@2 {
                         xlnx,ipi-id = <1>;
                         xlnx,ipi-bitmask = <0x200>;
+			xlnx,ipi-req-msg-buf = <0xff990c40>;
+			xlnx,ipi-rsp-msg-buf = <0xff990c60>;
                 };
                 ipi10_3: mailbox@3 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x10000>;
+			xlnx,ipi-req-msg-buf = <0xff990dc0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990de0>;
                 };
                 ipi10_4: mailbox@4 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x20000>;
+			xlnx,ipi-req-msg-buf = <0xff990dc0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990de0>;
                 };
                 ipi10_5: mailbox@5 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x40000>;
+			xlnx,ipi-req-msg-buf = <0xff990dc0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990de0>;
                 };
                 ipi10_6: mailbox@6 {
                         xlnx,ipi-id = <7>;
                         xlnx,ipi-bitmask = <0x80000>;
+			xlnx,ipi-req-msg-buf = <0xff990dc0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990de0>;
                 };
                 ipi10_7: mailbox@7 {
                         xlnx,ipi-id = <3>;
                         xlnx,ipi-bitmask = <0x1000000>;
+			xlnx,ipi-req-msg-buf = <0xff990cc0>;
+			xlnx,ipi-rsp-msg-buf = <0xff990ce0>;
                 };
                 ipi10_8: mailbox@8 {
                         xlnx,ipi-id = <4>;
                         xlnx,ipi-bitmask = <0x2000000>;
+			xlnx,ipi-req-msg-buf = <0xff990d00>;
+			xlnx,ipi-rsp-msg-buf = <0xff990d20>;
                 };
                 ipi10_9: mailbox@9 {
                         xlnx,ipi-id = <5>;
                         xlnx,ipi-bitmask = <0x4000000>;
+			xlnx,ipi-req-msg-buf = <0xff990d40>;
+			xlnx,ipi-rsp-msg-buf = <0xff990d60>;
                 };
                 ipi10_10: mailbox@10 {
                         xlnx,ipi-id = <6>;
                         xlnx,ipi-bitmask = <0x8000000>;
+			xlnx,ipi-req-msg-buf = <0xff990d80>;
+			xlnx,ipi-rsp-msg-buf = <0xff990da0>;
                 };
         };
 
