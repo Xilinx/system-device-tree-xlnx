@@ -5942,6 +5942,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 		}
 
 		add_prop $rt_node "status" "okay" string $default_dts
+		add_prop $rt_node "xlnx,ip-name" $ip_type string $default_dts
 	}
 
 	zynq_gen_pl_clk_binding $drv_handle
@@ -6339,6 +6340,7 @@ proc gen_cpu_nodes {drv_handle} {
 			if {[string match -nocase $loop "0"]} {
 			}
 			set slave [hsi::get_cells -hier ${drv_handle}]
+			add_prop $cpu_node "xlnx,ip-name" $processor_type string $default_dts
 
 			set loop 1
 		} elseif {[string match -nocase $processor_type "psv_pmc"] || [string match -nocase $processor_type "psv_psm"]} {
@@ -6393,6 +6395,7 @@ proc gen_cpu_nodes {drv_handle} {
 			}
 			if {[string match -nocase $loop "0"]} {
 			}
+			add_prop $cpu_node "xlnx,ip-name" $processor_type string $default_dts
 			set loop 1
 		} elseif {[string match -nocase $processor_type "ps7_cortexa9"]} {
 			set slave [hsi::get_cells -hier ${drv_handle}]
@@ -6403,6 +6406,7 @@ proc gen_cpu_nodes {drv_handle} {
 			set compatiblelist [lappend compatiblelist "arm,cortex-a9-$cpu_nr"]
 			if {[string match -nocase $loop "0"]} {
 			}
+			add_prop $cpu_node "xlnx,ip-name" $processor_type string $default_dts
 			set loop 1
 		} else {
 			set proctype [get_hw_family]
@@ -6418,6 +6422,7 @@ proc gen_cpu_nodes {drv_handle} {
 				set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d ${default_dts} -p $bus_name]
 			}
 			set cpu_node [create_node -n "cpu" -l "ub${count}_cpu" -u 0 -d "pl.dtsi" -p $rt_node]
+			add_prop $cpu_node "xlnx,ip-name" $processor_type string $default_dts
 		}
 		add_prop $cpu_node "bus-handle" $bus_label reference $default_dts
 		incr cpu_no
@@ -6492,6 +6497,7 @@ proc add_memory_node {drv_handle} {
 		set comp_prop "xlnx,${name}-${ver}"
 		regsub -all {_} $comp_prop {-} comp_prop
 		add_new_dts_param "${memory_node}" "compatible" $comp_prop string
+		add_new_dts_param "${memory_node}" "xlnx,ip-name" $ddr_ip string
 		return $memory_node
 	}
 }
