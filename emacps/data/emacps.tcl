@@ -81,7 +81,9 @@ proc generate {drv_handle} {
     }
 
        set ps7_cortexa9_1x_clk [get_ip_param_value [lindex [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}] 0] "C_CPU_1X_CLK_FREQ_HZ"]
+    if {$ps7_cortexa9_1x_clk != ""} {
        add_prop $node "xlnx,ptp-enet-clock" "$ps7_cortexa9_1x_clk" hexint $dts_file
+    }
     ps7_reset_handle $drv_handle CONFIG.C_ENET_RESET CONFIG.enet-reset
 
     # only generate the mdio node if it has mdio

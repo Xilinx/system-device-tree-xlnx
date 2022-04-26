@@ -80,7 +80,7 @@ proc generate {drv_handle} {
 	set intr_num "<0x0 0x94 0x1>, <0x0 0x95 0x1>, <0x0 0x96 0x1>"
 	set power_domain "&versal_firmware 0x18224072"
 	add_prop "${aperture_node}" "interrupt-names" $intr_names string "pl.dtsi"
-	add_prop "${aperture_node}" "interrupts" $intr_num intlist "pl.dtsi"
+	add_prop "${aperture_node}" "interrupts" $intr_num hexlist "pl.dtsi"
 	add_prop "${aperture_node}" "interrupt-parent" imux reference "pl.dtsi"
 	add_prop "${aperture_node}" "power-domains" $power_domain string "pl.dtsi"
 	add_prop "${aperture_node}" "#address-cells" "2" hexlist "pl.dtsi"
