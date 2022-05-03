@@ -20,10 +20,15 @@ proc generate {drv_handle} {
 	set pspmc [hsi get_cells -hier -filter {IP_NAME =~ "*pspmc*"}]
 	if {[string compare -nocase $pspmc ""] != 0} {
 		set fbclk [hsi get_property CONFIG.PMC_QSPI_FBCLK [hsi get_cells -hier -filter {IP_NAME =~ "*pspmc*"}]]
-		if {[regexp "ENABLE 1" $fbclk matched]} {
-			add_prop $node fbclk 1 int $dts_file
-		}
-	}
+               if {[regexp "ENABLE 0" $fbclk matched]} {
+                   set node [gen_peripheral_nodes $drv_handle]
+                   if {$node == 0} {
+                        return
+                   }
+                   add_prop "${node}" "/* hw design is missing feedback clock that's why spi-max-frequency is 40MHz */" "" comment $dts_file
+                   add_prop $drv_handle spi-max-frequency 40000000 int $dts_file
+               }
+       }
 	set is_stacked 0
 	if { $qspi_mode == 2} {
 		set is_dual 1
