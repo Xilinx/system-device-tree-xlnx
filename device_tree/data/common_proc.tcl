@@ -25,7 +25,7 @@
 
 #namespace export get_drivers
 #namespace export gen_root_node
-global def_string zynq_soc_dt_tree bus_clk_list pl_ps_irq1 pl_ps_irq0 pstree include_list count
+global def_string zynq_soc_dt_tree bus_clk_list pl_ps_irq1 pl_ps_irq0 pstree include_list count intrpin_width
 global or_id
 global or_cnt
 global repo_path
@@ -82,7 +82,6 @@ global set mc_map [dict create]
 global set memmap [dict create]
 global set label_addr [dict create]
 global set label_type [dict create]
-global set xlconcat_val [dict create]
 global set end_mappings [dict create]
 global set remo_mappings [dict create]
 global set port1_end_mappings [dict create]
@@ -4959,20 +4958,29 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 
 			set cur_intr_info ""
 			set valid_intc_list "ps7_scugic psu_acpu_gic psv_acpu_gic"
-
+			global intrpin_width
 			if { [string match -nocase $proctype "ps7_cortexa9"] }  {
 				if {[string match "[hsi get_property IP_NAME $intc]" "ps7_scugic"] } {
 					if {$intr_id > 32} {
 						set intr_id [expr $intr_id - 32]
 					}
 					set cur_intr_info "0 $intr_id $intr_type"
+
 				} elseif {[string match "[hsi get_property IP_NAME $intc]" "axi_intc"] } {
 					set cur_intr_info "$intr_id $intr_type"
 				}
 			} elseif {[string match -nocase $intc_name "psu_acpu_gic"] || [string match -nocase $intc_name "psv_acpu_gic"]} {
 			    set cur_intr_info "0 $intr_id $intr_type"
+			    for { set i 1 } {$i < $intrpin_width} {incr i} {
+				    set intr_id_inc [expr $intr_id + $i]
+				    append cur_intr_info ">, <0 $intr_id_inc $intr_type"
+		            }
 			} else {
 				set cur_intr_info "$intr_id $intr_type"
+				for { set i 1 } {$i < $intrpin_width} {incr i} {
+					set intr_id_inc [expr $intr_id + $i]
+					append cur_intr_info ">, <$intr_id_inc $intr_type"
+				}
 			}
 			if {[string_is_empty $intr_info]} {
 				set intr_info "$cur_intr_info"
@@ -6898,7 +6906,6 @@ proc get_psu_interrupt_id { ip_name port_name } {
 	proc_called_by
     global or_id
     global or_cnt
-    global xlconcat_val
 
     set ret -1
     set periph ""
@@ -7086,26 +7093,33 @@ proc get_psu_interrupt_id { ip_name port_name } {
 	if {[llength $connected_ip]} {
 		# check for direct connection or concat block connected
 		if { [string compare -nocase "$connected_ip" "xlconcat"] == 0 } {
-			set number [regexp -all -inline -- {[0-9]+} $sink_pin]
-                       if {[info exists xlconcat_val] && [dict exists $xlconcat_val $sink_periph]} {
-                               set intr_wid [dict get $xlconcat_val $sink_periph]
-                               set number [expr $number + {$intr_wid - 1}]
+                       set pin_number [regexp -all -inline -- {[0-9]+} $sink_pin]
+			set number 0
+			global intrpin_width
+			for { set i 0 } {$i <= $pin_number} {incr i} {
+				set pin_wdth [get_property LEFT [ lindex [ get_pins -of_objects [get_cells -hier $sink_periph ] ] $i ] ]
+				if { $i == $pin_number } {
+					set intrpin_width [expr $pin_wdth + 1]
+				} else {
+					set number [expr $number + {$pin_wdth + 1}]
+				}
                        }
+                       dtg_debug "Full pin width for $sink_periph of $sink_pin:$number intrpin_width:$intrpin_width"
 			set dout "dout"
 			set concat_block 1
 			set intr_pin [hsi::get_pins -of_objects $sink_periph -filter "NAME==$dout"]
 			set sink_pins [get_sink_pins "$intr_pin"]
-                       set sink_periph [::hsi::get_cells -of_objects $sink_pins]
-                       set connected_ip [hsi get_property IP_NAME [hsi::get_cells -hier $sink_periph]]
-                       if {[string match -nocase "$connected_ip" "xlconcat"]} {
-                               set intr_wid [get_port_width $sink_pins]
-                               dict set xlconcat_val $sink_periph $intr_wid
-                               set num [regexp -all -inline -- {[0-9]+} $sink_pins]
-                               set num1 [regexp -all -inline -- {[0-9]+} $sink_pin]
-                               set number [expr {$num + $num1}]
+                        set sink_periph [::hsi::get_cells -of_objects $sink_pins]
+                        set connected_ip [hsi get_property IP_NAME [hsi::get_cells -hier $sink_periph]]
+                        while {[llength $connected_ip]} {
+				if {![string match -nocase "$connected_ip" "xlconcat"]} {
+					break
+				}
                                set dout "dout"
                                set intr_pin [hsi::get_pins -of_objects $sink_periph -filter "NAME==$dout"]
                                set sink_pins [get_sink_pins $intr_pin]
+                               set sink_periph [::hsi::get_cells -of_objects $sink_pins]
+			        set connected_ip [get_property IP_NAME [get_cells -hier $sink_periph]]
                        }
 			foreach pin $sink_pins {
 				set sink_pin $pin
