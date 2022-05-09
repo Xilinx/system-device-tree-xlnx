@@ -77,7 +77,7 @@ proc generate {drv_handle} {
 	add_prop "${aperture_node}" "reg" $reg hexlist "pl.dtsi"
 
 	set intr_names "interrupt1"
-	set intr_num "<0x0 0x94 0x1>, <0x0 0x95 0x1>, <0x0 0x96 0x1>"
+	set intr_num "0x0 0x94 0x1>, <0x0 0x95 0x1>, <0x0 0x96 0x1"
 	set power_domain "&versal_firmware 0x18224072"
 	add_prop "${aperture_node}" "interrupt-names" $intr_names string "pl.dtsi"
 	add_prop "${aperture_node}" "interrupts" $intr_num hexlist "pl.dtsi"
