@@ -848,8 +848,8 @@
 			status = "disabled";
 			reg = <0 0xfd4d0000 0 0x10000>;
 			interrupt-parent = <&imux>;
-			interrupt-names = "wdt", "wwdt_reset_pending";
-			interrupts = <0 100 1>, <0 109 1>;
+			interrupt-names = "wdt", "wwdt_reset_pending", "gwdt", "gwdt_reset_pending";
+			interrupts = <0 100 1>, <0 109 1>, <0 108 4>, <0 110 4>;
 			timeout-sec = <30>;
 			pretimeout-sec = <25>;
 		};
@@ -859,8 +859,8 @@
                         status = "disabled";
                         reg = <0x0 0xff120000 0x0 0x10000>;
 			interrupt-parent = <&imux>;
-			interrupt-names = "wdt", "wwdt_reset_pending";
-			interrupts = <0 49 1>, <0 69 1>;
+			interrupt-names = "wdt", "wwdt_reset_pending", "gwdt", "gwdt_reset_pending";
+			interrupts = <0 49 1>, <0 69 1>, <0 70 4>, <0 71 4>;
 			timeout-sec = <30>;
 			pretimeout-sec = <25>;
                 };
