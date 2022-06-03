@@ -4227,3 +4227,48 @@ proc gen_power_domains {drv_handle} {
                }
        }
 }
+
+proc copy_hw_files args {
+	if {[llength $args]!= 0} {
+		set help_string "
+\tCopy hardware artifacts of a given xsa to output directory.
+\tUSAGE: sdtgen set_dt_param -dir <output directory path> -xsa <xsa file>
+\t       sdtgen copy_hw_files"
+
+		return $help_string
+        }
+
+	global env
+	set path $env(REPO)
+	if {[catch {set path $env(REPO)} msg]} {
+		set path "."
+		set env(REPO) $path
+	}
+
+	if {[catch {set xsa $env(xsa)} msg]} {
+ 		error "\[DTG++ ERROR]:  No xsa provided, please set the xsa \
+		        \n\r            Ex: set_dt_param -xsa <system.xsa>"
+		return
+	}
+
+	set dir $env(dir)
+	if [catch { set retstr [file mkdir $dir] } errmsg] {
+		error "cannot create directory"
+	}	
+	file copy -force $xsa $dir
+
+	set hw_designs [hsi::get_hw_designs]
+	if {[string match -nocase $hw_designs ""]} {
+		set xsa_log [hsi::open_hw_design $xsa]
+	}
+
+	set hw_files [hsi::get_hw_files]
+	set xsa_dirname [file dirname $xsa]
+	foreach hw_file $hw_files {
+		if {[file exists "$xsa_dirname/$hw_file"]} {
+			set hw_file_name [file normalize "$xsa_dirname/$hw_file"]
+			file copy -force $hw_file_name $dir
+			}
+		}
+}
+
