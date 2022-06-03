@@ -47,6 +47,7 @@ proc print_usage args {
             -mainline_kernel  mainline kernel version
             -kernel_ver       kernel version
             -dir              Directory where the dt files will be generated
+	    -include_dts      DTS file to be include into final device tree
             -debug            Enable DTG++ debug
             -trace            Enable DTG++ traces} 
         return $help_str
@@ -66,6 +67,7 @@ proc set_dt_param args {
         set dir ""
         set dt_zocl ""
         set dt_warn ""
+        set include_dts ""
 	if {[llength $args] == 0 || ![string match -* [lindex $args 0]]} {
 		print_usage
 	} else {
@@ -84,6 +86,7 @@ proc set_dt_param args {
                         -dir {set env(dir) [Pop args 1]}
 			-repo {set env(REPO) [Pop args 1]}
                         -dt_zocl {set env(dir) [Pop args 1]}
+                        -include_dts {set env(include_dts) [Pop args 1]}
                         -debug {set env(debug) [Pop args 1]}
 			-verbose {set env(verbose) [Pop args 1]}
                         -trace {set env(trace) [Pop args 1]}
@@ -129,6 +132,8 @@ proc get_dt_param args {
 			}
                } -dt_zocl {
                        if {[catch {set val $env(dt_zocl)} msg ]} {}
+               } -include_dts {
+                       if {[catch {set val $env(include_dts)} msg ]} {}
                } -help {
 	               set val [print_usage] 
                } default {
@@ -436,6 +441,19 @@ proc gen_include_headers {} {
 
 		}
 	}
+}
+
+proc include_custom_dts {} {
+	global env
+	set path $env(REPO)
+	set include_dts $env(include_dts)
+	set dir_name $env(dir)
+	foreach include_dts_file $include_dts {
+		if {[file exists $include_dts_file]} {
+			file normalize $include_dts_file
+			file copy -force $include_dts_file $dir_name
+			}
+		}
 }
 
 proc gen_afi_node {} {
@@ -1184,6 +1202,7 @@ Generates system device tree based on args given in:
     	gen_board_info
 	gen_afi_node
     	gen_include_headers
+        include_custom_dts
 	set proctype [get_hw_family]
 	set common_file "$path/device_tree/data/config.yaml"
 	set kernel_ver [get_user_config $common_file -kernel_ver]

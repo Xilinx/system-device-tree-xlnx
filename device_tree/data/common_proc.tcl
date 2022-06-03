@@ -1303,6 +1303,7 @@ proc write_dt args {
 	}
 	global env
 	set path $env(REPO)
+        set include_dts $env(include_dts)
 	set common_file "$path/device_tree/data/config.yaml"
 	set dt_overlay [get_user_config $common_file -dt_overlay]
 	set fd [open $file w]
@@ -1312,6 +1313,10 @@ proc write_dt args {
 		set includelist [split $include_list ","]
 		foreach val $includelist {
 			puts $fd "#include \"$val\""
+		}
+		foreach include_dts_file $include_dts {
+			set include_dts_filename [file tail $include_dts_file]
+			puts $fd "#include \"$include_dts_filename\""
 		}
 	}
 	if {[string match -nocase $dt "pldt"] && $dt_overlay} {
