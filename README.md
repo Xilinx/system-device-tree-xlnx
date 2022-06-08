@@ -83,7 +83,25 @@ xsct% sdtgen get_dt_param -dir
 output_dts
 xsct% sdtgen get_dt_param -xsa
 design_1_wrapper.xsa
-``` 
+```
+
+### Copy hw artifacts from xsa
+```bash
+Copy hardware artifacts from a given xsa to output directory.
+USAGE: sdtgen set_dt_param -dir <output directory path> -xsa <xsa file>
+       sdtgen copy_hw_files
+```
+
+### Using external repo
+```bash
+Sometimes user may want to modify the system device tree repo locally and use that for testing, insuch scenarios user can specify local repo using -repo option at set_dt_param.
+Please note that though the -repo option works for most of the cases where change is not in the core file i.e device_tree/data/device_tree.tcl, it will not work if change that needs to tested is in this file.
+In such cases, please follow below steps.
+1. Copy scripts/ folder from Vitis installation directory to local directory(ex: /tmp/path/)
+2. Set MYVIVADO environment variable with this path (ex: #export MYVIVADO=/tmp/path/)
+3. Now open file at /tmp/path/scripts/xsct/sdtgen/sdtgen.tcl and update it to source your own local device_tree.tcl instead of sourcing device_tree.tcl in installation path.
+4. Launch xsct now and continue with testing.
+```
 
 ### Command Help:
 ```bash
