@@ -1303,7 +1303,11 @@ proc write_dt args {
 	}
 	global env
 	set path $env(REPO)
-        set include_dts $env(include_dts)
+	if {[info exists env(include_dts)]} {
+		set include_dts $env(include_dts)
+	} else {
+		set include_dts ""
+ 	}
 	set common_file "$path/device_tree/data/config.yaml"
 	set dt_overlay [get_user_config $common_file -dt_overlay]
 	set fd [open $file w]
