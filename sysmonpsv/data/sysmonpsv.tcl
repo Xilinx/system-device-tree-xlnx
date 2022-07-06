@@ -23,8 +23,8 @@ proc generate {drv_handle} {
     set dts_file [set_drv_def_dts $drv_handle]
 	
     set num_supply_channels 0
-    add_prop $node "#address-cells" 1 int $dts_file
-    add_prop $node "#size-cells" 0 int $dts_file
+    add_prop $node "#address-cells" 2 int $dts_file
+    add_prop $node "#size-cells" 2 int $dts_file
 
     for {set supply_num 0} {$supply_num < 160} {incr supply_num} {
 	    set meas "C_MEAS_${supply_num}"
