@@ -117,9 +117,11 @@ proc generate {drv_handle} {
 			}
 			if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"]} {
 				set_memmap "${drv_handle}_memory" r5 $reg
+				set_memmap "${drv_handle}" r5 $reg
 			}
 			if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexa53"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexa72"]} {
 				set_memmap "${drv_handle}_memory" a53 $reg
+				set_memmap "${drv_handle}" a53 $reg
 			}
 			if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_pmu"]} {
 				set_memmap "${drv_handle}_memory" pmu $reg
@@ -132,6 +134,7 @@ proc generate {drv_handle} {
 			}
 			if {[string match -nocase [hsi get_property IP_NAME $procc] "microblaze"]} {
 				set_memmap "${drv_handle}_memory" $procc $reg
+				set_memmap "${drv_handle}" $procc $reg
 			}
         	}
         	add_prop "${memory_node}" "reg" $reg hexlist "system-top.dts" 1
