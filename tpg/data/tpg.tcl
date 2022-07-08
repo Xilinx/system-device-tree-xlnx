@@ -96,7 +96,7 @@ proc generate {drv_handle} {
                                 if {[string match -nocase $ip_name "v_mix"] || [string match -nocase $ip_name "v_tpg"]} {
                                         continue
                                 }
-                                add_prop "$tpg_node" "remote-endpoint" $out_ip$drv_handle reference $dts_file
+                                add_prop "$tpg_node" "remote-endpoint" $out_ip reference $dts_file
                                 if {[string match -nocase [hsi get_property IP_NAME $out_ip] "v_frmbuf_wr"] || [string match -nocase [hsi get_property IP_NAME $out_ip] "axi_vdma"]} {
                                         gen_frmbuf_node $out_ip $drv_handle $dts_file
                                 }
