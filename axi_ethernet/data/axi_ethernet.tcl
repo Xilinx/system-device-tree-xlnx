@@ -246,6 +246,7 @@ proc generate {drv_handle} {
 			add_prop $node "xlnx,phy-type" $phytype hexint "pl.dtsi" 1
 			add_prop $node "xlnx,phyaddr" $phyaddr hexint "pl.dtsi" 1
 			add_prop $node "xlnx,rxmem" $rxmem hexint "pl.dtsi" 1
+			add_prop $node "xlnx,speed-1-2p5" "1000" int "pl.dtsi" 1
 		}
 
 		set is_nobuf 0
@@ -254,6 +255,7 @@ proc generate {drv_handle} {
 			if {[lsearch -nocase $avail_param "CONFIG.speed_1_2p5"] >= 0} {
 				if {[hsi get_property CONFIG.speed_1_2p5 [hsi::get_cells -hier $drv_handle]] == "2p5G"} {
 					set is_nobuf 1
+					add_prop $node "xlnx,speed-1-2p5" "2500" int "pl.dtsi" 1
 					pldt append $node compatible "\ \, \"xlnx,axi-2_5-gig-ethernet-1.0\""	
 		    		}
 			}
@@ -683,6 +685,7 @@ proc deault_parameters {ip_handle {dont_generate ""}} {
 			"Timer_Format" - \
 			"SupportLevel" - \
 			"TransceiverControl" - \
+			"speed_1_2p5" - \
 			"USE_BOARD_FLOW" - \
 			"HW_VER" { } \
 			default {
