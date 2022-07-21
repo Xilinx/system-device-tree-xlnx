@@ -1133,7 +1133,8 @@ Generates system device tree based on args given in:
 				if {[lsearch -nocase $non_val_list $ip_name] >= 0} {
 					continue
 				}
-				if {[lsearch -nocase $non_val_ip_types $ip_type] >= 0 } {
+				if {[lsearch -nocase $non_val_ip_types $ip_type] >= 0 &&
+					![string match -nocase "axi_perf_mon" $ip_name]} {
 					continue
 				}
 				set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
@@ -1157,7 +1158,8 @@ Generates system device tree based on args given in:
 				if {[lsearch -nocase $non_val_list $ip_name] >= 0} {
 					continue
 				}
-				if {[lsearch -nocase $non_val_ip_types $ip_type] >= 0} {
+				if {[lsearch -nocase $non_val_ip_types $ip_type] >= 0 &&
+				     ![string match -nocase "axi_perf_mon" $ip_name]} {
 					continue
 				}
 				if {[is_ps_ip $drv_handle] != 1} {

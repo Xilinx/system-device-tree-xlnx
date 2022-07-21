@@ -452,7 +452,7 @@ proc get_node args {
 	if {[lsearch -nocase $non_val_list $ip_name] >= 0} {
 		return ""
 	}
-	if {[lsearch -nocase $non_val_ip_types $ip_type] >= 0 } {
+	if {[lsearch -nocase $non_val_ip_types $ip_type] >= 0 && ![string match -nocase "axi_perf_mon" $ip_name]} {
 		return ""
 	}
 
