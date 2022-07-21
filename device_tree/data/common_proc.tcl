@@ -8277,39 +8277,35 @@ enechange"
 		set label $ip
 		set bus_node [detect_bus_name $ip]
 		set dev_type [hsi get_property IP_NAME [hsi::get_cells -hier [hsi::get_cells -hier $ip]]]
-		if {[llength $axis_ip]} {
-			set intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
-			set inip [get_in_connect_ip $ip $intf]
+		set intf "S00_AXIS"
+		set inips [get_axis_switch_in_connect_ip $ip $intf]
+		foreach inip $inips {
 			if {[llength $inip]} {
-			set inipname [hsi get_property IP_NAME $inip]
-			set valid_mmip_list "mipi_csi2_rx_subsystem v_tpg v_hdmi_rx_ss v_smpte_uhdsdi_rx_ss v_smpte_uhdsdi_tx_ss v_demosaic v_gamma_l
-ut v_proc_ss v_frmbuf_rd v_frmbuf_wr v_hdmi_tx_ss v_uhdsdi_audio audio_formatter i2s_receiver i2s_transmitter mipi_dsi_tx_subsystem v_mix v_multi_scaler v_sc
-enechange"
-		if {[lsearch  -nocase $valid_mmip_list $inipname] >= 0} {
-			set rt_node [create_node -n ${dev_type} -l ${label} -u 0 -d $dts_file -p $bus_node]
-			set ports_node [create_node -n "ports" -l axis_switch_ports$ip -p $rt_node -d $dts_file]
-			gen_axis_switch_clk_property $ip $dts_file $rt_node
-			add_prop "$ports_node" "#address-cells" 1 int $dts_file
-			add_prop "$ports_node" "#size-cells" 0 int $dts_file
-			set port_node [create_node -n "port" -l axis_switch_port0$ip -u 0 -p $ports_node -d $dts_file]
-			add_prop "$port_node" "reg" 0 int $dts_file
-			if {[llength $inip]} {
-			       set axis_switch_in_end ""
-			       set axis_switch_remo_in_end ""
-				if {[info exists end_mappings] && [dict exists $end_mappings $inip]} {
-				       set axis_switch_in_end [dict get $end_mappings $inip]
-				       dtg_verbose "drv:$ip inend:$axis_switch_in_end"
-			       }
-				if {[info exists remo_mappings] && [dict exists $remo_mappings $inip]} {
-				       set axis_switch_remo_in_end [dict get $remo_mappings $inip]
-				       dtg_verbose "drv:$ip inremoend:$axis_switch_remo_in_end"
-			       }
-			       if {[llength $axis_switch_remo_in_end]} {
-				       set axisinnode [create_node -n "endpoint" -l $axis_switch_remo_in_end -p $port_node -d $dts_file]
-			       }
-			       if {[llength $axis_switch_in_end]} {
-				       add_prop "$axisinnode" "remote-endpoint" $axis_switch_in_end reference $dts_file
-			       }
+				set inipname [get_property IP_NAME $inip]
+					set valid_mmip_list "mipi_csi2_rx_subsystem v_tpg v_hdmi_rx_ss v_smpte_uhdsdi_rx_ss v_smpte_uhdsdi_tx_ss v_demosaic v_gamma_lut v_proc_ss v_frmbuf_rd v_frmbuf_wr v_hdmi_tx_ss v_uhdsdi_audio audio_formatter i2s_receiver i2s_transmitter mipi_dsi_tx_subsystem v_mix v_multi_scaler v_scenechange"
+					if {[lsearch -nocase $valid_mmip_list $inipname] >= 0} {
+						set ports_node [add_or_get_dt_node -n "ports" -l axis_switch_ports$drv_handle -p $node]
+						hsi::utils::add_new_dts_param "$ports_node" "#address-cells" 1 int
+						hsi::utils::add_new_dts_param "$ports_node" "#size-cells" 0 int
+						set port_node [add_or_get_dt_node -n "port" -l axis_switch_port0$ip -u 0 -p $ports_node]
+						hsi::utils::add_new_dts_param "$port_node" "reg" 0 int
+						if {[llength $inip]} {
+							set axis_switch_in_end ""
+							set axis_switch_remo_in_end ""
+							if {[info exists axis_switch_in_end_mappings] && [dict exists $axis_switch_in_end_mappings $inip]} {
+								set axis_switch_in_end [dict get $axis_switch_in_end_mappings $inip]
+								dtg_verbose "drv:$ip inend:$axis_switch_in_end"
+							}
+							if {[info exists axis_switch_in_remo_mappings] && [dict exists $axis_switch_in_remo_mappings $inip]} {
+								set axis_switch_remo_in_end [dict get $axis_switch_in_remo_mappings $inip]
+								dtg_verbose "drv:$ip inremoend:$axis_switch_remo_in_end"
+							}
+							if {[llength $axis_switch_remo_in_end]} {
+								set axisinnode [add_or_get_dt_node -n "endpoint" -l $axis_switch_remo_in_end -p $port_node]
+							}
+							if {[llength $axis_switch_in_end]} {
+								hsi::utils::add_new_dts_param "$axisinnode" "remote-endpoint" $axis_switch_in_end reference
+							}
 
 				}
 			}
@@ -8631,15 +8627,17 @@ proc get_axis_switch_in_connect_ip {ip intfpins} {
        foreach intf $intfpins {
                set connectip [get_connected_stream_ip [hsi get_cells -hier $ip] $intf]
                puts "connectip:$connectip"
-               if {[llength $connectip]} {
-                       set ipname [hsi get_property IP_NAME $connectip]
-                       puts "ipname:$ipname"
-                       set ip_mem_handles [get_ip_mem_ranges $connectip]
-                       if {[llength $ip_mem_handles]} {
-                               break
-                       } else {
-                               set master_intf [::hsi::get_intf_pins -of_objects [hsi get_cells -hier $connectip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
-                               get_axis_switch_in_connect_ip $connectip $master_intf
+               foreach cip $connectip {
+			if {[llength $cip]} {
+				set ipname [hsi get_property IP_NAME $cip]
+				puts "ipname:$ipname"
+				set ip_mem_handles [hsi::utils::get_ip_mem_ranges $cip]
+				if {[llength $ip_mem_handles]} {
+					break
+				} else {
+				set master_intf [::hsi::get_intf_pins -of_objects [hsi get_cells -hier $cip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
+				get_axis_switch_in_connect_ip $cip $master_intf
+				}
                        }
                }
        }
