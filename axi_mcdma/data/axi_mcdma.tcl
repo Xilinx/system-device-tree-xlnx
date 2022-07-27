@@ -100,7 +100,7 @@ proc generate {drv_handle} {
 		set addr_width [hsi get_property CONFIG.c_addr_width $mcdma_ip]
 		set inhex [format %x $addr_width]
 		append addrwidth "/bits/ 8 <0x$inhex>"
-		add_prop $node "xlnx,addrwidth" $addrwidth stringlist "pl.dtsi"
+		add_prop $node "xlnx,addrwidth" $addrwidth noformating "pl.dtsi"
 	}
 	incr dma_count
 	set_drv_conf_prop $drv_handle C_M_AXI_MM2S_DATA_WIDTH xlnx,mm2s-data-width hexint

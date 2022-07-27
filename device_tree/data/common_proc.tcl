@@ -711,6 +711,8 @@ proc write_value {type value} {
 			}
 		} elseif {$type == "comment"} {
 			set val "$value"
+		} elseif {$type == "noformating"} {
+			set val $value
 		} else {
                         puts "unknown type $type"
                 }
@@ -1002,6 +1004,8 @@ proc add_prop args {
 				set val ", $val"
 			}
 			if {[string match -nocase $already_key $val]} {
+			} elseif {[string match -nocase $type "noformating"]} {
+				set keyval $val
 			} else {
 				set keyval [$treeobj append $node $prop " $val"]
 			}

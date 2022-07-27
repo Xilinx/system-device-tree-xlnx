@@ -341,7 +341,7 @@ proc generate {drv_handle} {
 		    	set num_queues [hsi get_property CONFIG.c_num_mm2s_channels $connected_ip]
 				set inhex [format %x $num_queues]
 				set numqueues "/bits/ 16 <0x$inhex>"
-				add_prop $node "xlnx,num-queues" $numqueues stringlist "pl.dtsi"
+				add_prop $node "xlnx,num-queues" $numqueues noformating "pl.dtsi"
 				if {$version < 2018} {
 					dtg_warning "quotes to be removed or use 2018.1 version for $node param xlnx,num-queues"
 				}

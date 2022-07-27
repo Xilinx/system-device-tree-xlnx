@@ -98,11 +98,11 @@ proc generate {drv_handle} {
 	set addr_width [hsi get_property CONFIG.c_addr_width $dma_ip]
 	set inhex [format %x $addr_width]
 	append addrwidth "/bits/ 8 <0x$inhex>"
-	add_prop $node "xlnx,addrwidth" $addrwidth stringlist "pl.dtsi"
+	add_prop $node "xlnx,addrwidth" $addrwidth noformating "pl.dtsi"
 	set num_queues [hsi get_property CONFIG.c_num_mm2s_channels $dma_ip]
 	set inhex [format %x $num_queues]
 	append numqueues "/bits/ 16 <0x$inhex>"
-	add_prop $node "xlnx,num-queues" $numqueues stringlist "pl.dtsi"
+	add_prop $node "xlnx,num-queues" $numqueues noformating "pl.dtsi"
     }
     incr dma_count
 	set drvname [get_drivers $drv_handle]
