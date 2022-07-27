@@ -31,7 +31,6 @@ proc generate {drv_handle} {
 
     global connected_ip
 
-	pldt append $node compatible "\ \, \"xlnx,axi-dma-1.00.a\""
     set dma_ip [hsi::get_cells -hier $drv_handle]
 	set dma_count [get_count "dma_count"]
     if { [llength $dma_count] == 0 } {
@@ -53,6 +52,8 @@ proc generate {drv_handle} {
     if { $axiethernetfound || $is_xxv == 1} {
 	set compatstring "xlnx,eth-dma"
 	pldt append $node compatible "\ \, \"xlnx,eth-dma\""
+    } else {
+	pldt append $node compatible "\ \, \"xlnx,axi-dma-1.00.a\""
     }
     set tx_chan 0
     set rx_chan 0
