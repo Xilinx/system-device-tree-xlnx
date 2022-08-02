@@ -515,7 +515,7 @@ proc get_sink_pins {periph_pin} {
    if { [llength $net] == 0} {
        return [lappend return_value] 
    } else {
-       set signals [split [hsi get_property NAME $net] "&"]
+       set signals [split [hsi::get_property NAME $net] "&"]
        lappend source_pins
        if { [llength $signals] == 1 } {
        foreach signal $signals {
@@ -552,6 +552,26 @@ proc get_sink_pins {periph_pin} {
                }
             }
             set real_sink_pin [get_real_sink_pins_traverse_out $periph_pin]
+	    lappend result_real_sink_pin
+	    lappend pins_to_retain
+	    foreach outpin $real_sink_pin {
+		    set inpin [get_real_sink_pins_traverse_in $outpin]
+		    if { [llength $inpin ] == 0 } {
+			    set pins_to_retain [linsert $pins_to_retain end $outpin]
+		    }
+		    foreach tpin $inpin {
+			    set result_real_sink_pin [linsert $result_real_sink_pin end $tpin]
+		    }
+	    }
+	    lappend temp_result_pins
+	    foreach tpin $pins_to_retain {
+		    set temp_result_pins [linsert $temp_result_pins end $tpin ]
+	    }
+	    foreach tpin $result_real_sink_pin {
+		    set temp_result_pins [linsert $temp_result_pins end $tpin ]
+	    }
+	    set real_sink_pin $temp_result_pins
+
             if { [ llength $real_sink_pin] != 0 } {
                 foreach real_pin $real_sink_pin {
                   set real_sink_pins [linsert $real_sink_pins end $real_pin]
@@ -594,9 +614,10 @@ proc get_real_sink_pins_traverse_in { test_pin } {
     if { [ llength $hasCells] == 0 } {
       return $source_pins
     }
+    set ipname [hsi get_property IP_NAME [hsi::get_cells -of_objects $test_pin]]
     #set source_type [hsi get_property IP_NAME [hsi::get_cells -of_objects $test_pin]]
-    set source_type [hsi get_property BD_TYPE [hsi::get_cells -of_objects $test_pin]]
-    if { [ string match -nocase $source_type "block_container" ] } {
+    set source_type [hsi::get_property BD_TYPE [hsi::get_cells -of_objects $test_pin]]
+    if { [ string match -nocase $source_type "block_container" ] || [ string match -nocase $ipname "versal_cips" ] || [ string match -nocase $ipname "pspmc" ] } {
     
         set lower_net [hsi::get_nets -boundary_type lower -of_objects $test_pin]
         set upper_net [hsi::get_nets -boundary_type upper -of_objects $test_pin]
@@ -607,6 +628,7 @@ proc get_real_sink_pins_traverse_in { test_pin } {
             # removing the pin form where the traversal started or from where the funtion is called 
             set real_sink_pins [remove_pin_from_list $real_sink_pins $test_pin]
             
+	    lappend source_pins
             if { [ llength $real_sink_pins] != 0 } {
                 foreach source_pin $real_sink_pins { 
                     set source_pins [linsert $source_pins 0 $source_pin ]
@@ -622,6 +644,37 @@ proc get_real_sink_pins_traverse_in { test_pin } {
                     set source_pins [linsert $source_pins 0 $source_port]
                 }
             }
+
+	    #Need to recursively go into the hierarchies
+	    lappend real_sink_pins_recurse
+	    lappend hier_pins
+	    foreach itr_sink_pin $source_pins {
+		    set itr_sink_pins_recurse [get_real_sink_pins_traverse_in $itr_sink_pin]
+		    foreach temppin $itr_sink_pins_recurse {
+			    set real_sink_pins_recurse [linsert $real_sink_pins_recurse 0 $temppin ]
+		    }
+
+		    if { [llength $itr_sink_pins_recurse] != 0 } {
+                            set hier_pins [linsert $hier_pins 0 $itr_sink_pin]
+                    }
+	    }
+
+	    foreach itr_sink_pin $hier_pins {
+                    set sink_pins_cur_lvl [remove_pin_from_list $source_pins $itr_sink_pin ]
+            }
+	    if { [ llength $sink_pins_cur_lvl] != 0 } {
+	        foreach temppin $sink_pins_cur_lvl {
+                    #set source_pins [linsert $source_pins 0 $sink_pins_cur_lvl ]
+                    set source_pins [linsert $source_pins 0 $temppin  ]
+	        }
+            }
+
+	    if { [llength $real_sink_pins_recurse] != 0 } {
+                    foreach itr_pin $real_sink_pins_recurse {
+                  	 set source_pins [linsert $source_pins 0 $itr_pin ]
+                }
+            }
+		    
         }
     } else {
          set source_pins [linsert $source_pins 0 $test_pin]
@@ -630,9 +683,81 @@ proc get_real_sink_pins_traverse_in { test_pin } {
     return $source_pins
 }
 
+proc get_real_sink_pins_traverse_out_recurse { periph_pin } {
+
+	lappend sink_pins
+	set hasCells [hsi::get_cells -of_objects $periph_pin]
+        set ipname [hsi get_property IP_NAME [hsi::get_cells -of_objects $periph_pin]]
+        set source_type [hsi get_property BD_TYPE [hsi::get_cells -of_objects $periph_pin]]
+         if { [ string match -nocase $source_type "block_container" ] || [ string match -nocase $ipname "versal_cips" ] || [ string match -nocase $ipname "pspmc" ] } {
+         
+            set lower_net [hsi::get_nets -boundary_type lower -of_objects $periph_pin]
+            set upper_net [hsi::get_nets -boundary_type upper -of_objects $periph_pin]
+            
+            if { [ llength $lower_net] != 0  && [ llength $upper_net] != 0 } {
+               
+                set real_sink_pins [hsi::get_pins -of_objects $upper_net -filter "DIRECTION==I" ]
+                # removing the pin from where the traversal started or from where the funtion is called 
+                set real_sink_pins [remove_pin_from_list $real_sink_pins $periph_pin]
+            
+                set real_sink_ports [::hsi::get_ports -of_objects $upper_net -filter "DIRECTION==O" ]
+                # removing the pin from where the traversal started or from where the funtion is called 
+                set real_sink_ports [remove_pin_from_list $real_sink_ports $periph_pin]
+                                                                                                                        
+                lappend sink_pins_cur_lvl
+                if { [ llength $real_sink_pins] != 0 } {
+                    foreach sink_pin $real_sink_pins { 
+                        set sink_pins_cur_lvl [linsert $sink_pins_cur_lvl 0 $sink_pin ]
+                    }
+                }
+            
+                if { [llength $real_sink_ports] != 0 } {
+                    foreach sink_port $real_sink_ports { 
+                        set sink_pins_cur_lvl [linsert $sink_pins_cur_lvl 0 $sink_port]
+                    }
+                }
+                                                                                                                        
+                #Need to recursively go into the hierarchies
+                lappend real_sink_pins_recurse
+                lappend hier_pins
+                foreach itr_sink_pin $real_sink_pins {
+             	   set itr_sink_pins_recurse [get_real_sink_pins_traverse_out_recurse $itr_sink_pin]
+             	   foreach temppin $itr_sink_pins_recurse {
+             		   set real_sink_pins_recurse [linsert $real_sink_pins_recurse 0 $temppin ]
+             	   }
+             	   if { [llength $itr_sink_pins_recurse] != 0 } {
+                                set hier_pins [linsert $hier_pins 0 $itr_sink_pin]
+                        }
+                                                                                                                        
+                }
+                                                                                                                        
+                foreach itr_sink_pin $hier_pins {
+                        set sink_pins_cur_lvl [remove_pin_from_list $sink_pins_cur_lvl $itr_sink_pin ]
+                }
+                if { [ llength $sink_pins_cur_lvl] != 0 } {
+		    foreach temppin $sink_pins_cur_lvl {
+                        #set sink_pins [linsert $sink_pins 0 $sink_pins_cur_lvl ]
+                        set sink_pins [linsert $sink_pins 0 $temppin  ]
+	            }
+                }
+                                                                                                                        
+                if { [llength $real_sink_pins_recurse] != 0 } {
+             	   foreach sink_pin $real_sink_pins_recurse {
+             		   set sink_pins  [linsert $sink_pins 0 $sink_pin ]
+                    }
+                }
+            }
+         }
+	 if { [ llength $sink_pins] != 0 } {
+             return $sink_pins
+         }
+
+}
+
 proc get_real_sink_pins_traverse_out { periph_pin } {
 
     #InDirect out pins
+    set hasCells [hsi::get_cells -of_objects $periph_pin]
     lappend source_pins
     set sig_net [hsi::get_nets -of_objects $periph_pin]
     set pins [hsi::get_pins -of_objects $sig_net -filter {DIRECTION==O}]
@@ -654,33 +779,12 @@ proc get_real_sink_pins_traverse_out { periph_pin } {
             if { [ llength $hasCells] == 0 } {
               continue
             }
-            #set source_type [hsi get_property IP_NAME [hsi::get_cells -of_objects $test_pin]]
-            set source_type [hsi get_property BD_TYPE [hsi::get_cells -of_objects $test_pin]]
-            if { [ string match -nocase $source_type "block_container" ] } {
-            
-               set lower_net [hsi::get_nets -boundary_type lower -of_objects $test_pin]
-               set upper_net [hsi::get_nets -boundary_type upper -of_objects $test_pin]
-               
-               if { [ llength $lower_net] != 0  && [ llength $upper_net] != 0 } {
-                  
-                   set real_sink_pins [hsi::get_pins -of_objects $upper_net -filter "DIRECTION==I" ]
-                   # removing the pin from where the traversal started or from where the funtion is called 
-                   set real_sink_pins [remove_pin_from_list $real_sink_pins $test_pin]
-                   if { [ llength $real_sink_pins] != 0 } {
-                       foreach source_pin $real_sink_pins { 
-                           set sink_pins [linsert $sink_pins 0 $source_pin ]
-                       }
-                   }
-               
-                   set real_sink_ports [hsi::get_ports -of_objects $upper_net -filter "DIRECTION==O" ]
-                   # removing the pin from where the traversal started or from where the funtion is called 
-                   set real_sink_ports [remove_pin_from_list $real_sink_ports $test_pin]
-                   if { [llength $real_sink_ports] != 0 } {
-                       foreach source_port $real_sink_ports { 
-                           set sink_pins [linsert $sink_pins 0 $source_port]
-                       }
-                   }
-               }
+	    set sink_pins_recurse [get_real_sink_pins_traverse_out_recurse $test_pin]
+            if { [llength $sink_pins_recurse] != 0 } {
+		foreach temppin $sink_pins_recurse {
+                    #set sink_pins [linsert $sink_pins 0 $sink_pins_recurse]
+                    set sink_pins [linsert $sink_pins 0 $temppin ]
+	        }
             }
          } 
      }
