@@ -2121,13 +2121,13 @@ proc get_intr_id {drv_handle intr_port_name} {
 					}
 				}
 			}
-			set intc [hsi get_property IP_NAME $intc]
+			set intc_ipname [hsi get_property IP_NAME $intc]
 			if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] } {
-				if {[string match -nocase $intc "axi_intc"]} {
+				if {[string match -nocase $intc_ipname "axi_intc"]} {
 					set intc [get_interrupt_parent $drv_handle $pin]
 				}
 			}
-			if {[string match -nocase $proctype "versal"] && [string match -nocase $intc "axi_intc"] } {
+			if {[string match -nocase $proctype "versal"] && [string match -nocase $intc_ipname "axi_intc"] } {
 				set intc [get_interrupt_parent $drv_handle $pin]
 			}
 		}
@@ -2152,7 +2152,7 @@ proc get_intr_id {drv_handle intr_port_name} {
 			} elseif {[string match "[hsi get_property IP_NAME $intc]" "axi_intc"] } {
 				set cur_intr_info "$intr_id $intr_type"
 			}
-		} elseif {[string match -nocase $intc "psu_acpu_gic"] || [string match -nocase $intc "psv_acpu_gic"]} {
+		} elseif {[string match -nocase $intc_ipname "psu_acpu_gic"] || [string match -nocase $intc_ipname "psv_acpu_gic"]} {
 		    set cur_intr_info "0 $intr_id $intr_type"
 		} else {
 			set cur_intr_info "$intr_id $intr_type"
@@ -4907,19 +4907,20 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 			}
 			set ip_name $intc
 			if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "zynquplus"] || [string match -nocase $proctype "zynquplusRFSOC"]} {
-				set intc [hsi get_property IP_NAME $intc]
+				set intc_name [hsi get_property IP_NAME $intc]
 				if {[llength $intc] > 1} {
 					foreach intr_cntr $intc {
 						if { [is_ip_interrupting_current_proc $intr_cntr] } {
 							set intc $intr_cntr
+							set intc_name [hsi get_property IP_NAME $intc]
 						}
 					}
 				}
 				set proclist "zynqmp zynquplus zynquplusRFSOC"
-				if {[lsearch -nocase $proclist $proctype] >= 0 && [string match -nocase $intc "axi_intc"]} {
+				if {[lsearch -nocase $proclist $proctype] >= 0 && [string match -nocase $intc_name "axi_intc"]} {
 					set intc [get_interrupt_parent $drv_handle $pin]
 				}
-				if {[string match -nocase $proctype "versal"] && [string match -nocase $intc "axi_intc"] } {
+				if {[string match -nocase $proctype "versal"] && [string match -nocase $intc_name "axi_intc"] } {
 					set intc [get_interrupt_parent $drv_handle $pin]
 				}
 			}
@@ -4966,7 +4967,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 				} elseif {[string match "[hsi get_property IP_NAME $intc]" "axi_intc"] } {
 					set cur_intr_info "$intr_id $intr_type"
 				}
-			} elseif {[string match -nocase $intc "psu_acpu_gic"] || [string match -nocase $intc "psv_acpu_gic"]} {
+			} elseif {[string match -nocase $intc_name "psu_acpu_gic"] || [string match -nocase $intc_name "psv_acpu_gic"]} {
 			    set cur_intr_info "0 $intr_id $intr_type"
 			} else {
 				set cur_intr_info "$intr_id $intr_type"
@@ -5004,19 +5005,20 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 		return -1
 	}
 	set_drv_prop $drv_handle interrupts $intr_info intlist
-	if {[string_is_empty $intc]} {
+	if {[string_is_empty $intc_name]} {
 		return -1
 	}
 	set intc [ps_node_mapping $intc label]
 	set intc_len [llength $intc]
 	if {$intc_len > 1} {
 		foreach intc_ctr $intc { 
+			set intc_ctr [hsi get_property IP_NAME [hsi::get_cells -hier $intc]]
 			if { [string match -nocase $intc_ctr "psu_acpu_gic"] || [string match -nocase $intc_ctr "psv_acpu_gic"]} {
 				set intc "gic"
 			}
 		}
 	} else {
-		if { [string match -nocase $intc "psu_acpu_gic"] || [string match -nocase $intc "psv_acpu_gic"]} {
+		if { [string match -nocase $intc_name "psu_acpu_gic"] || [string match -nocase $intc_name "psv_acpu_gic"]} {
 			set intc "gic"
 		}
 	}
