@@ -934,7 +934,25 @@ proc gen_zocl_node {} {
                add_prop $zocl_node "interrupts-extended" $ref reference $default_dts
                }
        }
- }
+    }
+ 		set decouplers [hsi get_cells -hier -filter {IP_NAME == "dfx_decoupler"}]
+		set count 1
+		foreach decoupler $decouplers {
+			if { $count == 1 } {
+				add_prop "$zocl_node" "xlnx,pr-decoupler" "" boolean $default_dts
+			} else {
+				#zocl driver not supporting multiple decouplers so display warning.
+				dtg_warning "Multiple dfx_decoupler IPs found in the design,\
+					using pr-isolation-addr from [lindex [split $decouplers " "] 0] IP"
+				break
+			}
+			set baseaddr [hsi get_property CONFIG.C_BASEADDR [hsi get_cells -hier $decoupler]]
+			if {[llength $baseaddr]} {
+				set baseaddr "0x0 $baseaddr"
+				add_prop "$zocl_node" "xlnx,pr-isolation-addr" "$baseaddr" intlist $default_dts
+			}
+			incr count
+		}
 }
 
 proc gen_zynqmp_pinctrl {} {
