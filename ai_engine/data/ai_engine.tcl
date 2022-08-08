@@ -27,7 +27,7 @@ proc generate_aie_array_device_info {node drv_handle bus_node} {
 	set memrows "00 00"
 	add_prop "${node}" "xlnx,mem-rows" $memrows bytesequence "pl.dtsi"
 	set power_domain "&versal_firmware 0x18224072"
-	add_prop "${node}" "power-domains" $power_domain stringlist "pl.dtsi"
+	add_prop "${node}" "power-domains" $power_domain string "pl.dtsi"
 	add_prop "${node}" "#address-cells" 2 hexlist "pl.dtsi"
 	add_prop "${node}" "#size-cells" 2 hexlist "pl.dtsi"
 	add_prop "${node}" "ranges" 0 boolean "pl.dtsi"
