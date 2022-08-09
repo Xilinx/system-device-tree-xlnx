@@ -796,6 +796,12 @@
 			};
 		};
 
+		xilsem_edac: edac@f2014050 {
+			compatible = "xlnx,versal-xilsem-edac";
+			status = "disabled";
+			reg = <0x0 0xf2014050 0x0 0xc4>;
+		};
+
 		watchdog: watchdog@fd4d0000 {
 			compatible = "xlnx,versal-wwdt-1.0";
 			status = "disabled";
