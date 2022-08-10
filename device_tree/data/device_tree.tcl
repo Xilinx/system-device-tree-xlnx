@@ -259,8 +259,11 @@ proc extract_dts_name {override value} {
 proc gen_edac_node {} {
 	set dts_file "pcw.dtsi"
 	set edac_node [add_or_get_dt_node -n &xilsem_edac -d $dts_file]
-	if { [hsi get_property CONFIG.SEM_MEM_SCAN [hsi get_cells -hier -filter {IP_NAME == "pspmc"}]] || [hsi get_property CONFIG.SEM_NPI_SCAN [hsi get_cells -hier -filter {IP_NAME == "pspmc"}]] } {
-		add_prop "${edac_node}" "status" "okay" string ${dts_file}
+	set pspmc [hsi get_cells -hier -filter {IP_NAME == "pspmc"}]
+	if {[llength $pspmc]} {
+		if { [hsi get_property CONFIG.SEM_MEM_SCAN $pspmc] || [hsi get_property CONFIG.SEM_NPI_SCAN $pspmc] } {
+			add_prop "${edac_node}" "status" "okay" string $dts_file
+		}
 	}
 }
 
@@ -1237,7 +1240,9 @@ Generates system device tree based on args given in:
 			gen_zynqmp_opp_freq
 			gen_zynqmp_pinctrl
 			gen_zocl_node
-			gen_edac_node
+			if {[string match -nocase $proctype "versal"]} {
+				gen_edac_node
+			}
 		}
     	}
     	if {[string match -nocase $proctype "zynq"]} {
