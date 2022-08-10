@@ -15,17 +15,37 @@
 proc generate_aie_array_device_info {node drv_handle bus_node} {
 	set aie_array_id 0
 	set compatible [get_comp_str $drv_handle]
-	set keyval [pldt append $node compatible "\ \ , \"xlnx,ai_engine-v2.0\" \,"]
-        set_drv_prop $drv_handle compatible "$compatible" stringlist
+	set compatible [append compatible " " "xlnx,ai-engine-v2.0"]
+	set_drv_prop $drv_handle compatible "$compatible" stringlist
 
-	set aiegen "01"
-	add_prop "${node}" "xlnx,aie-gen" $aiegen bytesequence "pl.dtsi"
-	set shimrows "00 01"
-	add_prop "${node}" "xlnx,shim-rows" $shimrows bytesequence "pl.dtsi"
-	set corerows "1 8"
-	add_prop "${node}" "xlnx,core-rows" $corerows bytesequence "pl.dtsi"
-	set memrows "00 00"
-	add_prop "${node}" "xlnx,mem-rows" $memrows bytesequence "pl.dtsi"
+   	set hw_gen [hsi get_property HWGEN [hsi::get_hw_primitives aie]]
+	set aie_rows [hsi get_property AIETILEROWS [hsi::get_hw_primitives aie]]
+	set mem_rows [hsi get_property MEMTILEROW [hsi::get_hw_primitives aie]]
+	set shim_rows [hsi get_property SHIMROW [hsi::get_hw_primitives aie]]
+
+	set aie_rows_start [lindex [split $aie_rows ":"] 0]
+	set aie_rows_num [lindex [split $aie_rows ":"] 1]
+	set mem_rows_start [lindex [split $mem_rows ":"] 0]
+	if {$mem_rows_start==-1} {
+		set mem_rows_start 0
+	}
+	set mem_rows_num [lindex [split $mem_rows ":"] 1]
+	set shim_rows_start [lindex [split $shim_rows ":"] 0]
+	set shim_rows_num [lindex [split $shim_rows ":"] 1]
+
+	if {$hw_gen=="AIE"} {
+		append aiegen "/bits/ 8 <0x1>"
+	} elseif {$hw_gen=="AIEML"} {
+		append aiegen "/bits/ 8 <0x2>"
+	}
+
+	add_prop "${node}" "xlnx,aie-gen" $aiegen noformating "pl.dtsi"
+	append shimrows "/bits/ 8 <${shim_rows_start} ${shim_rows_num}>"
+	add_prop "${node}" "xlnx,shim-rows" $shimrows noformating "pl.dtsi"
+	append corerows "/bits/ 8 <${aie_rows_start} ${aie_rows_num}>"
+	add_prop "${node}" "xlnx,core-rows" $corerows noformating "pl.dtsi"
+	append memrows "/bits/ 8 <$mem_rows_start $mem_rows_num>"
+	add_prop "${node}" "xlnx,mem-rows" $memrows noformating "pl.dtsi"
 	set power_domain "&versal_firmware 0x18224072"
 	add_prop "${node}" "power-domains" $power_domain string "pl.dtsi"
 	add_prop "${node}" "#address-cells" 2 hexlist "pl.dtsi"
