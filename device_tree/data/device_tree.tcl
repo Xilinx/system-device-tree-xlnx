@@ -886,6 +886,17 @@ proc gen_zocl_node {} {
        if {!$zocl} {
                return
        }
+       set ip_count 0
+       foreach ip [get_drivers] {
+            if {[is_pl_ip $ip]} {
+                incr ip_count
+                break
+            }
+       }
+	if {$ip_count == 0} {
+	    dtg_warning "dt_zocl enabled and No PL ip's found in specified design, skip adding zocl node"
+	    return
+	}
        set dt_overlay [get_user_config $common_file -dt_overlay]
        if {$dt_overlay} {
                set bus_node "overlay2"
