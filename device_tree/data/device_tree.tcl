@@ -267,6 +267,22 @@ proc gen_edac_node {} {
 	}
 }
 
+proc gen_ddrmc_node {} {
+	set dts_file "pcw.dtsi"
+	set ddrmc [hsi get_cells -hier -filter {IP_NAME == "noc_mc_ddr4"}]
+	if {[llength $ddrmc]} {
+		set i 0
+		foreach mc $ddrmc {
+			set ddrmc_node [add_or_get_dt_node -n &mc$i -d $dts_file]
+			if { [hsi get_property CONFIG.MC_ECC $mc] } {
+				add_prop "${ddrmc_node}" "status" "okay" string ${dts_file}
+			}
+			incr i
+		}
+	}
+
+}
+
 proc gen_sata_laneinfo {} {
 
 	foreach ip [hsi::get_cells] {
@@ -1253,6 +1269,7 @@ Generates system device tree based on args given in:
 			gen_zocl_node
 			if {[string match -nocase $proctype "versal"]} {
 				gen_edac_node
+				gen_ddrmc_node
 			}
 		}
     	}
