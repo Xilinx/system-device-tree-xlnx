@@ -18,20 +18,39 @@ proc generate_aie_array_device_info {node drv_handle bus_node} {
 	set compatible [append compatible " " "xlnx,ai-engine-v2.0"]
 	set_drv_prop $drv_handle compatible "$compatible" stringlist
 
-   	set hw_gen [hsi get_property HWGEN [hsi::get_hw_primitives aie]]
-	set aie_rows [hsi get_property AIETILEROWS [hsi::get_hw_primitives aie]]
-	set mem_rows [hsi get_property MEMTILEROW [hsi::get_hw_primitives aie]]
-	set shim_rows [hsi get_property SHIMROW [hsi::get_hw_primitives aie]]
+   	#set default values for S80 device
+	set hw_gen "AIE"
+	set aie_rows_start 1
+	set aie_rows_num 8
+	set mem_rows_start 0
+	set mem_rows_num 0
+	set shim_rows_start 0
+	set shim_rows_num 1
 
-	set aie_rows_start [lindex [split $aie_rows ":"] 0]
-	set aie_rows_num [lindex [split $aie_rows ":"] 1]
-	set mem_rows_start [lindex [split $mem_rows ":"] 0]
-	if {$mem_rows_start==-1} {
-		set mem_rows_start 0
+	# override the above default values if AIE primitives are available in
+	# xsa
+	set aie_prop [hsi::get_hw_primitives aie]
+	if {$aie_prop != ""} {
+		puts "INFO: Reading AIE hardware properties from XSA."
+
+		set hw_gen [hsi get_property HWGEN [hsi::get_hw_primitives aie]]
+		set aie_rows [hsi get_property AIETILEROWS [hsi::get_hw_primitives aie]]
+		set mem_rows [hsi get_property MEMTILEROW [hsi::get_hw_primitives aie]]
+		set shim_rows [hsi get_property SHIMROW [hsi::get_hw_primitives aie]]
+
+		set aie_rows_start [lindex [split $aie_rows ":"] 0]
+		set aie_rows_num [lindex [split $aie_rows ":"] 1]
+		set mem_rows_start [lindex [split $mem_rows ":"] 0]
+		if {$mem_rows_start==-1} {
+			set mem_rows_start 0
+		}
+		set mem_rows_num [lindex [split $mem_rows ":"] 1]
+		set shim_rows_start [lindex [split $shim_rows ":"] 0]
+		set shim_rows_num [lindex [split $shim_rows ":"] 1]
+
+	} else {
+		dtg_warning "$drv_handle: AIE hardware properties are not available in XSA, using defaults."
 	}
-	set mem_rows_num [lindex [split $mem_rows ":"] 1]
-	set shim_rows_start [lindex [split $shim_rows ":"] 0]
-	set shim_rows_num [lindex [split $shim_rows ":"] 1]
 
 	if {$hw_gen=="AIE"} {
 		append aiegen "/bits/ 8 <0x1>"
