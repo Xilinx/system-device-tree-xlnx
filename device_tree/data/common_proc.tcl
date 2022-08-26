@@ -6710,6 +6710,8 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 					lappend intr_cntrl $sink_periph
 				} elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "microblaze"] } {
 					lappend intr_cntrl $sink_periph
+				} elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "tmr_voter"] } {
+					lappend intr_cntrl $sink_periph
 				} elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "dfx_decoupler"] } {
 					set intr [hsi::get_pins -of_objects $sink_periph -filter {TYPE==INTERRUPT&&DIRECTION==O}
 					lappend intr_cntrl [get_intr_cntrl_name $sink_periph "$intr"]
