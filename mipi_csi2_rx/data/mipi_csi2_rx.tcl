@@ -91,7 +91,7 @@ if {[llength $outip]} {
                 gen_remoteendpoint $drv_handle "$outip$drv_handle"
         }
                if {[string match -nocase [hsi get_property IP_NAME $outip] "axis_switch"]} {
-                       set ip_mem_handles [get_ip_mem_ranges $ip]
+                       set ip_mem_handles [get_ip_mem_ranges $outip]
                        if {[llength $ip_mem_handles]} {
                                set mipi_node [create_node -n "endpoint" -l mipi_csirx_out$drv_handle -p $port_node -d $dts_file]
                                gen_axis_switch_in_endpoint $drv_handle "mipi_csirx_out$drv_handle"
