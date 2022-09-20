@@ -603,6 +603,7 @@ proc gen_afi_node {} {
 
 proc gen_include_dtfile {args} {
 	set kernel_dtsi [lindex $args 0]
+	set outdir_path [lindex $args 1]
 	set fp [open $kernel_dtsi r]
 	set file_data [read $fp]
 	set data [split $file_data "\n"]
@@ -614,7 +615,8 @@ proc gen_include_dtfile {args} {
 			foreach file [glob [file normalize [file dirname ${kernel_dtsi}]/*]] {
 				# NOTE: ./ works only if we did not change our directory
 				if {[regexp $include_dt $file match]} {
-					file copy -force $file ./
+					file copy -force $file ${outdir_path}/
+					gen_include_dtfile $file ${outdir_path}/
 					break
 				}
 			}
@@ -720,7 +722,7 @@ proc gen_board_info {} {
 					file copy -force $file $dir_path
 					update_system_dts_include [file tail $file]
 					set valid_board_file 1
-					gen_include_dtfile "${file}"
+					gen_include_dtfile "${file}" "${dir_path}"
 					break
 				}
 			}

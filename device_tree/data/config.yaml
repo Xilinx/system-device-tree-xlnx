@@ -13,7 +13,7 @@
 #
 ---
 dict_devicetree:
-    kernel_ver: 2022.1
+    kernel_ver: 2022.2
     mainline_kernel: none
     board_dts: versal-vck190-reva
     dt_overlay: false

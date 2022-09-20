@@ -139,6 +139,7 @@ namespace export *
 set count 0
 set pl_ps_irq1 0
 set pl_ps_irq0 0
+set intrpin_width 0
 set def_string "__def_none"
 set zynq_soc_dt_tree "dummy.dtsi"
 set bus_clk_list ""
