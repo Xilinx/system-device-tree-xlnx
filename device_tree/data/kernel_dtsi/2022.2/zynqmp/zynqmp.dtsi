@@ -344,7 +344,7 @@
 		};
 	};
 
-	amba: axi {
+	amba: amba {
 		compatible = "simple-bus";
 		u-boot,dm-pre-reloc;
 		#address-cells = <2>;
