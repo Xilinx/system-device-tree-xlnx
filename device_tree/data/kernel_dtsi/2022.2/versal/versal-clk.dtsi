@@ -43,7 +43,7 @@
 	firmware {
 		versal_firmware: versal-firmware {
 			compatible = "xlnx,versal-firmware";
-			interrupt-parent = <&gic>;
+			interrupt-parent = <&imux>;
 			u-boot,dm-pre-reloc;
 			method = "smc";
 			#power-domain-cells = <1>;
@@ -58,7 +58,7 @@
 
 			zynqmp_power: zynqmp-power {
 				compatible = "xlnx,zynqmp-power";
-				interrupt-parent = <&gic>;
+				interrupt-parent = <&imux>;
 				interrupts = <0 30 4>;
 				mboxes = <&ipi_mailbox_pmu1 0>,
 					 <&ipi_mailbox_pmu1 1>;
@@ -126,7 +126,7 @@
 
 	zynqmp_ipi {
 		compatible = "xlnx,zynqmp-ipi-mailbox";
-		interrupt-parent = <&gic>;
+		interrupt-parent = <&imux>;
 		interrupts = <0 30 4>;
 		xlnx,ipi-id = <2>;
 		#address-cells = <2>;
@@ -146,7 +146,7 @@
 	};
 };
 
-&cpu0 {
+&a72_cpu0 {
 	clocks = <&versal_clk ACPU>;
 };
 

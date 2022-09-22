@@ -83,14 +83,14 @@
 			compatible = "arm,cortex-r5", "arm,armv8";
 			device_type = "cpu";
 			reg = <0x4>;
-            power-domains = <&zynqmp_firmware 0x7>;
+			power-domains = <&zynqmp_firmware PD_RPU_0>;
 		};
 
 		r5_cpu1: cpu@1 {
 			compatible = "arm,cortex-r5", "arm,armv8";
 			device_type = "cpu";
 			reg = <0x5>;
-            power-domains = <&zynqmp_firmware 0x8>;
+			power-domains = <&zynqmp_firmware PD_RPU_1>;
 		};
 	};
 

@@ -7098,7 +7098,7 @@ proc get_psu_interrupt_id { ip_name port_name } {
 			set number 0
 			global intrpin_width
 			for { set i 0 } {$i <= $pin_number} {incr i} {
-				set pin_wdth [get_property LEFT [ lindex [ get_pins -of_objects [get_cells -hier $sink_periph ] ] $i ] ]
+				set pin_wdth [hsi get_property LEFT [ lindex [ hsi::get_pins -of_objects [hsi::get_cells -hier $sink_periph ] ] $i ] ]
 				if { $i == $pin_number } {
 					set intrpin_width [expr $pin_wdth + 1]
 				} else {
@@ -7120,7 +7120,7 @@ proc get_psu_interrupt_id { ip_name port_name } {
                                set intr_pin [hsi::get_pins -of_objects $sink_periph -filter "NAME==$dout"]
                                set sink_pins [get_sink_pins $intr_pin]
                                set sink_periph [::hsi::get_cells -of_objects $sink_pins]
-			        set connected_ip [get_property IP_NAME [get_cells -hier $sink_periph]]
+			        set connected_ip [hsi get_property IP_NAME [hsi::get_cells -hier $sink_periph]]
                        }
 			foreach pin $sink_pins {
 				set sink_pin $pin
