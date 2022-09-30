@@ -17,8 +17,7 @@ variable aie_array_cols_num
 proc generate_aie_array_device_info {node drv_handle bus_node} {
 	set aie_array_id 0
 	set compatible [get_comp_str $drv_handle]
-	set compatible [append compatible " " "xlnx,ai-engine-v2.0"]
-	set_drv_prop $drv_handle compatible "$compatible" stringlist
+	pldt append $node compatible "\ \, \"xlnx,ai-engine-v2.0\""
 
 	#set default values for S80 device
 	set hw_gen "AIE"
@@ -39,11 +38,11 @@ proc generate_aie_array_device_info {node drv_handle bus_node} {
 		if {$aie_prop != ""} {
 			puts "INFO: Reading AIE hardware properties from XSA."
 
-			set hw_gen [get_property HWGEN [hsi::get_hw_primitives aie]]
-			set aie_rows [get_property AIETILEROWS [hsi::get_hw_primitives aie]]
-			set mem_rows [get_property MEMTILEROW [hsi::get_hw_primitives aie]]
-			set shim_rows [get_property SHIMROW [hsi::get_hw_primitives aie]]
-			set ::aie_array_cols_num [get_property AIEARRAYCOLUMNS [hsi::get_hw_primitives aie]]
+			set hw_gen [hsi get_property HWGEN [hsi::get_hw_primitives aie]]
+			set aie_rows [hsi get_property AIETILEROWS [hsi::get_hw_primitives aie]]
+			set mem_rows [hsi get_property MEMTILEROW [hsi::get_hw_primitives aie]]
+			set shim_rows [hsi get_property SHIMROW [hsi::get_hw_primitives aie]]
+			set ::aie_array_cols_num [hsi get_property AIEARRAYCOLUMNS [hsi::get_hw_primitives aie]]
 
 			set aie_rows_start [lindex [split $aie_rows ":"] 0]
 			set aie_rows_num [lindex [split $aie_rows ":"] 1]
