@@ -39,7 +39,7 @@ proc generate {drv_handle} {
        #for the address 0xa4010000 to 0x40000
        set ips [hsi::get_cells -hier -filter {IP_NAME == "mrmac"}]
        if {[llength $ips]} {
-               set mem_ranges [hsi::get_ip_mem_ranges [get_cells -hier $drv_handle]]
+               set mem_ranges [get_ip_mem_ranges [get_cells -hier $drv_handle]]
                foreach mem_range $mem_ranges {
                        set base_addr [string tolower [hsi get_property BASE_VALUE $mem_range]]
                        set high_addr [string tolower [hsi get_property HIGH_VALUE $mem_range]]
