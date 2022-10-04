@@ -306,6 +306,7 @@
 			status = "disabled";
 			reg = <0 0xff060000 0 0x6000>;
 			interrupts = <0 20 4>;
+			interrupt-parent = <&imux>;
 			clock-names = "can_clk", "s_axi_aclk";
 			rx-fifo-depth = <0x40>;
 			tx-mailbox-count = <0x20>;
@@ -316,6 +317,7 @@
 			status = "disabled";
 			reg = <0 0xff070000 0 0x6000>;
 			interrupts = <0 21 4>;
+			interrupt-parent = <&imux>;
 			clock-names = "can_clk", "s_axi_aclk";
 			rx-fifo-depth = <0x40>;
 			tx-mailbox-count = <0x20>;
@@ -331,6 +333,7 @@
 			cci_pmu: pmu@10000 {
 				compatible = "arm,cci-500-pmu,r0";
 				reg = <0x10000 0x90000>;
+				interrupt-parent = <&imux>;
 				interrupts = <0 106 4>,
 					     <0 106 4>,
 					     <0 106 4>,
@@ -348,6 +351,7 @@
 			status = "disabled";
 			reg = <0 0xffa80000 0 0x1000>;
 			interrupts = <0 60 4>;
+			interrupt-parent = <&imux>;
 			clock-names = "clk_main", "clk_apb";
 			/* iommus = <&smmu 0x210>; */
 			xlnx,bus-width = <64>;
@@ -360,6 +364,7 @@
 			status = "disabled";
 			reg = <0 0xffa90000 0 0x1000>;
 			interrupts = <0 61 4>;
+			interrupt-parent = <&imux>;
 			clock-names = "clk_main", "clk_apb";
 			/* iommus = <&smmu 0x212>; */
 			xlnx,bus-width = <64>;
@@ -372,6 +377,7 @@
 			status = "disabled";
 			reg = <0 0xffaa0000 0 0x1000>;
 			interrupts = <0 62 4>;
+			interrupt-parent = <&imux>;
 			clock-names = "clk_main", "clk_apb";
 			/* iommus = <&smmu 0x214>; */
 			xlnx,bus-width = <64>;
@@ -385,6 +391,7 @@
 			status = "disabled";
 			reg = <0 0xffab0000 0 0x1000>;
 			interrupts = <0 63 4>;
+			interrupt-parent = <&imux>;
 			clock-names = "clk_main", "clk_apb";
 			/* iommus = <&smmu 0x216>; */
 			xlnx,bus-width = <64>;
@@ -397,6 +404,7 @@
 			status = "disabled";
 			reg = <0 0xffac0000 0 0x1000>;
 			interrupts = <0 64 4>;
+			interrupt-parent = <&imux>;
 			clock-names = "clk_main", "clk_apb";
 			/* iommus = <&smmu 0x218>; */
 			xlnx,bus-width = <64>;
@@ -409,6 +417,7 @@
 			status = "disabled";
 			reg = <0 0xffad0000 0 0x1000>;
 			interrupts = <0 65 4>;
+			interrupt-parent = <&imux>;
 			clock-names = "clk_main", "clk_apb";
 			/* iommus = <&smmu 0x21a>; */
 			xlnx,bus-width = <64>;
@@ -421,6 +430,7 @@
 			status = "disabled";
 			reg = <0 0xffae0000 0 0x1000>;
 			interrupts = <0 66 4>;
+			interrupt-parent = <&imux>;
 			clock-names = "clk_main", "clk_apb";
 			/* iommus = <&smmu 0x21c>; */
 			xlnx,bus-width = <64>;
@@ -433,6 +443,7 @@
 			status = "disabled";
 			reg = <0 0xffaf0000 0 0x1000>;
 			interrupts = <0 67 4>;
+			interrupt-parent = <&imux>;
 			clock-names = "clk_main", "clk_apb";
 			/* iommus = <&smmu 0x21e>; */
 			xlnx,bus-width = <64>;
@@ -444,6 +455,7 @@
 			compatible = "xlnx,versal-gem", "cdns,versal-gem", "cdns,gem";
 			status = "disabled";
 			reg = <0 0xff0c0000 0 0x1000>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 56 4>, <0 56 4>;
 			clock-names = "pclk", "hclk", "tx_clk", "rx_clk", "tsu_clk";
 			/* iommus = <&smmu 0x234>; */
@@ -456,6 +468,7 @@
 			compatible = "xlnx,versal-gem", "cdns,versal-gem", "cdns,gem";
 			status = "disabled";
 			reg = <0 0xff0d0000 0 0x1000>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 58 4>, <0 58 4>;
 			clock-names = "pclk", "hclk", "tx_clk", "rx_clk", "tsu_clk";
 			/* iommus = <&smmu 0x235>; */
@@ -469,6 +482,7 @@
 			compatible = "xlnx,versal-gpio-1.0";
 			status = "disabled";
 			reg = <0 0xff0b0000 0 0x1000>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 13 4>;
 			#gpio-cells = <2>;
 			gpio-controller;
@@ -480,6 +494,7 @@
 			compatible = "xlnx,pmc-gpio-1.0";
 			status = "disabled";
 			reg = <0 0xf1020000 0 0x1000>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 122 4>;
 			#gpio-cells = <2>;
 			gpio-controller;
@@ -491,6 +506,7 @@
 			compatible = "cdns,i2c-r1p14", "cdns,i2c-r1p10";
 			status = "disabled";
 			reg = <0 0xff020000 0 0x1000>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 14 4>;
 			clock-frequency = <400000>;
 			#address-cells = <1>;
@@ -501,6 +517,7 @@
 			compatible = "cdns,i2c-r1p14", "cdns,i2c-r1p10";
 			status = "disabled";
 			reg = <0 0xff030000 0 0x1000>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 15 4>;
 			clock-frequency = <400000>;
 			#address-cells = <1>;
@@ -511,6 +528,7 @@
 			compatible = "cdns,i2c-r1p14", "cdns,i2c-r1p10";
 			status = "disabled";
 			reg = <0 0xf1000000 0 0x1000>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 123 4>;
 			clock-frequency = <400000>;
 			#address-cells = <1>;
@@ -522,6 +540,7 @@
 			status = "disabled";
 			reg = <0x0 0xf6150000 0x0 0x2000>, <0x0 0xf6070000 0x0 0x20000>;
 			reg-names = "ddrmc_base", "ddrmc_noc_base";
+			interrupt-parent = <&imux>;
 			interrupts = <0 147 4>;
 			xlnx,mc-id = <0>;
 		};
@@ -531,6 +550,7 @@
 			status = "disabled";
 			reg = <0x0 0xf62c0000 0x0 0x2000>, <0x0 0xf6210000 0x0 0x20000>;
 			reg-names = "ddrmc_base", "ddrmc_noc_base";
+			interrupt-parent = <&imux>;
 			interrupts = <0 147 4>;
 			xlnx,mc-id = <1>;
 		};
@@ -540,6 +560,7 @@
 			status = "disabled";
 			reg = <0x0 0xf6430000 0x0 0x2000>, <0x0 0xf6380000 0x0 0x20000>;
 			reg-names = "ddrmc_base", "ddrmc_noc_base";
+			interrupt-parent = <&imux>;
 			interrupts = <0 147 4>;
 			xlnx,mc-id = <2>;
 		};
@@ -549,6 +570,7 @@
 			status = "disabled";
 			reg = <0x0 0xf65a0000 0x0 0x2000>, <0x0 0xf64f0000 0x0 0x20000>;
 			reg-names = "ddrmc_base", "ddrmc_noc_base";
+			interrupt-parent = <&imux>;
 			interrupts = <0 147 4>;
 			xlnx,mc-id = <3>;
 		};
@@ -556,6 +578,7 @@
 		ocm: memory-controller@ff960000 {
 			compatible = "xlnx,zynqmp-ocmc-1.0";
 			reg = <0x0 0xff960000 0x0 0x1000>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 10 4>;
 		};
 
@@ -564,6 +587,7 @@
 			status = "disabled";
 			reg = <0 0xf12a0000 0 0x100>;
 			interrupt-names = "alarm", "sec";
+			interrupt-parent = <&imux>;
 			interrupts = <0 142 4>, <0 143 4>;
 			calibration = <0x7FFF>;
 		};
@@ -572,6 +596,7 @@
 			compatible = "xlnx,versal-8.9a", "arasan,sdhci-8.9a";
 			status = "disabled";
 			reg = <0 0xf1040000 0 0x10000>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 126 4>;
 			clock-names = "clk_xin", "clk_ahb";
 			xlnx,device_id = <0>;
@@ -585,6 +610,7 @@
 			compatible = "xlnx,versal-8.9a", "arasan,sdhci-8.9a";
 			status = "disabled";
 			reg = <0 0xf1050000 0 0x10000>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 128 4>;
 			clock-names = "clk_xin", "clk_ahb";
 			xlnx,device_id = <1>;
@@ -598,6 +624,7 @@
 			compatible = "arm,pl011", "arm,sbsa-uart";
 			status = "disabled";
 			reg = <0 0xff000000 0 0x1000>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 18 4>;
 			clock-names = "uart_clk", "apb_clk";
 			current-speed = <115200>;
@@ -608,6 +635,7 @@
 			compatible = "arm,pl011", "arm,sbsa-uart";
 			status = "disabled";
 			reg = <0 0xff010000 0 0x1000>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 19 4>;
 			clock-names = "uart_clk", "apb_clk";
 			current-speed = <115200>;
@@ -621,6 +649,7 @@
 			stream-match-mask = <0x7c00>;
 			#iommu-cells = <1>;
 			#global-interrupts = <1>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 107 4>,
 				     <0 107 4>, <0 107 4>, <0 107 4>, <0 107 4>,
 				     <0 107 4>, <0 107 4>, <0 107 4>, <0 107 4>,
@@ -636,8 +665,9 @@
 			compatible = "xlnx,versal-ospi-1.0", "cadence,qspi", "cdns,qspi-nor";
 			status = "disabled";
 			reg = <0 0xf1010000 0 0x10000 0 0xc0000000 0 0x20000000>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 124 4>, <0 124 4>;
-            clock-names = "ref_clk", "pclk";
+            		clock-names = "ref_clk", "pclk";
 			cdns,fifo-depth = <256>;
 			cdns,fifo-width = <4>;
 			cdns,is-dma = <1>;
@@ -651,6 +681,7 @@
 			compatible = "xlnx,versal-qspi-1.0";
 			status = "disabled";
 			reg = <0 0xf1030000 0 0x1000>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 125 4>, <0 125 4>;
 			clock-names = "ref_clk", "pclk";
 			/* iommus = <&smmu 0x244>; */
@@ -664,6 +695,7 @@
 			compatible = "cdns,spi-r1p6";
 			status = "disabled";
 			reg = <0 0xff040000 0 0x1000>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 16 4>;
 			clock-names = "ref_clk", "pclk";
 			#address-cells = <1>;
@@ -674,6 +706,7 @@
 			compatible = "cdns,spi-r1p6";
 			status = "disabled";
 			reg = <0 0xff050000 0 0x1000>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 17 4>;
 			clock-names = "ref_clk", "pclk";
 			#address-cells = <1>;
@@ -683,6 +716,7 @@
 		sysmon0: sysmon@f1270000 {
 			compatible = "xlnx,versal-sysmon";
 			reg = <0x0 0xf1270000 0x0 0x4000>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 144 4>;
 			xlnx,numchannels = /bits/8 <0>;
 			status = "disabled";
@@ -715,6 +749,7 @@
 		ttc0: timer@ff0e0000 {
 			compatible = "cdns,ttc";
 			status = "disabled";
+			interrupt-parent = <&imux>;
 			interrupts = <0 37 4>, <0 38 4>, <0 39 4>;
 			reg = <0x0 0xff0e0000 0x0 0x1000>;
 			timer-width = <32>;
@@ -723,6 +758,7 @@
 		ttc1: timer@ff0f0000 {
 			compatible = "cdns,ttc";
 			status = "disabled";
+			interrupt-parent = <&imux>;
 			interrupts = <0 40 4>, <0 41 4>, <0 42 4>;
 			reg = <0x0 0xff0f0000 0x0 0x1000>;
 			timer-width = <32>;
@@ -731,6 +767,7 @@
 		ttc2: timer@ff100000 {
 			compatible = "cdns,ttc";
 			status = "disabled";
+			interrupt-parent = <&imux>;
 			interrupts = <0 43 4>, <0 44 4>, <0 45 4>;
 			reg = <0x0 0xff100000 0x0 0x1000>;
 			timer-width = <32>;
@@ -739,6 +776,7 @@
 		ttc3: timer@ff110000 {
 			compatible = "cdns,ttc";
 			status = "disabled";
+			interrupt-parent = <&imux>;
 			interrupts = <0 46 4>, <0 47 4>, <0 48 4>;
 			reg = <0x0 0xff110000 0x0 0x1000>;
 			timer-width = <32>;
@@ -757,6 +795,7 @@
 				compatible = "snps,dwc3";
 				status = "disabled";
 				reg = <0 0xfe200000 0 0x10000>;
+				interrupt-parent = <&imux>;
 				interrupt-names = "dwc_usb3", "otg", "usb-wakeup";
 				interrupts = <0 0x16 4>, <0 0x1A 4>, <0x0 0x4a 0x4>;
 				/* iommus = <&smmu 0x230>; */
@@ -782,6 +821,7 @@
 					<0 0 0 4 &pcie_intc_0 3>;
 			interrupt-map-mask = <0 0 0 7>;
 			interrupt-names = "misc";
+			interrupt-parent = <&imux>;
 			interrupts = <0 72 4>;
 			ranges = <0x02000000 0x00000000 0xe0000000 0x0 0xe0000000 0x00000000 0x10000000>,
 				 <0x43000000 0x00000080 0x00000000 0x00000080 0x00000000 0x00000000 0x80000000>;
@@ -806,6 +846,7 @@
 			compatible = "xlnx,versal-wwdt-1.0";
 			status = "disabled";
 			reg = <0 0xfd4d0000 0 0x10000>;
+			interrupt-parent = <&imux>;
 			interrupt-names = "wdt", "wwdt_reset_pending";
 			interrupts = <0 0x64 1>, <0 0x6D 1>;
 			timeout-sec = <30>;
@@ -815,6 +856,7 @@
 		    compatible = "xlnx,versal-wwdt-1.0";
 		    status = "disabled";
 		    reg = <0x0 0xff120000 0x0 0x10000>;
+		    interrupt-parent = <&imux>;
 		    interrupt-names = "wdt", "wwdt_reset_pending", "gwdt", "gwdt_reset_pending";
 		    interrupts = <0 49 1>, <0 69 1>, <0 70 4>, <0 71 4>;
 		    timeout-sec = <30>;
@@ -824,6 +866,7 @@
 		dma0: pmcdma@f11c0000 {
 		    status = "disabled";
 		    compatible = "xlnx,zynqmp-csudma-1.0";
+		    interrupt-parent = <&imux>;
 		    interrupts = <0 0x83 4>;
 		    reg = <0x0 0xf11c0000 0x0 0x40000>;
 		    xlnx,dma-type = <1>;
@@ -832,6 +875,7 @@
 		dma1: pmcdma@f11d0000 {
 		    status = "disabled";
 		    compatible = "xlnx,zynqmp-csudma-1.0";
+		    interrupt-parent = <&imux>;
 		    interrupts = <0 0x84 4>;
 		    reg = <0x0 0xf11d0000 0x0 0x40000>;
 		    xlnx,dma-type = <2>;
