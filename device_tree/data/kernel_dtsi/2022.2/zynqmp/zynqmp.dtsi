@@ -307,7 +307,7 @@
 		ranges;
 	};
 
-	amba_apu: amba_apu {
+	amba_apu: apu-bus {
 		compatible = "simple-bus";
 		#address-cells = <2>;
 		#size-cells = <1>;
@@ -327,8 +327,8 @@
 		};
 	};
 
-	amba_rpu: amba_rpu {
-		compatible = "simple-bus";
+	amba_rpu: rpu-bus {
+		compatible = "indirect-bus";
 		#address-cells = <2>;
 		#size-cells = <1>;
 		gic_r5: interrupt-controller@f9000000 {
@@ -343,7 +343,7 @@
 		};
 	};
 
-	amba: amba {
+	amba: axi {
 		compatible = "simple-bus";
 		u-boot,dm-pre-reloc;
 		#address-cells = <2>;

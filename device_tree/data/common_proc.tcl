@@ -802,43 +802,43 @@ proc create_node args {
 	}
 	}
 	if {[string match -nocase $node_name "amba_pl: amba_pl"] || 
-		[string match -nocase $node_name "amba: amba"] ||
-		[string match -nocase $node_name "amba_apu: amba_apu"] ||
-                [string match -nocase $node_name "amba_rpu: amba_rpu"]} {	
+		[string match -nocase $node_name "amba: axi"] ||
+		[string match -nocase $node_name "amba_apu: apu-bus"] ||
+                [string match -nocase $node_name "amba_rpu: rpu-bus"]} {
 	} else {
 		set busname [detect_bus_name $node_name]
 	}
 	if {[string match -nocase $node_name "amba_pl: amba_pl"] || 
-		[string match -nocase $node_name "amba: amba"] ||
-		[string match -nocase $node_name "amba_rpu: amba_rpu"] ||
-		[string match -nocase $node_name "amba_apu: amba_apu"] || [string match -nocase $node_name "root"]} {	
+		[string match -nocase $node_name "amba: axi"] ||
+		[string match -nocase $node_name "amba_rpu: rpu-bus"] ||
+		[string match -nocase $node_name "amba_apu: apu-bus"] || [string match -nocase $node_name "root"]} {
 		set mainroot [$treeobj children root]
 		
 		if {[string match -nocase $mainroot ""]} {
 			if {[string match $node_name "amba_pl: amba_pl"]} {
-				
+
 				set interconnect [$treeobj insert root end "amba_pl: amba_pl"]
 			}	
-			if {[string match $node_name "amba: amba"]} {
-				set interconnect [$treeobj insert root end "amba: amba"]
+			if {[string match $node_name "amba: axi"]} {
+				set interconnect [$treeobj insert root end "amba: axi"]
 			}	
-			if {[string match $node_name "amba_apu: amba_apu"]} {
-				set interconnect [$treeobj insert root end "amba_apu: amba_apu"]
+			if {[string match $node_name "amba_apu: apu-bus"]} {
+				set interconnect [$treeobj insert root end "amba_apu: apu-bus"]
 			}
-			if {[string match $node_name "amba_rpu: amba_rpu"]} {
-                                set interconnect [$treeobj insert root end "amba_rpu: amba_rpu"]
+			if {[string match $node_name "amba_rpu: rpu-bus"]} {
+                                set interconnect [$treeobj insert root end "amba_rpu: rpu-bus"]
                         }
 			if {[string match -nocase $node_name "root"] && [string match $parent_obj "amba_pl: amba_pl"]} {
 				set interconnect [$treeobj insert root end "amba_pl: amba_pl"]
 			}	
-			if {[string match -nocase $node_name "root"] && [string match $parent_obj "amba: amba"]} {
-				set interconnect [$treeobj insert root end "amba: amba"]
+			if {[string match -nocase $node_name "root"] && [string match $parent_obj "amba: axi"]} {
+				set interconnect [$treeobj insert root end "amba: axi"]
 			}	
-			if {[string match -nocase $node_name "root"] && [string match $parent_obj "amba_apu"]} {
-				set interconnect [$treeobj insert root end "amba_apu: amba_apu"]
+			if {[string match -nocase $node_name "root"] && [string match $parent_obj "apu-bus"]} {
+				set interconnect [$treeobj insert root end "amba_apu: apu-bus"]
 			}	
-			if {[string match -nocase $node_name "root"] && [string match $parent_obj "amba_rpu"]} {
-                                set interconnect [$treeobj insert root end "amba_rpu: amba_rpu"]
+			if {[string match -nocase $node_name "root"] && [string match $parent_obj "rpu-bus"]} {
+                                set interconnect [$treeobj insert root end "amba_rpu: rpu-bus"]
                         }
 			return $interconnect
 		} else {
@@ -2408,7 +2408,7 @@ proc update_dt_parent args {
 	}
 	set node [get_node_object $node $dts_file]
 	# Skip if node is a reference node (start with &) or amba
-	if {[regexp "^&.*" "$node" match] || [regexp "amba_apu" "$node" match] || [regexp "amba_rpu" "node" match] || [regexp "amba" "$node" match]} {
+	if {[regexp "^&.*" "$node" match] || [regexp "apu-bus" "$node" match] || [regexp "rpu-bus" "node" match] || [regexp "axi" "$node" match]} {
 		return $node
 	}
 
@@ -6044,10 +6044,10 @@ proc detect_bus_name {ip_drv} {
 			return "amba_pl: amba_pl"
 		}
 		if {[string match -nocase $ip_drv "psu_acpu_gic"] || [string match -nocase $ip_drv "psv_acpu_gic"]} {
-			return "amba_apu: amba_apu"
+			return "amba_apu: apu-bus"
 		}
 		if {[string match -nocase $ip_drv "psu_rcpu_gic"] || [string match -nocase $ip_drv "psv_rcpu_gic"]} {
-                        return "amba_rpu: amba_rpu"
+                        return "amba_rpu: rpu-bus"
                 }
 		set ipname ""
 		if {[catch {set ipname [hsi get_property IP_NAME [hsi::get_cells -hier $ip_drv]]} msg]} {
@@ -6056,7 +6056,7 @@ proc detect_bus_name {ip_drv} {
 		if {[lsearch $valid_xppu $ipname] >= 0} {
 			return "amba_xppu: indirect-bus@1"
 		}
-		return "amba: amba"
+		return "amba: axi"
 }
 
 proc get_afi_val {val} {
