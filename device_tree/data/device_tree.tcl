@@ -656,14 +656,21 @@ proc gen_include_dtfile {args} {
 proc gen_board_info {} {
 	global env
 	set path $env(REPO)
-
+	set default_dts "system-top.dts"
 	set common_file "$path/device_tree/data/config.yaml"
 	set kernel_ver [get_user_config $common_file -kernel_ver]
 	set dtsi_file [get_user_config $common_file -board_dts]
 	set dir_path [get_user_config $common_file -dir]
-    	if {[string match $dtsi_file "none"]} {
-		return
-    	}
+	if {$dtsi_file eq ""} {
+		set boardname [get_board_name]
+		if { [string length $boardname] != 0 } {
+			set fields [split $boardname ":"]
+			lassign $fields prefix board suffix
+			if { [string length $board] != 0 } {
+				add_prop "root" "compatible" "xlnx,${board}" string $default_dts
+			}
+		}
+	}
 	if {[file exists $dtsi_file]} {
 		set dir $dir_path
 		set pathtype [file pathtype $dtsi_file]
@@ -758,7 +765,6 @@ proc gen_board_info {} {
 			if {$valid_board_file == 0} {
 				error "Error:$dtsi_name board file is not present in DTG. Please add a valid board."
 			}
-			set default_dts "system-top.dts"
 		} else {
 			puts "File not found\n\r"
 		}
