@@ -54,7 +54,7 @@
 	cpus_microblaze_1: cpus_microblaze@1 {
 		#address-cells = <1>;
 		#size-cells = <0>;
-                ub1_cpu: cpu@0 {
+                ub1_cpu_pmc: cpu@0 {
                         compatible = "pmc-microblaze";
                         device_type = "cpu";
                         reg = <0x2>;
@@ -64,7 +64,7 @@
 	cpus_microblaze_2: cpus_microblaze@2 {
 		#address-cells = <1>;
 		#size-cells = <0>;
-                ub2_cpu: cpu@0 {
+                ub2_cpu_psm: cpu@0 {
                         compatible = "psm-microblaze";
                         device_type = "cpu";
                         reg = <0x3>;

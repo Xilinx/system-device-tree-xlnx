@@ -16,11 +16,11 @@ proc generate {drv_handle} {
 	set dts_file [set_drv_def_dts $drv_handle]
 	set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
 	if {[string match -nocase $ip_name "psu_pmu"]} {
-		set node "&ub1_cpu"
+		set node "&ub1_cpu_pmu"
 	} elseif {[string match -nocase $ip_name "psv_pmc"]} {
-		set node "&ub1_cpu"
+		set node "&ub1_cpu_pmc"
 	} else {
-		set node "&ub2_cpu"
+		set node "&ub2_cpu_psm"
 	}
 	global env
 	set path $env(REPO)

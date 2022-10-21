@@ -98,7 +98,7 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		ub1_cpu: cpu@0 {
+		ub1_cpu_pmu: cpu@0 {
 			compatible = "pmu-microblaze";
 			device_type = "cpu";
 			reg = <0x6>;

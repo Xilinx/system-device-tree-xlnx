@@ -2012,9 +2012,9 @@ proc add_cross_property args {
 							set index [string index $src_handle end]
 							set node [create_node -n "&r5_cpu${index}" -d "pcw.dtsi" -p root]
 						} "psv_pmc" {
-							set node [create_node -n "&ub1_cpu" -d "pcw.dtsi" -p root]
+							set node [create_node -n "&ub1_cpu_pmc" -d "pcw.dtsi" -p root]
 						} "psv_psm" {
-							set node [create_node -n "&ub2_cpu" -d "pcw.dtsi" -p root]
+							set node [create_node -n "&ub2_cpu_psm" -d "pcw.dtsi" -p root]
 						} "psu_cortexa53" {
 							set index [string index $src_handle end]
 							set node [create_node -n "&a53_cpu${index}" -d "pcw.dtsi" -p root] 
@@ -2022,7 +2022,7 @@ proc add_cross_property args {
 							set index [string index $src_handle end]
 							set node [create_node -n "&r5_cpu${index}" -d "pcw.dtsi" -p root]
 						} "psu_pmu" {
-							set node [create_node -n "&ub1_cpu" -d "pcw.dtsi" -p root]
+							set node [create_node -n "&ub1_cpu_pmu" -d "pcw.dtsi" -p root]
 						} "microblaze" {
 							set count [get_microblaze_nr $src_handle]
 							set bus_name [detect_bus_name $src_handle]
@@ -5942,9 +5942,9 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 						set index [string index $drv_handle end]
 						set rt_node [create_node -n "&r5_cpu${index}" -d ${default_dts} -p root]
 					} "psv_pmc" {
-						set rt_node [create_node -n "&ub1_cpu" -d ${default_dts} -p root]
+						set rt_node [create_node -n "&ub1_cpu_pmc" -d ${default_dts} -p root]
 					} "psv_psm" {
-						set node [create_node -n "&ub2_cpu" -d "pcw.dtsi" -p root]
+						set node [create_node -n "&ub2_cpu_psm" -d "pcw.dtsi" -p root]
 					} "psu_cortexa53" {
 						set index [string index $src_handle end]
 						set node [create_node -n "&a53_cpu${index}" -d "pcw.dtsi" -p root] 
@@ -5952,7 +5952,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 						set index [string index $src_handle end]
 						set node [create_node -n "&r5_cpu${index}" -d "pcw.dtsi" -p root]
 					} "psu_pmu" {
-						set node [create_node -n "&ub1_cpu" -d "pcw.dtsi" -p root]
+						set node [create_node -n "&ub1_cpu_pmu" -d "pcw.dtsi" -p root]
 					}
 				}
 			} else {
@@ -6358,6 +6358,7 @@ proc gen_cpu_nodes {drv_handle} {
 	set slave [hsi::get_cells -hier ${drv_handle}]
 
 	foreach cpu ${processor_list} {
+		puts "cpu $cpu"
 		set tmp $cpu
 		if {[lsearch -nocase $proc_list $processor_type] >= 0} {
 			if {[string match -nocase $loop "0"]} {
@@ -6365,7 +6366,7 @@ proc gen_cpu_nodes {drv_handle} {
 			}
 		}
 		if {[string match -nocase $processor_type "psu_pmu"]} {
-			set cpu_node [pcwdt insert root end "&ub1_cpu"]
+			set cpu_node [pcwdt insert root end "&ub1_cpu_pmu"]
 			add_prop $cpu_node "microblaze_ddr_reserve_ea" [hsi get_property CONFIG.C_DDR_RESERVE_EA $slave] int $default_dts
 			add_prop $cpu_node "microblaze_ddr_reserve_sa" [hsi get_property CONFIG.C_DDR_RESERVE_SA $slave] int $default_dts
 			set name [split [hsi get_property NAME $slave] "_"]
@@ -6380,9 +6381,9 @@ proc gen_cpu_nodes {drv_handle} {
 			set loop 1
 		} elseif {[string match -nocase $processor_type "psv_pmc"] || [string match -nocase $processor_type "psv_psm"]} {
 			if {[string match -nocase $processor_type "psv_pmc"]} {
-				set cpu_node [pcwdt insert root end "&ub1_cpu"]
+				set cpu_node [pcwdt insert root end "&ub1_cpu_pmc"]
 			} else {
-				set cpu_node [pcwdt insert root end "&ub2_cpu"]
+				set cpu_node [pcwdt insert root end "&ub2_cpu_psm"]
 			}
 			set name [split [hsi get_property NAME $slave] "_"]
 			set cpu [lindex $name 2]
@@ -6390,6 +6391,7 @@ proc gen_cpu_nodes {drv_handle} {
 			set compatiblelist [lappend compatiblelist "pmc-microblaze-$cpu"]
 			if {[string match -nocase $loop "0"]} {
 			}
+			add_prop $cpu_node "xlnx,ip-name" $processor_type string $default_dts
 			set loop 1
 		} elseif {[string match -nocase $processor_type "psu_cortexr5"] || [string match -nocase $processor_type "psv_cortexr5"]} {
 			set slave [hsi::get_cells -hier ${drv_handle}]
@@ -6406,6 +6408,7 @@ proc gen_cpu_nodes {drv_handle} {
 			set compatiblelist [lappend compatiblelist "arm,cortex-r5-$cpu"]
 			if {[string match -nocase $loop "0"]} {
 			}
+			add_prop $cpu_node "xlnx,ip-name" $processor_type string $default_dts
 			set loop 1
 		} elseif {[string match -nocase $processor_type "psu_cortexa53"] || [string match -nocase $processor_type "psv_cortexa72"]} {
 			set slave [hsi::get_cells -hier $cpu]
