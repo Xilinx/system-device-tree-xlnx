@@ -4322,17 +4322,8 @@ proc copy_hw_files args {
 	}	
 	file copy -force $xsa $dir
 
-	set hw_designs [hsi::get_hw_designs]
-	if {[string match -nocase $hw_designs ""]} {
-		set xsa_log [hsi::open_hw_design $xsa]
-	}
-
-	set hw_files [hsi::get_hw_files]
-	set xsa_dirname [file dirname $xsa]
-	foreach hw_file $hw_files {
-		if {[file exists "$xsa_dirname/$hw_file"]} {
-			set hw_file_name [file normalize "$xsa_dirname/$hw_file"]
-			file copy -force $hw_file_name $dir
-			}
-		}
+	set xsa_name [file tail $xsa]
+	set xsa_path "$dir/$xsa_name"
+	hsi::open_hw_design "$xsa_path"
+	file delete -force "$xsa_path"
 }
