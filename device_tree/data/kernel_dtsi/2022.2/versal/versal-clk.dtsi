@@ -146,7 +146,7 @@
 	};
 };
 
-&a72_cpu0 {
+&psv_cortexa72_0 {
 	clocks = <&versal_clk ACPU>;
 };
 

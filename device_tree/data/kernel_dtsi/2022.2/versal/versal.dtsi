@@ -17,7 +17,7 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 		base-address = <0x0 0xfd5c0000 0x0 0x10000>;
-		a72_cpu0: cpu@0 {
+		psv_cortexa72_0: cpu@0 {
 			compatible = "arm,cortex-a72", "arm,armv8";
 			device_type = "cpu";
 			enable-method = "psci";
@@ -27,7 +27,7 @@
 			power-domains = <&versal_firmware 0x18110003>;
 		};
 
-		a72_cpu1: cpu@1 {
+		psv_cortexa72_1: cpu@1 {
 			compatible = "arm,cortex-a72", "arm,armv8";
 			device_type = "cpu";
 			enable-method = "psci";
@@ -54,7 +54,7 @@
 	cpus_microblaze_1: cpus_microblaze@1 {
 		#address-cells = <1>;
 		#size-cells = <0>;
-                ub1_cpu_pmc: cpu@0 {
+                psv_pmc_0: cpu@0 {
                         compatible = "pmc-microblaze";
                         device_type = "cpu";
                         reg = <0x2>;
@@ -64,7 +64,7 @@
 	cpus_microblaze_2: cpus_microblaze@2 {
 		#address-cells = <1>;
 		#size-cells = <0>;
-                ub2_cpu_psm: cpu@0 {
+                psv_psm_0: cpu@0 {
                         compatible = "psm-microblaze";
                         device_type = "cpu";
                         reg = <0x3>;
@@ -77,7 +77,7 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 		base-address = <0x0 0xff9a0000 0x0 0x10000>;
-                r5_cpu0: cpu@0 {
+                psv_cortexr5_0: cpu@0 {
                         compatible = "arm,cortex-r5";
                         device_type = "cpu";
                         reg = <0x4>;
@@ -85,7 +85,7 @@
                         power-domains = <&versal_firmware 0x18110005>;
                 };
 
-                r5_cpu1: cpu@1 {
+                psv_cortexr5_1: cpu@1 {
                         compatible = "arm,cortex-r5";
                         device_type = "cpu";
                         reg = <0x5>;
