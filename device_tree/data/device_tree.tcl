@@ -1352,10 +1352,13 @@ proc gen_r5_trustzone_config {} {
         set family [get_hw_family]
         if {[string match -nocase $family "versal"]} {
                 set cortexr5proc [hsi::get_cells -hier -filter {IP_NAME=="psv_cortexr5"}]
+                set r5proc_name "psv_cortexr5"
         } elseif {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
                 set cortexr5proc [hsi::get_cells -hier -filter {IP_NAME=="psu_cortexr5"}]
+                set r5proc_name "psu_cortexr5"
         } else {
                 set cortexr5proc ""
+                set r5proc_name ""
         }
 	set rpu_cnt 0
         set slcr_instance [hsi::get_cells -hier -filter { IP_NAME == "psu_iouslcr" }]
@@ -1384,7 +1387,7 @@ proc gen_r5_trustzone_config {} {
 				}
 			}
 	        }
-		set rt_node [create_node -n "&r5_cpu${rpu_cnt}" -d "pcw.dtsi" -p root]
+		set rt_node [create_node -n "&${r5proc_name}_${rpu_cnt}" -d "pcw.dtsi" -p root]
 		add_prop $rt_node "access-val" $r5_access hexint "pcw.dtsi"
 		incr rpu_cnt
 	}
@@ -4333,4 +4336,3 @@ proc copy_hw_files args {
 			}
 		}
 }
-

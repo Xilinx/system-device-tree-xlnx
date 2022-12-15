@@ -2007,22 +2007,22 @@ proc add_cross_property args {
 					switch $ipname {
 						"psv_cortexa72" {
 							set index [string index $src_handle end]
-							set node [create_node -n "&a72_cpu${index}" -d "pcw.dtsi" -p root]
+							set node [create_node -n "&psv_cortexa72_${index}" -d "pcw.dtsi" -p root]
 						} "psv_cortexr5" {
 							set index [string index $src_handle end]
-							set node [create_node -n "&r5_cpu${index}" -d "pcw.dtsi" -p root]
+							set node [create_node -n "&psv_cortexr5_${index}" -d "pcw.dtsi" -p root]
 						} "psv_pmc" {
-							set node [create_node -n "&ub1_cpu_pmc" -d "pcw.dtsi" -p root]
+							set node [create_node -n "&psv_pmc_0" -d "pcw.dtsi" -p root]
 						} "psv_psm" {
-							set node [create_node -n "&ub2_cpu_psm" -d "pcw.dtsi" -p root]
+							set node [create_node -n "&psv_psm_0" -d "pcw.dtsi" -p root]
 						} "psu_cortexa53" {
 							set index [string index $src_handle end]
-							set node [create_node -n "&a53_cpu${index}" -d "pcw.dtsi" -p root] 
+							set node [create_node -n "&psu_cortexa53_${index}" -d "pcw.dtsi" -p root]
 						} "psu_cortexr5" {
 							set index [string index $src_handle end]
-							set node [create_node -n "&r5_cpu${index}" -d "pcw.dtsi" -p root]
+							set node [create_node -n "&psu_cortexr5_${index}" -d "pcw.dtsi" -p root]
 						} "psu_pmu" {
-							set node [create_node -n "&ub1_cpu_pmu" -d "pcw.dtsi" -p root]
+							set node [create_node -n "&psu_pmu_0" -d "pcw.dtsi" -p root]
 						} "microblaze" {
 							set count [get_microblaze_nr $src_handle]
 							set bus_name [detect_bus_name $src_handle]
@@ -5937,22 +5937,22 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 				switch $ip_type {
 					"psv_cortexa72" {
 						set index [string index $drv_handle end]
-						set rt_node [create_node -n "&a72_cpu${index}" -d ${default_dts} -p root]
+						set rt_node [create_node -n "&psv_cortexa72_${index}" -d ${default_dts} -p root]
 					} "psv_cortexr5" {
 						set index [string index $drv_handle end]
-						set rt_node [create_node -n "&r5_cpu${index}" -d ${default_dts} -p root]
+						set rt_node [create_node -n "&psv_cortexr5_${index}" -d ${default_dts} -p root]
 					} "psv_pmc" {
-						set rt_node [create_node -n "&ub1_cpu_pmc" -d ${default_dts} -p root]
+						set rt_node [create_node -n "&psv_pmc_0" -d ${default_dts} -p root]
 					} "psv_psm" {
-						set node [create_node -n "&ub2_cpu_psm" -d "pcw.dtsi" -p root]
+						set node [create_node -n "&psv_psm_0" -d "pcw.dtsi" -p root]
 					} "psu_cortexa53" {
 						set index [string index $src_handle end]
-						set node [create_node -n "&a53_cpu${index}" -d "pcw.dtsi" -p root] 
+						set node [create_node -n "&psu_cortexa53_${index}" -d "pcw.dtsi" -p root]
 					} "psu_cortexr5" {
 						set index [string index $src_handle end]
-						set node [create_node -n "&r5_cpu${index}" -d "pcw.dtsi" -p root]
+						set node [create_node -n "&psu_cortexr5_${index}" -d "pcw.dtsi" -p root]
 					} "psu_pmu" {
-						set node [create_node -n "&ub1_cpu_pmu" -d "pcw.dtsi" -p root]
+						set node [create_node -n "&psu_pmu_0" -d "pcw.dtsi" -p root]
 					}
 				}
 			} else {
@@ -6366,11 +6366,11 @@ proc gen_cpu_nodes {drv_handle} {
 			}
 		}
 		if {[string match -nocase $processor_type "psu_pmu"]} {
-			set cpu_node [pcwdt insert root end "&ub1_cpu_pmu"]
+			set cpu_node [pcwdt insert root end "&psu_pmu_0"]
 			add_prop $cpu_node "microblaze_ddr_reserve_ea" [hsi get_property CONFIG.C_DDR_RESERVE_EA $slave] int $default_dts
 			add_prop $cpu_node "microblaze_ddr_reserve_sa" [hsi get_property CONFIG.C_DDR_RESERVE_SA $slave] int $default_dts
 			set name [split [hsi get_property NAME $slave] "_"]
-			set cpu [lindex $name 2]
+			set cpu [lindex $name end]
 			set compatiblelist [lappend compatiblelist "pmu-microblaze"]
 			set compatiblelist [lappend compatiblelist "pmu-microblaze-$cpu"]
 			if {[string match -nocase $loop "0"]} {
@@ -6381,12 +6381,12 @@ proc gen_cpu_nodes {drv_handle} {
 			set loop 1
 		} elseif {[string match -nocase $processor_type "psv_pmc"] || [string match -nocase $processor_type "psv_psm"]} {
 			if {[string match -nocase $processor_type "psv_pmc"]} {
-				set cpu_node [pcwdt insert root end "&ub1_cpu_pmc"]
+				set cpu_node [pcwdt insert root end "&psv_pmc_0"]
 			} else {
-				set cpu_node [pcwdt insert root end "&ub2_cpu_psm"]
+				set cpu_node [pcwdt insert root end "&psv_psm_0"]
 			}
 			set name [split [hsi get_property NAME $slave] "_"]
-			set cpu [lindex $name 2]
+			set cpu [lindex $name end]
 			set compatiblelist [lappend compatiblelist "pmc-microblaze"]
 			set compatiblelist [lappend compatiblelist "pmc-microblaze-$cpu"]
 			if {[string match -nocase $loop "0"]} {
@@ -6396,13 +6396,17 @@ proc gen_cpu_nodes {drv_handle} {
 		} elseif {[string match -nocase $processor_type "psu_cortexr5"] || [string match -nocase $processor_type "psv_cortexr5"]} {
 			set slave [hsi::get_cells -hier ${drv_handle}]
 			set name [split [hsi get_property NAME $slave] "_"]
-			set cpu [lindex $name 2]
+			set cpu [lindex $name end]
 			if {[string match -nocase $cpu "0"]} {
 					set cpu_nr 0
 			} else {
 					set cpu_nr 1
 			}
-			set cpu_node [pcwdt insert root end "&r5_cpu${cpu_nr}"]
+			if {[string match -nocase $processor_type "psu_cortexr5"]} {
+				set cpu_node [pcwdt insert root end "&psu_cortexr5_${cpu_nr}"]
+			} else {
+				set cpu_node [pcwdt insert root end "&psv_cortexr5_${cpu_nr}"]
+			}
 			add_prop $cpu_node "cpu-frequency" [hsi get_property CONFIG.C_CPU_CLK_FREQ_HZ $slave] int $default_dts
 			set compatiblelist [lappend compatiblelist "arm,cortex-r5"]
 			set compatiblelist [lappend compatiblelist "arm,cortex-r5-$cpu"]
@@ -6413,12 +6417,12 @@ proc gen_cpu_nodes {drv_handle} {
 		} elseif {[string match -nocase $processor_type "psu_cortexa53"] || [string match -nocase $processor_type "psv_cortexa72"]} {
 			set slave [hsi::get_cells -hier $cpu]
 			set name [split [hsi get_property NAME $slave] "_"]
-			set cpu_nr [lindex $name 2]
+			set cpu_nr [lindex $name end]
 			set cpu_nr [string index [hsi get_property NAME $slave] end]
 			if {[string match -nocase $processor_type "psu_cortexa53"]} {
-				set cpu_node [pcwdt insert root end "&a53_cpu${cpu_nr}"]
+				set cpu_node [pcwdt insert root end "&psu_cortexa53_${cpu_nr}"]
 			} else {
-				set cpu_node [pcwdt insert root end "&a72_cpu${cpu_nr}"]
+				set cpu_node [pcwdt insert root end "&psv_cortexa72_${cpu_nr}"]
 			}
 			add_prop $cpu_node "cpu-frequency" [hsi get_property CONFIG.C_CPU_CLK_FREQ_HZ $slave] int $default_dts
 			add_prop $cpu_node "stamp-frequency" [hsi get_property CONFIG.C_TIMESTAMP_CLK_FREQ $slave] int $default_dts
@@ -6438,7 +6442,7 @@ proc gen_cpu_nodes {drv_handle} {
 		} elseif {[string match -nocase $processor_type "ps7_cortexa9"]} {
 			set slave [hsi::get_cells -hier ${drv_handle}]
 			set name [split [hsi get_property NAME $slave] "_"]
-			set cpu_nr [lindex $name 2]
+			set cpu_nr [lindex $name end]
 			set cpu_node [add_or_get_dt_node -n ${dev_type} -l "cpu${cpu_nr}" -d ${default_dts} -p /]
 			set compatiblelist [lappend compatiblelist "arm,cortex-a9"]
 			set compatiblelist [lappend compatiblelist "arm,cortex-a9-$cpu_nr"]
