@@ -5573,7 +5573,11 @@ proc ip2drv_prop {ip_name ip_prop_name} {
 	set prop [hsi get_property $ip_prop_name [hsi::get_cells -hier $ip_name]]
 
 	if {[regexp -nocase {0x([0-9a-f])} $prop match]} {
-		set type "hexint"
+		if {[string first $match $prop]} {
+			set type "string"
+		} else {
+			set type "hexint"
+		}
 	} elseif {[string is integer -strict $prop]} {
 		set type "int"
 	} elseif {[string is boolean -strict $prop]} {
