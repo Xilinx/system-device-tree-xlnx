@@ -68,7 +68,8 @@ proc gen_ps7_ddr_reg_property {drv_handle system_node} {
 proc generate_secure_memory {drv_handle} {
     set regprop ""
     set psu_cortexa53 ""
-    set r5 0
+    set r5_0 0
+    set r5_1 0
     set a53 0
     set pmu 0
     set slave [hsi::get_cells -hier ${drv_handle}]
@@ -85,12 +86,20 @@ proc generate_secure_memory {drv_handle} {
     set addr_64 "0"
     set size_64 "0"
 	foreach bank ${ip_mem_handles} {
-	if {$r5 == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"]} {
+	if {$r5_0 == 1 && [string match -nocase [hsi get_property NAME $procc] "psu_cortexr5_0"]} {
 		continue
 	}
-	if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"]} {
-		set r5 1
+	if {[string match -nocase [hsi get_property NAME $procc] "psu_cortexr5_0"]} {
+		set r5_0 1
 	}
+	if {$r5_1 == 1 && [string match -nocase [hsi get_property NAME $procc] "psu_cortexr5_1"]} {
+		continue
+	}
+	if {[string match -nocase [hsi get_property NAME $procc] "psu_cortexr5_1"]} {
+		set regprop ""
+		set r5_1 1
+	}
+
 	if {$a53 == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexa53"]} {
 		continue
 	}
@@ -155,7 +164,7 @@ proc generate_secure_memory {drv_handle} {
 		    }
 		}
 		if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"]} {
-			set_memmap "${drv_handle}_memory" r5 $regprop
+			set_memmap "${drv_handle}_memory" $procc $regprop
 		}
 		if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexa53"]} {
 			set_memmap "${drv_handle}_memory" a53 $regprop

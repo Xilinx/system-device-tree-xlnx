@@ -73,7 +73,7 @@
 
 	};
 
-	cpus_r5: cpus-r5@3 {
+	cpus_r5_3: cpus-r5@3 {
 		#address-cells = <1>;
 		#size-cells = <0>;
 		base-address = <0x0 0xff9a0000 0x0 0x10000>;
@@ -84,7 +84,12 @@
                         operating-points-v2 = <&cpu_opp_table>;
                         power-domains = <&versal_firmware 0x18110005>;
                 };
+	};
 
+	cpus_r5_4: cpus-r5@4 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		base-address = <0x0 0xff9a0000 0x0 0x10000>;
                 psv_cortexr5_1: cpu@1 {
                         compatible = "arm,cortex-r5";
                         device_type = "cpu";

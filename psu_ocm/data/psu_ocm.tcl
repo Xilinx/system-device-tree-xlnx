@@ -13,7 +13,6 @@
 #
 
 proc generate {drv_handle} {
-	set r5 0
 	set a53 0
 	set pmu 0
 	set pmc 0
@@ -37,6 +36,7 @@ proc generate {drv_handle} {
 			set ocm_ip [hsi get_property IP_NAME [hsi::get_cells -hier $main_memory]]
 		}
 
+		set r5 0
 		foreach bank ${ip_mem_handles} {
 			if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"]} {
 				if {$r5 == 1} {
@@ -111,7 +111,7 @@ proc generate {drv_handle} {
 				set reg "$base $size"
 			}
 			if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"]} {
-				set_memmap "${drv_handle}_memory" r5 $reg
+				set_memmap "${drv_handle}_memory" $procc $reg
 			}
 			if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexa53"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexa72"]} {
 				set_memmap "${drv_handle}_memory" a53 $reg

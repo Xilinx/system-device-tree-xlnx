@@ -890,13 +890,14 @@ proc generate_reg_property {node ip_mem_handles num} {
     set family [get_hw_family]
     if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
         set_memmap $label a53 $reg
-        set_memmap $label r5 $reg
         set_memmap $label pmu $reg
     } else {
         set_memmap $label a53 $reg
-        set_memmap $label r5 $reg
         set_memmap $label pmc $reg
     }
+    set r5_procs [hsi::get_cells -hier -filter {IP_NAME==psv_cortexr5 || IP_NAME==psu_cortexr5}]
+    set_memmap $label [lindex $r5_procs 0] $reg
+    set_memmap $label [lindex $r5_procs 1] $reg
 }
 
 proc gen_drv_prop_eth_ip {drv_handle ipname} {

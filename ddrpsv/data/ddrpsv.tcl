@@ -213,7 +213,7 @@ proc generate {drv_handle} {
 					set val [get_count "psv_cortexr5"]
 					set map [get_mc_map $drv_handle]
 					if {$val == 0 || $map == 1} {
-						set_memmap "${drv_handle}_memory" r5 $reg_val
+						set_memmap "${drv_handle}_memory" $procc $reg_val
 					}
 				}
 				if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexa72"] } {
