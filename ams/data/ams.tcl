@@ -29,7 +29,7 @@ proc generate {drv_handle} {
 	set family [hsi get_property FAMILY [hsi::current_hw_design]]
 	set dts [set_drv_def_dts $drv_handle]
 	if {[string match -nocase $family "versal"]} {
-	} elseif {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
+	} elseif {[is_zynqmp_platform $family]} {
 	}
 	  foreach ams_name ${ams_list} {
 		set node [create_node -n "&${ams_name}" -p root -d "pcw.dtsi"]

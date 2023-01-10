@@ -374,7 +374,7 @@ proc gen_sata_laneinfo {} {
 
 proc gen_ext_axi_interface {}  {
 	set family [get_hw_family]
-	if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
+	if {[is_zynqmp_platform $family]} {
 		set ext_axi_intf [get_mem_ranges -of_objects [hsi::get_cells -hier [get_sw_processor]] -filter {INSTANCE ==""}]
 		set hsi_version [get_hsi_version]
 		set ver [split $hsi_version "."]
@@ -431,7 +431,7 @@ proc gen_include_headers {} {
 	set dir_path [get_user_config $common_file -dir]
 	set power_base_file ""
 	set reset_base_file ""
-	if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
+	if {[is_zynqmp_platform $family]} {
 		set power_list "xlnx-zynqmp-power.h"
 		set clock_list "xlnx-zynqmp-clk.h"
 		set reset_list "xlnx-zynqmp-resets.h"
@@ -490,7 +490,7 @@ proc gen_afi_node {} {
 	set pllist [hsi::get_cells -filter {IS_PL==1}]
 	set dts "pl.dtsi"
 	set family [get_hw_family]
-	if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
+	if {[is_zynqmp_platform $family]} {
 	if {[llength $afi_ip] > 0 && [llength $pllist] > 0} {
 		set node [create_node -l "afi0" -n "afi0" -p "amba_pl: amba_pl" -d "pl.dtsi"]
 		add_prop $node "compatible" "xlnx,afi-fpga" string $dts 1
@@ -617,7 +617,7 @@ proc gen_afi_node {} {
 			}
 		}
 
-		if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"] || [string match -nocase $family "zynquplusRFSOC"]} {
+		if {[is_zynqmp_platform $family]} {
 			set hw_name [::hsi::get_hw_files -filter "TYPE == bit"]
 			add_prop "amba_pl: amba_pl" "firmware-name" "$hw_name.bin" string  $dts 1
 		} 
@@ -929,7 +929,7 @@ proc gen_zocl_node {} {
        }
        set default_dts "pl.dtsi"
        set zocl_node [create_node -n "zyxclmm_drm" -d ${default_dts} -p $bus_node]
-	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] || [string match -nocase $proctype "zynq"]} {
+	if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "zynq"]} {
                add_prop $zocl_node "compatible" "xlnx,zocl" string $default_dts
        } else {
                add_prop $zocl_node "compatible" "xlnx,zocl-versal" string $default_dts
@@ -1159,7 +1159,7 @@ Generates system device tree based on args given in:
 			source $proc_file
 			generate $procc
     			add_skeleton
-			set non_val_list "versal_cips noc_nmu noc_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat axis_tdest_editor util_reduced_logic noc_nsw axis_ila pspmc psv_ocm_ram_0 psv_pmc_qspi_ospi"
+			set non_val_list "versal_cips noc_nmu noc_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat axis_tdest_editor util_reduced_logic noc_nsw axis_ila pspmc psv_ocm_ram_0 psv_pmc_qspi_ospi add_keep_128 c_counter_binary"
 			set non_val_ip_types "MONITOR BUS PROCESSOR"
 			global duplist
     			foreach drv_handle $peri_list {
@@ -1266,7 +1266,7 @@ Generates system device tree based on args given in:
 	set common_file "$path/device_tree/data/config.yaml"
 	set kernel_ver [get_user_config $common_file -kernel_ver]
 
-    	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] || \
+    	if {[is_zynqmp_platform $proctype] || \
 		[string match -nocase $proctype "versal"]} {
 		if {[string match -nocase $kernel_ver "none"]} {
 			gen_sata_laneinfo
@@ -1294,7 +1294,7 @@ Generates system device tree based on args given in:
     	update_chosen
         gen_cpu_cluster $drv_handle
 	set family [get_hw_family]
-	if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
+	if {[is_zynqmp_platform $family]} {
 		set reset_node [create_node -n "&zynqmp_reset" -p root -d "pcw.dtsi"]
 		add_prop $reset_node "status" "okay" string "pcw.dtsi"
 		set pinctrl_node [create_node -n "&pinctrl0" -p root -d "pcw.dtsi"]
@@ -1306,7 +1306,7 @@ Generates system device tree based on args given in:
 	}
 	set release [get_user_config $common_file -kernel_ver]
 	global dtsi_fname
-	if {[string match -nocase $family "versal"] || [string match -nocase $family "zynqmp"] || [string match -nocase $family "zynq"] || [string match -nocase $family "zynquplus"]} {
+	if {[string match -nocase $family "versal"] || [is_zynqmp_platform $family] || [string match -nocase $family "zynq"]} {
 		set mainline_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${release}/${dtsi_fname}"]
 		foreach file [glob [file normalize [file dirname ${mainline_dtsi}]/*]] {
 			# NOTE: ./ works only if we did not change our directory
@@ -1353,7 +1353,7 @@ proc gen_r5_trustzone_config {} {
         if {[string match -nocase $family "versal"]} {
                 set cortexr5proc [hsi::get_cells -hier -filter {IP_NAME=="psv_cortexr5"}]
                 set r5proc_name "psv_cortexr5"
-        } elseif {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
+        } elseif {[is_zynqmp_platform $family]} {
                 set cortexr5proc [hsi::get_cells -hier -filter {IP_NAME=="psu_cortexr5"}]
                 set r5proc_name "psu_cortexr5"
         } else {
@@ -1928,7 +1928,7 @@ proc generate_psvreg_property {base high} {
 	set size [format 0x%x [expr {${high} - ${base} + 1}]]
 
 	set family [get_hw_family]
-	if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"] || [string match -nocase $family "versal"]} {
+	if {[is_zynqmp_platform $family] || [string match -nocase $family "versal"]} {
 		if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 			set temp $base
 			set temp [string trimleft [string trimleft $temp 0] x]
@@ -2292,7 +2292,7 @@ proc update_chosen {} {
 		set bootargs "earlycon console=ttyPS0,115200 clk_ignore_unused init_fatal_sh=1"
     	}
 	set family [get_hw_family]
-    	if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
+    	if {[is_zynqmp_platform $family]} {
     		add_prop $chosen_node "bootargs" $bootargs string $default_dts
     	}
 }
@@ -2352,7 +2352,7 @@ proc gen_cpu_cluster {os_handle} {
 		}
 
 	}
-    	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+    	if {[is_zynqmp_platform $proctype]} {
         	set cpu_node [create_node -l "cpus_a53" -n "cpus-a53" -u 0 -d ${default_dts} -p root]
 		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
 		add_prop $cpu_node "#ranges-size-cells" "0x2" hexint $default_dts
@@ -2408,7 +2408,7 @@ proc gen_cpu_cluster {os_handle} {
 		if {[string match -nocase $proctype "versal"] } {
 			set node_num [expr $core + 3]
 			set cpu_node [create_node -l "cpus_r5_$core" -n "cpus-r5" -u $node_num -d ${default_dts} -p root]
-		} elseif {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+		} elseif {[is_zynqmp_platform $proctype]} {
 			set node_num [expr $core + 1]
 			set cpu_node [create_node -l "cpus_r5_$core" -n "cpus-r5" -u $node_num -d ${default_dts} -p root]
 		}
@@ -2418,7 +2418,7 @@ proc gen_cpu_cluster {os_handle} {
 		global memmap
 		set values [dict keys $memmap]
 		set list_values "0xf0000000 &amba 0xf0000000 0x10000000>, \n\t\t\t      <0xf9000000 &amba_rpu 0xf9000000 0x3000"
-		if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+		if {[is_zynqmp_platform $proctype]} {
 			set list_values "0xf0000000 &amba 0xf0000000 0x10000000>, \n\t\t\t      <0xf9000000 &amba_rpu 0xf9000000 0x3000>, \n\t\t\t      <0x0 &zynqmp_reset 0x0 0x0"
 		}
 
@@ -2440,7 +2440,7 @@ proc gen_cpu_cluster {os_handle} {
 		add_prop $cpu_node "address-map" $list_values special $default_dts
     		if {[string match -nocase $proctype "versal"] } {
 			add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x200> , <&lpd_xppu 0x204" hexlist $default_dts
-		} elseif {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+		} elseif {[is_zynqmp_platform $proctype]} {
 			add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x0> , <&lpd_xppu 0x10" hexlist $default_dts
 		}
 	}
@@ -2460,11 +2460,11 @@ proc gen_cpu_cluster {os_handle} {
 	global memmap
 	set values [dict keys $memmap]
 	set list_values "0xf0000000 &amba 0xf0000000 0x10000000"
-    	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+    	if {[is_zynqmp_platform $proctype]} {
 		set list_values "0xf0000000 &amba 0xf0000000 0x10000000>, \n\t\t\t      <0x0 &zynqmp_reset 0x0 0x0"
 	}
 	foreach val $values {
-    		if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+    		if {[is_zynqmp_platform $proctype]} {
 			set temp [get_memmap $val pmu]
 		} else {
 			set temp [get_memmap $val pmc]
@@ -2515,7 +2515,7 @@ proc gen_cpu_cluster {os_handle} {
 		set count [get_microblaze_nr $proc]
 		if {[string match -nocase $proctype "versal"]} {
 			set cpu_node [create_node -l "cpus_microblaze_${count}" -n "cpus_microblaze" -u $count -d ${default_dts} -p $plnode]
-		} elseif {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+		} elseif {[is_zynqmp_platform $proctype]} {
 			set cpu_node [create_node -l "cpus_microblaze_${count}" -n "cpus_microblaze" -u $count -d ${default_dts} -p $plnode]	
 		}
 		add_prop $cpu_node "#ranges-size-cells" "0x1" hexint $default_dts
@@ -2546,7 +2546,7 @@ proc update_cpu_node {os_handle} {
     	if {[string match -nocase $proctype "versal"] } {
         	set current_proc "psv_cortexa72_"
         	set total_cores 2
-    	} elseif {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+    	} elseif {[is_zynqmp_platform $proctype]} {
         	set current_proc "psu_cortexa53_"
         	set total_cores 4
     	} elseif {[string match -nocase $proctype "zynq"] } {
@@ -2612,7 +2612,7 @@ proc update_alias {os_handle} {
 	set proctype [get_hw_family]
 	if {[string match -nocase $proctype "zynq"]} {
 		set pos [lsearch $all_drivers "ps7_qspi*"]
-	} elseif {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+	} elseif {[is_zynqmp_platform $proctype]} {
 		set pos [lsearch $all_drivers "psu_qspi*"]
 	} elseif {[string match -nocase $proctype "versal"]} {
 		set pos [lsearch $all_drivers "psv_pmc_qspi*"]
@@ -2635,7 +2635,7 @@ proc update_alias {os_handle} {
 		}
 	}
 
-	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+	if {[is_zynqmp_platform $proctype]} {
 		set ps_uarts [hsi::get_cells -hier -filter {IP_NAME==psu_uart}]
 	} elseif {[string match -nocase $proctype "versal"]} {
 		set ps_uarts [hsi::get_cells -hier -filter {IP_NAME==psv_sbsauart}]
@@ -3780,7 +3780,7 @@ proc gen_xppu {drv_handle} {
 			}	
 		}
 
-    } elseif {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
+    } elseif {[is_zynqmp_platform $family]} {
 		dict set xppu FF000000 addr lpd
 		dict set xppu FF010000 addr lpd
 		dict set xppu FF020000 addr lpd
@@ -4267,7 +4267,7 @@ proc gen_power_domains {drv_handle} {
                if {![string match -nocase $tmp ""]} {
                        add_prop $node "power-domains" $prop reference "pcw.dtsi"
                }
-       } elseif {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
+       } elseif {[is_zynqmp_platform $family]} {
                dict set node_id psu_r5_0_atcm_global id 15
                dict set node_id psu_r5_0_btcm_global id 16
                dict set node_id psu_r5_1_atcm_global id 17

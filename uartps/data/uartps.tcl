@@ -39,9 +39,9 @@ proc generate {drv_handle} {
 	set chosen_node [create_node -n "chosen" -d "system-top.dts" -p root]
 	set bootargs "earlycon"
 	set proctype [get_hw_family]
-    if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] || \
+    if {[is_zynqmp_platform $proctype] || \
 	[string match -nocase $proctype "versal"]} {
-		if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+		if {[is_zynqmp_platform $proctype]} {
 		   append bootargs "\ \, \"clk_ignore_unused\""
 		}
     }

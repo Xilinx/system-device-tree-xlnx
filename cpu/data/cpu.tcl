@@ -21,7 +21,7 @@ proc generate {drv_handle} {
 	set proctype [get_hw_family]
 	set bus_name [detect_bus_name $drv_handle]
 	set nr [get_microblaze_nr $drv_handle]
-	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+	if {[is_zynqmp_platform $proctype]} {
 		set node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${nr}" -u $nr -d "pl.dtsi" -p $bus_name]
 	} elseif {[string match -nocase $proctype "versal"]} {
 		set node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${nr}" -u $nr -d "pl.dtsi" -p $bus_name]

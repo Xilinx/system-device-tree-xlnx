@@ -121,7 +121,7 @@ proc generate {drv_handle} {
 
 	set baseaddr [get_baseaddr $eth_ip no_prefix]
 	set num_queues [hsi get_property CONFIG.NUM_PRIORITIES $eth_ip]
-	if {[string match -nocase $proc_type "zynqmp"] || [string match -nocase $proc_type "zynquplus"]} {
+	if {[is_zynqmp_platform $proc_type]} {
 		add_prop $node "#address-cells" 2 int $dts_file
 		add_prop $node "#size-cells" 2 int $dts_file
 		add_prop "${node}" "ranges" boolean $dts_file

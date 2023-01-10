@@ -174,7 +174,7 @@ proc generate_clk_nodes {drv_handle tx_chan rx_chan} {
 	    }
 	    set_drv_prop_if_empty $drv_handle "clocks" $clocks reference
 	    set_drv_prop_if_empty $drv_handle "clock-names" $clocknames stringlist
-	} elseif {[string match -nocase $proc_type "zynqmp"] || [string match -nocase $proc_type "zynquplus"]} {
+	} elseif {[is_zynqmp_platform $proc_type]} {
 	    foreach i [get_sw_cores device_tree] {
 		set common_tcl_file "[hsi get_property "REPOSITORY" $i]/data/common_proc.tcl"
 		if {[file exists $common_tcl_file]} {

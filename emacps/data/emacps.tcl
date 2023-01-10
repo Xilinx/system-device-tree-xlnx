@@ -93,7 +93,7 @@ proc generate {drv_handle} {
     }
 
 	set proc_type [get_hw_family]
-    if {[string match -nocase $proc_type "zynqmp"] || [string match -nocase $proc_type "zynquplus"]} {
+    if {[is_zynqmp_platform $proc_type]} {
         set zynq_periph [hsi::get_cells -hier -filter {IP_NAME == zynq_ultra_ps_e}]
         set avail_param [hsi list_property [hsi::get_cells -hier $zynq_periph]]
         if {[lsearch -nocase $avail_param "CONFIG.PSU__GEM__TSU__ENABLE"] >= 0} {
@@ -188,7 +188,7 @@ proc generate {drv_handle} {
           }
     }
 
-	if {[string match -nocase $proc_type "zynqmp"] || [string match -nocase $proc_type "zynquplus"]} {
+	if {[is_zynqmp_platform $proc_type]} {
 		set sink_periph ""
 		      if {[string match -nocase $node "&gem0"]} {
 	      set connected_ip [get_connected_stream_ip $zynq_periph "MDIO_ENET0"]

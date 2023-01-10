@@ -199,7 +199,7 @@ proc generate_clk_nodes {drv_handle axiethernetfound tx_chan rx_chan} {
 			}
 			set_drv_prop_if_empty $drv_handle "clocks" $clocks reference
 			set_drv_prop_if_empty $drv_handle "clock-names" $clocknames stringlist
-	} elseif {[string match -nocase $proc_type "zynqmp"] || [string match -nocase $proc_type "zynquplus"]} {
+	} elseif {[is_zynqmp_platform $proc_type]} {
 			set clk_freq [get_clock_frequency [hsi::get_cells -hier $drv_handle] "s_axi_lite_aclk"]
 			if {![string equal $clk_freq ""]} {
 				if {[lsearch $bus_clk_list $clk_freq] < 0} {

@@ -22,7 +22,7 @@ proc generate {drv_handle} {
 	set nvme_ip [hsi::get_cells -hier $drv_handle]
 	set ip_name [hsi get_property IP_NAME $nvme_ip]
 
-	if {[string match -nocase $proc_type "zynqmp"] || [string match -nocase $proc_type "zynquplus"] || \
+	if {[is_zynqmp_platform $proc_type] || \
 	    [string match -nocase $proc_type "versal"]} {
 		add_prop $node "#address-cells" 2 int $dts_file
 		add_prop $node "#size-cells" 2 int $dts_file

@@ -84,7 +84,7 @@ proc generate {drv_handle} {
                         set proctype [get_hw_family]
                         set size [format 0x%x [expr {${high} - ${base} + 1}]]
 
-			if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "zynquplus"]} {
+			if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"]} {
 				if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 					set temp $base
 					set temp [string trimleft [string trimleft $temp 0] x]

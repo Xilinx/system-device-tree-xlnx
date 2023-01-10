@@ -161,6 +161,15 @@ proc destroy_tree {} {
 	systemdt destroy
 }
 
+proc is_zynqmp_platform {proctype} {
+	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] ||
+	    [string match -nocase $proctype "zynquplusRFSOC"] } {
+		return 1
+	} else { 
+		return 0
+	}
+}
+
 proc get_type args {
 	set prop [lindex $args 1]
 	set handle [lindex $args 0]
@@ -203,7 +212,7 @@ proc get_microblaze_nr {drv_handle} {
 				dict set microblaze_map $drv_handle 3
 				return 3
 			}
-		} elseif {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+		} elseif {[is_zynqmp_platform $proctype]} {
 			if {$theValue } {
 				set val [expr $theValue + 1]
 				dict set microblaze_map $drv_handle $val
@@ -2026,7 +2035,7 @@ proc add_cross_property args {
 						} "microblaze" {
 							set count [get_microblaze_nr $src_handle]
 							set bus_name [detect_bus_name $src_handle]
-							if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+							if {[is_zynqmp_platform $proctype]} {
 								set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
 							} elseif {[string match -nocase $proctype "versal"]} {
 								set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
@@ -2112,7 +2121,7 @@ proc get_intr_id {drv_handle intr_port_name} {
 	foreach pin ${intr_port_name} {
 		set intc [get_interrupt_parent $drv_handle $pin]
 		if {[string_is_empty $intc] == 1} {continue}
-		if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "zynquplus"]} {
+		if {[string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype]} {
 
 			if {[llength $intc] > 1} {
 				foreach intr_cntr $intc {
@@ -2122,7 +2131,7 @@ proc get_intr_id {drv_handle intr_port_name} {
 				}
 			}
 			set intc_ipname [hsi get_property IP_NAME $intc]
-			if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] } {
+			if {[is_zynqmp_platform $proctype] } {
 				if {[string match -nocase $intc_ipname "axi_intc"]} {
 					set intc [get_interrupt_parent $drv_handle $pin]
 				}
@@ -2131,7 +2140,7 @@ proc get_intr_id {drv_handle intr_port_name} {
 				set intc [get_interrupt_parent $drv_handle $pin]
 			}
 		}
-		if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "zynquplus"]} {
+		if {[string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype]} {
 			set intr_id [get_psu_interrupt_id $drv_handle $pin]
 		} else {
 			set intr_id [get_interrupt_id $drv_handle $pin]
@@ -2534,7 +2543,7 @@ proc get_dts_include {} {
 	set family [get_hw_family]
 	set common_file "$path/device_tree/data/config.yaml" 
         set dir [get_user_config $common_file -output_dir]
-        if {[string match -nocase $family "versal"] || [string match -nocase $family "zynqmp"] || [string match -nocase $family "zynq"] || [string match -nocase $family "zynquplus"]} {
+        if {[string match -nocase $family "versal"] || [is_zynqmp_platform $family] || [string match -nocase $family "zynq"]} {
 		return [file normalize "$path/device_tree/data/kernel_dtsi/${release}/${dtsi_fname}"]
 	} else {
 		return "$dir/pl.dtsi"
@@ -2569,7 +2578,7 @@ proc set_drv_def_dts {drv_handle} {
 		set child_node [create_node -l "overlay0" -n $child_name -p $fpga_node -d $default_dts]
 		add_prop "${child_node}" "#address-cells" 2 int $default_dts 1
 		add_prop "${child_node}" "#size-cells" 2 int $default_dts 1
-		if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"] || [string match -nocase $family "zynquplusRFSOC"]} {
+		if {[is_zynqmp_platform $family]} {
 			set hw_name [::hsi::get_hw_files -filter "TYPE == bit"]
 			add_prop "${child_node}" "firmware-name" "$hw_name.bin" string  $default_dts 1
 			add_prop "root" "firmware-name" "$hw_name" string  $default_dts 1
@@ -3155,7 +3164,7 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping f6220000 label "ddrmc_xmpu_1: xmpu"
 		dict set def_ps_mapping f6390000 label "ddrmc_xmpu_2: xmpu"
 		dict set def_ps_mapping f6400000 label "ddrmc_xmpu_3: xmpu"
-	} elseif {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
+	} elseif {[is_zynqmp_platform $family]} {
 		dict set def_ps_mapping f9010000 label "gic_a53: interrupt-controller"
 		dict set def_ps_mapping f9000000 label "gic_r5: interrupt-controller"
 		dict set def_ps_mapping ff060000 label "can0: can"
@@ -3525,7 +3534,7 @@ proc zynq_gen_pl_clk_binding {drv_handle} {
 	} else {
 		set valid_ip_list "xadc_wiz"
 	}
-	set valid_plt "zynq zynqmp zynquplus"
+	set valid_plt "zynq zynqmp zynquplus zynquplusRFSOC"
 	if {[lsearch  -nocase $valid_plt $plattype] >= 0} {
 		set iptype [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
 		if {[lsearch $valid_ip_list $iptype] >= 0} {
@@ -3539,7 +3548,7 @@ proc zynq_gen_pl_clk_binding {drv_handle} {
 				set clks "s_axi_aclk"
 			}
 			foreach pin $clks {
-			if {[string match -nocase $plattype "zynqmp"] || [string match -nocase $plattype "zynquplus"]} {
+			if {[is_zynqmp_platform $plattype]} {
 				set dts_file [set_drv_def_dts $drv_handle]
 				set bus_node [add_or_get_bus_node $drv_handle $dts_file]
 				set clk_freq [get_clock_frequency [hsi::get_cells -hier $drv_handle] $pin]
@@ -4247,7 +4256,7 @@ proc gen_clk_property {drv_handle} {
 				if {[llength $clk_pl]} {
 					set num [regexp -all -inline -- {[0-9]+} $clk_pl]
 				}
-				if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] || [string match -nocase $proctype "zynquplusRFSOC"]} {
+				if {[is_zynqmp_platform $proctype]} {
 					switch $num {
 						"0" {
 							set def_dts "pcw.dtsi"
@@ -4422,7 +4431,7 @@ proc gen_clk_property {drv_handle} {
 			}
 		}
 		}
-		if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] || [string match -nocase $proctype "zynquplusRFSOC"]} {
+		if {[is_zynqmp_platform $proctype]} {
 			switch $pl_clk {
 				"pl_clk0" {
 						set pl_clk0 "zynqmp_clk 71"
@@ -4798,7 +4807,7 @@ proc gen_mb_interrupt_property {cpu_handle {intr_port_name ""}} {
 	set proctype [get_hw_family]
 	set bus_name [detect_bus_name $cpu_handle]
 	set count [get_microblaze_nr $cpu_handle]
-	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+	if {[is_zynqmp_platform $proctype]} {
 		set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
 	} elseif {[string match -nocase $proctype "versal"]} {
 		set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
@@ -4917,7 +4926,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 				continue
 			}
 			set ip_name $intc
-			if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "zynquplus"] || [string match -nocase $proctype "zynquplusRFSOC"]} {
+			if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"]} {
 				set intc_name [hsi get_property IP_NAME $intc]
 				if {[llength $intc] > 1} {
 					foreach intr_cntr $intc {
@@ -4936,7 +4945,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 				}
 			}
 
-			if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "zynquplus"] || [string match -nocase $proctype "zynquplusRFSOC"]} {
+			if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"]} {
 				if { [string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "axi_intc"] } {
 					set intr_id [get_psu_interrupt_id $drv_handle "irq"]
 				} else {
@@ -5118,7 +5127,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 			set size [format 0x%x [expr {${high} - ${base} + 1}]]
 		}
 		if {![string_is_empty $base]} {
-			if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_pmc"] || [string match -nocase $proctype "zynquplus"]} {
+			if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_pmc"]} {
 				# check if base address is 64bit and split it as MSB and LSB
 				if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 					set temp $base
@@ -5166,7 +5175,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 			set size [format 0x%x [expr {${high} - ${base} + 1}]]
 
 			if {[string_is_empty $reg]} {
-				if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_pmc"] || [string match -nocase $proctype "zynquplus"]} {
+				if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_pmc"]} {
 					# check if base address is 64bit and split it as MSB and LSB
 					if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 						set temp $base
@@ -5201,7 +5210,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 						continue
 					}
 				}
-				if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_pmc"] || [string match -nocase $proctype "zynquplus"]} {
+				if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_pmc"]} {
 					set index [check_64_base $reg $base $size]
 					if {$index == "true" && $ip_name != "axi_fifo_mm_s"} {
 						continue
@@ -5209,7 +5218,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 				}
 				# ensure no duplication
 				if {![regexp ".*${reg}.*" "$base $size" matched]} {
-					if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_pmc"] || [string match -nocase $proctype "zynquplus"]} {
+					if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_pmc"]} {
 						set base1 "0x0 $base"
 						set size1 "0x0 $size"
 						if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
@@ -5500,7 +5509,7 @@ proc gen_compatible_property {drv_handle} {
 		set proctype [get_hw_family]
 		set bus_name [detect_bus_name $drv_handle]
 		set count [get_microblaze_nr $drv_handle]
-		if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+		if {[is_zynqmp_platform $proctype]} {
 			set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
 		} elseif {[string match -nocase $proctype "versal"]} {
 			set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
@@ -5868,7 +5877,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 			add_prop $node "status" "okay" string $default_dts
 		}
 		if {[string match -nocase $rt_node "&dwc3_0"]} {
-				if {[string match -nocase $proc_type "zynqmp"] || [string match -nocase $proc_type "zynquplus"]} {
+				if {[is_zynqmp_platform $proc_type]} {
 					set zynq_periph [hsi::get_cells -hier -filter {IP_NAME == zynq_ultra_ps_e}]
 					set avail_param [hsi list_property [hsi::get_cells -hier $zynq_periph]]
 					if {[lsearch -nocase $avail_param "CONFIG.PSU__USB0__PERIPHERAL__ENABLE"] >= 0} {
@@ -5889,7 +5898,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 				}
 		}
 		if {[string match -nocase $rt_node "&dwc3_1"]} {
-				if {[string match -nocase $proc_type "zynqmp"] || [string match -nocase $proc_type "zynquplus"]} {
+				if {[is_zynqmp_platform $proc_type]} {
 					set zynq_periph [hsi::get_cells -hier -filter {IP_NAME == zynq_ultra_ps_e}]
 					set avail_param [hsi list_property [hsi::get_cells -hier $zynq_periph]]
 					if {[lsearch -nocase $avail_param "CONFIG.PSU__USB1__PERIPHERAL__ENABLE"] >= 0} {
@@ -5964,7 +5973,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 					set proctype [get_hw_family]
 					set bus_name [detect_bus_name $drv_handle]
 					set count [get_microblaze_nr $drv_handle]
-					if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+					if {[is_zynqmp_platform $proctype]} {
 						set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d ${default_dts} -p $bus_name]
 					} elseif {[string match -nocase $proctype "versal"]} {
 						set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d ${default_dts} -p $bus_name]
@@ -6126,7 +6135,7 @@ proc add_or_get_bus_node {ip_drv dts_file} {
 		add_prop $fpga_node target "$targets" reference $dts 1
 		set child_name "__overlay__"
 		set bus_node [create_node -l "overlay2" -n $child_name -p $fpga_node -d $dts]
-		if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] || [string match -nocase $proctype "versal"]} {
+		if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"]} {
 			add_prop "${bus_node}" "#address-cells" 2 int $dts 1
 			add_prop "${bus_node}" "#size-cells" 2 int $dts 1
 		} else {
@@ -6246,7 +6255,7 @@ proc gen_root_node {drv_handle} {
 			set family [get_hw_family]
 			set count [get_microblaze_nr $drv_handle]
 			set bus_name [detect_bus_name $drv_handle]
-			if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
+			if {[is_zynqmp_platform $family]} {
 				set root_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d ${default_dts} -p $bus_name]
 			} elseif {[string match -nocase $family "versal"]} {
 				set root_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d ${default_dts} -p $bus_name]
@@ -6462,7 +6471,7 @@ proc gen_cpu_nodes {drv_handle} {
 			if {$cpu_no >= 1} {
 				break
 			}
-			if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+			if {[is_zynqmp_platform $proctype]} {
 				set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d ${default_dts} -p $bus_name]
 			} elseif {[string match -nocase $proctype "versal"]} {
 				set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d ${default_dts} -p $bus_name]
@@ -6705,7 +6714,7 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 		if { [llength $intr_pin] == 0 } {
 			return $intr_cntrl
 		}
-		set valid_cascade_proc "kintex zynq zynqmp zynquplus versal"
+		set valid_cascade_proc "kintex zynq zynqmp zynquplus versal zynquplusRFSOC"
 		set proctype [get_hw_family]
 		if { [string match -nocase [hsi get_property IP_NAME $periph] "axi_intc"] && [lsearch -nocase $valid_cascade_proc $proctype] >= 0 } {
 			set sinks [get_sink_pins $intr_pin]
@@ -6756,7 +6765,7 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 	if { [llength $intr_sink_pins] == 0 || [string match $intr_sink_pins "{}"]} {
 		return $intr_cntrl
 	}
-	set valid_cascade_proc "kintex7 zynq zynqmp zynquplus versal"
+	set valid_cascade_proc "kintex7 zynq zynqmp zynquplus versal zynquplusRFSOC"
 	foreach intr_sink ${intr_sink_pins} {
 		if {[llength $intr_sink] == 0} {
 			continue
@@ -7063,7 +7072,7 @@ proc get_psu_interrupt_id { ip_name port_name } {
            return $number
        }
     }
-    if {[string match -nocase $proctype "versal"] || [string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]
+    if {[string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype]
        || [string match -nocase $proctype "zynq"]} {
        if {[string match -nocase "[hsi get_property IP_NAME $periph]" "axi_intc"]} {
                set ip [hsi get_property IP_NAME $periph]

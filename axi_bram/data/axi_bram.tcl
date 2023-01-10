@@ -87,7 +87,7 @@ proc generate {drv_handle} {
 			}
 			set size [format 0x%x [expr {${high} - ${base} + 1}]]
 			set proctype [get_hw_family]
-			if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] || \
+			if {[is_zynqmp_platform $proctype] || \
 				[string match -nocase $proctype "versal"]} {
 				if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 					set temp $base
@@ -148,7 +148,7 @@ proc generate {drv_handle} {
 	set high [string tolower [hsi get_property HIGH_VALUE $ip_mem_handle]]
 	set size [format 0x%x [expr {${high} - ${base} + 1}]]
 	set proctype [get_hw_family]
-	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] || \
+	if {[is_zynqmp_platform $proctype] || \
 		[string match -nocase $proctype "versal"]} {
 		if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 			set temp $base

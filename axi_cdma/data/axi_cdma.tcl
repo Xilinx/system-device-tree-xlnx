@@ -92,7 +92,7 @@ proc generate_clk_nodes {drv_handle} {
 	if {[string match -nocase $proc_type "zynq"]} {
 	    set_drv_prop_if_empty $drv_handle "clocks" "clkc 15>, <&clkc 15" reference
 	    set_drv_prop_if_empty $drv_handle "clock-names" "s_axi_lite_aclk m_axi_aclk" stringlist
-	} elseif if {[string match -nocase $proc_type "zynqmp"] || [string match -nocase $proc_type "zynquplus"]} {
+	} elseif if {[is_zynqmp_platform $proc_type]} {
 	    set clk_freq [get_clock_frequency [hsi::get_cells -hier $drv_handle] "s_axi_lite_aclk"]
 	    if {![string equal $clk_freq ""]} {
 		if {[lsearch $bus_clk_list $clk_freq] < 0} {

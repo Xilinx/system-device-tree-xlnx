@@ -853,7 +853,7 @@ proc generate_reg_property {node ip_mem_handles num} {
     set size [format 0x%x [expr {${high} - ${base} + 1}]]
 
     set proctype [get_hw_family]
-    if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+    if {[is_zynqmp_platform $proctype]} {
         if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
                 set temp $base
                 set temp [string trimleft [string trimleft $temp 0] x]
@@ -888,7 +888,7 @@ proc generate_reg_property {node ip_mem_handles num} {
         return
     }
     set family [get_hw_family]
-    if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"]} {
+    if {[is_zynqmp_platform $family]} {
         set_memmap $label a53 $reg
         set_memmap $label pmu $reg
     } else {

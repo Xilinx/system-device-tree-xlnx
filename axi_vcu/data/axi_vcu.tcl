@@ -99,7 +99,7 @@ proc generate {drv_handle} {
 								break
 							}
 						}
-						if {[string match -nocase $proc_type "zynqmp"] || [string match -nocase $proc_type "zynquplus"]} {
+						if {[is_zynqmp_platform $proc_type]} {
 							if {[string match -nocase $ip "zynq_ultra_ps_e"]} {
 								set gpio [expr $gpio + 78]
 								add_prop $node "reset-gpios" "gpio $gpio 0" reference $dts_file

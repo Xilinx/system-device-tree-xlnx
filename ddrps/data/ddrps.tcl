@@ -37,7 +37,7 @@ proc gen_ps7_ddr_reg_property {drv_handle system_node} {
 	    set base 0x0
 	    set high [hsi get_property HIGH_VALUE $mem_handle]
 	    set mem_size [format 0x%x [expr {${high} - ${base} + 1}]]
-	    if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"]} {
+	    if {[is_zynqmp_platform $proctype]} {
 		# Check if memory crossing 4GB map, then split 2GB below 32 bit limit
 		# and remaining above 32 bit limit
 		if { [expr {${mem_size} + ${base}}] >= [expr 0x100000000] } {
