@@ -1033,7 +1033,7 @@ proc define_processor_params {drv_handle file_name} {
 # Get the memory range of IP for current processor
 #
 proc get_ip_mem_ranges {periph} {
-	puts "ipmem ranges"
+	puts "Inside get_ip_mem_ranges : $periph"
     set sw_proc_handle [hsi::get_sw_processor]
     set hw_proc_handle [hsi::get_cells -hier [hsi get_property hw_instance $sw_proc_handle]]
 	if { [llength $periph] != 0 } {

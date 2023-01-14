@@ -84,9 +84,9 @@
                         operating-points-v2 = <&cpu_opp_table>;
                         power-domains = <&versal_firmware 0x18110005>;
                 };
-	};
+        };
 
-	cpus_r5_4: cpus-r5@4 {
+        cpus_r5_4: cpus-r5@4 {
 		#address-cells = <1>;
 		#size-cells = <0>;
 		base-address = <0x0 0xff9a0000 0x0 0x10000>;

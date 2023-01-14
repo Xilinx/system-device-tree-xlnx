@@ -28,7 +28,6 @@
 global def_string zynq_soc_dt_tree bus_clk_list pl_ps_irq1 pl_ps_irq0 pstree include_list count intrpin_width
 global or_id
 global or_cnt
-global repo_path
 global mainlist
 global addrlist
 
@@ -75,7 +74,6 @@ dict with driver_param alias {
 	lappend items psv_sbsauart serial
 }
 
-global set duplist [dict create]
 global set osmap [dict create]
 global set microblaze_map [dict create]
 global set mc_map [dict create]
@@ -144,12 +142,31 @@ set def_string "__def_none"
 set zynq_soc_dt_tree "dummy.dtsi"
 set bus_clk_list ""
 
-set repo_path ""
 set or_id 0
 set or_cnt 0
 set tree {}
 set include_list ""
 set pstree 0
+
+global node_dict
+global nodename_dict
+global ip_type_dict
+global property_dict
+global intr_id_dict
+global comp_ver_dict
+global comp_str_dict
+global cur_hw_design
+global intr_type_dict
+
+set node_dict [dict create]
+set nodename_dict [dict create]
+set ip_type_dict [dict create]
+set property_dict [dict create]
+set intr_id_dict [dict create]
+set comp_ver_dict [dict create]
+set comp_str_dict [dict create]
+set cur_hw_design ""
+set intr_type_dict [dict create]
 
 package require Tcl 8.5.14
 package require yaml
@@ -159,15 +176,6 @@ proc destroy_tree {} {
 	psdt destroy
 	pcwdt destroy
 	systemdt destroy
-}
-
-proc is_zynqmp_platform {proctype} {
-	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] ||
-	    [string match -nocase $proctype "zynquplusRFSOC"] } {
-		return 1
-	} else { 
-		return 0
-	}
 }
 
 proc get_type args {
@@ -187,6 +195,17 @@ proc get_type args {
 	}
 	return $type
 }
+
+
+proc is_zynqmp_platform {proctype} {
+      	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] ||
+		[string match -nocase $proctype "zynquplusRFSOC"] } {
+		return 1
+	} else {
+		return 0
+	}
+}
+
 
 proc get_microblaze_nr {drv_handle} {
 	global microblaze_map
@@ -232,7 +251,7 @@ proc get_driver_param args {
 	set drv_handle [lindex $args 0]
 	set type [lindex $args 1]
 	set val ""
-	set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+	set ip_name [get_ip_property $drv_handle IP_NAME]
 	if {[catch {set val [dict get $driver_param $type items $ip_name]} msg]} {
 	}
 	return $val
@@ -294,48 +313,23 @@ proc get_label_addr args {
 	return $value
 }
 
-proc remove_duplicate_addr {} {
-	global duplist
-	set val [hsi::get_cells -hier]
-	global mainlist
-	global addrlist
-	set mainlist ""
-	set addrlist ""
-	set ignorelist "psu_iou_s zynq_ultra_ps_e_0 versal_cips displayport v_tc"
-	foreach v $val {
-		set nested 0
-		if {[is_ps_ip $v] == 1} {
-			continue
-		}
-		set main_base [get_baseaddr $v]
-		if {$main_base == ""} {
-			continue
-		}
-		set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $v]]
-		if {[lsearch $ignorelist $ip_name] >= 0} {
-			continue
-		}
-		if {[lsearch $addrlist $main_base] >= 0} {
-			if {[catch {set rt [dict get $duplist $main_base]} msg]} {
-				continue
+proc remove_duplicate_addr args {
+	set peri_list [lindex $args 0]
+	set non_val_list [lindex $args 1]
+	global dup_periph_handle
+	set dup_periph_handle [dict create]
+	set addr_dict [dict create]
+	foreach drv_handle $peri_list {
+		set periph_addr [get_baseaddr $drv_handle]
+		set ip_name [get_ip_property $drv_handle IP_NAME]
+		if { $periph_addr ne "" && [is_ps_ip $drv_handle] != 1 && [lsearch $non_val_list $ip_name] < 0 } {
+			if { [dict exists $addr_dict $periph_addr $ip_name] } {
+				dict set dup_periph_handle $drv_handle [dict get $addr_dict $periph_addr $ip_name]
 			} else {
-				set matchip_name [hsi get_property IP_NAME [hsi::get_cells -hier $rt]]
-				if {[string match -nocase $matchip_name $ip_name]} {
-					continue
-				}
-				set nested 1
-			}
-		} else {
-			append mainlist " " $v
-			append addrlist " " $main_base
-			if {$nested == 1} {
-				dict lappend duplist $main_base $v
-			} else {
-				dict set duplist $main_base $v
+				dict set addr_dict $periph_addr $ip_name $drv_handle
 			}
 		}
-	}	
-	set values [dict keys $duplist]
+	}
 }
 
 
@@ -345,7 +339,7 @@ proc set_memmap args {
 	set proc_ip [lindex $args 1]
 	set val [lindex $args 2]
 	if {[catch {dict for {memory procs} $memmap {}} msg]} {
-			dict set memmap $mem_ip $proc_ip $val
+		dict set memmap $mem_ip $proc_ip $val
 	} else {
 		dict for {memory procs} $memmap {
 			if {[string match -nocase $memory $mem_ip]} {
@@ -353,7 +347,7 @@ proc set_memmap args {
 					if {[dict exists $memmap $memory $proc_ip]} {
 						if {[catch {set value [dict get $procs $proc_ip]} msg]} {
 							dict set memmap $mem_ip $proc_ip $val
-						} else {
+						} elseif { $value ne $val } {
 							dict set memmap $mem_ip $proc_ip "$value , $val"
 						}
 					} else {
@@ -386,23 +380,6 @@ proc get_memmap args {
 proc get_hw_family {} {
 	set prop [hsi get_property FAMILY [hsi::get_hw_designs]]
 	return $prop
-}
-
-proc get_dt_data args {
-	global env
-	set path $env(REPO)
-	set prop [lindex $args 1]
-	set drv_handle [lindex $args 0]
-	set drvname [get_drivers $drv_handle]
-	set common_file "$path/$drvname/data/config.yaml"
-	if {[file exists $common_file]} {
-        	#error "file not found: $common_file"
-    	} else {
-		return ""
-	}
-	set value [get_driver_config $drv_handle $prop]
-
-	return $value
 }
 
 # set global dict_devicetree
@@ -451,17 +428,24 @@ proc get_user_config args {
 }
 
 proc get_node args {
+	global node_dict
+	global cur_hw_design
 
 	proc_called_by
 	set handle [lindex $args 0]
+	if { [dict exists $node_dict $cur_hw_design $handle] } {
+		return [dict get $node_dict $cur_hw_design $handle]
+	}
 	set non_val_list "versal_cips noc_nmu noc_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect noc_nsw"
 	set non_val_ip_types "MONITOR BUS PROCESSOR"
 	set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $handle]]
 	set ip_type [hsi get_property IP_TYPE [hsi::get_cells -hier $handle]]
 	if {[lsearch -nocase $non_val_list $ip_name] >= 0} {
+		dict set node_dict $cur_hw_design $handle {}
 		return ""
 	}
 	if {[lsearch -nocase $non_val_ip_types $ip_type] >= 0 && ![string match -nocase "axi_perf_mon" $ip_name]} {
+		dict set node_dict $cur_hw_design $handle {}
 		return ""
 	}
 
@@ -495,9 +479,9 @@ proc get_node args {
 	} else {
 		set busname [detect_bus_name $handle]
 	}
-	set childs [$treeobj children $busname]
-	foreach child $childs {
-	}
+	#set childs [$treeobj children $busname]
+	#foreach child $childs {
+	#}
 	set dev_type [hsi get_property IP_NAME [hsi::get_cells -hier $handle]]
 	if {[string match -nocase $dev_type "psv_fpd_smmutcu"]} {
 		set dev_type "psv_fpd_maincci"
@@ -517,6 +501,7 @@ proc get_node args {
 	}
 	set node [string trimleft $node "\{"]
 	set node [string trimright $node "\}"]
+	dict set node_dict $cur_hw_design $handle $node
 
 	return $node
 }
@@ -528,12 +513,12 @@ proc get_prop args {
 	set dts_file [set_drv_def_dts $handle]]
 	set ip_type [hsi get_property IP_TYPE [hsi::get_cells -hier $handle]]
 
-	if {[string match -nocase $ip_type "PROCESSOR"]} {
-		set busname root
-	} else {
-		set busname [detect_bus_name $handle]
-	}
-	set addr [get_baseaddr $handle]
+	#if {[string match -nocase $ip_type "PROCESSOR"]} {
+	#	set busname root
+	#} else {
+	#	set busname [detect_bus_name $handle]
+	#}
+	#set addr [get_baseaddr $handle]
 	if {[string match -nocase $dts_file "pcw.dtsi"]} {
 		set treeobj "pcwdt"
 	} elseif {[string match -nocase $dts_file "pl.dtsi"]} {
@@ -543,10 +528,10 @@ proc get_prop args {
 	} else {
 		set treeobj "systemdt"
 	}
-	set childs [$treeobj children $busname]
-	foreach child $childs {
-	}
-	set label [hsi get_property IP_NAME [hsi::get_cells -hier $handle]]
+	#set childs [$treeobj children $busname]
+	#foreach child $childs {
+	#}
+	#set label [hsi get_property IP_NAME [hsi::get_cells -hier $handle]]
 	set dts [set_drv_def_dts $handle]
 	set node [get_node $drv_handle]
 	set val [$treeobj get $node $property]
@@ -574,7 +559,7 @@ proc get_yaml_dict { config_file } {
         } else {
                 error "YAML:: No such file $config_file"
         }
-    return [yaml::yaml2dict $data]
+	return [yaml::yaml2dict $data]
 }
 
 proc write_value {type value} {
@@ -608,8 +593,6 @@ proc write_value {type value} {
 	                        	set val "<$value>"
 				}
                 	}
-			
-
                 } elseif {$type == "hexint"} {
 			if {[regexp -nocase {0x([0-9a-f])} $value match]} {
 				set val "<$value>"
@@ -641,7 +624,6 @@ proc write_value {type value} {
                         set val [append val ">"]
 		} elseif {$type == "special"} {
                         set val "<$value>"
-
                 } elseif {$type == "bytesequence"} {
                         set val "\[ "
                         foreach element $value {
@@ -650,7 +632,7 @@ proc write_value {type value} {
                                 if {$tmp} {
                                         error {"Value $element is not a byte!"}
                                 }
-                               set val [append val "[format %02x $element] "]
+                                set val [append val "[format %02x $element] "]
                         }
                         set val [append val "\]"]
                 } elseif {$type == "labelref" || $type == "reference"} {
@@ -708,14 +690,14 @@ proc write_value {type value} {
 					}
 				}
 			} else {
-                        foreach element $value {
-                                if {$first != true} { 
-                                	set val [append val "\ \,\ $element"]
-				} else {
-                                	set val [append val "\"$element"]
+				foreach element $value {
+					if {$first != true} { 
+						set val [append val "\ \,\ $element"]
+					} else {
+						set val [append val "\"$element"]
+					}
+				       set first false
 				}
-                               set first false
-                        }
 				set val [append val "\""]
 			}
 		} elseif {$type == "comment"} {
@@ -757,7 +739,7 @@ proc create_node args {
 	}
 	set ignore_list "fifo_generator clk_wiz clk_wizard xlconcat xlconstant util_vector_logic xlslice util_ds_buf proc_sys_reset axis_data_fifo v_vid_in_axi4s bufg_gt axis_tdest_editor util_reduced_logic gt_quad_base noc_nsw blk_mem_gen emb_mem_gen lmb_bram_if_cntlr perf_axi_tg noc_mc_ddr4 c_counter_binary timer_sync_1588 oddr axi_noc mailbox dp_videoaxi4s_bridge axi4svideo_bridge axi_vip xpm_cdc_gen bufgmux"
 	set temp [lsearch $ignore_list $node_name]
-	if {[string match -nocase $node_unit_addr ""] && $temp >= 0 } {
+	if {$temp >= 0  && [string match -nocase $node_unit_addr ""]} {
 		set val_lab [string match -nocase $node_label ""]
 		set val_name [string match -nocase $node_name ""]
 		if {$val_lab != 1 && $val_name != 1} {
@@ -767,8 +749,7 @@ proc create_node args {
 	if {[string match -nocase $node_name "lmb_bram_if_cntlr"]} {
 		set val_lab [string match -nocase $node_label ""]
 		set val_name [string match -nocase $node_name ""]
-		
-			set node_unit_addr [get_label_addr $node_name $node_label]
+		set node_unit_addr [get_label_addr $node_name $node_label]
 		
 	}
 	if {[string match -nocase $node_name "aliases"]} {
@@ -804,11 +785,10 @@ proc create_node args {
 		set root "systemroot"
 	}
 	if {[string match -nocase $treeobj "pcwdt"]} {
-	set ps_mapping [gen_ps_mapping]
-	if {[catch {set tmp [dict get $ps_mapping $node_unit_addr label]} msg]} {
-	} else {
-		set new_name "&$node_name"
-	}
+		set ps_mapping [gen_ps_mapping]
+		if {![dict exists $ps_mapping $node_unit_addr label]} {
+			set new_name "&$node_name"
+		}
 	}
 	if {[string match -nocase $node_name "amba_pl: amba_pl"] || 
 		[string match -nocase $node_name "amba: axi"] ||
@@ -822,10 +802,9 @@ proc create_node args {
 		[string match -nocase $node_name "amba_rpu: rpu-bus"] ||
 		[string match -nocase $node_name "amba_apu: apu-bus"] || [string match -nocase $node_name "root"]} {
 		set mainroot [$treeobj children root]
-		
+
 		if {[string match -nocase $mainroot ""]} {
 			if {[string match $node_name "amba_pl: amba_pl"]} {
-
 				set interconnect [$treeobj insert root end "amba_pl: amba_pl"]
 			}	
 			if {[string match $node_name "amba: axi"]} {
@@ -879,14 +858,14 @@ proc create_node args {
 	if {[catch {set main_childs [$treeobj children $parent_obj]} msg] } {
 	}
 	if {[string match -nocase $treeobj "pcwdt"]} {
-	set ps_mapping [gen_ps_mapping]
-	if {[catch {set tmp [dict get $ps_mapping $node_unit_addr label]} msg]} {
-		
-	} else {
-		set node_name "&$node_label"
-		set node_label ""
-		set node_unit_addr ""
-	}
+		set ps_mapping [gen_ps_mapping]
+		if {[catch {set tmp [dict get $ps_mapping $node_unit_addr label]} msg]} {
+			
+		} else {
+			set node_name "&$node_label"
+			set node_label ""
+			set node_unit_addr ""
+		}
 	}
 	if {[string match -nocase $main_childs ""]} {
 		if {[string match -nocase $node_unit_addr ""]} {
@@ -908,24 +887,24 @@ proc create_node args {
 	} else {
 		foreach childnodes $main_childs {
 			if {[catch {set temp [[string match -nocase $childnodes "$node_label: $node_name@$node_unit_addr"]]} msg]} {
-              	          if {[string match -nocase $childnodes "$node_name: $node_label"]} {
-                                return $childnodes
-			} else {
-			if {[catch {set temp [string match -nocase $node_unit_addr ""]} msg]} {
-				if {[string match -nocase $node_label ""]} {
-                			set drvnode [$treeobj insert $parent_obj end "$node_name"]
+				if {[string match -nocase $childnodes "$node_name: $node_label"]} {
+				      return $childnodes
 				} else {
-                			set drvnode [$treeobj insert $parent_obj end "$node_label: $node_name"]
-				}
-			} else {
-				if {[string match -nocase $node_label ""]} {
-	                		set drvnode [$treeobj insert $parent_obj end "$node_name@$node_unit_addr"]
-				} else {
-	                		set drvnode [$treeobj insert $parent_obj end "$node_label: $node_name@$node_unit_addr"]
-				}
-			}
-			return $drvnode
-                        }
+				      if {[catch {set temp [string match -nocase $node_unit_addr ""]} msg]} {
+						if {[string match -nocase $node_label ""]} {
+							set drvnode [$treeobj insert $parent_obj end "$node_name"]
+						} else {
+							set drvnode [$treeobj insert $parent_obj end "$node_label: $node_name"]
+						}
+					} else {
+						if {[string match -nocase $node_label ""]} {
+							set drvnode [$treeobj insert $parent_obj end "$node_name@$node_unit_addr"]
+						} else {
+							set drvnode [$treeobj insert $parent_obj end "$node_label: $node_name@$node_unit_addr"]
+						}
+					}
+					return $drvnode
+			      }
 			}
                 }
 		if {[string match -nocase $node_unit_addr ""]} {
@@ -946,38 +925,39 @@ proc create_node args {
 	set drvnode [string trimright $drvnode "\}"]
         return $drvnode
 }
-proc add_prop args {
 
+proc add_prop args {
 	proc_called_by
 	set keyval ""
 	set bypass 0
 	set incr 0
 	set overwrite 0
-	foreach val $args {
-		incr count
-	}
+	#foreach val $args {
+	#	incr count
+	#}
+	set count [llength $args]
 	set node [lindex $args 0]
 	set prop [lindex $args 1]
 
-
-	if {$count > 4} {
-		set val [lindex $args 2]
-		set type [lindex $args 3]
-		set dts_file [lindex $args 4]
-	} else {
+	# revisit this
+	if {$count <= 4} {
 		set val ""
 		set type [lindex $args 2]
 		set dts_file [lindex $args 3]
+	} else {
+		set val [lindex $args 2]
+		set type [lindex $args 3]
+		set dts_file [lindex $args 4]
 	}
 	if {$count > 5} {
 		set overwrite [lindex $args 5]
 	}
 
-	if {[string match -nocase $node "&gic"]} {
-	}
-	if {[string match -nocase $dts_file "pcw.dtsi"]} {
-
-	}
+	#if {[string match -nocase $node "&gic"]} {
+	#}
+	#if {[string match -nocase $dts_file "pcw.dtsi"]} {
+	#
+	#}
 
 	set val [write_value $type $val]
 	if {[string match -nocase $dts_file "pcw.dtsi"]} {
@@ -991,18 +971,9 @@ proc add_prop args {
 	}
 
 	if {[catch {set already_key [$treeobj get $node $prop]} msg]} {
-		set temp [$treeobj children root]
-		foreach kid $temp {
-			foreach nkid [$treeobj children $kid] {
-				if {[string match -nocase $nkid $node]} {
-				}
-			}
-		}
 		set node [string trimleft $node "\{"]
 		set node [string trimright $node "\}"]
 		if {$bypass == 0} {
-			if {[string match -nocase $prop "reg"]} {
-			}
 			set keyval [$treeobj set $node $prop $val]
 		}
 	} else {
@@ -1022,28 +993,6 @@ proc add_prop args {
 	}
 	if {$bypass == 0} {
 		return $keyval
-	}
-}
-
-proc line_to_node_val {line} {
-	regsub -all "\{| |\t" $line {} line
-	set node_label ""
-	set node_name ""
-	set node_unit_addr ""
-	
-	set node_data [split $line ":"]
-	set node_data_size [llength $node_data]
-	if {$node_data_size == 2} {
-		set node_label [lindex $node_data 0]
-		set tmp_data [split [lindex $node_data 1] "@"]
-		set node_name [lindex $tmp_data 0]
-		if {[llength $tmp_data] >= 2} {
-			set node_unit_addr [lindex $tmp_data 1]
-		}
-	} elseif {$node_data_size == 1} {
-		set node_name [lindex $node_data 0]
-	} else {
-		error "invalid node found - $line"
 	}
 }
 
@@ -1478,7 +1427,6 @@ proc write_dt args {
 					set pr [expr $pr + 2]
 				}
 			}
-
 			
 			foreach child $nestchilds {
 				puts $fd "\t\t\t$child {"
@@ -1823,7 +1771,7 @@ proc get_drivers args {
 		foreach drv_handle [hsi::get_cells -hier] {
 			set ipname [hsi get_property IP_NAME $drv_handle]
 			set val [hsi::get_mem_ranges $drv_handle]
-			if {[string match -nocase [hsi get_property IP_TYPE [hsi::get_cells -hier $drv_handle]] "processor"]} {
+			if {[string match -nocase [get_ip_property $drv_handle IP_TYPE] "processor"]} {
 				if {[string match -nocase $ipname "psv_cortexa72"] || [string match -nocase $ipname "psu_cortexa53"]} {
 					set index [string index $drv_handle end]
 					if {$index == 0} {
@@ -1894,16 +1842,16 @@ proc gen_axis_port4_endpoint {drv_handle value} {
 }
 
 proc set_drv_property args {
-
 	set drv_handle [lindex $args 0]
 	set dts_file [set_drv_def_dts $drv_handle]
 	set conf_prop [lindex $args 1]
 	set value [lindex $args 2]
-	if {[llength $value] !=0} {
-		if {$value != "-1" && [llength $value] !=0} {
+	set node [lindex $args 3]
+	if {[llength $value] != 0} {
+		if {$value != "-1" && [llength $value] != 0} {
 			set type "hexint"
-			if {[llength $args] >= 4} {
-				set type [lindex $args 3]
+			if {[llength $args] >= 5} {
+				set type [lindex $args 4]
 				if {[string equal -nocase $type "boolean"]} {
 					if {[expr $value < 1]} {
 						return 0
@@ -1913,7 +1861,7 @@ proc set_drv_property args {
 			}
 			# remove CONFIG. as add_new_property does not work with CONFIG.
 			regsub -all {^CONFIG.} $conf_prop {} conf_prop
-			set node [get_node $drv_handle]
+			#set node [get_node $drv_handle]
 			add_prop $node $conf_prop $value $type $dts_file
 		}
 	}
@@ -1924,14 +1872,15 @@ proc set_drv_conf_prop args {
 	set drv_handle [lindex $args 0]
 	set pram [lindex $args 1]
 	set conf_prop [lindex $args 2]
+	set node [lindex $args 3]
 	set ip [hsi::get_cells -hier $drv_handle]
 	set value [hsi get_property CONFIG.${pram} $ip]
 	if {[llength $value] !=0} {
 		regsub -all "MIO( |)" $value "" value
 		if {$value != "-1" && [llength $value] !=0} {
 			set type "hexint"
-			if {[llength $args] >= 4} {
-				set type [lindex $args 3]
+			if {[llength $args] >= 5} {
+				set type [lindex $args 4]
 				if {[string equal -nocase $type "boolean"]} {
 					if {[expr $value < 1]} {
 						return 0
@@ -1940,8 +1889,8 @@ proc set_drv_conf_prop args {
 				}
 			}
 			regsub -all {^CONFIG.} $conf_prop {} conf_prop
-			set node [get_node $drv_handle]
-			set name [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+			#set node [get_node $drv_handle]
+			set name [get_ip_property $drv_handle IP_NAME]
 			set dts_file [set_drv_def_dts $drv_handle]
 			if {[string match -nocase $dts_file "pcw.dtsi"]} {
 				set treeobj "pcwdt"
@@ -1967,11 +1916,21 @@ proc add_cross_property args {
 	set src_prams [lindex $args 1]
 	set dest_handle [lindex $args 2]
 	set dest_prop [lindex $args 3]
+	set node [lindex $args 4]
 	set ip [hsi::get_cells -hier $src_handle]
 	set ipname [hsi get_property IP_NAME $ip]
 	set proctype [get_hw_family]
+	set valid_proclist "psv_cortexa72 psv_cortexr5 psu_cortexa53 psu_cortexr5 psu_pmu psv_pmc psv_psm microblaze"
+	set type "hexint"
+	if {[llength $args] >= 6} {
+		set type [lindex $args 5]
+	}
+	set sub 0
+	if {[regexp "(int|hex).*" $type match]} {
+		set sub 1
+	}
 	foreach conf_prop $src_prams {
-		set value [hsi get_property ${conf_prop} $ip]
+		set value [hsi get_property $conf_prop $ip]
 		if {$conf_prop == "CONFIG.processor_mode"} {
 			set value "true"
 		}
@@ -1980,27 +1939,21 @@ proc add_cross_property args {
 		}
 		if {[llength $value]} {
 			if {$value != "-1" && [llength $value] !=0} {
-				set type "hexint"
-				if {[llength $args] >= 5} {
-					set type [lindex $args 4]
-				}
 				if {[string equal -nocase $type "boolean"]} {
 					if {[expr $value < 1]} {
 						return 0
 					}
 					set value ""
 				}
-				if {[regexp "(int|hex).*" $type match]} {
+				if {$sub} {
 					regsub -all {"} $value "" value
 				}
-				set ipname [hsi get_property IP_NAME [hsi::get_cells -hier $ip]]
 				if {[string match -nocase $ipname "axi_mcdma"] && [string match -nocase $dest_prop "xlnx,include-sg"] } {
-					set type "boolean"
 					set value ""
 				}
 				if {[regexp -nocase {0x([0-9a-f]{9})} "$value" match]} {
-					set temp $value
-					set temp [string trimleft [string trimleft $temp 0] x]
+					set temp [string range $value 2 end]
+					#set temp [string trimleft [string trimleft $temp 0] x]
 					set len [string length $temp]
 					set rem [expr {${len} - 8}]
 					set high_base "0x[string range $temp $rem $len]"
@@ -2009,7 +1962,6 @@ proc add_cross_property args {
 					set value "$low_base $high_base"
 				}
 
-				set valid_proclist "psv_cortexa72 psv_cortexr5 psu_cortexa53 psu_cortexr5 psu_pmu psv_pmc psv_psm microblaze"
 				if {[string match -nocase $ipname "psv_rcpu_gic"]} {
 					set node [create_node -n "&gic_r5" -d "pcw.dtsi" -p root]
 				} elseif {[lsearch $valid_proclist $ipname] >= 0} {
@@ -2040,7 +1992,7 @@ proc add_cross_property args {
 							} elseif {[string match -nocase $proctype "versal"]} {
 								set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
 							}
-								set node [create_node -n "cpu" -l "ub${count}_cpu" -u 0 -d "pl.dtsi" -p $rt_node]
+							set node [create_node -n "cpu" -l "ub${count}_cpu" -u 0 -d "pl.dtsi" -p $rt_node]
 						}
 					}
 				} else {
@@ -2092,8 +2044,15 @@ proc add_cross_property_to_dtnode args {
 }
 
 proc get_ip_property {drv_handle parameter} {
+	global property_dict
+	global cur_hw_design
+	if { [dict exists $property_dict $cur_hw_design $drv_handle $parameter] } {
+		return [dict get $property_dict $cur_hw_design $drv_handle $parameter]
+	}
 	set ip [hsi::get_cells -hier $drv_handle]
-	return [hsi get_property ${parameter} $ip]
+	set val [hsi get_property ${parameter} $ip]
+	dict set property_dict $cur_hw_design $drv_handle $parameter $val
+	return $val
 }
 
 proc is_it_in_pl {ip} {
@@ -2114,6 +2073,11 @@ proc is_it_in_pl {ip} {
 }
 
 proc get_intr_id {drv_handle intr_port_name} {
+	global cur_hw_design
+	global intr_id_dict
+	if { [dict exists $intr_id_dict $cur_hw_design $drv_handle $intr_port_name] } {
+		return [dict get $intr_id_dict $cur_hw_design $drv_handle $intr_port_name]
+	}
 	proc_called_by
 	set slave [hsi::get_cells -hier $drv_handle]
 	set intr_info ""
@@ -2122,7 +2086,6 @@ proc get_intr_id {drv_handle intr_port_name} {
 		set intc [get_interrupt_parent $drv_handle $pin]
 		if {[string_is_empty $intc] == 1} {continue}
 		if {[string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype]} {
-
 			if {[llength $intc] > 1} {
 				foreach intr_cntr $intc {
 					if { [is_ip_interrupting_current_proc $intr_cntr] } {
@@ -2177,6 +2140,7 @@ proc get_intr_id {drv_handle intr_port_name} {
 		set intr_info -1
 	}
 
+	dict set intr_id_dict $cur_hw_design $drv_handle $intr_port_name $intr_info
 	return $intr_info
 }
 
@@ -2230,9 +2194,9 @@ proc gen_dt_node_search_pattern args {
 	# generates device tree node search pattern and return it
 
 	global def_string
-	foreach var {node_name node_label node_unit_addr} {
-		set ${var} ${def_string}
-	}
+	#foreach var {node_name node_label node_unit_addr} {
+	#	set ${var} ${def_string}
+	#}
 	while {[string match -* [lindex $args 0]]} {
 		switch -glob -- [lindex $args 0] {
 			-n* {set node_name [Pop args 1]}
@@ -2502,8 +2466,9 @@ proc update_system_dts_include {include_file} {
 	if {[regexp "kintex*" $proctype match]} {
 		global env
 		set path $env(REPO)
-		set drvname [get_drivers $drv_handle]
-		set common_file "$path/device_tree/data/config.yaml"
+		#set drvname [get_drivers $drv_handle]
+		#set common_file "$path/device_tree/data/config.yaml"
+		set common_file [file join [file dirname [dict get [info frame 0] file]] "config.yaml"]
 		set board_dts [get_user_config $common_file -board_dts]
 		set dtsi_file " "
 		set dtsi_file $board_dts
@@ -2543,7 +2508,7 @@ proc get_dts_include {} {
 	set family [get_hw_family]
 	set common_file "$path/device_tree/data/config.yaml" 
         set dir [get_user_config $common_file -output_dir]
-        if {[string match -nocase $family "versal"] || [is_zynqmp_platform $family] || [string match -nocase $family "zynq"]} {
+        if {[string match -nocase $family "versal"] || [string match -nocase $family "zynq"] || [is_zynqmp_platform $family]} {
 		return [file normalize "$path/device_tree/data/kernel_dtsi/${release}/${dtsi_fname}"]
 	} else {
 		return "$dir/pl.dtsi"
@@ -2552,14 +2517,16 @@ proc get_dts_include {} {
 
 proc set_drv_def_dts {drv_handle} {
 	global env
-	set path $env(REPO)
+	#set path $env(REPO)
 
-	set drvname [get_drivers $drv_handle]
-	set common_file "$path/device_tree/data/config.yaml"
+	#set drvname [get_drivers $drv_handle]
+	#set common_file "$path/device_tree/data/config.yaml"
+	set common_file [file join [file dirname [dict get [info frame 0] file]] "config.yaml"]
 	set dt_overlay [get_user_config $common_file -dt_overlay]
 	set family [get_hw_family]
 	global bus_clk_list
-	if {[is_pl_ip $drv_handle]} {
+	set pl_ip [is_pl_ip $drv_handle]
+	if {$pl_ip} {
 		set default_dts "pl.dtsi"
 		if {!$dt_overlay} {
 			update_system_dts_include $default_dts
@@ -2569,7 +2536,7 @@ proc set_drv_def_dts {drv_handle} {
 		set default_dts "pcw.dtsi"
 		update_system_dts_include $default_dts
 	}
-	if {[is_pl_ip $drv_handle] && $dt_overlay} {
+	if {$pl_ip && $dt_overlay} {
 		set fpga_node [create_node -n "fragment" -u 0 -d ${default_dts} -p root]
 		set pl_file $default_dts
 		set targets "fpga_full"
@@ -2813,73 +2780,67 @@ proc add_or_get_dt_node args {
 	return $node
 }
 
-proc is_pl_ip {ip_inst} {
+proc get_ip_type {ip_inst} {
+	global ip_type_dict
+	global cur_hw_design
+	if { [dict exists $ip_type_dict $cur_hw_design $ip_inst] } {
+		return [dict get $ip_type_dict $cur_hw_design $ip_inst]
+	}
 	# check if the IP is a soft IP (not PS7)
 	# return 1 if it is soft ip
 	# return 0 if not
 	set ip_obj [hsi::get_cells -hier $ip_inst]
-	if {[llength [hsi::get_cells -hier $ip_inst]] < 1} {
-		return 0
+	if {[llength $ip_obj] < 1} {
+		return -1
 	}
 	set ip_name [hsi get_property IP_NAME $ip_obj]
-	set nochk_list "ai_engine noc_mc_ddr4"
+	set nochk_list "ai_engine noc_mc_ddr4 axi_noc"
 	if {[lsearch $nochk_list $ip_name] >= 0} {
+		dict set ip_type_dict $cur_hw_design $ip_inst 1
 		return 1
 	}
-	if {[catch {set proplist [hsi list_property [hsi::get_cells -hier $ip_inst]]} msg]} {
-	} else {
-		if {[lsearch -nocase $proplist "IS_PL"] >= 0} {
-			set prop [hsi get_property IS_PL [hsi::get_cells -hier $ip_inst]]
-			if {$prop} {
-				return 1
-			} else {
-				return 0
+	#if {[catch {set proplist [hsi list_property [hsi::get_cells -hier $ip_inst]]} msg]} {
+	#} else {
+	#	if {[lsearch -nocase $proplist "IS_PL"] >= 0} {
+			if {![catch {set prop [hsi get_property IS_PL [hsi::get_cells -hier $ip_inst]]} msg]} {
+				#if {$prop} {
+				#	return 1
+				#} else {
+				#	return 0
+				#}
+				dict set ip_type_dict $cur_hw_design $ip_inst $prop
+				return $prop
 			}
-		}
-	}
-	set ip_name [hsi get_property IP_NAME $ip_obj]
+		#}
+	#}
+	#set ip_name [hsi get_property IP_NAME $ip_obj]
 	if {![regexp "ps._*" "$ip_name" match]} {
+		dict set ip_type_dict $cur_hw_design $ip_inst 1
 		return 1
 	}
+	dict set ip_type_dict $cur_hw_design $ip_inst 0
 	return 0
+
+}
+proc is_pl_ip {ip_inst} {
+	set type [get_ip_type $ip_inst]
+	if {$type == -1} {return 0}
+	return $type
 }
 
 proc is_ps_ip {ip_inst} {
-	proc_called_by
-	# check if the IP is a soft IP (not PS7)
-	# return 1 if it is soft ip
-	# return 0 if not
-	set ip_obj [hsi::get_cells -hier $ip_inst]
-	if {[catch {set proplist [hsi list_property [hsi::get_cells -hier $ip_inst]]} msg]} {
-	} else {
-	if {[lsearch -nocase $proplist "IS_PL"] >= 0} {
-		set prop [hsi get_property IS_PL [hsi::get_cells -hier $ip_inst]]
-		if {$prop} {
-			return 0
-		}
-	}
-	}
-	if {[llength [hsi::get_cells -hier $ip_inst]] < 1} {
-		return 0
-	}
-	
-	set ip_name [hsi get_property IP_NAME $ip_obj]
-	if {[string match -nocase $ip_name "axi_noc"]} {
-		return 0
-	}
-	if {[string match -nocase $ip_name "iomodule"]} {
-		set prop [hsi get_property IS_PL [hsi::get_cells -hier $ip_inst]]
-                if {$prop == 0} {
-                        return 1
-                }
-	}
-	if {[regexp "ps._*" "$ip_name" match]} {
-		return 1
-	}
-	return 0
+	set type [get_ip_type $ip_inst]
+	if {$type == -1} return 0
+	return [expr !$type]
 }
 
 proc get_node_name {drv_handle} {
+	global node_dict
+	global cur_hw_design
+
+	if { [dict exists $node_dict $cur_hw_design $drv_handle] } {
+		return [dict get $node_dict $cur_hw_design $drv_handle]
+	}
 	# FIXME: handle node that is not an ip
 	# what about it is a bus node
 	set ip [hsi::get_cells -hier $drv_handle]
@@ -2887,12 +2848,13 @@ proc get_node_name {drv_handle} {
 	if {[string_is_empty $ip]} {
 		error "$drv_handle is not a valid IP"
 	}
-	set unit_addr [get_baseaddr ${ip}]
+	#set unit_addr [get_baseaddr ${ip}]
 	set dev_type [hsi get_property CONFIG.dev_type $drv_handle]
 	if {[string_is_empty $dev_type] == 1} {
 		set dev_type $drv_handle
 	}
 	set dt_node [add_or_get_dt_node -n ${dev_type} -l ${drv_handle} -u ${unit_addr}]
+	dict set $nodename_dict $cur_hw_design $drv_handle $dt_node
 	return $dt_node
 }
 
@@ -2936,7 +2898,7 @@ proc add_driver_prop {drv_handle dt_node prop} {
 	regsub -all {CONFIG.} $prop {xlnx,} prop
 	set prop [string tolower $prop]
 	dtg_debug "${dt_node} - ${prop} - ${value} - ${type}"
-	set ipname [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+	set ipname [get_ip_property $drv_handle IP_NAME]
        	if {[string match -nocase $ipname "axi_mcdma"] && [string match -nocase $prop "xlnx,sg-include-stscntrl-strm"] && [string match -nocase $type "boolean"]} {
                set type "hexint"
        	}
@@ -2947,7 +2909,7 @@ proc add_driver_prop {drv_handle dt_node prop} {
 		return 1
 	}
 	# TODO: sanity check is missing
-	set ipname [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+	set ipname [get_ip_property $drv_handle IP_NAME]
 
 	if {[string match -nocase $ipname "axi_dma"]} {
 		if {[string match -nocase $prop "xlnx,include-sg"] && [string match -nocase $value "0"]} {
@@ -2958,7 +2920,7 @@ proc add_driver_prop {drv_handle dt_node prop} {
 	if {[string match -nocase $type "boolean"] && [string_is_empty ${value}] != 1} {
 		set value ""
 	}
-	if {[string match -nocase "PROCESSOR" [hsi get_property IP_TYPE [hsi::get_cells -hier $drv_handle]]]} {
+	if {[string match -nocase "PROCESSOR" [get_ip_property $drv_handle IP_TYPE]]} {
 		add_prop $dt_node $prop $value $type [set_drv_def_dts $drv_handle] 1
 	} else {
 	set node [get_node $drv_handle ]
@@ -3445,28 +3407,28 @@ proc gen_ps7_mapping {} {
 }
 
 proc ps_node_mapping {ip_name prop} {
-	if {[is_ps_ip [get_drivers $ip_name]]} {
-		set unit_addr [get_ps_node_unit_addr $ip_name]
-		if {$unit_addr == -1} {return $ip_name}
-		set ps7_mapping [gen_ps7_mapping]
+	# if {[is_ps_ip $ip_name]} {
+	# 	set unit_addr [get_ps_node_unit_addr $ip_name]
+	# 	if {$unit_addr == -1} {return $ip_name}
+	# 	set ps7_mapping [gen_ps7_mapping]
 
-		if {[catch {set tmp [dict get $ps7_mapping $unit_addr $prop]} msg]} {
-			continue
-		}
-		return $tmp
-	}
+	# 	if {[catch {set tmp [dict get $ps7_mapping $unit_addr $prop]} msg]} {
+	# 		continue
+	# 	}
+	# 	return $tmp
+	# }
 	return $ip_name
 }
 
 proc get_ps_node_unit_addr {ip_name {prop "label"}} {
 	set ip [hsi::get_cells -hier $ip_name]
 	set ip_mem_handle [get_ip_mem_ranges [hsi::get_cells -hier $ip]]
+	set ps7_mapping [gen_ps7_mapping]
 
 	# loop through the base addresses: workaround for intc
 	foreach handler ${ip_mem_handle} {
 		set unit_addr [string tolower [hsi get_property BASE_VALUE $handler]]
 		regsub -all {^0x} $unit_addr {} unit_addr
-		set ps7_mapping [gen_ps7_mapping]
 		if {[is_ps_ip [get_drivers $ip_name]]} {
 			if {[catch {set tmp [dict get $ps7_mapping $unit_addr $prop]} msg]} {
 				continue
@@ -3520,9 +3482,10 @@ proc zynq_gen_pl_clk_binding {drv_handle} {
 	global env
 	set path $env(REPO)
 
-	set drvname [get_drivers $drv_handle]
-
-	set common_file "$path/device_tree/data/config.yaml"
+	#set drvname [get_drivers $drv_handle]
+	#
+	#set common_file "$path/device_tree/data/config.yaml"
+	set common_file [file join [file dirname [dict get [info frame 0] file]] "config.yaml"]
 	if {[file exists $common_file]} {
         	#error "file not found: $common_file"
     	}
@@ -3536,8 +3499,9 @@ proc zynq_gen_pl_clk_binding {drv_handle} {
 	}
 	set valid_plt "zynq zynqmp zynquplus zynquplusRFSOC"
 	if {[lsearch  -nocase $valid_plt $plattype] >= 0} {
-		set iptype [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+		set iptype [get_ip_property $drv_handle IP_NAME]
 		if {[lsearch $valid_ip_list $iptype] >= 0} {
+			set node [get_node $drv_handle]
 			# FIXME: this is hardcoded - maybe dynamic detection
 			# Keep the below logic, until we have clock frame work for ZynqMP
 			if {[string match -nocase $iptype "can"] || [string match -nocase $iptype "canfd"]} {
@@ -3548,43 +3512,43 @@ proc zynq_gen_pl_clk_binding {drv_handle} {
 				set clks "s_axi_aclk"
 			}
 			foreach pin $clks {
-			if {[is_zynqmp_platform $plattype]} {
-				set dts_file [set_drv_def_dts $drv_handle]
-				set bus_node [add_or_get_bus_node $drv_handle $dts_file]
-				set clk_freq [get_clock_frequency [hsi::get_cells -hier $drv_handle] $pin]
-				if {![string equal $clk_freq ""]} {
-					if {[lsearch $bus_clk_list $clk_freq] < 0} {
-						set bus_clk_list [lappend bus_clk_list $clk_freq]
+				if {[is_zynqmp_platform $plattype]} {
+					set dts_file [set_drv_def_dts $drv_handle]
+					set bus_node [add_or_get_bus_node $drv_handle $dts_file]
+					set clk_freq [get_clock_frequency [hsi::get_cells -hier $drv_handle] $pin]
+					if {![string equal $clk_freq ""]} {
+						if {[lsearch $bus_clk_list $clk_freq] < 0} {
+							set bus_clk_list [lappend bus_clk_list $clk_freq]
+						}
+						set bus_clk_cnt [lsearch -exact $bus_clk_list $clk_freq]
+						set misc_clk_node [create_node -n "misc_clk_${bus_clk_cnt}" -l "misc_clk_${bus_clk_cnt}" |
+							-d ${dts_file} -p ${bus_node}]
+						# create the node and assuming reg 0 is taken by cpu
+						set clk_refs [lappend clk_refs misc_clk_${bus_clk_cnt}]
+						add_prop "${misc_clk_node}" "compatible" "fixed-clock" stringlist $dts_file 1
+						add_prop "${misc_clk_node}" "#clock-cells" 0 int $dts_file 1
+						add_prop "${misc_clk_node}" "clock-frequency" $clk_freq int $dts_file 1
+						if {[string match -nocase $iptype "can"] || [string match -nocase $iptype "vcu"] || [string match -nocase $iptype "canfd"]} {
+							set clocks [lindex $clk_refs 0]
+							append clocks ">, <&[lindex $clk_refs 1]"
+							set_drv_prop $drv_handle "clocks" "$clocks" $node reference
+							set_drv_prop_if_empty $drv_handle "clock-names" "$clks" $node stringlist
+						} else {
+							set_drv_prop_if_empty $drv_handle "clocks" $clk_refs $node reference
+							set_drv_prop_if_empty $drv_handle "clock-names" "$clks" $node stringlist
+						}
 					}
-					set bus_clk_cnt [lsearch -exact $bus_clk_list $clk_freq]
-					set misc_clk_node [create_node -n "misc_clk_${bus_clk_cnt}" -l "misc_clk_${bus_clk_cnt}" |
-						-d ${dts_file} -p ${bus_node}]
-					# create the node and assuming reg 0 is taken by cpu
-					set clk_refs [lappend clk_refs misc_clk_${bus_clk_cnt}]
-					add_prop "${misc_clk_node}" "compatible" "fixed-clock" stringlist $dts_file 1
-					add_prop "${misc_clk_node}" "#clock-cells" 0 int $dts_file 1
-					add_prop "${misc_clk_node}" "clock-frequency" $clk_freq int $dts_file 1
-					if {[string match -nocase $iptype "can"] || [string match -nocase $iptype "vcu"] || [string match -nocase $iptype "canfd"]} {
-						set clocks [lindex $clk_refs 0]
-						append clocks ">, <&[lindex $clk_refs 1]"
-						set_drv_prop $drv_handle "clocks" "$clocks" reference
-						set_drv_prop_if_empty $drv_handle "clock-names" "$clks" stringlist
-					} else {
-						set_drv_prop_if_empty $drv_handle "clocks" $clk_refs reference
-						set_drv_prop_if_empty $drv_handle "clock-names" "$clks" stringlist
-					}
+				} else {
+					set_drv_prop_if_empty $drv_handle "clock-names" "ref_clk" $node stringlist
+					set_drv_prop_if_empty $drv_handle "clocks" "clkc 0" $node reference
 				}
-			} else {
-				set_drv_prop_if_empty $drv_handle "clock-names" "ref_clk" stringlist
-				set_drv_prop_if_empty $drv_handle "clocks" "clkc 0" reference
-			}
 			}
 		}
 	}
 }
 
 proc gen_dfx_reg_property {drv_handle dfx_node} {
-       set ip_name  [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+       set ip_name  [get_ip_property $drv_handle IP_NAME]
        set reg ""
        set slave [hsi::get_cells -hier ${drv_handle}]
        set ip_mem_handles [get_ip_mem_ranges $slave]
@@ -3692,7 +3656,7 @@ proc gen_dfx_clk_property {drv_handle dts_file child_node dfx_node} {
                return
        }
        set clk_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $drv_handle] -filter {TYPE==clk&&DIRECTION==I}]
-       set ip [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+       set ip [get_ip_property $drv_handle IP_NAME]
        foreach clk $clk_pins {
                set ip [hsi::get_cells -hier $drv_handle]
                set pins [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $ip] $clk]]
@@ -3736,7 +3700,7 @@ proc gen_dfx_clk_property {drv_handle dts_file child_node dfx_node} {
                                }
                                # if clk_freq is float convert it to int
                                set clk_freq [expr int($clk_freq)]
-                               set iptype [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+                               set iptype [get_ip_property $drv_handle IP_NAME]
                                if {![string equal $clk_freq ""]} {
                                        if {[lsearch $bus_clk_list $clk_freq] < 0} {
                                                set bus_clk_list [lappend bus_clk_list $clk_freq]
@@ -3862,7 +3826,7 @@ proc gen_dfx_clk_property {drv_handle dts_file child_node dfx_node} {
                        }
                        # if clk_freq is float convert it to int
                        set clk_freq [expr int($clk_freq)]
-                       set iptype [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+                       set iptype [get_ip_property $drv_handle IP_NAME]
                        if {![string equal $clk_freq ""]} {
                                if {[lsearch $bus_clk_list $clk_freq] < 0} {
                                        set bus_clk_list [lappend bus_clk_list $clk_freq]
@@ -3883,7 +3847,7 @@ proc gen_dfx_clk_property {drv_handle dts_file child_node dfx_node} {
                set axi 0
        }
        add_new_dts_param "${dfx_node}" "clock-names" "$clocknames" stringlist
-       set ip [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+       set ip [get_ip_property $drv_handle IP_NAME]
        set len [llength $updat]
        switch $len {
                "1" {
@@ -3926,8 +3890,9 @@ proc gen_dfx_clk_property {drv_handle dts_file child_node dfx_node} {
 proc gen_axis_switch_clk_property {drv_handle dts_file node} {
 	global env
 	set path $env(REPO)
-	set drvname [get_drivers $drv_handle]
-	set common_file "$path/device_tree/data/config.yaml"
+	#set drvname [get_drivers $drv_handle]
+	#set common_file "$path/device_tree/data/config.yaml"
+	set common_file [file join [file dirname [dict get [info frame 0] file]] "config.yaml"]
 	set mainline_ker [get_user_config $common_file -mainline_kernel]
        set valid_mainline_kernel_list "v4.17 v4.18 v4.19 v5.0 v5.1 v5.2 v5.3 v5.4"
        if {[lsearch $valid_mainline_kernel_list $mainline_ker] >= 0 } {
@@ -3945,7 +3910,7 @@ proc gen_axis_switch_clk_property {drv_handle dts_file node} {
 		return
 	}
        set clk_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $drv_handle] -filter {TYPE==clk&&DIRECTION==I}]
-       set ip [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+       set ip [get_ip_property $drv_handle IP_NAME]
        foreach clk $clk_pins {
                set ip [hsi::get_cells -hier $drv_handle]
                set pins [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $ip] $clk]]
@@ -3990,7 +3955,7 @@ proc gen_axis_switch_clk_property {drv_handle dts_file node} {
                                set bus_node [add_or_get_bus_node $drv_handle $dts_file]
                                # if clk_freq is float convert it to int
                                set clk_freq [expr int($clk_freq)]
-                               set iptype [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+                               set iptype [get_ip_property $drv_handle IP_NAME]
                                if {![string equal $clk_freq ""]} {
                                        if {[lsearch $bus_clk_list $clk_freq] < 0} {
                                                set bus_clk_list [lappend bus_clk_list $clk_freq]
@@ -4117,7 +4082,7 @@ proc gen_axis_switch_clk_property {drv_handle dts_file node} {
                        set bus_node [add_or_get_bus_node $drv_handle $dts_file]
                        # if clk_freq is float convert it to int
                        set clk_freq [expr int($clk_freq)]
-                       set iptype [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+                       set iptype [get_ip_property $drv_handle IP_NAME]
                        if {![string equal $clk_freq ""]} {
                                if {[lsearch $bus_clk_list $clk_freq] < 0} {
                                        set bus_clk_list [lappend bus_clk_list $clk_freq]
@@ -4138,7 +4103,7 @@ proc gen_axis_switch_clk_property {drv_handle dts_file node} {
                set axi 0
        }
        add_prop "${node}" "clock-names" "$clocknames" stringlist $dts_file
-       set ip [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+       set ip [get_ip_property $drv_handle IP_NAME]
        set len [llength $updat]
        switch $len {
                "1" {
@@ -4184,8 +4149,9 @@ proc gen_clk_property {drv_handle} {
 	}
 	global env
 	set path $env(REPO)
-	set drvname [get_drivers $drv_handle]
-	set common_file "$path/device_tree/data/config.yaml"
+	#set drvname [get_drivers $drv_handle]
+	#set common_file "$path/device_tree/data/config.yaml"
+	set common_file [file join [file dirname [dict get [info frame 0] file]] "config.yaml"]
 	set mainline_ker [get_user_config $common_file -mainline_kernel]
 	set valid_mainline_kernel_list "v4.17 v4.18 v4.19 v5.0 v5.1 v5.2 v5.3 v5.4"
         if {[lsearch $valid_mainline_kernel_list $mainline_ker] >= 0 } {
@@ -4208,7 +4174,7 @@ proc gen_clk_property {drv_handle} {
 
 	set clk_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $drv_handle] -filter {TYPE==clk&&DIRECTION==I}]
 	dtg_verbose "clk_pins:$clk_pins"
-	set ip [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+	set ip [get_ip_property $drv_handle IP_NAME]
 	set ignore_list "lmb_bram_if_cntlr PERIPHERAL axi_noc mrmac"
 	if {[lsearch $ignore_list $ip] >= 0 } {
 		return 0
@@ -4290,7 +4256,7 @@ proc gen_clk_property {drv_handle} {
 				}
 				# if clk_freq is float convert it to int
 				set clk_freq [expr int($clk_freq)]
-				set iptype [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+				set iptype [get_ip_property $drv_handle IP_NAME]
 				if {![string equal $clk_freq ""]} {
 					if {[lsearch $bus_clk_list $clk_freq] < 0} {
 						set bus_clk_list [lappend bus_clk_list $clk_freq]
@@ -4500,7 +4466,7 @@ proc gen_clk_property {drv_handle} {
 			}
 			# if clk_freq is float convert it to int
 			set clk_freq [expr int($clk_freq)]
-			set iptype [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+			set iptype [get_ip_property $drv_handle IP_NAME]
 			if {![string equal $clk_freq ""]} {
 				if {[lsearch $bus_clk_list $clk_freq] < 0} {
 					set bus_clk_list [lappend bus_clk_list $clk_freq]
@@ -4522,15 +4488,16 @@ proc gen_clk_property {drv_handle} {
 		set is_clk_wiz 0
 		set axi 0
 	}
+	set node [get_node $drv_handle]
 	if {![string match -nocase $clocknames ""]} {
 		set len [llength $updat]
-		if {[string match -nocase "[hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]" "dfx_axi_shutdown_manager"]} {
-			set_drv_prop_if_empty $drv_handle "clock-names" "aclk" stringlist
+		if {[string match -nocase "[get_ip_property $drv_handle IP_NAME]" "dfx_axi_shutdown_manager"]} {
+			set_drv_prop_if_empty $drv_handle "clock-names" "aclk" $node stringlist
 		} else {
-			set_drv_prop_if_empty $drv_handle "clock-names" $clocknames stringlist
+			set_drv_prop_if_empty $drv_handle "clock-names" $clocknames $node stringlist
 		}
 	}
-	set ip [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+	set ip [get_ip_property $drv_handle IP_NAME]
 	if {[string match -nocase $ip "vcu"]} {
 		set vcu_label $drv_handle
 		set vcu_clk1 "$drv_handle 0"
@@ -4544,89 +4511,89 @@ proc gen_clk_property {drv_handle} {
 		set len [llength $updat]
 		set refs [lindex $updat 0]
 		append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]"
-		set_drv_prop $drv_handle "clocks" "$refs" reference
+		set_drv_prop $drv_handle "clocks" "$refs" $node reference
 		return
 	}
 	set len [llength $updat]
 	switch $len {
 		"1" {
 			set refs [lindex $updat 0]
-			set_drv_prop $drv_handle "clocks" "$refs" reference
+			set_drv_prop $drv_handle "clocks" "$refs" $node reference
 		}
 		"2" {
 			set refs [lindex $updat 0]
 			append refs ">, <&[lindex $updat 1]"
-			set_drv_prop $drv_handle "clocks" "$refs" reference
+			set_drv_prop $drv_handle "clocks" "$refs" $node reference
 		}
 		"3" {
 			set refs [lindex $updat 0]
 			append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]"
-			set_drv_prop $drv_handle "clocks" "$refs" reference
+			set_drv_prop $drv_handle "clocks" "$refs" $node reference
 		}
 		"4" {
 			set refs [lindex $updat 0]
 			append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]"
-			set_drv_prop $drv_handle "clocks" "$refs" reference
+			set_drv_prop $drv_handle "clocks" "$refs" $node reference
 		}
 		"5" {
 			set refs [lindex $updat 0]
 			append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]"
-			set_drv_prop $drv_handle "clocks" "$refs" reference
+			set_drv_prop $drv_handle "clocks" "$refs" $node reference
 		}
 		"6" {
 			set refs [lindex $updat 0]
 			append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]"
-			set_drv_prop $drv_handle "clocks" "$refs" reference
+			set_drv_prop $drv_handle "clocks" "$refs" $node reference
 		}
 		"7" {
 			set refs [lindex $updat 0]
 			append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]"
-			set_drv_prop $drv_handle "clocks" "$refs" reference
+			set_drv_prop $drv_handle "clocks" "$refs" $node reference
 		}
 		"8" {
 			set refs [lindex $updat 0]
 			append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]"
-			set_drv_prop $drv_handle "clocks" "$refs" reference
+			set_drv_prop $drv_handle "clocks" "$refs" $node reference
 		}
 		"9" {
 			set refs [lindex $updat 0]
 			append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]"
-			set_drv_prop $drv_handle "clocks" "$refs" reference
+			set_drv_prop $drv_handle "clocks" "$refs" $node reference
 		}
 		"10" {
 			set refs [lindex $updat 0]
 			append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]"
-			set_drv_prop $drv_handle "clocks" "$refs" reference
+			set_drv_prop $drv_handle "clocks" "$refs" $node reference
 		}
 		"11" {
 			set refs [lindex $updat 0]
 			append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]"
-			set_drv_prop $drv_handle "clocks" "$refs" reference
+			set_drv_prop $drv_handle "clocks" "$refs" $node reference
 		}
 		"12" {
 			set refs [lindex $updat 0]
 			append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]>, <&[lindex $updat 11]"
-			set_drv_prop $drv_handle "clocks" "$refs" reference
+			set_drv_prop $drv_handle "clocks" "$refs" $node reference
 		}
 		"13" {
 			set refs [lindex $updat 0]
 			append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]>, <&[lindex $updat 11]>, <&[lindex $updat 12]"
-			set_drv_prop $drv_handle "clocks" "$refs" reference
+			set_drv_prop $drv_handle "clocks" "$refs" $node reference
 		}
 		"14" {
 			set refs [lindex $updat 0]
 			append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]>, <&[lindex $updat 11]>, <&[lindex $updat 12]>, <&[lindex $updat 13]"
-			set_drv_prop $drv_handle "clocks" "$refs" reference
+			set_drv_prop $drv_handle "clocks" "$refs" $node reference
 		}
 		"15" {
 			set refs [lindex $updat 0]
 			append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]>, <&[lindex $updat 11]>, <&[lindex $updat 12]>, <&[lindex $updat 13]>, <&[lindex $updat 14]"
-			set_drv_prop $drv_handle "clocks" "$refs" reference
+			set_drv_prop $drv_handle "clocks" "$refs" $node reference
 		}
 		"16" {
 			set refs [lindex $updat 0]
 			append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]>, <&[lindex $updat 11]>, <&[lindex $updat 12]>, <&[lindex $updat 13]>, <&[lindex $updat 14]>, <&[lindex $updat 15]"
-			set_drv_prop $drv_handle "clocks" "$refs" reference
+			set_drv_prop $drv_handle "clocks" "$refs" $node reference
 		}
 	}
 }
@@ -4637,30 +4604,52 @@ proc overwrite_clknames {clknames drv_handle} {
 }
 
 proc get_comp_ver {drv_handle} {
-       set slave [hsi::get_cells -hier ${drv_handle}]
-       set vlnv  [split [hsi::get_property VLNV $slave] ":"]
-       set ver   [lindex $vlnv 3]
-       return $ver
+	global comp_ver_dict
+	global cur_hw_design
+
+	if { [dict exists $comp_ver_dict $cur_hw_design $drv_handle] } {
+		return [dict get $comp_ver_dict $cur_hw_design $drv_handle]
+	}
+	set slave [hsi::get_cells -hier ${drv_handle}]
+	set vlnv  [split [hsi::get_property VLNV $slave] ":"]
+	set ver   [lindex $vlnv 3]
+	dict set comp_ver_dict $cur_hw_design $drv_handle $ver
+	return $ver
 }
 
 proc get_comp_str {drv_handle} {
+	global comp_str_dict
+	global cur_hw_design
+
+	if { [dict exists $comp_str_dict $cur_hw_design $drv_handle] } {
+		return [dict get $comp_str_dict $cur_hw_design $drv_handle]
+	}
 	set slave [hsi::get_cells -hier ${drv_handle}]
 	set vlnv [split [hsi get_property VLNV $slave] ":"]
-	set ver [lindex $vlnv 3]
+	#set ver [lindex $vlnv 3]
 	set name [lindex $vlnv 2]
 	set ver [lindex $vlnv 3]
 	set comp_prop "xlnx,${name}-${ver}"
 	regsub -all {_} $comp_prop {-} comp_prop
+	dict set comp_str_dict $cur_hw_design $drv_handle $comp_prop
 	return $comp_prop
 }
 
+#TODO: cache intr_type based on ip and port names
 proc get_intr_type {intc_name ip_name port_name} {
+	global intr_type_dict
+	global cur_hw_design
+	if { [dict exists $intr_type_dict $cur_hw_design $intc_name $ip_name $port_name] } {
+		return [dict get $intr_type_dict $cur_hw_design $intc_name $ip_name $port_name]
+	}
 	set intc [hsi::get_cells -hier $intc_name]
 	set ip [hsi::get_cells -hier $ip_name]
 	if {[llength $intc] == 0 && [llength $ip] == 0} {
+		dict set intr_type_dict $cur_hw_design $intc_name $ip_name $port_name -1
 		return -1
 	}
 	if {[llength $intc] == 0} {
+		dict set intr_type_dict $cur_hw_design $intc_name $ip_name $port_name -1
 		return -1
 	}
 	set intr_pin [hsi::get_pins -of_objects $ip $port_name]
@@ -4673,26 +4662,35 @@ proc get_intr_type {intc_name ip_name port_name} {
 	set valid_intc_list "ps7_scugic psu_acpu_gic psv_acpu_gic"
 	if {[lsearch  -nocase $valid_intc_list $intc_type] >= 0} {
 		if {[string match -nocase $sensitivity "EDGE_FALLING"]} {
-				return 2;
+			dict set intr_type_dict $cur_hw_design $intc_name $ip_name $port_name 2
+			return 2;
 		} elseif {[string match -nocase $sensitivity "EDGE_RISING"]} {
-				return 1;
+			dict set intr_type_dict $cur_hw_design $intc_name $ip_name $port_name 1
+			return 1;
 		} elseif {[string match -nocase $sensitivity "LEVEL_HIGH"]} {
-				return 4;
+			dict set intr_type_dict $cur_hw_design $intc_name $ip_name $port_name 4
+			return 4;
 		} elseif {[string match -nocase $sensitivity "LEVEL_LOW"]} {
-				return 8;
+			dict set intr_type_dict $cur_hw_design $intc_name $ip_name $port_name 8
+			return 8;
 		}
 	} else {
 		# Follow the openpic specification
 		if {[string match -nocase $sensitivity "EDGE_FALLING"]} {
-				return 3;
+			dict set intr_type_dict $cur_hw_design $intc_name $ip_name $port_name 3
+			return 3;
 		} elseif {[string match -nocase $sensitivity "EDGE_RISING"]} {
-				return 0;
+			dict set intr_type_dict $cur_hw_design $intc_name $ip_name $port_name 0
+			return 0;
 		} elseif {[string match -nocase $sensitivity "LEVEL_HIGH"]} {
-				return 2;
+			dict set intr_type_dict $cur_hw_design $intc_name $ip_name $port_name 2
+			return 2;
 		} elseif {[string match -nocase $sensitivity "LEVEL_LOW"]} {
-				return 1;
+			dict set intr_type_dict $cur_hw_design $intc_name $ip_name $port_name 1
+			return 1;
 		}
 	}
+	dict set intr_type_dict $cur_hw_design $intc_name $ip_name $port_name -1
 	return -1
 }
 
@@ -4724,18 +4722,19 @@ proc set_drv_prop args {
 	set drv_handle [lindex $args 0]
 	set prop_name [lindex $args 1]
 	set value [lindex $args 2]
+	set node [lindex $args 3]
 	set dts_file [set_drv_def_dts $drv_handle]
 	# check if property exists if not create it
 	set list [get_drv_conf_prop_list $drv_handle]
 	if {[lsearch -glob ${list} ${prop_name}] < 0} {
 	}
 
-	if {[llength $args] >= 4} {
-		set type [lindex $args 3]
-		set node [get_node $drv_handle]
-		add_prop $node $prop_name $value $type $dts_file 
+	if {[llength $args] >= 5} {
+		set type [lindex $args 4]
+		#set node [get_node $drv_handle]
+		add_prop $node $prop_name $value $type $dts_file
 	} else {
-		add_prop $node $prop_name $value $type $dts_file 
+		add_prop $node $prop_name $value "hexint" $dts_file 
 	}
 	return 0
 }
@@ -4744,6 +4743,7 @@ proc set_drv_prop_if_empty args {
 	set drv_handle [lindex $args 0]
 	set prop_name [lindex $args 1]
 	set value [lindex $args 2]
+	set node [lindex $args 3]
 	set dts_file [set_drv_def_dts $drv_handle]
 	if {[string match -nocase $dts_file "pcw.dtsi"]} {
 		set treeobj "pcwdt"
@@ -4754,7 +4754,7 @@ proc set_drv_prop_if_empty args {
 	} else {
 		set treeobj "systemdt"
 	}
-	set node [get_node $drv_handle]
+	#set node [get_node $drv_handle]
 	set cur_prop_value ""
 	if {[catch {set tmp [set cur_prop_value [$treeobj get $node $prop_name]]} msg]} {
 	}
@@ -4763,12 +4763,11 @@ proc set_drv_prop_if_empty args {
 		dtg_debug "$drv_handle $prop_name property is not empty, current value is '$cur_prop_value'"
 		return -1
 	}
-	if {[llength $args] >= 4} {
-
-		set type [lindex $args 3]
-		set_drv_prop $drv_handle $prop_name $value $type
+	if {[llength $args] >= 5} {
+		set type [lindex $args 4]
+		set_drv_prop $drv_handle $prop_name $value $node $type
 	} else {
-		set_drv_prop $drv_handle $prop_name $value
+		set_drv_prop $drv_handle $prop_name $value $node
 	}
 	return 0
 }
@@ -4814,11 +4813,11 @@ proc gen_mb_interrupt_property {cpu_handle {intr_port_name ""}} {
 	}
 	set cpu_node [create_node -n "cpu" -l "ub${count}_cpu" -u 0 -d "pl.dtsi" -p $rt_node]
 	if {[is_pl_ip $intc]} {
-		set tmpbase [get_baseaddr $intc]
-		global duplist
-		if {[catch {set handle_value [dict get $duplist $tmpbase]} msg]} {
+		global dup_periph_handle
+		if { [dict exists $dup_periph_handle $intc] } {
+			set intc [dict get $dup_periph_handle $intc]
 		} else {
-			set intc $handle_value
+			set intc $intc
 		}
 	}
 	add_prop $cpu_node "interrupt-handle" $intc reference "pl.dtsi" 1
@@ -4886,7 +4885,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 	set intc_names ""
         set intr_par ""
 	if {[string_is_empty $intr_port_name]} {
-		if {[string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "axi_intc"]} {
+		if {[string match -nocase [get_ip_property $drv_handle IP_NAME] "axi_intc"]} {
 			set val [hsi::get_pins -of_objects $slave -filter {TYPE==INTERRUPT}]
 			set intr_port_name [hsi::get_pins -of_objects $slave -filter {TYPE==INTERRUPT&&DIRECTION==O}]
 			set single [hsi get_property CONFIG.C_IRQ_CONNECTION [hsi::get_cells -hier $slave]]
@@ -4901,7 +4900,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 	foreach pin ${intr_port_name} {
 		set connected_intc [get_intr_cntrl_name $drv_handle $pin]
 		if {[llength $connected_intc] == 0 || [string match $connected_intc "{}"] } {
-			if {![string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "axi_intc"]} {
+			if {![string match -nocase [get_ip_property $drv_handle IP_NAME] "axi_intc"]} {
 				dtg_warning "Interrupt pin \"$pin\" of IP block: \"$drv_handle\" is not connected to any interrupt controller\n\r"
 			}
 			continue
@@ -4915,7 +4914,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 			generate_gpio_intr_info $connected_intc $drv_handle $pin
 		} else {
 			set intc [get_interrupt_parent $drv_handle $pin]
-			if { [string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "axi_intc"] && [lsearch -nocase $valid_cascade_proc $proctype] >= 0 } {
+			if { [string match -nocase [get_ip_property $drv_handle IP_NAME] "axi_intc"] && [lsearch -nocase $valid_cascade_proc $proctype] >= 0 } {
 				set pins [hsi::get_pins -of_objects [::hsi::get_cells -hier -filter "NAME==$drv_handle"] -filter "NAME==irq"]
 				set intc [get_interrupt_parent $drv_handle $pins]
 			} else {
@@ -4926,7 +4925,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 				continue
 			}
 			set ip_name $intc
-			if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"]} {
+			if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype]} {
 				set intc_name [hsi get_property IP_NAME $intc]
 				if {[llength $intc] > 1} {
 					foreach intr_cntr $intc {
@@ -4945,15 +4944,15 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 				}
 			}
 
-			if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"]} {
-				if { [string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "axi_intc"] } {
+			if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype]} {
+				if { [string match -nocase [get_ip_property $drv_handle IP_NAME] "axi_intc"] } {
 					set intr_id [get_psu_interrupt_id $drv_handle "irq"]
 				} else {
 					set intr_id [get_psu_interrupt_id $drv_handle $pin]
 				}
 			}
 			if { [string match -nocase $proctype "zynq"]} {
-				if { [string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "axi_intc"] } {
+				if { [string match -nocase [get_ip_property $drv_handle IP_NAME] "axi_intc"] } {
 					set intr_id [get_interrupt_id $drv_handle "irq"]
 				} else {
 					set intr_id [get_interrupt_id $drv_handle $pin]
@@ -4961,13 +4960,13 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 			}
 
 			if {[regexp "kintex*" $proctype match]} {
-				if {[string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "axi_intc"] } {
+				if {[string match -nocase [get_ip_property $drv_handle IP_NAME] "axi_intc"] } {
 					set intr_id [get_psu_interrupt_id $drv_handle "irq"]
 				} else {
 					set intr_id [get_psu_interrupt_id $drv_handle $pin]
 				}
 			}
-			if {[string match -nocase $intr_id "-1"] && ![string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "axi_intc"]} {
+			if {[string match -nocase $intr_id "-1"] && ![string match -nocase [get_ip_property $drv_handle IP_NAME] "axi_intc"]} {
 				continue
 			}
 			set intr_type [get_intr_type $intc $slave $pin]
@@ -5008,32 +5007,33 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 			}
 		}
 			append intr_names " " "$pin"
-                       append intr_par  " " "$intc"
-                       lappend intc_names "$intc" "$cur_intr_info"
-       }
-       if {[llength $intr_par] > 1 } {
-               set int_ext 0
-               set intc0 [lindex $intr_par 0]
-               for {set i 1} {$i < [llength $intr_par]} {incr i} {
-                       set intc [lindex $intr_par $i]
-                       if {![string match -nocase $intc0 $intc]} {
-                               set int_ext 1
-                       }
-               }
-               if {$int_ext == 1} {
-                       set intc_names [string map {psu_acpu_gic gic} $intc_names]
-                       set ref [lindex $intc_names 0]
-                       append ref " [lindex $intc_names 1]>, <&[lindex $intc_names 2] [lindex $intc_names 3]>, <&[lindex $intc_names 4] [lindex $intc_names 5]>,<&[lindex $intc_names 6] [lindex $intc_names 7]>, <&[lindex $intc_names 8] [lindex $intc_names 9]"
-			if {[string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "v_hdmi_tx_ss"]} {
-	                       set_drv_prop_if_empty $drv_handle "interrupts-extended" $ref reference
+			append intr_par  " " "$intc"
+			lappend intc_names "$intc" "$cur_intr_info"
+	}
+	set node [get_node $drv_handle]
+	if {[llength $intr_par] > 1 } {
+		set int_ext 0
+		set intc0 [lindex $intr_par 0]
+		for {set i 1} {$i < [llength $intr_par]} {incr i} {
+			set intc [lindex $intr_par $i]
+			if {![string match -nocase $intc0 $intc]} {
+				set int_ext 1
 			}
-               }
-       }
+		}
+		if {$int_ext == 1} {
+			set intc_names [string map {psu_acpu_gic gic} $intc_names]
+			set ref [lindex $intc_names 0]
+			append ref " [lindex $intc_names 1]>, <&[lindex $intc_names 2] [lindex $intc_names 3]>, <&[lindex $intc_names 4] [lindex $intc_names 5]>,<&[lindex $intc_names 6] [lindex $intc_names 7]>, <&[lindex $intc_names 8] [lindex $intc_names 9]"
+			if {[string match -nocase [get_ip_property $drv_handle IP_NAME] "v_hdmi_tx_ss"]} {
+				set_drv_prop_if_empty $drv_handle "interrupts-extended" $ref $node reference
+			}
+		}
+	}
 
 	if {[string_is_empty $intr_info]} {
 		return -1
 	}
-	set_drv_prop $drv_handle interrupts $intr_info intlist
+	set_drv_prop $drv_handle interrupts $intr_info $node intlist
 	if {[string_is_empty $intc_name]} {
 		return -1
 	}
@@ -5055,21 +5055,21 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 		set intc "imux"
 	}
 	if {[is_pl_ip $intc]} {
-		set tmpbase [get_baseaddr $intc]
-		global duplist
-		if {[catch {set handle_value [dict get $duplist $tmpbase]} msg]} {
+		global dup_periph_handle
+		if { [dict exists $dup_periph_handle $intc] } {
+			set intc [dict get $dup_periph_handle $intc]
 		} else {
-			set intc $handle_value
+			set intc $intc
 		}
 	}
-	set_drv_prop $drv_handle interrupt-parent $intc reference
-	if {[string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]] "xdma"]} {
+	set_drv_prop $drv_handle interrupt-parent $intc $node reference
+	if {[string match -nocase [get_ip_property $drv_handle IP_NAME] "xdma"]} {
 		set msi_rx_pin_en [hsi get_property CONFIG.msi_rx_pin_en [hsi::get_cells -hier $drv_handle]]
 		if {[string match -nocase $msi_rx_pin_en "true"]} {
-			set_drv_prop_if_empty $drv_handle "interrupt-names" $intr_names stringlist
+			set_drv_prop_if_empty $drv_handle "interrupt-names" $intr_names $node stringlist
 		}
 	} else {
-		set_drv_prop_if_empty $drv_handle "interrupt-names" $intr_names stringlist
+		set_drv_prop_if_empty $drv_handle "interrupt-names" $intr_names $node stringlist
 	}
 }
 
@@ -5094,14 +5094,14 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 	} else {
 		set treeobj "systemdt"
 	}
+	set node [get_node $drv_handle]
 	if {[string_is_empty $skip_ps_check]} {
 		if {[is_ps_ip $drv_handle]} {
-			set node [get_node $drv_handle]
 			if {[catch {set tmp [set val [$treeobj get $node "reg"]]} msg]} {
 			}
 		}
 	}
-	set ip_name  [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+	set ip_name  [get_ip_property $drv_handle IP_NAME]
 	if {$ip_name == "xxv_ethernet" || $ip_name == "ddr4" || $ip_name == "psu_acpu_gic" || $ip_name == "mrmac" || $ip_name == "axi_noc"} {
 		return
 	}
@@ -5127,7 +5127,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 			set size [format 0x%x [expr {${high} - ${base} + 1}]]
 		}
 		if {![string_is_empty $base]} {
-			if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_pmc"]} {
+			if {[string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_pmc"] || [is_zynqmp_platform $proctype]} {
 				# check if base address is 64bit and split it as MSB and LSB
 				if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 					set temp $base
@@ -5156,7 +5156,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 				set reg "$base $size"
 			}
 
-		set_drv_prop_if_empty $drv_handle reg $reg hexlist
+			set_drv_prop_if_empty $drv_handle reg $reg $node hexlist
 		}
 
 		return
@@ -5175,7 +5175,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 			set size [format 0x%x [expr {${high} - ${base} + 1}]]
 
 			if {[string_is_empty $reg]} {
-				if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_pmc"]} {
+				if {[string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_pmc"] || [is_zynqmp_platform $proctype]} {
 					# check if base address is 64bit and split it as MSB and LSB
 					if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 						set temp $base
@@ -5210,7 +5210,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 						continue
 					}
 				}
-				if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_pmc"]} {
+				if {[string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_pmc"] || [is_zynqmp_platform $proctype]} {
 					set index [check_64_base $reg $base $size]
 					if {$index == "true" && $ip_name != "axi_fifo_mm_s"} {
 						continue
@@ -5218,7 +5218,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 				}
 				# ensure no duplication
 				if {![regexp ".*${reg}.*" "$base $size" matched]} {
-					if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_pmc"]} {
+					if {[string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_pmc"] || [is_zynqmp_platform $proctype]} {
 						set base1 "0x0 $base"
 						set size1 "0x0 $size"
 						if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
@@ -5248,10 +5248,9 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 				}
 			}
 	}
-	set_drv_prop_if_empty $drv_handle reg $reg hexlist
-	set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+	set_drv_prop_if_empty $drv_handle reg $reg $node hexlist
+	set ip_name [get_ip_property $drv_handle IP_NAME]
 	if {[string match -nocase $ip_name "psv_pciea_attrib"]} {
-		set node [get_node $drv_handle]
 		set ranges " 0x02000000 0x00000000 0xe0000000 0x0 0xe0000000 0x00000000 0x10000000>, \n\t\t\t      <0x43000000 0x00000080 0x00000000 0x00000080 0x00000000 0x00000000 0x80000000"
 		add_prop $node "ranges" $ranges hexlist "pcw.dtsi"
 	}
@@ -5459,7 +5458,7 @@ proc gen_compatible_property {drv_handle} {
 	proc_called_by
 	set dts_file [set_drv_def_dts $drv_handle]
 	set ip [hsi::get_cells -hier $drv_handle]
-	set ip_name  [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+	set ip_name  [get_ip_property $drv_handle IP_NAME]
 	if {[string match -nocase $ip_name "axi_noc"]} {
 		return
 	}
@@ -5517,14 +5516,13 @@ proc gen_compatible_property {drv_handle} {
 		set node [create_node -n "cpu" -l "ub${count}_cpu" -u 0 -d "pl.dtsi" -p $rt_node]
 		add_prop $node compatible "$comp_prop xlnx,microblaze" stringlist "pl.dtsi"	
 	} else {
-		set_drv_prop_if_empty $drv_handle compatible $comp_prop stringlist
+		set node [get_node $drv_handle]
+		set_drv_prop_if_empty $drv_handle compatible $comp_prop $node stringlist
 		if {[string match -nocase $ip_name "dfx_axi_shutdown_manager"]} {
-			set node [get_node $drv_handle]
 			pldt append $node compatible "\ \, \"xlnx,dfx-axi-shutdown-manager-1.00\""
 			pldt append $node compatible "\ \, \"xlnx,dfx-axi-shutdown-manager\""
 		}
 		if {[lsearch -nocase $tcm_addresses $unit_addr] >= 0} {
-			set node [get_node $drv_handle]
 			pcwdt append $node compatible "\ \, \"mmio-sram\""
 		}
 	}
@@ -5538,93 +5536,86 @@ proc is_property_set {value} {
        return 0
 }
 
-proc ip2drv_prop {ip_name ip_prop_name} {
-	set drv_handle [get_ip_handler $ip_name]
+proc ip2drv_prop {ip_name prop_name_list} {
 	set ip [hsi::get_cells -hier $ip_name]
 	set emac [hsi get_property IP_NAME $ip]
-
-	if { $emac == "axi_ethernet1"} {
-		# remove CONFIG.
-		set prop [hsi get_property $ip_prop_name [hsi::get_cells -hier $ip_name]]
-		set drv_prop_name $ip_prop_name
-		regsub -all {CONFIG.} $drv_prop_name {xlnx,} drv_prop_name
-		regsub -all {_} $drv_prop_name {-} drv_prop_name
-		set drv_prop_name [string tolower $drv_prop_name]
-		set node [get_node $ip_name]
-		add_prop $node $drv_prop_name hexint "pl.dtsi"
-		return
-	}
-	if {[string match -nocase $ip_prop_name "CONFIG.C_AXIS_SIGNAL_SET"] || [string match -nocase $ip_prop_name "CONFIG.C_USE_BRAM_BLOCK"] || [string match -nocase $ip_prop_name "CONFIG.C_ALGORITHM"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_TYPE"] || [string match -nocase $ip_prop_name "CONFIG.C_INTERFACE_TYPE"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_SLAVE_TYPE"] || [string match -nocase $ip_prop_name "CONFIG.device_port_type"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_WRITE_BASEADDR_SLV"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_WRITE_HIGHADDR_SLV"]|| [string match -nocase $ip_prop_name "CONFIG.C_PVR_USER1"] || [string match -nocase $ip_prop_name "CONFIG.Component_Name"]} {
-		return
-	}
-	set drv_prop_name $ip_prop_name
+	set node [get_node $ip_name]
 	set pcieattrib_num "CONFIG.C_CPM_PCIE0_AXIBAR_NUM"
 	set pcieattrib "CONFIG.C_CPM_PCIE0_PF0_AXIBAR2PCIE_BASEADDR_0 CONFIG.C_CPM_PCIE0_PF0_AXIBAR2PCIE_BASEADDR_1 CONFIG.C_CPM_PCIE0_PF0_AXIBAR2PCIE_HIGHADDR_0 CONFIG.C_CPM_PCIE0_PF0_AXIBAR2PCIE_HIGHADDR_1"
-	if {[lsearch $pcieattrib_num $ip_prop_name] >= 0} {
-		set drv_prop_name "xlnx,axibar-num"
-		
-	} elseif {[lsearch $pcieattrib $ip_prop_name] >= 0} {
-		set index [string index $ip_prop_name end]
-		if {[string match -nocase $ip_prop_name "CONFIG.C_CPM_PCIE0_PF0_AXIBAR2PCIE_BASEADDR_0"] || [string match -nocase $ip_prop_name "CONFIG.C_CPM_PCIE0_PF0_AXIBAR2PCIE_BASEADDR_1"]} {
-			set drv_prop_name "xlnx,axibar-${index}"
-		} else {
-			set drv_prop_name "xlnx,axibar-highaddr-${index}"
+	foreach ip_prop_name $prop_name_list {
+		if { $emac == "axi_ethernet1"} {
+			# remove CONFIG.
+			set drv_prop_name $ip_prop_name
+			regsub -all {CONFIG.} $drv_prop_name {xlnx,} drv_prop_name
+			regsub -all {_} $drv_prop_name {-} drv_prop_name
+			set drv_prop_name [string tolower $drv_prop_name]
+			add_prop $node $drv_prop_name hexint "pl.dtsi"
+			continue
 		}
-	} else {
-	# remove CONFIG.C_
-		regsub -all {CONFIG.C_} $drv_prop_name {xlnx,} drv_prop_name
-	
-		regsub -all {^CONFIG.} $drv_prop_name {xlnx,} drv_prop_name
-		regsub -all {_} $drv_prop_name {-} drv_prop_name
-	}
-	set drv_prop_name [string tolower $drv_prop_name]
+		if {[string match -nocase $ip_prop_name "CONFIG.C_AXIS_SIGNAL_SET"] || [string match -nocase $ip_prop_name "CONFIG.C_USE_BRAM_BLOCK"] || [string match -nocase $ip_prop_name "CONFIG.C_ALGORITHM"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_TYPE"] || [string match -nocase $ip_prop_name "CONFIG.C_INTERFACE_TYPE"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_SLAVE_TYPE"] || [string match -nocase $ip_prop_name "CONFIG.device_port_type"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_WRITE_BASEADDR_SLV"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_WRITE_HIGHADDR_SLV"]|| [string match -nocase $ip_prop_name "CONFIG.C_PVR_USER1"] || [string match -nocase $ip_prop_name "CONFIG.Component_Name"]} {
+			continue
+		}
 
-	set prop [hsi get_property $ip_prop_name [hsi::get_cells -hier $ip_name]]
+		if {[lsearch $pcieattrib_num $ip_prop_name] >= 0} {
+			set drv_prop_name "xlnx,axibar-num"
+		} elseif {[lsearch $pcieattrib $ip_prop_name] >= 0} {
+			set index [string index $ip_prop_name end]
+			if {[string match -nocase $ip_prop_name "CONFIG.C_CPM_PCIE0_PF0_AXIBAR2PCIE_BASEADDR_0"] || [string match -nocase $ip_prop_name "CONFIG.C_CPM_PCIE0_PF0_AXIBAR2PCIE_BASEADDR_1"]} {
+				set drv_prop_name "xlnx,axibar-${index}"
+			} else {
+				set drv_prop_name "xlnx,axibar-highaddr-${index}"
+			}
+		} else {
+			# remove CONFIG.C_
+			set drv_prop_name $ip_prop_name
+			regsub -all {CONFIG.C_} $drv_prop_name {xlnx,} drv_prop_name
+			regsub -all {^CONFIG.} $drv_prop_name {xlnx,} drv_prop_name
+			regsub -all {_} $drv_prop_name {-} drv_prop_name
+			set drv_prop_name [string tolower $drv_prop_name]
+			if {[string match -nocase $drv_prop_name "xlnx,include-sg"] || [string match -nocase $drv_prop_name "xlnx,sg-include-stscntrl-strm"]} {
+				continue
+			}
+		}
 
-	if {[regexp -nocase {0x([0-9a-f])} $prop match]} {
-		if {[string first $match $prop]} {
+		set prop [hsi get_property $ip_prop_name [hsi::get_cells -hier $ip_name]]
+		if {[regexp -nocase {0x([0-9a-f])} $prop match]} {
+			if {[string first $match $prop]} {
+				set type "string"
+			} else {
+				set type "hexint"
+			}
+		} elseif {[string is integer -strict $prop]} {
+			set type "int"
+		} elseif {[string is boolean -strict $prop]} {
+			set type "boolean"
+		} elseif {[string is wordchar -strict $prop]} {
 			set type "string"
 		} else {
-			set type "hexint"
+			set type "mixed"
 		}
-	} elseif {[string is integer -strict $prop]} {
-		set type "int"
-	} elseif {[string is boolean -strict $prop]} {
-		set type "boolean"
-	} elseif {[string is wordchar -strict $prop]} {
-		set type "string"
-	} else {
-		set type "mixed"
-	}
-	if {[string match -nocase $drv_prop_name "xlnx,include-sg"] || [string match -nocase $drv_prop_name "xlnx,sg-include-stscntrl-strm"]} {
-		return
-	}
-	if {[string match -nocase $emac "psv_pciea_attrib"] && [string match -nocase $ip_prop_name "CONFIG.C_CPM_PCIE0_PORT_TYPE"]} {
-		set node [get_node $ip_name]
-		add_prop $node "xlnx,device-port-type" $prop int [set_drv_def_dts $ip_name]
-	} else {
-		add_cross_property $ip $ip_prop_name $ip_name ${drv_prop_name} $type
+		if {[string match -nocase $emac "psv_pciea_attrib"] && [string match -nocase $ip_prop_name "CONFIG.C_CPM_PCIE0_PORT_TYPE"]} {
+			add_prop $node "xlnx,device-port-type" $prop int [set_drv_def_dts $ip_name]
+		} else {
+			add_cross_property $ip $ip_prop_name $ip_name $drv_prop_name $node $type
+		}
 	}
 }
 
 proc gen_drv_prop_from_ip {drv_handle} {
 	# check if we should generating the ip properties or not
+	set ip_name [get_ip_property $drv_handle IP_NAME] 
 	set prop_name_list [default_parameters $drv_handle]
-	foreach prop_name ${prop_name_list} {
-		ip2drv_prop $drv_handle $prop_name
-	}
+	ip2drv_prop $drv_handle $prop_name_list
 }
 
 proc remove_duplicates {ip_handle} {
 	set par_handles [get_ip_conf_prop_list $ip_handle "CONFIG.*"]
 	set dictval [dict create]
-	set values ""
 	foreach prop $par_handles {
 		set inner ""
 		if {[regexp -nocase "CONFIG.C_.*" $prop match]} {
 			set temp [regsub -all {CONFIG.C_} $prop $inner]
-			lappend values $temp
-			dict append dictval $temp $prop
+			dict set dictval $temp $prop
 		}
 	}
 	foreach prop $par_handles {
@@ -5632,19 +5623,16 @@ proc remove_duplicates {ip_handle} {
 		set temp [regsub -all {^CONFIG.} $prop $inner]
 		set inner ""
 		set temp [regsub -all {^C_} $temp $inner]
-		lappend values $temp
-		if {[catch {set rt [dict get $dictval $temp]} msg]} {
-			dict append dictval $temp $prop
-		} else {
+		if {![dict exists $dictval $temp]} {
+			dict set dictval $temp $prop
 		}
 
 	}
-	set valus [lsort -nocase -unique $values]
-	set tempvalues ""
-	foreach val $valus {
-		if {[catch {set rt [dict get $dictval $val]} msg]} {
-		} else {
-			lappend tempvalues $rt
+	set values [lsort -nocase -unique [dict keys $dictval]]
+	set tempvalues {}
+	foreach val $values {
+		if {[dict exists $dictval $val]} {
+			lappend tempvalues [dict get $dictval $val]
 		}
 	}
 	return $tempvalues
@@ -5653,59 +5641,59 @@ proc remove_duplicates {ip_handle} {
 # based on libgen dtg
 proc default_parameters {ip_handle {dont_generate ""}} {
 	proc_called_by
-	set par_handles [get_ip_conf_prop_list $ip_handle "CONFIG.*"]
 	set par_handles [remove_duplicates $ip_handle]
 	set valid_prop_names {}
+	set ps_ip [is_ps_ip $ip_handle]
 	foreach par $par_handles {
-		if {[is_ps_ip $ip_handle]} {
+		if { $ps_ip } {
 			set tmp_par $par
 		} else {
 			regsub -all {CONFIG.} $par {} tmp_par
 		}
 		# Ignore some parameters that are always handled specially
 		
-		if {[is_ps_ip $ip_handle]} {
+		if {$ps_ip} {
 			lappend valid_prop_names $par
 		} else {
-		switch -glob $tmp_par {
-			$dont_generate - \
-			"INSTANCE" - \
-			"C_INSTANCE" - \
-			"*BASEADDR" - \
-			"*HIGHADDR" - \
-			"C_SPLB*" - \
-			"C_DPLB*" - \
-			"C_IPLB*" - \
-			"C_PLB*" - \
-			"M_AXI*" - \
-			"C_M_AXI*" - \
-			"S_AXI_ADDR_WIDTH" - \
-			"C_S_AXI_ADDR_WIDTH" - \
-			"S_AXI_DATA_WIDTH" - \
-			"C_S_AXI_DATA_WIDTH" - \
-			"S_AXI_ACLK_FREQ_HZ" - \
-			"C_S_AXI_ACLK_FREQ_HZ" - \
-			"S_AXI_LITE*" - \
-			"C_S_AXI_LITE*" - \
-			"S_AXI_PROTOCOL" - \
-			"C_S_AXI_PROTOCOL" - \
-			"*INTERCONNECT_?_AXI*" - \
-			"*S_AXI_ACLK_PERIOD_PS" - \
-			"M*_AXIS*" - \
-			"C_M*_AXIS*" - \
-			"S*_AXIS*" - \
-			"C_S*_AXIS*" - \
-			"PRH*" - \
-			"C_FAMILY" - \
-			"FAMILY" - \
-			"*CLK_FREQ_HZ" - \
-			"*ENET_SLCR_*Mbps_DIV?" - \
-			"HW_VER" { } \
-			default {
-				lappend valid_prop_names $par
+			switch -glob $tmp_par {
+				$dont_generate - \
+				"INSTANCE" - \
+				"C_INSTANCE" - \
+				"*BASEADDR" - \
+				"*HIGHADDR" - \
+				"C_SPLB*" - \
+				"C_DPLB*" - \
+				"C_IPLB*" - \
+				"C_PLB*" - \
+				"M_AXI*" - \
+				"C_M_AXI*" - \
+				"S_AXI_ADDR_WIDTH" - \
+				"C_S_AXI_ADDR_WIDTH" - \
+				"S_AXI_DATA_WIDTH" - \
+				"C_S_AXI_DATA_WIDTH" - \
+				"S_AXI_ACLK_FREQ_HZ" - \
+				"C_S_AXI_ACLK_FREQ_HZ" - \
+				"S_AXI_LITE*" - \
+				"C_S_AXI_LITE*" - \
+				"S_AXI_PROTOCOL" - \
+				"C_S_AXI_PROTOCOL" - \
+				"*INTERCONNECT_?_AXI*" - \
+				"*S_AXI_ACLK_PERIOD_PS" - \
+				"M*_AXIS*" - \
+				"C_M*_AXIS*" - \
+				"S*_AXIS*" - \
+				"C_S*_AXIS*" - \
+				"PRH*" - \
+				"C_FAMILY" - \
+				"FAMILY" - \
+				"*CLK_FREQ_HZ" - \
+				"*ENET_SLCR_*Mbps_DIV?" - \
+				"HW_VER" { } \
+				default {
+					lappend valid_prop_names $par
+				}
 			}
 		}
-	}
 	}
 	return $valid_prop_names
 }
@@ -5724,9 +5712,10 @@ proc ps7_reset_handle {drv_handle reset_pram conf_prop} {
 			global env
 			set path $env(REPO)
 
-			set drvname [get_drivers $drv_handle]
-
-			set common_file "$path/device_tree/data/config.yaml"
+			#set drvname [get_drivers $drv_handle]
+			#
+			#set common_file "$path/device_tree/data/config.yaml"
+			set common_file [file join [file dirname [dict get [info frame 0] file]] "config.yaml"]
 			set kernel_ver [get_user_config $common_file -kernel_ver]
 
 			switch -exact $kernel_ver {
@@ -5739,7 +5728,8 @@ proc ps7_reset_handle {drv_handle reset_pram conf_prop} {
 		if {$src_ip != "-1"} {
 			if {$value != "-1" && [llength $value] !=0} {
 				regsub -all "CONFIG." $conf_prop "" conf_prop
-				set_drv_property $drv_handle ${conf_prop} "$src_ip $value 0" reference
+				set node [get_node $drv_handle]
+				set_drv_property $drv_handle ${conf_prop} "$src_ip $value 0" $node reference
 			}
 		}
 	} else {
@@ -5761,10 +5751,10 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	set proc_type [get_hw_family]
 	set label $drv_handle
 	set label_len [string length $label]
-       if {$label_len >= 31} {
-               # As per the device tree specification the label length should be maximum of 31 characters
-               dtg_verbose "the label \"$label\" length is $label_len characters which is greater than default 31 characters as per DT SPEC...user need to fix the label\n\r"
-       }
+	if {$label_len >= 31} {
+		# As per the device tree specification the label length should be maximum of 31 characters
+		dtg_verbose "the label \"$label\" length is $label_len characters which is greater than default 31 characters as per DT SPEC...user need to fix the label\n\r"
+	}
 	set dev_type ""
 	if {[string_is_empty $dev_type] == 1} {
 		set ps_mapping [gen_ps_mapping]
@@ -5983,7 +5973,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 					if {[string match -nocase $dev_type "psv_fpd_smmutcu"]} {
 							set dev_type "psv_fpd_maincci"
 					}
-					set t [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+					set t [get_ip_property $drv_handle IP_NAME]
 					set rt_node [create_node -n ${dev_type} -l ${label} -u ${unit_addr} -d ${default_dts} -p $bus_node]
 				}
 			}
@@ -6313,7 +6303,7 @@ proc cortexa9_opp_gen {drv_handle} {
 
 # Q: common function for all processor or one for each driver lib
 proc gen_cpu_nodes {drv_handle} {
-	set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+	set ip_name [get_ip_property $drv_handle IP_NAME]
 	switch $ip_name {
 		"ps7_cortexa9" {
 			# skip node generation for static zynq-7000 dtsi
@@ -6714,7 +6704,7 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 		if { [llength $intr_pin] == 0 } {
 			return $intr_cntrl
 		}
-		set valid_cascade_proc "kintex zynq zynqmp zynquplus versal zynquplusRFSOC"
+		set valid_cascade_proc "kintex zynq zynqmp zynquplus zynquplusRFSOC versal"
 		set proctype [get_hw_family]
 		if { [string match -nocase [hsi get_property IP_NAME $periph] "axi_intc"] && [lsearch -nocase $valid_cascade_proc $proctype] >= 0 } {
 			set sinks [get_sink_pins $intr_pin]
@@ -6765,7 +6755,7 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 	if { [llength $intr_sink_pins] == 0 || [string match $intr_sink_pins "{}"]} {
 		return $intr_cntrl
 	}
-	set valid_cascade_proc "kintex7 zynq zynqmp zynquplus versal zynquplusRFSOC"
+	set valid_cascade_proc "kintex7 zynq zynqmp zynquplus zynquplusRFSOC versal"
 	foreach intr_sink ${intr_sink_pins} {
 		if {[llength $intr_sink] == 0} {
 			continue
@@ -6857,12 +6847,13 @@ proc generate_gpio_intr_info {connected_intc drv_handle pin} {
 	if {[string_is_empty $intr_info]} {
 		return -1
 	}
-	set_drv_prop $drv_handle interrupts $intr_info intlist
+	set node [get_node $drv_handle]
+	set_drv_prop $drv_handle interrupts $intr_info $node intlist
 	if {[string_is_empty $intc]} {
 		return -1
 	}
 	set intc [ps_node_mapping $intc label]
-	set_drv_prop $drv_handle interrupt-parent $intc reference
+	set_drv_prop $drv_handle interrupt-parent $intc $node reference
 }
 
 # Get the gpio channel number to which the ip is connected
@@ -6934,198 +6925,198 @@ proc is_orgate { intc_src_port ip_name} {
 	return $ret
 }
 
+#TODO: cache the data
 proc get_psu_interrupt_id { ip_name port_name } {
 	proc_called_by
-    global or_id
-    global or_cnt
+	global or_id
+	global or_cnt
 
-    set ret -1
-    set periph ""
-    set intr_pin ""
-    if { [llength $port_name] == 0 } {
-        return $ret
-    }
-    global pl_ps_irq1
-    global pl_ps_irq0
-    if { [llength $ip_name] != 0 } {
-        #This is the case where IP pin is interrupting
-        set periph [hsi::get_cells -hier -filter "NAME==$ip_name"]
-        if { [llength $periph] == 0 } {
-            return $ret
-        }
-        set intr_pin [hsi::get_pins -of_objects $periph -filter "NAME==$port_name"]
-        if { [llength $intr_pin] == 0 } {
-            return $ret
-        }
-        set pin_dir [hsi get_property DIRECTION $intr_pin]
-        if { [string match -nocase $pin_dir "I"] } {
-          return $ret
-        }
-    } else {
-        #This is the case where External interrupt port is interrupting
-        set intr_pin [hsi::get_ports $port_name]
-        if { [llength $intr_pin] == 0 } {
-            return $ret
-        }
-        set pin_dir [hsi get_property DIRECTION $intr_pin]
-        if { [string match -nocase $pin_dir "O"] } {
-          return $ret
-        }
-    }
-    set intc_periph [get_interrupt_parent $ip_name $port_name]
-    if {[llength $intc_periph] > 1} {
-        foreach intr_cntr $intc_periph {
-            if { [is_ip_interrupting_current_proc $intr_cntr] } {
-                set intc_periph $intr_cntr
-            }
-        }
-    }
-    if { [llength $intc_periph]  ==  0 } {
-        return $ret
-    }
+	set ret -1
+	set periph ""
+	set intr_pin ""
+	if { [llength $port_name] == 0 } {
+		return $ret
+	}
+	global pl_ps_irq1
+	global pl_ps_irq0
+	if { [llength $ip_name] != 0 } {
+		#This is the case where IP pin is interrupting
+		set periph [hsi::get_cells -hier -filter "NAME==$ip_name"]
+		if { [llength $periph] == 0 } {
+			return $ret
+		}
+		set intr_pin [hsi::get_pins -of_objects $periph -filter "NAME==$port_name"]
+		if { [llength $intr_pin] == 0 } {
+			return $ret
+		}
+		set pin_dir [hsi get_property DIRECTION $intr_pin]
+		if { [string match -nocase $pin_dir "I"] } {
+			return $ret
+		}
+	} else {
+		#This is the case where External interrupt port is interrupting
+		set intr_pin [hsi::get_ports $port_name]
+		if { [llength $intr_pin] == 0 } {
+			return $ret
+		}
+		set pin_dir [hsi get_property DIRECTION $intr_pin]
+		if { [string match -nocase $pin_dir "O"] } {
+			return $ret
+		}
+	}
+	set intc_periph [get_interrupt_parent $ip_name $port_name]
+	if {[llength $intc_periph] > 1} {
+		foreach intr_cntr $intc_periph {
+			if { [is_ip_interrupting_current_proc $intr_cntr] } {
+		        	set intc_periph $intr_cntr
+			}
+		}
+	}
+	if { [llength $intc_periph]  ==  0 } {
+		return $ret
+	}
 
-    set intc_type [hsi get_property IP_NAME $intc_periph]
-    if {[llength $intc_type] > 1} {
-        foreach intr_cntr $intc_type {
-            if { [is_ip_interrupting_current_proc $intr_cntr] } {
-                set intc_type $intr_cntr
-            }
-        }
-    }
+	set intc_type [hsi get_property IP_NAME $intc_periph]
+	if {[llength $intc_type] > 1} {
+		foreach intr_cntr $intc_type {
+			if { [is_ip_interrupting_current_proc $intr_cntr] } {
+			        set intc_type $intr_cntr
+			}
+		}
+	}
 
-    set intc_src_ports [get_interrupt_sources $intc_periph]
+	set intc_src_ports [get_interrupt_sources $intc_periph]
 
-    #Special Handling for cascading case of axi_intc Interrupt controller
-    set cascade_id 0
+	#Special Handling for cascading case of axi_intc Interrupt controller
+	set cascade_id 0
 
-    set i $cascade_id
-    set found 0
-    set j $or_id
-    foreach intc_src_port $intc_src_ports {
+	set i $cascade_id
+	set found 0
+	set j $or_id
+	foreach intc_src_port $intc_src_ports {
 	# Check whether externel port is interrupting not peripheral
-        # like externel[7:0] port to gic
-        set pin_dir [hsi get_property DIRECTION $intc_src_port]
-        if { [string match -nocase $pin_dir "I"] } {
+	# like externel[7:0] port to gic
+	set pin_dir [hsi get_property DIRECTION $intc_src_port]
+	if { [string match -nocase $pin_dir "I"] } {
 		incr i
-                continue
-        }
-        if { [llength $intc_src_port] == 0 } {
-            incr i
-            continue
-        }
-        set intr_width [get_port_width $intc_src_port]
-        set intr_periph [hsi::get_cells -of_objects $intc_src_port]
-        if { [llength $intr_periph] && [is_interrupt $intc_type] } {
-            if {[hsi get_property IS_PL $intr_periph] == 0 } {
-                continue
-            }
-        }
-        set width [is_orgate $intc_src_port $ip_name]
-        if { [string compare -nocase "$port_name"  "$intc_src_port" ] == 0 } {
-            if { [string compare -nocase "$intr_periph" "$periph"] == 0  && $width != -1} {
-		set or_cnt [expr $or_cnt + 1]
-                if { $or_cnt == $width} {
-                    set or_cnt 0
-                    set or_id [expr $or_id + 1]
-                }
-                set ret $i
-                set found 1
-                break
-            } elseif { [string compare -nocase "$intr_periph" "$periph"] == 0 } {
-                set ret $i
-                set found 1
-                break
-            }
-        }
-        if { $width != -1} {
-            set i [expr $or_id]
-        } else {
-            set i [expr $i + $intr_width]
-        }
-    }
-    set intr_list_irq0 [list 89 90 91 92 93 94 95 96]
-    set intr_list_irq1 [list 104 105 106 107 108 109 110 111]
-    set sink_pins [get_sink_pins $intr_pin]
-    if { [llength $sink_pins] == 0 } {
-        return
-    }
-	set proctype [get_hw_family]
-	if {[regexp "kintex*" $proctype match]} {
-         if {[string match -nocase "[hsi get_property IP_NAME $periph]" "axi_intc"]} {
-             set ip [hsi get_property IP_NAME $periph]
-             set cascade_master [hsi get_property CONFIG.C_CASCADE_MASTER [hsi::get_cells -hier $periph]]
-             set en_cascade_mode [hsi get_property CONFIG.C_EN_CASCADE_MODE [hsi::get_cells -hier $periph]]
-             set sink_pn [get_sink_pins $intr_pin]
-             set peri [hsi::get_cells -of_objects $sink_pn]
-             set periph_ip [hsi get_property IP_NAME [hsi::get_cells -hier $peri]]
-             if {[string match -nocase $periph_ip "xlconcat"]} {
-                 set dout "dout"
-                 set intr_pin [hsi::get_pins -of_objects $peri -filter "NAME==$dout"]
-                 set pins [get_sink_pins "$intr_pin"]
-                 set perih [hsi::get_cells -of_objects $pins]
-                 if {[string match -nocase "[hsi get_property IP_NAME $perih]" "axi_intc"]} {
-                     set cascade_master [hsi get_property CONFIG.C_CASCADE_MASTER [hsi::get_cells -hier $perih]]
-                     set en_cascade_mode [hsi get_property CONFIG.C_EN_CASCADE_MODE [hsi::get_cells -hier $perih]]
-                }
-           }
-           set number [regexp -all -inline -- {[0-9]+} $sink_pn]
-           return $number
-       }
-    }
-    if {[string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype]
-       || [string match -nocase $proctype "zynq"]} {
-       if {[string match -nocase "[hsi get_property IP_NAME $periph]" "axi_intc"]} {
-               set ip [hsi get_property IP_NAME $periph]
-               set cascade_master [hsi get_property CONFIG.C_CASCADE_MASTER [hsi::get_cells -hier $periph]]
-               set en_cascade_mode [hsi get_property CONFIG.C_EN_CASCADE_MODE [hsi::get_cells -hier $periph]]
-               set sink_pn [get_sink_pins $intr_pin]
-               set peri [hsi::get_cells -of_objects $sink_pn]
-               set periph_ip [hsi get_property IP_NAME [hsi::get_cells -hier $peri]]
-               if {[string match -nocase $periph_ip "xlconcat"]} {
-                       set dout "dout"
-                       set intr_pin [hsi::get_pins -of_objects $peri -filter "NAME==$dout"]
-                       set pins [get_sink_pins "$intr_pin"]
-                       set periph [hsi::get_cells -of_objects $pins]
-                       if {[string match -nocase "[hsi get_property IP_NAME $periph]" "axi_intc"]} {
-                               set cascade_master [hsi get_property CONFIG.C_CASCADE_MASTER [hsi::get_cells -hier $periph]]
-                               set en_cascade_mode [hsi get_property CONFIG.C_EN_CASCADE_MODE [hsi::get_cells -hier $periph]]
-                       }
-                       if {$en_cascade_mode == 1} {
-                               set number [regexp -all -inline -- {[0-9]+} $sink_pn]
-                               return $number
-                       }
-               }
-       }
-    }
-    set concat_block 0
-    foreach sink_pin $sink_pins {
-        set sink_periph [hsi::get_cells -of_objects $sink_pin]
-	if {[llength $sink_periph] == 0 } {
+	        continue
+	}
+	if { [llength $intc_src_port] == 0 } {
+		incr i
 		continue
 	}
-        set connected_ip [hsi get_property IP_NAME [hsi::get_cells -hier $sink_periph]]
+	set intr_width [get_port_width $intc_src_port]
+	set intr_periph [hsi::get_cells -of_objects $intc_src_port]
+	if { [llength $intr_periph] && [is_interrupt $intc_type] } {
+		if {[hsi get_property IS_PL $intr_periph] == 0 } {
+			continue
+		}
+	}
+	set width [is_orgate $intc_src_port $ip_name]
+	if { [string compare -nocase "$port_name"  "$intc_src_port" ] == 0 } {
+		if { [string compare -nocase "$intr_periph" "$periph"] == 0  && $width != -1} {
+			set or_cnt [expr $or_cnt + 1]
+			if { $or_cnt == $width} {
+				set or_cnt 0
+				set or_id [expr $or_id + 1]
+			}
+			set ret $i
+			set found 1
+			break
+		} elseif { [string compare -nocase "$intr_periph" "$periph"] == 0 } {
+			set ret $i
+			set found 1
+			break
+		}
+	}
+	if { $width != -1} {
+		set i [expr $or_id]
+	} else {
+		set i [expr $i + $intr_width]
+	}
+	}
+	set intr_list_irq0 [list 89 90 91 92 93 94 95 96]
+	set intr_list_irq1 [list 104 105 106 107 108 109 110 111]
+	set sink_pins [get_sink_pins $intr_pin]
+	if { [llength $sink_pins] == 0 } {
+		return
+	}
+	set proctype [get_hw_family]
+	if {[regexp "kintex*" $proctype match]} {
+		if {[string match -nocase "[hsi get_property IP_NAME $periph]" "axi_intc"]} {
+			set ip [hsi get_property IP_NAME $periph]
+			set cascade_master [hsi get_property CONFIG.C_CASCADE_MASTER [hsi::get_cells -hier $periph]]
+			set en_cascade_mode [hsi get_property CONFIG.C_EN_CASCADE_MODE [hsi::get_cells -hier $periph]]
+			set sink_pn [get_sink_pins $intr_pin]
+			set peri [hsi::get_cells -of_objects $sink_pn]
+			set periph_ip [hsi get_property IP_NAME [hsi::get_cells -hier $peri]]
+			if {[string match -nocase $periph_ip "xlconcat"]} {
+				set dout "dout"
+				set intr_pin [hsi::get_pins -of_objects $peri -filter "NAME==$dout"]
+				set pins [get_sink_pins "$intr_pin"]
+				set perih [hsi::get_cells -of_objects $pins]
+				if {[string match -nocase "[hsi get_property IP_NAME $perih]" "axi_intc"]} {
+					set cascade_master [hsi get_property CONFIG.C_CASCADE_MASTER [hsi::get_cells -hier $perih]]
+					set en_cascade_mode [hsi get_property CONFIG.C_EN_CASCADE_MODE [hsi::get_cells -hier $perih]]
+				}
+			}
+			set number [regexp -all -inline -- {[0-9]+} $sink_pn]
+			return $number
+		}
+	}
+	if {[string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype] || [string match -nocase $proctype "zynq"]} {
+		if {[string match -nocase "[hsi get_property IP_NAME $periph]" "axi_intc"]} {
+			set ip [hsi get_property IP_NAME $periph]
+			set cascade_master [hsi get_property CONFIG.C_CASCADE_MASTER [hsi::get_cells -hier $periph]]
+			set en_cascade_mode [hsi get_property CONFIG.C_EN_CASCADE_MODE [hsi::get_cells -hier $periph]]
+			set sink_pn [get_sink_pins $intr_pin]
+			set peri [hsi::get_cells -of_objects $sink_pn]
+			set periph_ip [hsi get_property IP_NAME [hsi::get_cells -hier $peri]]
+			if {[string match -nocase $periph_ip "xlconcat"]} {
+				set dout "dout"
+				set intr_pin [hsi::get_pins -of_objects $peri -filter "NAME==$dout"]
+				set pins [get_sink_pins "$intr_pin"]
+				set periph [hsi::get_cells -of_objects $pins]
+				if {[string match -nocase "[hsi get_property IP_NAME $periph]" "axi_intc"]} {
+					set cascade_master [hsi get_property CONFIG.C_CASCADE_MASTER [hsi::get_cells -hier $periph]]
+					set en_cascade_mode [hsi get_property CONFIG.C_EN_CASCADE_MODE [hsi::get_cells -hier $periph]]
+				}
+				if {$en_cascade_mode == 1} {
+					set number [regexp -all -inline -- {[0-9]+} $sink_pn]
+					return $number
+				}
+			}
+		}
+	}
+	set concat_block 0
+	foreach sink_pin $sink_pins {
+		set sink_periph [hsi::get_cells -of_objects $sink_pin]
+		if {[llength $sink_periph] == 0 } {
+			continue
+	}
+	set connected_ip [hsi get_property IP_NAME [hsi::get_cells -hier $sink_periph]]
 	if {[llength $connected_ip]} {
-               if {[string compare -nocase "$connected_ip" "dfx_decoupler"] == 0} {
-                       set dfx_intr [hsi::get_pins -of_objects $sink_periph -filter {TYPE==INTERRUPT&&DIRECTION==O}]
-                       set intr_pin [hsi::get_pins -of_objects $sink_periph -filter "NAME==$dfx_intr"]
-                       set sink_pins [get_sink_pins "$intr_pin"]
-                       foreach pin $sink_pins {
-                               set sink_pin $pin
-                               if {[string match -nocase $sink_pin "IRQ0_F2P"]} {
-                                       set sink_pin "IRQ0_F2P"
-                                       break
-                               }
-                               if {[string match -nocase $sink_pin "IRQ1_F2P"]} {
-                                       set sink_pin "IRQ1_F2P"
-                                       break
-                               }
-                       }
-               }
-        }
+		if {[string compare -nocase "$connected_ip" "dfx_decoupler"] == 0} {
+			set dfx_intr [hsi::get_pins -of_objects $sink_periph -filter {TYPE==INTERRUPT&&DIRECTION==O}]
+			set intr_pin [hsi::get_pins -of_objects $sink_periph -filter "NAME==$dfx_intr"]
+			set sink_pins [get_sink_pins "$intr_pin"]
+			foreach pin $sink_pins {
+				set sink_pin $pin
+				if {[string match -nocase $sink_pin "IRQ0_F2P"]} {
+				       set sink_pin "IRQ0_F2P"
+				       break
+				}
+				if {[string match -nocase $sink_pin "IRQ1_F2P"]} {
+				       set sink_pin "IRQ1_F2P"
+				       break
+				}
+			}
+		}
+	}
 	if {[llength $connected_ip]} {
 		# check for direct connection or concat block connected
 		if { [string compare -nocase "$connected_ip" "xlconcat"] == 0 } {
-                       set pin_number [regexp -all -inline -- {[0-9]+} $sink_pin]
+	               set pin_number [regexp -all -inline -- {[0-9]+} $sink_pin]
 			set number 0
 			global intrpin_width
 			for { set i 0 } {$i <= $pin_number} {incr i} {
@@ -7135,24 +7126,24 @@ proc get_psu_interrupt_id { ip_name port_name } {
 				} else {
 					set number [expr $number + {$pin_wdth + 1}]
 				}
-                       }
-                       dtg_debug "Full pin width for $sink_periph of $sink_pin:$number intrpin_width:$intrpin_width"
+	               }
+	               dtg_debug "Full pin width for $sink_periph of $sink_pin:$number intrpin_width:$intrpin_width"
 			set dout "dout"
 			set concat_block 1
 			set intr_pin [hsi::get_pins -of_objects $sink_periph -filter "NAME==$dout"]
 			set sink_pins [get_sink_pins "$intr_pin"]
-                        set sink_periph [::hsi::get_cells -of_objects $sink_pins]
-                        set connected_ip [hsi get_property IP_NAME [hsi::get_cells -hier $sink_periph]]
-                        while {[llength $connected_ip]} {
+	                set sink_periph [::hsi::get_cells -of_objects $sink_pins]
+	                set connected_ip [hsi get_property IP_NAME [hsi::get_cells -hier $sink_periph]]
+	                while {[llength $connected_ip]} {
 				if {![string match -nocase "$connected_ip" "xlconcat"]} {
 					break
 				}
-                               set dout "dout"
-                               set intr_pin [hsi::get_pins -of_objects $sink_periph -filter "NAME==$dout"]
-                               set sink_pins [get_sink_pins $intr_pin]
-                               set sink_periph [::hsi::get_cells -of_objects $sink_pins]
+	                       set dout "dout"
+	                       set intr_pin [hsi::get_pins -of_objects $sink_periph -filter "NAME==$dout"]
+	                       set sink_pins [get_sink_pins $intr_pin]
+	                       set sink_periph [::hsi::get_cells -of_objects $sink_pins]
 			        set connected_ip [hsi get_property IP_NAME [hsi::get_cells -hier $sink_periph]]
-                       }
+	               }
 			foreach pin $sink_pins {
 				set sink_pin $pin
 				if {[string match -nocase $sink_pin "IRQ0_F2P"]} {
@@ -7197,30 +7188,30 @@ proc get_psu_interrupt_id { ip_name port_name } {
 		}
 	}
 
-        # generate irq id for IRQ1_F2P
-        if { [string compare -nocase "$sink_pin" "IRQ1_F2P"] == 0 } {
-            if {$found == 1} {
-                set irqval $pl_ps_irq1
-                set pl_ps_irq1 [expr $pl_ps_irq1 + 1]
-                if {$concat_block == "0"} {
-                    return [lindex $intr_list_irq1 $irqval]
-                } else {
-                    set ret [expr 104 + $number]
-                    return $ret
-                }
-            }
-        } elseif { [string compare -nocase "$sink_pin" "IRQ0_F2P"] == 0 } {
-            # generate irq id for IRQ0_F2P
-            if {$found == 1} {
-                set irqval $pl_ps_irq0
-                set pl_ps_irq0 [expr $pl_ps_irq0 + 1]
-                if {$concat_block == "0"} {
-                    return [lindex $intr_list_irq0 $irqval]
-                } else {
-                    set ret [expr 89 + $number]
-                    return $ret
-                }
-             }
+	# generate irq id for IRQ1_F2P
+	if { [string compare -nocase "$sink_pin" "IRQ1_F2P"] == 0 } {
+	    if {$found == 1} {
+	        set irqval $pl_ps_irq1
+	        set pl_ps_irq1 [expr $pl_ps_irq1 + 1]
+	        if {$concat_block == "0"} {
+	            return [lindex $intr_list_irq1 $irqval]
+	        } else {
+	            set ret [expr 104 + $number]
+	            return $ret
+	        }
+	    }
+	} elseif { [string compare -nocase "$sink_pin" "IRQ0_F2P"] == 0 } {
+		# generate irq id for IRQ0_F2P
+		if {$found == 1} {
+			set irqval $pl_ps_irq0
+			set pl_ps_irq0 [expr $pl_ps_irq0 + 1]
+			if {$concat_block == "0"} {
+			    return [lindex $intr_list_irq0 $irqval]
+			} else {
+			    set ret [expr 89 + $number]
+			    return $ret
+			}
+		}
 	} elseif { [string compare -nocase "$sink_pin" "pl_ps_irq0"] == 0} {
 		set ret 84
 	} elseif { [string compare -nocase "$sink_pin" "pl_ps_irq1"] == 0} {
@@ -7253,29 +7244,29 @@ proc get_psu_interrupt_id { ip_name port_name } {
 		set ret 98
 	} elseif { [string compare -nocase "$sink_pin" "pl_ps_irq15"] == 0} {
 		set ret 99
-        } else {
+	} else {
 
-            set sink_periph [hsi::get_cells -of_objects $sink_pin]
+	    set sink_periph [hsi::get_cells -of_objects $sink_pin]
 	    if {[llength $sink_periph] == 0 } {
 		break
 	    }
-            set connected_ip [hsi get_property IP_NAME [hsi::get_cells -hier $sink_periph]]
-            if {[string match -nocase $connected_ip "axi_intc"] } {
-                set sink_pin [hsi::get_pins -of_objects $periph -filter {TYPE==INTERRUPT && DIRECTION==O}]
-            }
-            if {[llength $sink_pin] == 1} {
-                set port_width [get_port_width $sink_pin]
-            } else {
+	    set connected_ip [hsi get_property IP_NAME [hsi::get_cells -hier $sink_periph]]
+	    if {[string match -nocase $connected_ip "axi_intc"] } {
+	        set sink_pin [hsi::get_pins -of_objects $periph -filter {TYPE==INTERRUPT && DIRECTION==O}]
+	    }
+	    if {[llength $sink_pin] == 1} {
+	        set port_width [get_port_width $sink_pin]
+	    } else {
 	            foreach pin $sink_pin {
-                            set port_width [get_port_width $pin]
+	                    set port_width [get_port_width $pin]
 	            }
-            }
-        }
-    }
+	    }
+	}
+	}
 
-    set id $ret
-    return $ret
-}
+	set id $ret
+	return $ret
+	}
 
 proc check_ip_trustzone_state { drv_handle } {
 	proc_called_by
@@ -7316,7 +7307,7 @@ proc generate_cci_node { drv_handle rt_node} {
 	set avail_param [hsi list_property [hsi::get_cells -hier $drv_handle]]
 	if {[lsearch -nocase $avail_param "CONFIG.IS_CACHE_COHERENT"] >= 0} {
 		set cci_enable [hsi get_property CONFIG.IS_CACHE_COHERENT [hsi::get_cells -hier $drv_handle]]
-		set iptype [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+		set iptype [get_ip_property $drv_handle IP_NAME]
 		set nodma_coherent_list "psu_sata"
 		if {[lsearch $nodma_coherent_list $iptype] >= 0} {
 			#CR 974156, as per 2017.1 PCW update
@@ -7531,9 +7522,6 @@ proc update_endpoints {drv_handle} {
                                 }
 							}
 						}
-
-
-
 
 			 foreach inip $scaninip {
                                 if {[llength $inip]} {
@@ -8819,7 +8807,7 @@ proc gen_axis_switch {ip} {
 }
 
 proc get_broad_in_ip {ip} {
-	dtg_verbose "get_braod_in_ip:$ip"
+	dtg_verbose "get_broad_in_ip:$ip"
         if {[llength $ip]== 0} {
                 return
         }
