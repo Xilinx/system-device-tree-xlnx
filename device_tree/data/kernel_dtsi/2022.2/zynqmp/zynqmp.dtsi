@@ -87,11 +87,9 @@
 		};
 	};
 
-
 	cpus_r5_1: cpus-r5@2 {
 		#address-cells = <1>;
 		#size-cells = <0>;
-	
 		psu_cortexr5_1: cpu@1 {
 			compatible = "arm,cortex-r5", "arm,armv8";
 			device_type = "cpu";
