@@ -3692,24 +3692,24 @@ proc copy_hw_files args {
 		return $help_string
         }
 
-	global env
-	set path $env(REPO)
-	if {[catch {set path $env(REPO)} msg]} {
-		set path "."
-		set env(REPO) $path
-	}
-
+    	global env
 	if {[catch {set xsa $env(xsa)} msg]} {
  		error "\[DTG++ ERROR]:  No xsa provided, please set the xsa \
 		        \n\r            Ex: set_dt_param -xsa <system.xsa>"
 		return
 	}
 
+	if {[catch {set dir $env(dir)} msg]} {
+		error "\[DTG++ ERROR]:  No dir provided, please set the -dir option \
+		        \n\r            Ex: set_dt_param -dir <dir path with write permission>"
+		return
+	}
+
 	set cur_hw_design [hsi::get_hw_designs]
 	if {[string match -nocase $cur_hw_design ""]} {
-		set dir $env(dir)
 		if [catch { set retstr [file mkdir $dir] } errmsg] {
-			error "cannot create directory"
+			error "cannot create the passed directory: $env(dir)"
+			return
 		}
 		file copy -force $xsa $dir
 
