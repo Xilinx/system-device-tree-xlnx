@@ -1,5 +1,4 @@
     proc cpu_generate {drv_handle} {
-        puts stderr "[info procs]"
         set proctype [get_hw_family]
         set bus_name [detect_bus_name $drv_handle]
         set nr [get_microblaze_nr $drv_handle]
