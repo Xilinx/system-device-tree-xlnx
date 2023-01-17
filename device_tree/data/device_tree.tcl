@@ -3705,14 +3705,17 @@ proc copy_hw_files args {
 		return
 	}
 
-	set dir $env(dir)
-	if [catch { set retstr [file mkdir $dir] } errmsg] {
-		error "cannot create directory"
-	}	
-	file copy -force $xsa $dir
+	set cur_hw_design [hsi::get_hw_designs]
+	if {[string match -nocase $cur_hw_design ""]} {
+		set dir $env(dir)
+		if [catch { set retstr [file mkdir $dir] } errmsg] {
+			error "cannot create directory"
+		}
+		file copy -force $xsa $dir
 
-	set xsa_name [file tail $xsa]
-	set xsa_path "$dir/$xsa_name"
-	hsi::open_hw_design "$xsa_path"
-	file delete -force "$xsa_path"
+		set xsa_name [file tail $xsa]
+		set xsa_path "$dir/$xsa_name"
+		hsi::open_hw_design "$xsa_path"
+		file delete -force "$xsa_path"
+	}
 }
