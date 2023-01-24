@@ -774,6 +774,8 @@ proc gen_board_info {} {
 	set kernel_ver [get_user_config $common_file -kernel_ver]
 	set dtsi_file [get_user_config $common_file -board_dts]
 	set dir_path [get_user_config $common_file -dir]
+	set device [hsi get_property DEVICE [hsi::current_hw_design]]
+	add_prop "root" "device_id" "${device}" string $default_dts 
 	if {$dtsi_file eq ""} {
 		set boardname [get_board_name]
 		if { [string length $boardname] != 0 } {
@@ -783,6 +785,8 @@ proc gen_board_info {} {
 				add_prop "root" "compatible" "xlnx,${board}" string $default_dts
 			}
 		}
+	} else {
+		add_prop "root" "compatible" "xlnx,${dtsi_file}" string $default_dts
 	}
 	if {[file exists $dtsi_file]} {
 		set dir $dir_path
