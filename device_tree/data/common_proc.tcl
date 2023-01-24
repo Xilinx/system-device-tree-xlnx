@@ -5981,6 +5981,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 
 		add_prop $rt_node "status" "okay" string $default_dts
 		add_prop $rt_node "xlnx,ip-name" $ip_type string $default_dts
+		add_prop $rt_node "xlnx,name" $drv_handle string $default_dts
 	}
 
 	zynq_gen_pl_clk_binding $drv_handle
