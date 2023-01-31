@@ -20,6 +20,7 @@
 	compatible = "xlnx,zynqmp";
 	#address-cells = <2>;
 	#size-cells = <2>;
+	model = "Xilinx ZynqMP";
 
 	cpus_a53: cpus-a53@0 {
 		#address-cells = <1>;
