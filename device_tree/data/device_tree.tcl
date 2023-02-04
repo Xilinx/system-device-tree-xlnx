@@ -785,8 +785,6 @@ proc gen_board_info {} {
 				add_prop "root" "compatible" "xlnx,${board}" string $default_dts
 			}
 		}
-	} else {
-		add_prop "root" "compatible" "xlnx,${dtsi_file}" string $default_dts
 	}
 	if {[file exists $dtsi_file]} {
 		set dir $dir_path
