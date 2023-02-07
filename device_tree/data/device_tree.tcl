@@ -1323,6 +1323,9 @@ Generates system device tree based on args given in:
 				     ![string match -nocase "axi_perf_mon" $ip_name]} {
 					set skip1 1
 				}
+				if {[string match -nocase $ip_name "gmii_to_rgmii"]} {
+					set skip1 1
+				}
 				if { [dict exists $dup_periph_handle $drv_handle] } {
 					set skip1 1
 				}
