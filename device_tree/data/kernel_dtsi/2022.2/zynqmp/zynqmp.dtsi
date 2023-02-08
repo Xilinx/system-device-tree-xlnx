@@ -76,37 +76,37 @@
 		};
 	};
 
-	cpus_r5_0: cpus-r5@1 {
+	cpus_r5_0: cpus-r5@0 {
 		#address-cells = <1>;
 		#size-cells = <0>;
 
 		psu_cortexr5_0: cpu@0 {
 			compatible = "arm,cortex-r5", "arm,armv8";
 			device_type = "cpu";
-			reg = <0x4>;
+			reg = <0x0>;
 			power-domains = <&zynqmp_firmware PD_RPU_0>;
 		};
 	};
 
-	cpus_r5_1: cpus-r5@2 {
+	cpus_r5_1: cpus-r5@1 {
 		#address-cells = <1>;
 		#size-cells = <0>;
 		psu_cortexr5_1: cpu@1 {
 			compatible = "arm,cortex-r5", "arm,armv8";
 			device_type = "cpu";
-			reg = <0x5>;
+			reg = <0x1>;
 			power-domains = <&zynqmp_firmware PD_RPU_1>;
 		};
 	};
 
-	cpus_microblaze_1: cpus_microblaze@1 {
+	cpus_microblaze_0: cpus_microblaze@0 {
 		#address-cells = <1>;
 		#size-cells = <0>;
 
 		psu_pmu_0: cpu@0 {
 			compatible = "pmu-microblaze";
 			device_type = "cpu";
-			reg = <0x6>;
+			reg = <0x0>;
 			operating-points-v2 = <&cpu_opp_table>;
 		};
 	};
