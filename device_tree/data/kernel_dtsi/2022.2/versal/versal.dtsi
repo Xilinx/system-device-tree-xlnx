@@ -51,49 +51,49 @@
 		};
 	};
 
-	cpus_microblaze_1: cpus_microblaze@1 {
+	cpus_microblaze_0: cpus_microblaze@0 {
 		#address-cells = <1>;
 		#size-cells = <0>;
                 psv_pmc_0: cpu@0 {
                         compatible = "pmc-microblaze";
                         device_type = "cpu";
-                        reg = <0x2>;
+                        reg = <0x0>;
                         operating-points-v2 = <&cpu_opp_table>;
                 };
 	};
-	cpus_microblaze_2: cpus_microblaze@2 {
+	cpus_microblaze_1: cpus_microblaze@1 {
 		#address-cells = <1>;
 		#size-cells = <0>;
                 psv_psm_0: cpu@0 {
                         compatible = "psm-microblaze";
                         device_type = "cpu";
-                        reg = <0x3>;
+                        reg = <0x1>;
                         operating-points-v2 = <&cpu_opp_table>;
                 };
 
 	};
 
-	cpus_r5_3: cpus-r5@3 {
+	cpus_r5_0: cpus-r5@0 {
 		#address-cells = <1>;
 		#size-cells = <0>;
 		base-address = <0x0 0xff9a0000 0x0 0x10000>;
                 psv_cortexr5_0: cpu@0 {
                         compatible = "arm,cortex-r5";
                         device_type = "cpu";
-                        reg = <0x4>;
+                        reg = <0x0>;
                         operating-points-v2 = <&cpu_opp_table>;
                         power-domains = <&versal_firmware 0x18110005>;
                 };
         };
 
-        cpus_r5_4: cpus-r5@4 {
+        cpus_r5_1: cpus-r5@1 {
 		#address-cells = <1>;
 		#size-cells = <0>;
 		base-address = <0x0 0xff9a0000 0x0 0x10000>;
                 psv_cortexr5_1: cpu@1 {
                         compatible = "arm,cortex-r5";
                         device_type = "cpu";
-                        reg = <0x5>;
+                        reg = <0x1>;
                         operating-points-v2 = <&cpu_opp_table>;
                         power-domains = <&versal_firmware 0x18110006>;
                 };
