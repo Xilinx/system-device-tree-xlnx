@@ -35,7 +35,7 @@
                         set dmas [lappend dmas $peri]
                 }
                 add_prop "$vcap_scd" "dma-names" $dma_names stringlist $dts_file
-                generate_dmas $vcap_scd $dmas $dts_file
+                scene_change_detector_generate_dmas $vcap_scd $dmas $dts_file
                 set ports_vcap [create_node -n "ports" -l ports_vcap -p $vcap_scd -d $dts_file]
                 add_prop $ports_vcap "#address-cells" 1 int $dts_file
                 add_prop $ports_vcap "#size-cells" 0 int $dts_file
