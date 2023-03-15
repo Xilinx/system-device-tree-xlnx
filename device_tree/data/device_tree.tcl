@@ -1289,7 +1289,7 @@ Generates system device tree based on args given in:
 		set val_proclist "microblaze"
 	}
 
-	set non_val_list "versal_cips noc_nmu noc_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat axis_tdest_editor util_reduced_logic noc_nsw axis_ila pspmc psv_ocm_ram_0 psv_pmc_qspi_ospi add_keep_128 c_counter_binary"
+	set non_val_list "versal_cips axi_noc noc_mc_ddr4 noc_nmu noc_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat xlconstant xlslice axis_tdest_editor util_reduced_logic noc_nsw axis_ila pspmc psv_ocm_ram_0 psv_pmc_qspi_ospi add_keep_128 c_counter_binary"
 	set non_val_ip_types "MONITOR BUS PROCESSOR"
 	set non_val_list1 "psv_cortexa72 psu_cortexa53 ps7_cortexa9 versal_cips noc_nmu noc_nsu ila psu_iou_s noc_nsw pspmc"
 	set non_val_ip_types1 "MONITOR BUS"
