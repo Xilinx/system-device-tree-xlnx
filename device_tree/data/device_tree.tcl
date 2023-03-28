@@ -776,6 +776,12 @@ proc gen_board_info {} {
 	set dir_path [get_user_config $common_file -dir]
 	set device [hsi get_property DEVICE [hsi::current_hw_design]]
 	add_prop "root" "device_id" "${device}" string $default_dts 
+	if {[hsi get_current_part] != ""} {
+		set slrcount [common::get_property NUM_OF_SLRS [hsi get_current_part]]
+		if {$slrcount != -1} {
+			add_prop "root" "slrcount" $slrcount int $default_dts
+		}
+	}
 	if {$dtsi_file eq ""} {
 		set boardname [get_board_name]
 		if { [string length $boardname] != 0 } {
