@@ -278,8 +278,12 @@
             set phya [lindex $phynode 0]
             if { $phya != "-1"} {
                 set phy_name "[lindex $phynode 1]"
-                set_drv_prop $drv_handle phy-handle "$drv_handle$phy_name" $node reference
+                set_drv_prop $drv_handle pcs-handle "$drv_handle$phy_name" $node reference
                 axi_ethernet_gen_phy_node $mdio_node $phy_name $phya $drv_handle
+		if {[llength $node]} {
+			add_prop $node "managed" "in-band-status" string "pl.dtsi"
+			add_prop $node "xlnx,switch-x-sgmii" boolean "pl.dtsi"
+		}
             }
         }
         if {$ip_name == "xxv_ethernet" && $core != 0 && [llength $eth_node]} {
