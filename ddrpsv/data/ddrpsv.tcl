@@ -1,8 +1,5 @@
     proc ddrpsv_generate {drv_handle} {
         set a72 0
-        set r5 0
-        set psm 0
-        set pmc 0
         set slave [hsi::get_cells -hier ${drv_handle}]
         set dts_file "system-top.dts"
         set slave [hsi::get_cells -hier ${drv_handle}]
@@ -33,24 +30,7 @@
                 if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexa72"]} {
                        set a72 1
                 }
-                if {$r5 == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"]} {
-                        continue
-                }
-                if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"]} {
-                      set r5 1
-                }
-                if {$pmc == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psv_pmc"]} {
-                        continue
-                }
-                if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_pmc"]} {
-                        set pmc 1
-                }
-                if {$psm == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psv_psm"]} {
-                        continue
-                }
-                if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_psm"]} {
-                        set psm 1
-                }
+
                 set i 0
                 foreach block_name $interface_block_names {
                         if {[string match "C*_DDR_LOW0*" $block_name]} {
@@ -198,7 +178,7 @@
                                 if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"]} {
                                         set val [get_count "psv_cortexr5"]
                                         set map [get_mc_map $drv_handle]
-                                        if {$val == 0 || $map == 1} {
+                                        if {$val == 0 || $val == 1 || $map == 1} {
                                                 set_memmap "${drv_handle}_memory" $procc $reg_val
                                         }
                                 }
