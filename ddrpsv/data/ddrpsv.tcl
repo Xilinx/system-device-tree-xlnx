@@ -44,6 +44,9 @@
                         continue
                 }
 
+                # Get the processor IP name (A72/R5/PMC/PSM)
+                set proc_ip_name [hsi get_property IP_NAME $procc]
+
                 # Get the interface block names
                 # (e.g. C0_DDR_LOW0 C0_DDR_LOW0 C0_DDR_LOW0 C0_DDR_LOW1 C0_DDR_LOW1 C0_DDR_LOW1)
                 # Blocks with same name say C0_DDR_LOW0 will be having a different master interface
@@ -51,10 +54,10 @@
                 set interface_block_names [hsi get_property ADDRESS_BLOCK ${mapped_periph_list}]
 
                 # If the mappings have already been found for a72_0, then ignore the process for a72_1
-                if {$a72 == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexa72"]} {
+                if {$a72 == 1 && [string match -nocase ${proc_ip_name} "psv_cortexa72"]} {
                         continue
                 }
-                if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexa72"]} {
+                if {[string match -nocase ${proc_ip_name} "psv_cortexa72"]} {
                        set a72 1
                 }
 
@@ -187,35 +190,35 @@
                         }
 
                         if {$len} {
-                                if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"]} {
+                                if {[string match -nocase ${proc_ip_name} "psv_cortexr5"]} {
                                         set val [get_count "psv_cortexr5"]
                                         set map [get_mc_map $drv_handle]
                                         if {$val == 0 || $val == 1 || $map == 1} {
                                                 set_memmap "${drv_handle}_memory" $procc $reg_val
                                         }
                                 }
-                                if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexa72"] } {
+                                if {[string match -nocase ${proc_ip_name} "psv_cortexa72"] } {
                                         set val [get_count "psv_cortexa72"]
                                         set map [get_mc_map $drv_handle]
                                         if {$val == 0 || $map == 1} {
                                                 set_memmap "${drv_handle}_memory" a53 $reg_val
                                         }
                                 }
-                                if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_pmc"] } {
+                                if {[string match -nocase ${proc_ip_name} "psv_pmc"] } {
                                         set val [get_count "psv_pmc"]
                                         set map [get_mc_map $drv_handle]
                                         if {$val == 0 || $map == 1} {
                                                 set_memmap "${drv_handle}_memory" pmc $reg_val
                                         }
                                 }
-                                if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_psm"] } {
+                                if {[string match -nocase ${proc_ip_name} "psv_psm"] } {
                                         set val [get_count "psv_psm"]
                                         set map [get_mc_map $drv_handle]
                                         if {$val == 0 || $map == 1} {
                                                 set_memmap "${drv_handle}_memory" psm $reg_val
                                         }
                                 }
-                                if {[string match -nocase [hsi get_property IP_NAME $procc] "microblaze"] } {
+                                if {[string match -nocase ${proc_ip_name} "microblaze"] } {
                                         set val [get_count "microblaze"]
                                         set map [get_mc_map $drv_handle]
                                         if {$val == 0 || $map == 1} {
