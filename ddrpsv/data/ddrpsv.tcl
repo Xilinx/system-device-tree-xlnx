@@ -4,7 +4,6 @@
 
         # Get the periph_name from drv_handle (output is usually same as drv_handle)
         set periph_name [hsi::get_cells -hier ${drv_handle}]
-
         set vlnv [split [hsi get_property VLNV $periph_name] ":"]
         set name [lindex $vlnv 2]
         set ver [lindex $vlnv 3]
@@ -16,9 +15,19 @@
         # Defined at the top to avoid scope issue if no DDR region is mapped
         set reg_val ""
 
+        # List that contains base_address of each DDR region (C0_DDR_LOW(0-3), C0_DDR_CH(1-3))
+        global base_addr_list
+        set base_addr_list {0 0 0 0 0 0 0}
+
+        # List that contains high_address of each DDR region (C0_DDR_LOW(0-3), C0_DDR_CH(1-3))
+        global high_addr_list
+        set high_addr_list {0 0 0 0 0 0 0}
+
         # list all the processors available in the design
         set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
         foreach procc $proclist {
+                # Variables to get the presence status of each DDR region
+                # If the region is present status is set to 1
                 set is_ddr_low_0 0
                 set is_ddr_low_1 0
                 set is_ddr_low_2 0
@@ -37,6 +46,8 @@
 
                 # Get the interface block names
                 # (e.g. C0_DDR_LOW0 C0_DDR_LOW0 C0_DDR_LOW0 C0_DDR_LOW1 C0_DDR_LOW1 C0_DDR_LOW1)
+                # Blocks with same name say C0_DDR_LOW0 will be having a different master interface
+                # FPD_CCI_NOC_0, FPD_CCI_NOC_1 are the examples of master interfaces
                 set interface_block_names [hsi get_property ADDRESS_BLOCK ${mapped_periph_list}]
 
                 # If the mappings have already been found for a72_0, then ignore the process for a72_1
@@ -52,77 +63,87 @@
 
                 # Loop through all the interface blocks mapped to the processor
                 foreach block_name $interface_block_names {
+                        # ddr_region_id:
+                        #        specifies index of base_addr_list/high_addr_list
+                        #        for each DDR region.
+                        # is_ddr_low<0-6>:
+                        #        status of each DDR region, if it is present or not.
+                        # ddrpsv_handle_address_details:
+                        #       to update the base_addr_list and high_ddr_list if needed.
+                        # i:
+                        #       loop variable to traverse across the mapped DDR region.
+                        #       This is needed as block_name dont have unique names.
                         if {[string match "C*_DDR_LOW0*" $block_name]} {
-                                if {$is_ddr_low_0 == 0} {
-                                        set base_value_0 [ddrpsv_get_base_addr ${mapped_periph_list} $i]
-                                }
-                                set high_value_0 [ddrpsv_get_high_addr ${mapped_periph_list} $i]
+                                set ddr_region_id 0
+                                ddrpsv_handle_address_details $i $mapped_periph_list $is_ddr_low_0 $ddr_region_id
                                 set is_ddr_low_0 1
                         } elseif {[string match "C*_DDR_LOW1*" $block_name]} {
-                                if {$is_ddr_low_1 == 0} {
-                                        set base_value_1 [ddrpsv_get_base_addr ${mapped_periph_list} $i]
-                                }
-                                set high_value_1 [ddrpsv_get_high_addr ${mapped_periph_list} $i]
+                                set ddr_region_id 1
+                                ddrpsv_handle_address_details $i $mapped_periph_list $is_ddr_low_1 $ddr_region_id
                                 set is_ddr_low_1 1
                         } elseif {[string match "C*_DDR_LOW2*" $block_name]} {
-                                if {$is_ddr_low_2 == 0} {
-                                        set base_value_2 [ddrpsv_get_base_addr ${mapped_periph_list} $i]
-                                }
-                                set high_value_2 [ddrpsv_get_high_addr ${mapped_periph_list} $i]
+                                set ddr_region_id 2
+                                ddrpsv_handle_address_details $i $mapped_periph_list $is_ddr_low_2 $ddr_region_id
                                 set is_ddr_low_2 1
                         } elseif {[string match "C*_DDR_LOW3*" $block_name] } {
-                                if {$is_ddr_low_3 == "0"} {
-                                        set base_value_3 [ddrpsv_get_base_addr ${mapped_periph_list} $i]
-                                }
-                                set high_value_3 [ddrpsv_get_high_addr ${mapped_periph_list} $i]
+                                set ddr_region_id 3
+                                ddrpsv_handle_address_details $i $mapped_periph_list $is_ddr_low_3 $ddr_region_id
                                 set is_ddr_low_3 1
                         } elseif {[string match "C*_DDR_CH1*" $block_name]} {
-                                if {$is_ddr_ch_1 == "0"} {
-                                        set base_value_4 [ddrpsv_get_base_addr ${mapped_periph_list} $i]
-                                }
-                                set high_value_4 [ddrpsv_get_high_addr ${mapped_periph_list} $i]
+                                set ddr_region_id 4
+                                ddrpsv_handle_address_details $i $mapped_periph_list $is_ddr_ch_1 $ddr_region_id
                                 set is_ddr_ch_1 1
                         } elseif {[string match "C*_DDR_CH2*" $block_name]} {
-                                if {$is_ddr_ch_2 == "0"} {
-                                        set base_value_5 [ddrpsv_get_base_addr ${mapped_periph_list} $i]
-                                }
-                                set high_value_5 [ddrpsv_get_high_addr ${mapped_periph_list} $i]
+                                set ddr_region_id 5
+                                ddrpsv_handle_address_details $i $mapped_periph_list $is_ddr_ch_2 $ddr_region_id
                                 set is_ddr_ch_2 1
                         } elseif {[string match "C*_DDR_CH3*" $block_name]} {
-                                if {$is_ddr_ch_3 == "0"} {
-                                        set base_value_6 [ddrpsv_get_base_addr ${mapped_periph_list} $i]
-                                }
-                                set high_value_6 [ddrpsv_get_high_addr ${mapped_periph_list} $i]
+                                set ddr_region_id 6
+                                ddrpsv_handle_address_details $i $mapped_periph_list $is_ddr_ch_3  $ddr_region_id
                                 set is_ddr_ch_3 1
                         }
                         incr i
                 }
                 set updat ""
                 if {$is_ddr_low_0 == 1} {
+                        set base_value_0 [lindex $base_addr_list 0]
+                        set high_value_0 [lindex $high_addr_list 0]
                         set reg_val_0 [ddrpsv_generate_reg_property $base_value_0 $high_value_0]
                         set updat [lappend updat $reg_val_0]
                 }
                 if {$is_ddr_low_1 == 1} {
+                        set base_value_1 [lindex $base_addr_list 1]
+                        set high_value_1 [lindex $high_addr_list 1]
                         set reg_val_1 [ddrpsv_generate_reg_property $base_value_1 $high_value_1]
                         set updat [lappend updat $reg_val_1]
                 }
                 if {$is_ddr_low_2 == 1} {
+                        set base_value_2 [lindex $base_addr_list 2]
+                        set high_value_2 [lindex $high_addr_list 2]
                         set reg_val_2 [ddrpsv_generate_reg_property $base_value_2 $high_value_2]
                         set updat [lappend updat $reg_val_2]
                 }
                 if {$is_ddr_low_3 == 1} {
+                        set base_value_3 [lindex $base_addr_list 3]
+                        set high_value_3 [lindex $high_addr_list 3]
                         set reg_val_3 [ddrpsv_generate_reg_property $base_value_3 $high_value_3]
                         set updat [lappend updat $reg_val_3]
                 }
                 if {$is_ddr_ch_1 == 1} {
+                        set base_value_4 [lindex $base_addr_list 4]
+                        set high_value_4 [lindex $high_addr_list 4]
                         set reg_val_4 [ddrpsv_generate_reg_property $base_value_4 $high_value_4]
                         set updat [lappend updat $reg_val_4]
                 }
                 if {$is_ddr_ch_2 == 1} {
+                        set base_value_5 [lindex $base_addr_list 5]
+                        set high_value_5 [lindex $high_addr_list 5]
                         set reg_val_5 [ddrpsv_generate_reg_property $base_value_5 $high_value_5]
                         set updat [lappend updat $reg_val_5]
                 }
                 if {$is_ddr_ch_3 == 1} {
+                        set base_value_6 [lindex $base_addr_list 6]
+                        set high_value_6 [lindex $high_addr_list 6]
                         set reg_val_6 [ddrpsv_generate_reg_property $base_value_6 $high_value_6]
                         set updat [lappend updat $reg_val_6]
                 }
@@ -363,9 +384,37 @@
     }                                                                                                                                                                           
 
     proc ddrpsv_get_base_addr {mapped_periph_list index} {
+        # Get the Base address of the mapped DDR region
         return [hsi get_property BASE_VALUE [lindex ${mapped_periph_list} $index]]
     }
 
     proc ddrpsv_get_high_addr {mapped_periph_list index} {
+        # Get the High address of the mapped DDR region
         return [hsi get_property HIGH_VALUE [lindex ${mapped_periph_list} $index]]
+    }
+
+    proc ddrpsv_handle_address_details { index mapped_periph_list is_ddr_region_accessed ddr_region_id } {
+        #Variables to hold base address and high address of each DDR region
+        global base_addr_list
+        global high_addr_list
+
+        # Get the base address of the passed DDR region i.e. mapped_periph_list[index]
+        set temp [ddrpsv_get_base_addr $mapped_periph_list $index]
+
+        # If the DDR region is accessed for the first time OR
+        # If the base address found is less than the address present in the list for this DDR region,
+        # replace the address in the list with the new address found.
+        if { $is_ddr_region_accessed == 0 || [string compare $temp [lindex $base_addr_list $ddr_region_id]] < 0 } {
+                lset base_addr_list $ddr_region_id $temp
+        }
+
+        # Get the High address of the passed DDR region i.e. mapped_periph_list[index]
+        set temp [ddrpsv_get_high_addr $mapped_periph_list $index]
+
+        # If the DDR region is accessed for the first time OR
+        # If the high address found is greater than the address present in the list for this DDR region,
+        # replace the address in the list with the new address found.
+        if { $is_ddr_region_accessed == 0 || [string compare $temp [lindex $high_addr_list $ddr_region_id]] > 0} {
+                lset high_addr_list $ddr_region_id $temp
+        }
     }
