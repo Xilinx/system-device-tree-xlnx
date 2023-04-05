@@ -1,15 +1,24 @@
     proc ddrpsv_generate {drv_handle} {
         set a72 0
-        set slave [hsi::get_cells -hier ${drv_handle}]
         set dts_file "system-top.dts"
-        set slave [hsi::get_cells -hier ${drv_handle}]
-        set vlnv [split [hsi get_property VLNV $slave] ":"]
+
+        # Get the periph_name from drv_handle (output is usually same as drv_handle)
+        set periph_name [hsi::get_cells -hier ${drv_handle}]
+
+        set vlnv [split [hsi get_property VLNV $periph_name] ":"]
         set name [lindex $vlnv 2]
         set ver [lindex $vlnv 3]
+
+        # Property for compatibility string
         set comp_prop "xlnx,${name}-${ver}"
         regsub -all {_} $comp_prop {-} comp_prop
+
+        # Defined at the top to avoid scope issue if no DDR region is mapped
+        set reg_val ""
+
+        # list all the processors available in the design
         set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
-            foreach procc $proclist {
+        foreach procc $proclist {
                 set is_ddr_low_0 0
                 set is_ddr_low_1 0
                 set is_ddr_low_2 0
@@ -18,12 +27,19 @@
                 set is_ddr_ch_2 0
                 set is_ddr_ch_3 0
                 
-                set periph [hsi::get_cells -hier $drv_handle]
-                if {[catch {set interface_block_names [hsi get_property ADDRESS_BLOCK [hsi::get_mem_ranges -of_objects $procc $periph]]} msg]} {
-                        if {[catch {set interface_block_names [hsi get_property ADDRESS_BLOCK [hsi::get_mem_ranges $procc $periph]]} msg]} {
-                                set interface_block_names ""
-                        } 
+                # Get all the NOC memory instances mapped to the particular processor
+                set mapped_periph_list [hsi::get_mem_ranges -of_objects $procc $periph_name]
+
+                # If there is no instances mapped, then skip that processor
+                if { $mapped_periph_list eq "" } {
+                        continue
                 }
+
+                # Get the interface block names
+                # (e.g. C0_DDR_LOW0 C0_DDR_LOW0 C0_DDR_LOW0 C0_DDR_LOW1 C0_DDR_LOW1 C0_DDR_LOW1)
+                set interface_block_names [hsi get_property ADDRESS_BLOCK ${mapped_periph_list}]
+
+                # If the mappings have already been found for a72_0, then ignore the process for a72_1
                 if {$a72 == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexa72"]} {
                         continue
                 }
@@ -31,77 +47,52 @@
                        set a72 1
                 }
 
+                # Loop variable to go over all the interface blocks
                 set i 0
+
+                # Loop through all the interface blocks mapped to the processor
                 foreach block_name $interface_block_names {
                         if {[string match "C*_DDR_LOW0*" $block_name]} {
                                 if {$is_ddr_low_0 == 0} {
-                                        if {[catch {set base_value_0 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-                                                set base_value_0 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
-                                        }
+                                        set base_value_0 [ddrpsv_get_base_addr ${mapped_periph_list} $i]
                                 }
-                                if {[catch {set high_value_0 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-                                        set high_value_0 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
-                                }
+                                set high_value_0 [ddrpsv_get_high_addr ${mapped_periph_list} $i]
                                 set is_ddr_low_0 1
                         } elseif {[string match "C*_DDR_LOW1*" $block_name]} {
                                 if {$is_ddr_low_1 == 0} {
-                                        if {[catch {set base_value_1 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-                                                set base_value_1 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
-                                        }
+                                        set base_value_1 [ddrpsv_get_base_addr ${mapped_periph_list} $i]
                                 }
-                                if {[catch {set high_value_1 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-                                        set high_value_1 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
-                                }
+                                set high_value_1 [ddrpsv_get_high_addr ${mapped_periph_list} $i]
                                 set is_ddr_low_1 1
                         } elseif {[string match "C*_DDR_LOW2*" $block_name]} {
                                 if {$is_ddr_low_2 == 0} {
-                                        if {[catch {set base_value_2 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-                                                set base_value_2 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
-                                        }
+                                        set base_value_2 [ddrpsv_get_base_addr ${mapped_periph_list} $i]
                                 }
-                                if {[catch {set high_value_2 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-                                        set high_value_2 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
-                                }
+                                set high_value_2 [ddrpsv_get_high_addr ${mapped_periph_list} $i]
                                 set is_ddr_low_2 1
                         } elseif {[string match "C*_DDR_LOW3*" $block_name] } {
                                 if {$is_ddr_low_3 == "0"} {
-                                        if {[catch {set base_value_3 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-                                                set base_value_3 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
-                                        }
+                                        set base_value_3 [ddrpsv_get_base_addr ${mapped_periph_list} $i]
                                 }
-                                if {[catch {set high_value_3 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-                                        set high_value_3 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
-                                }
+                                set high_value_3 [ddrpsv_get_high_addr ${mapped_periph_list} $i]
                                 set is_ddr_low_3 1
                         } elseif {[string match "C*_DDR_CH1*" $block_name]} {
                                 if {$is_ddr_ch_1 == "0"} {
-                                        if {[catch {set base_value_4 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-                                                set base_value_4 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
-                                        }
+                                        set base_value_4 [ddrpsv_get_base_addr ${mapped_periph_list} $i]
                                 }
-                                if {[catch {set high_value_4 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-                                        set high_value_4 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
-                                }
+                                set high_value_4 [ddrpsv_get_high_addr ${mapped_periph_list} $i]
                                 set is_ddr_ch_1 1
                         } elseif {[string match "C*_DDR_CH2*" $block_name]} {
                                 if {$is_ddr_ch_2 == "0"} {
-                                        if {[catch {set base_value_5 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-                                                set base_value_5 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
-                                        }
+                                        set base_value_5 [ddrpsv_get_base_addr ${mapped_periph_list} $i]
                                 }
-                                if {[catch {set high_value_5 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-                                        set high_value_5 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
-                                }
+                                set high_value_5 [ddrpsv_get_high_addr ${mapped_periph_list} $i]
                                 set is_ddr_ch_2 1
                         } elseif {[string match "C*_DDR_CH3*" $block_name]} {
                                 if {$is_ddr_ch_3 == "0"} {
-                                        if {[catch {set base_value_6 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-                                                set base_value_6 [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
-                                        }
+                                        set base_value_6 [ddrpsv_get_base_addr ${mapped_periph_list} $i]
                                 }
-                                if {[catch {set high_value_6 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc $periph] $i]]} msg]} {
-                                        set high_value_6 [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges $procc $periph] $i]]
-                                }
+                                set high_value_6 [ddrpsv_get_high_addr ${mapped_periph_list} $i]
                                 set is_ddr_ch_3 1
                         }
                         incr i
@@ -214,20 +205,20 @@
         }
 
 
-                if {[llength $reg_val]} {
-                        set higheraddr [expr [lindex $reg_val 0] << 32]
-                        set loweraddr [lindex $reg_val 1]
-                        set baseaddr [format 0x%x [expr {${higheraddr} + ${loweraddr}}]]
-                        regsub -all {^0x} $baseaddr {} baseaddr
-                        set memory_node [create_node -n memory -l "${drv_handle}_memory" -u $baseaddr -p root -d "system-top.dts"]
-                        if {[catch {set dev_type [hsi get_property CONFIG.device_type $drv_handle]} msg]} {
-                                set dev_type memory
-                        }
-                        if {[string_is_empty $dev_type]} {set dev_type memory}
-                        add_prop "${memory_node}" "compatible" $comp_prop string $dts_file
-                        add_prop "${memory_node}" "device_type" $dev_type string $dts_file
-                        add_prop "${memory_node}" "reg" $reg_val hexlist $dts_file
+        if {[llength $reg_val]} {
+                set higheraddr [expr [lindex $reg_val 0] << 32]
+                set loweraddr [lindex $reg_val 1]
+                set baseaddr [format 0x%x [expr {${higheraddr} + ${loweraddr}}]]
+                regsub -all {^0x} $baseaddr {} baseaddr
+                set memory_node [create_node -n memory -l "${drv_handle}_memory" -u $baseaddr -p root -d "system-top.dts"]
+                if {[catch {set dev_type [hsi get_property CONFIG.device_type $drv_handle]} msg]} {
+                        set dev_type memory
                 }
+                if {[string_is_empty $dev_type]} {set dev_type memory}
+                add_prop "${memory_node}" "compatible" $comp_prop string $dts_file
+                add_prop "${memory_node}" "device_type" $dev_type string $dts_file
+                add_prop "${memory_node}" "reg" $reg_val hexlist $dts_file
+        }
 
     }
 
@@ -371,5 +362,10 @@
         return [split [string map [list $splitStr $mc] $str] $mc]
     }                                                                                                                                                                           
 
+    proc ddrpsv_get_base_addr {mapped_periph_list index} {
+        return [hsi get_property BASE_VALUE [lindex ${mapped_periph_list} $index]]
+    }
 
-
+    proc ddrpsv_get_high_addr {mapped_periph_list index} {
+        return [hsi get_property HIGH_VALUE [lindex ${mapped_periph_list} $index]]
+    }
