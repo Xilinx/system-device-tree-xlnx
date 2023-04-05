@@ -2189,6 +2189,14 @@ proc string_is_empty {input} {
 	return 1
 }
 
+proc check_if_forty_bit_address {addr_map} {
+	set forty_bit_address_value [string trimleft [lindex $addr_map 0] "<"]
+	if {[string match -nocase ${forty_bit_address_value} "0x0"]} {
+		return 0
+	}
+	return 1
+}
+
 proc gen_dt_node_search_pattern args {
 	proc_called_by
 	# generates device tree node search pattern and return it

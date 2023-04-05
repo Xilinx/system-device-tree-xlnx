@@ -1848,15 +1848,18 @@ proc gen_cpu_cluster {os_handle} {
 			set temp [get_memmap $val [lindex $r5_procs $core]]
 			set com_val [split $temp ","]
 			foreach value $com_val {
-				set addr "[lindex $value 1]"
-				if {[string match -nocase $val "psu_rcpu_gic"] || [string match -nocase $val "psu_acpu_gic"]} {
-					set size "[lindex $value 2]"
-				} else {
-					set size "[lindex $value 3]"
+				# Ignore if a 40 bit address is mapped to R5 processor
+				if {![check_if_forty_bit_address $value]} {
+					set addr "[lindex $value 1]"
+					if {[string match -nocase $val "psu_rcpu_gic"] || [string match -nocase $val "psu_acpu_gic"]} {
+						set size "[lindex $value 2]"
+					} else {
+						set size "[lindex $value 3]"
+					}
+					set addr [string trimright $addr ">"]
+					set size [string trimright $size ">"]
+					set list_values [append list_values ">, \n\t\t\t      " "<$addr &${val} $addr $size"]
 				}
-				set addr [string trimright $addr ">"]
-				set size [string trimright $size ">"]
-				set list_values [append list_values ">, \n\t\t\t      " "<$addr &${val} $addr $size"]
 			}
 		}
 		add_prop $cpu_node "address-map" $list_values special $default_dts
@@ -1894,11 +1897,14 @@ proc gen_cpu_cluster {os_handle} {
 		}
 		set com_val [split $temp ","]
 		foreach value $com_val {
-			set addr "[lindex $value 1]"
-			set size "[lindex $value 3]"
-			set addr [string trimright $addr ">"]
-			set size [string trimright $size ">"]
-			set list_values [append list_values ">, \n\t\t\t      " "<$addr &${val} $addr $size"]
+			# Ignore if a 40 bit address is mapped to PMU/PMC processor
+			if {![check_if_forty_bit_address $value]} {
+				set addr "[lindex $value 1]"
+				set size "[lindex $value 3]"
+				set addr [string trimright $addr ">"]
+				set size [string trimright $size ">"]
+				set list_values [append list_values ">, \n\t\t\t      " "<$addr &${val} $addr $size"]
+			}
 		}
 	}
     	if {[string match -nocase $proctype "versal"]} {
@@ -1910,7 +1916,7 @@ proc gen_cpu_cluster {os_handle} {
 		set cpu_node [create_node -l "cpus_microblaze_1" -n "cpus_microblaze" -u 1 -d ${default_dts} -p root]
 		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
 		add_prop $cpu_node "#ranges-size-cells" "0x1" hexint $default_dts
-	    add_prop "${cpu_node}" "#ranges-address-cells" "0x1" hexint $default_dts
+	   	add_prop "${cpu_node}" "#ranges-address-cells" "0x1" hexint $default_dts
 		global memmap
 		set values [dict keys $memmap]
 		set list_values "0xf0000000 &amba 0xf0000000 0x10000000"
@@ -1918,11 +1924,14 @@ proc gen_cpu_cluster {os_handle} {
 			set temp [get_memmap $val psm]
 			set com_val [split $temp ","]
 			foreach value $com_val {
-				set addr "[lindex $value 1]"
-				set size "[lindex $value 3]"
-				set addr [string trimright $addr ">"]
-				set size [string trimright $size ">"]
-				set list_values [append list_values ">, \n\t\t\t      " "<$addr &${val} $addr $size"]
+				# Ignore if a 40 bit address is mapped to PSM
+				if {![check_if_forty_bit_address $value]} {
+					set addr "[lindex $value 1]"
+					set size "[lindex $value 3]"
+					set addr [string trimright $addr ">"]
+					set size [string trimright $size ">"]
+					set list_values [append list_values ">, \n\t\t\t      " "<$addr &${val} $addr $size"]
+				}
 			}
 		}
 		add_prop $cpu_node "address-map" $list_values special $default_dts
@@ -1942,7 +1951,7 @@ proc gen_cpu_cluster {os_handle} {
 			set cpu_node [create_node -l "cpus_microblaze_${count}" -n "cpus_microblaze" -u $count -d ${default_dts} -p $plnode]	
 		}
 		add_prop $cpu_node "#ranges-size-cells" "0x1" hexint $default_dts
-	    add_prop "${cpu_node}" "#ranges-address-cells" "0x1" hexint $default_dts
+		add_prop "${cpu_node}" "#ranges-address-cells" "0x1" hexint $default_dts
 		global memmap
 		set values [dict keys $memmap]
 		set list_values "0xf1000000 &amba 0xf1000000 0xeb00000"
@@ -1950,11 +1959,14 @@ proc gen_cpu_cluster {os_handle} {
 			set temp [get_memmap $val $proc]
 			set com_val [split $temp ","]
 			foreach value $com_val {
-				set addr "[lindex $value 1]"
-				set size "[lindex $value 3]"
-				set addr [string trimright $addr ">"]
-				set size [string trimright $size ">"]
-				set list_values [append list_values ">, \n\t\t\t      " "<$addr &${val} $addr $size"]
+				# Ignore if a 40 bit address is mapped to Microblaze
+				if {![check_if_forty_bit_address $value]} {
+					set addr "[lindex $value 1]"
+					set size "[lindex $value 3]"
+					set addr [string trimright $addr ">"]
+					set size [string trimright $size ">"]
+					set list_values [append list_values ">, \n\t\t\t      " "<$addr &${val} $addr $size"]
+				}
 			}
 		}
 		add_prop $cpu_node "address-map" $list_values special $default_dts
