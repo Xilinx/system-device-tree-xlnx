@@ -7,6 +7,7 @@
         set zocl [get_user_config $common_file -dt_zocl]
         pldt append $node compatible "\ \, \"xlnx,xps-intc-1.00.a\""
         add_prop $node "#interrupt-cells" 2 int "pl.dtsi"
+        add_prop $node "interrupt-controller" boolean "pl.dtsi"
         set ip [hsi::get_cells -hier $drv_handle]
         set num_intr_inputs [get_ip_param_value $ip C_NUM_INTR_INPUTS]
         set kind_of_intr [get_ip_param_value $ip C_KIND_OF_INTR]
