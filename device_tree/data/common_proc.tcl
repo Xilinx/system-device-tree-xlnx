@@ -5601,10 +5601,15 @@ proc ip2drv_prop {ip_name prop_name_list} {
 		} else {
 			set type "mixed"
 		}
+
 		if {[string match -nocase $emac "psv_pciea_attrib"] && [string match -nocase $ip_prop_name "CONFIG.C_CPM_PCIE0_PORT_TYPE"]} {
 			add_prop $node "xlnx,device-port-type" $prop int [set_drv_def_dts $ip_name]
 		} else {
-			add_cross_property $ip $ip_prop_name $ip_name $drv_prop_name $node $type
+			# For boolean property type if property value is false don't generate the property.
+			if { $prop == "false" && $type == "boolean"} {
+			} else {
+				add_cross_property $ip $ip_prop_name $ip_name $drv_prop_name $node $type
+			}
 		}
 	}
 }
