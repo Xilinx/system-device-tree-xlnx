@@ -150,7 +150,7 @@
                 set msi_rx_pin_en [hsi get_property CONFIG.msi_rx_pin_en [hsi::get_cells -hier $drv_handle]]
                 if {[string match -nocase $msi_rx_pin_en "true"]} {
                         set intr_names "misc msi0 msi1"
-                        set_drv_prop $drv_handle "interrupt-names" $intr_names $node stringlist
+                        add_prop $node "interrupt-names" $intr_names stringlist "pl.dtsi" 1
                 }
         }
         add_prop $node device_type "pci" string "pl.dtsi"
