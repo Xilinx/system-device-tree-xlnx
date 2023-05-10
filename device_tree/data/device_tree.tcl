@@ -588,7 +588,10 @@ proc gen_include_headers {} {
 proc include_custom_dts {} {
 	global env
 	set path $env(REPO)
-	set include_dts $env(include_dts)
+	# Windows treats an empty env variable as not defined
+	if {[catch {set include_dts $env(include_dts)} msg]} {
+		set include_dts ""
+	}
 	set dir_name $env(dir)
 	foreach include_dts_file $include_dts {
 		if {[file exists $include_dts_file]} {
