@@ -546,12 +546,15 @@ proc gen_include_headers {} {
 	set reset_base_file ""
 	if {[is_zynqmp_platform $family]} {
 		set power_list "xlnx-zynqmp-power.h"
+		# FIXME: Unnecessary, fix the whole logic
+        	set sysmon_regnode_list ""
 		set clock_list "xlnx-zynqmp-clk.h"
 		set reset_list "xlnx-zynqmp-resets.h"
 		set dpdma_list "xlnx-zynqmp-dpdma.h"
 		set gpio_list "gpio.h"
 	} else {
 		set power_list "xlnx-versal-power.h"
+		set sysmon_regnode_list "xlnx-versal-regnode.h"
 		set clock_list "xlnx-versal-clk.h"
 		set reset_list "xlnx-versal-resets.h"
 		set dpdma_list "xlnx-zynqmp-dpdma.h"
@@ -571,6 +574,8 @@ proc gen_include_headers {} {
 		foreach file [glob [file normalize [file dirname ${include_dtsi}]/*/*/*/*]] {
 			if {[string first $power_list $file]!= -1} {
 				file copy -force $file $powerdir
+			} elseif {[string first $sysmon_regnode_list $file] != -1} {
+                		file copy -force $file $powerdir
 			} elseif {[string first $clock_list $file] != -1} {
 				file copy -force $file $clockdir
 			} elseif {[string first $reset_list $file] != -1} {
