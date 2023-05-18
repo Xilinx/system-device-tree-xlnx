@@ -2262,7 +2262,9 @@ proc set_cur_working_dts {{dts_file ""}} {
 
 proc get_baseaddr {slave_ip {no_prefix ""}} {
 	# only returns the first addr
-	if {[string match -nocase $slave_ip "psu_sata"]} {
+	set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $slave_ip]]
+	if {[string match -nocase $slave_ip "psu_sata"] ||
+	    [string match -nocase $ip_name "psv_pmc_qspi"]} {
 		set addr [string tolower [hsi get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $slave_ip]]]
 	} else {
 		set ip_mem_handle [lindex [hsi::get_mem_ranges [hsi::get_cells -hier $slave_ip]] 0]
