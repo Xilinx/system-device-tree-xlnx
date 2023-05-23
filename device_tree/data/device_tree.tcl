@@ -534,59 +534,14 @@ proc gen_sata_laneinfo {} {
 
 proc gen_include_headers {} {
 	global env
-	set path $env(REPO)
-	set common_file "$path/device_tree/data/config.yaml"
+	set common_file "$env(REPO)/device_tree/data/config.yaml"
 	set kernel_ver [get_user_config $common_file -kernel_ver]
-
-	set family [get_hw_family]
-	set include_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${kernel_ver}/include"]
-	set include_list "include*"
+	set includes_dir [file normalize "$env(REPO)/device_tree/data/kernel_dtsi/${kernel_ver}/include"]
 	set dir_path [get_user_config $common_file -dir]
-	set power_base_file ""
-	set reset_base_file ""
-	if {[is_zynqmp_platform $family]} {
-		set power_list "xlnx-zynqmp-power.h"
-		# FIXME: Unnecessary, fix the whole logic
-        	set sysmon_regnode_list ""
-		set clock_list "xlnx-zynqmp-clk.h"
-		set reset_list "xlnx-zynqmp-resets.h"
-		set dpdma_list "xlnx-zynqmp-dpdma.h"
-		set gpio_list "gpio.h"
-	} else {
-		set power_list "xlnx-versal-power.h"
-		set sysmon_regnode_list "xlnx-versal-regnode.h"
-		set clock_list "xlnx-versal-clk.h"
-		set reset_list "xlnx-versal-resets.h"
-		set dpdma_list "xlnx-zynqmp-dpdma.h"
-		set gpio_list "gpio.h"
-	}
-	set powerdir "$dir_path/include/dt-bindings/power"
-	set clockdir "$dir_path/include/dt-bindings/clock"
-	set resetdir "$dir_path/include/dt-bindings/reset"
-	set dpdmadir "$dir_path/include/dt-bindings/dma"
-	set gpiodir "$dir_path/include/dt-bindings/gpio"
-	file mkdir $powerdir
-	file mkdir $clockdir
-	file mkdir $resetdir
-	file mkdir $dpdmadir
-	file mkdir $gpiodir
-	if {[file exists $include_dtsi]} {
-		foreach file [glob [file normalize [file dirname ${include_dtsi}]/*/*/*/*]] {
-			if {[string first $power_list $file]!= -1} {
-				file copy -force $file $powerdir
-			} elseif {[string first $sysmon_regnode_list $file] != -1} {
-                		file copy -force $file $powerdir
-			} elseif {[string first $clock_list $file] != -1} {
-				file copy -force $file $clockdir
-			} elseif {[string first $reset_list $file] != -1} {
-				file copy -force $file $resetdir
-			} elseif {[string first $dpdma_list $file] != -1} {
-				file copy -force $file $dpdmadir
-			} elseif {[string first $gpio_list $file] != -1} {
-				file copy -force $file $gpiodir
-			}
-
-		}
+	# Copy full include directory to dt WS
+	if {[file exists $includes_dir]} {
+		file delete -force -- $dir_path/include
+		file copy -force $includes_dir $dir_path
 	}
 }
 
