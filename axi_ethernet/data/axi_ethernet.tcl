@@ -222,6 +222,7 @@
         set rxmem [axi_ethernet_get_memrange $rxmem]
         add_prop $node "xlnx,txcsum" $txcsum hexint "pl.dtsi" 1
         add_prop $node "xlnx,rxcsum" $rxcsum hexint "pl.dtsi" 1
+        pldt unset $node "xlnx,phy-type"
         add_prop $node "xlnx,phyaddr" $phyaddr hexint "pl.dtsi" 1
         add_prop $node "xlnx,rxmem" $rxmem hexint "pl.dtsi" 1
         add_prop $node "xlnx,speed-1-2p5" "1000" int "pl.dtsi" 1
