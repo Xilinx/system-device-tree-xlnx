@@ -1200,6 +1200,7 @@ Generates system device tree based on args given in:
 	}
 
 	source [file join $path "device_tree" "data" "common_proc.tcl"]
+	source [file join $path "device_tree" "data" "video_utils.tcl"]
 	source [file join $path "device_tree" "data" "xillib_common.tcl"]
 	source [file join $path "device_tree" "data" "xillib_hw.tcl"]
 	source [file join $path "device_tree" "data" "xillib_internal.tcl"]
