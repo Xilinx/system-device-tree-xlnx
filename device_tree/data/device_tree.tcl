@@ -1476,6 +1476,7 @@ proc proc_mapping {} {
 	set proctype [get_hw_family]
 	set default_dts "system-top.dts"
 	set proc_list [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
+	set hier_periph_list [hsi::get_cells -hier -filter {IS_HIERARCHICAL==1}]
 	set periphs_list ""
 	append periphs_list [hsi::get_cells -hier -filter {IP_TYPE==MEMORY_CNTLR}]
 	set family [get_hw_family]
@@ -1487,6 +1488,18 @@ proc proc_mapping {} {
         foreach val $proc_list {
 		#puts "$val: [time {
 		set periph_list [hsi::get_mem_ranges -of_objects [hsi::get_cells -hier $val]]
+		set hier_mapped_list [::struct::set intersect $periph_list $hier_periph_list]
+		foreach entry $hier_mapped_list {
+			set hier_mem_filter \
+				"HIER_NAME=~${entry}/* && \
+				( \
+					CONFIG.C_BASEADDR=~0x* || \
+					CONFIG.C_S_AXI_BASEADDR=~0x* || \
+					CONFIG.C_S_AXI_CTRL_BASEADDR=~0x* \
+				)"
+			append periph_list ' [hsi::get_cells -hier -filter $hier_mem_filter]'
+		}
+
 		set iptype [hsi get_property IP_NAME [hsi::get_cells -hier $val]]
 		foreach periph $periph_list {
 		    #puts "$periph: [time {
