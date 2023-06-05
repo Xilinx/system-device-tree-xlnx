@@ -341,8 +341,12 @@ proc get_memmap args {
 }
 
 proc get_hw_family {} {
-	set prop [hsi get_property FAMILY [hsi::get_hw_designs]]
-	return $prop
+	set family [hsi get_property FAMILY [hsi::get_hw_designs]]
+	if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"] ||
+		[string match -nocase $family "zynquplusRFSOC"] } {
+		return "zynqmp"
+	}
+	return $family
 }
 
 # set global dict_devicetree
