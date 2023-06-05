@@ -167,45 +167,47 @@ proc is_zynqmp_platform {proctype} {
 	}
 }
 
-
+# Saves the number of microblaze processors in microblaze_map dict
+# and returns the microblaze numbers found during a particular cmd
+# execution.
 proc get_microblaze_nr {drv_handle} {
 	global microblaze_map
 	set proctype [get_hw_family]
 	set microblaze_proc [hsi::get_cells -hier -filter {IP_NAME==microblaze}]
 	set theValue 1
+	set rt 0
 	if {[llength $microblaze_proc] >= 0} {
-	if {[catch {set rt [dict get $microblaze_map $drv_handle]} msg]} {
-		if {[catch {set len [dict size $microblaze_map]} msg]} {
-			set theValue 0
-		}
-		if {$theValue != 0} {
-			foreach theKey [dict keys $microblaze_map] {
-				set theValue [dict get $microblaze_map $theKey]
+		if {[catch {set rt [dict get $microblaze_map $drv_handle]} msg]} {
+			if {[catch {set len [dict size $microblaze_map]} msg]} {
+				set theValue 0
+			}
+			if {$theValue != 0} {
+				foreach theKey [dict keys $microblaze_map] {
+					set theValue [dict get $microblaze_map $theKey]
+				}
+			}
+			if {[string match -nocase $proctype "versal"]} {
+				if {$theValue } {
+					set val [expr $theValue + 1]
+					dict set microblaze_map $drv_handle $val
+					return $val
+				} else {
+					dict set microblaze_map $drv_handle 3
+					return 3
+				}
+			} elseif {[is_zynqmp_platform $proctype]} {
+				if {$theValue } {
+					set val [expr $theValue + 1]
+					dict set microblaze_map $drv_handle $val
+					return $val
+				} else {
+					dict set microblaze_map $drv_handle 2
+					return 2
+				}
 			}
 		}
-		if {[string match -nocase $proctype "versal"]} {
-			if {$theValue } {
-				set val [expr $theValue + 1]
-				dict set microblaze_map $drv_handle $val
-				return $val
-			} else {
-				dict set microblaze_map $drv_handle 3
-				return 3
-			}
-		} elseif {[is_zynqmp_platform $proctype]} {
-			if {$theValue } {
-				set val [expr $theValue + 1]
-				dict set microblaze_map $drv_handle $val
-				return $val
-			} else {
-				dict set microblaze_map $drv_handle 2
-				return 2
-			}
-		}
-	} else {
-		return $rt
-	}	
 	}
+	return $rt
 }
 proc get_driver_param args {
 	global driver_param
