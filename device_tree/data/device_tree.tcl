@@ -1708,7 +1708,31 @@ proc gen_cpu_cluster {os_handle} {
 		}
 
 	}
-    	if {[is_zynqmp_platform $proctype]} {
+	set r5_present 0
+
+	if {[string match -nocase [get_hw_family] "zynq"]} {
+        	set cpu_node [create_node -l "cpus_a9" -n "cpus-a9" -u 0 -d ${default_dts} -p root]
+		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
+		add_prop $cpu_node "#ranges-size-cells" "0x1" hexint $default_dts
+		add_prop $cpu_node "#ranges-address-cells" "0x1" hexint $default_dts
+		global memmap
+		set values [dict keys $memmap]
+		puts stderr "$values"
+		set list_values "0xf0000000 &amba 0xf0000000 0x10000000"
+		foreach val $values {
+			set temp [get_memmap $val a53]
+			set com_val [split $temp ","]
+			foreach value $com_val {
+				set addr "[lindex $value 1]"
+				set size "[lindex $value 3]"
+				set addr [string trimright $addr ">"]
+				set size [string trimright $size ">"]
+				set list_values [append list_values ">, \n\t\t\t      " "<$addr &${val} $addr $size"]
+			}
+		}
+		add_prop $cpu_node "address-map" $list_values special $default_dts
+	} elseif {[is_zynqmp_platform $proctype]} {
+    		set r5_present 1
         	set cpu_node [create_node -l "cpus_a53" -n "cpus-a53" -u 0 -d ${default_dts} -p root]
 		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
 		add_prop $cpu_node "#ranges-size-cells" "0x2" hexint $default_dts
@@ -1736,6 +1760,7 @@ proc gen_cpu_cluster {os_handle} {
 		add_prop $cpu_node "address-map" $list_values special $default_dts
 		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x80" hexlist $default_dts
     	} elseif {[string match -nocase $proctype "versal"] } {
+    		set r5_present 1
         	set cpu_node [create_node -l "cpus_a72" -n "cpus-a72" -u 0 -d ${default_dts} -p root]
 		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
 		add_prop $cpu_node "#ranges-size-cells" "0x2" hexint $default_dts
@@ -1760,42 +1785,43 @@ proc gen_cpu_cluster {os_handle} {
 		add_prop $cpu_node "address-map" $list_values special $default_dts
 		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x260> , <&lpd_xppu 0x261" hexlist $default_dts
     	}
-	for {set core 0} {$core < 2} {incr core} {
-		set cpu_node [create_node -l "cpus_r5_$core" -n "cpus-r5" -u $core -d ${default_dts} -p root]
-		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
-		add_prop $cpu_node "#ranges-size-cells" "0x1" hexint $default_dts
-		add_prop $cpu_node "#ranges-address-cells" "0x1" hexint $default_dts
-		global memmap
-		set values [dict keys $memmap]
-		set list_values "0xf0000000 &amba 0xf0000000 0x10000000>, \n\t\t\t      <0xf9000000 &amba_rpu 0xf9000000 0x3000"
-		if {[is_zynqmp_platform $proctype]} {
-			set list_values "0xf0000000 &amba 0xf0000000 0x10000000>, \n\t\t\t      <0xf9000000 &amba_rpu 0xf9000000 0x3000>, \n\t\t\t      <0x0 &zynqmp_reset 0x0 0x0"
-		}
+    	if { $r5_present } {
+		for {set core 0} {$core < 2} {incr core} {
+			set cpu_node [create_node -l "cpus_r5_$core" -n "cpus-r5" -u $core -d ${default_dts} -p root]
+			add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
+			add_prop $cpu_node "#ranges-size-cells" "0x1" hexint $default_dts
+			add_prop $cpu_node "#ranges-address-cells" "0x1" hexint $default_dts
+			global memmap
+			set values [dict keys $memmap]
+			set list_values "0xf0000000 &amba 0xf0000000 0x10000000>, \n\t\t\t      <0xf9000000 &amba_rpu 0xf9000000 0x3000"
+			if {[is_zynqmp_platform $proctype]} {
+				set list_values "0xf0000000 &amba 0xf0000000 0x10000000>, \n\t\t\t      <0xf9000000 &amba_rpu 0xf9000000 0x3000>, \n\t\t\t      <0x0 &zynqmp_reset 0x0 0x0"
+			}
 
-
-		foreach val $values {
-			set temp [get_memmap $val [lindex $r5_procs $core]]
-			set com_val [split $temp ","]
-			foreach value $com_val {
-				# Ignore if a 40 bit address is mapped to R5 processor
-				if {![check_if_forty_bit_address $value]} {
-					set addr "[lindex $value 1]"
-					if {[string match -nocase $val "psu_rcpu_gic"] || [string match -nocase $val "psu_acpu_gic"]} {
-						set size "[lindex $value 2]"
-					} else {
-						set size "[lindex $value 3]"
+			foreach val $values {
+				set temp [get_memmap $val [lindex $r5_procs $core]]
+				set com_val [split $temp ","]
+				foreach value $com_val {
+					# Ignore if a 40 bit address is mapped to R5 processor
+					if {![check_if_forty_bit_address $value]} {
+						set addr "[lindex $value 1]"
+						if {[string match -nocase $val "psu_rcpu_gic"] || [string match -nocase $val "psu_acpu_gic"]} {
+							set size "[lindex $value 2]"
+						} else {
+							set size "[lindex $value 3]"
+						}
+						set addr [string trimright $addr ">"]
+						set size [string trimright $size ">"]
+						set list_values [append list_values ">, \n\t\t\t      " "<$addr &${val} $addr $size"]
 					}
-					set addr [string trimright $addr ">"]
-					set size [string trimright $size ">"]
-					set list_values [append list_values ">, \n\t\t\t      " "<$addr &${val} $addr $size"]
 				}
 			}
-		}
-		add_prop $cpu_node "address-map" $list_values special $default_dts
-	    	if {[string match -nocase $proctype "versal"] } {
-			add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x200> , <&lpd_xppu 0x204" hexlist $default_dts
-		} elseif {[is_zynqmp_platform $proctype]} {
-			add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x0> , <&lpd_xppu 0x10" hexlist $default_dts
+			add_prop $cpu_node "address-map" $list_values special $default_dts
+		    	if {[string match -nocase $proctype "versal"] } {
+				add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x200> , <&lpd_xppu 0x204" hexlist $default_dts
+			} elseif {[is_zynqmp_platform $proctype]} {
+				add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x0> , <&lpd_xppu 0x10" hexlist $default_dts
+			}
 		}
 	}
 
@@ -1810,7 +1836,7 @@ proc gen_cpu_cluster {os_handle} {
 	        add_prop "${microblaze_node}" "compatible" "cpus,cluster" string $default_dts
        		add_prop "${microblaze_node}" "#ranges-size-cells" "0x1" hexint $default_dts
        	 	add_prop "${microblaze_node}" "#ranges-address-cells" "0x1" hexint $default_dts
-		add_prop $microblaze_node "bus-master-id" "&lpd_xppu 0x40" hexlist $default_dts
+		#add_prop $microblaze_node "bus-master-id" "&lpd_xppu 0x40" hexlist $default_dts
 	}
 	global memmap
 	set values [dict keys $memmap]
