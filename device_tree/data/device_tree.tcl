@@ -2025,11 +2025,13 @@ proc update_alias {os_handle} {
 		}
 	}
 
-	if {[is_zynqmp_platform $proctype]} {
-		set ps_uarts [hsi::get_cells -hier -filter {IP_NAME==psu_uart}]
-	} elseif {[string match -nocase $proctype "versal"]} {
-		set ps_uarts [hsi::get_cells -hier -filter {IP_NAME==psv_sbsauart}]
-	}
+	set family [get_hw_family]
+	set uart_platform_map [dict create]
+	dict set uart_platform_map "versal" "psv_sbsauart"
+	dict set uart_platform_map "zynqmp" "psu_uart"
+	dict set uart_platform_map "zynq" "ps7_uart"
+
+	set ps_uarts [hsi::get_cells -hier -filter "IP_NAME==[dict get $uart_platform_map $family]"]
 
         if {[llength $ps_uarts] >= 2} {
 		set uart_address "ff000000 ff010000"
