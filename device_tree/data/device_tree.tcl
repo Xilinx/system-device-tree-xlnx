@@ -1504,9 +1504,6 @@ proc proc_mapping {} {
 		set iptype [hsi get_property IP_NAME [hsi::get_cells -hier $val]]
 		foreach periph $periph_list {
 		    #puts "$periph: [time {
-			if {[catch {set hier_prop [hsi get_property IS_HIERARCHICAL [hsi::get_cells -hier $periph]]} msg]} {
-				set hier_prop 0
-			}
 			if {[catch {set ipname [hsi get_property IP_NAME [hsi::get_cells -hier $periph]]} msg]} {
 				set ipname ""
 				continue
@@ -1598,76 +1595,31 @@ proc proc_mapping {} {
 				set temp "gic_r5"
 			}
 
-			#set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $periph]]
-			
-
 			set pl_ip [is_pl_ip $periph]
-			if {[string match -nocase $iptype "psv_cortexa72"] || [string match -nocase $iptype "psu_cortexa53"]} {
-				if {$pl_ip} {
-					if { ![dict exists $dup_periph_handle $periph] } {
-						set_memmap $temp a53 $regprop
-					} else {
-						set_memmap [dict get $dup_periph_handle $periph] a53 $regprop
-					}
+
+			set family [get_hw_family]
+			set mem_proc_key_map [dict create]
+			dict set mem_proc_key_map "psv_cortexa72" "a53"
+			dict set mem_proc_key_map "psu_cortexa53" "a53"
+			dict set mem_proc_key_map "psu_cortexr5" "$val"
+			dict set mem_proc_key_map "psv_cortexr5" "$val"
+			dict set mem_proc_key_map "psv_pmc" "pmc"
+			dict set mem_proc_key_map "psv_psm" "psm"
+			dict set mem_proc_key_map "psu_pmu" "pmu"
+			dict set mem_proc_key_map "ps7_cortexa9" "a53"
+			dict set mem_proc_key_map "microblaze" "$val"
+
+			set mem_map_key [dict get $mem_proc_key_map $iptype]
+			if {$pl_ip} {
+				if { ![dict exists $dup_periph_handle $periph] } {
+					set_memmap $temp $mem_map_key $regprop
 				} else {
-						set_memmap $temp a53 $regprop
+					set_memmap [dict get $dup_periph_handle $periph] $mem_map_key $regprop
 				}
+			} else {
+				set_memmap $temp $mem_map_key $regprop
 			}
-			if {[string match -nocase $iptype "psv_cortexr5"] || [string match -nocase $iptype "psu_cortexr5"]} {
-				if {$pl_ip} {
-					if { ![dict exists $dup_periph_handle $periph] } {
-						set_memmap $temp $val $regprop
-					} else {
-						set_memmap [dict get $dup_periph_handle $periph] r5 $regprop
-					}
-				} else {
-						set_memmap $temp $val $regprop
-				}
-			}
-			if {[string match -nocase $iptype "psv_pmc"]} {
-				if {$pl_ip} {
-					if { ![dict exists $dup_periph_handle $periph] } {
-						set_memmap $temp a53 $regprop
-					} else {
-						set_memmap [dict get $dup_periph_handle $periph] pmc $regprop
-					}
-				} else {
-						set_memmap $temp pmc $regprop
-				}
-			}
-			if {[string match -nocase $iptype "psv_psm"]} {
-				if {$pl_ip} {
-					if { ![dict exists $dup_periph_handle $periph] } {
-						set_memmap $temp psm $regprop
-					} else {
-						set_memmap [dict get $dup_periph_handle $periph] psm $regprop
-					}
-				} else {
-						set_memmap $temp psm $regprop
-				}
-			}
-			if {[string match -nocase $iptype "psu_pmu"]} {
-				if {$pl_ip} {
-					if { ![dict exists $dup_periph_handle $periph] } {
-						set_memmap $temp pmu $regprop
-					} else {
-						set_memmap [dict get $dup_periph_handle $periph] pmu $regprop
-					}
-				} else {
-						set_memmap $temp pmu $regprop
-				}
-			}
-			if {[string match -nocase $iptype "microblaze"]} {
-				if {$pl_ip} {
-					if { ![dict exists $dup_periph_handle $periph] } {
-						set_memmap $temp $val $regprop
-					} else {
-						set_memmap [dict get $dup_periph_handle $periph] $val $regprop
-					}
-				} else {
-						set_memmap $temp $val $regprop
-				}
-			}
+			puts stderr "$temp $regprop"
 		#}]"
 		}
 	    #}]"
