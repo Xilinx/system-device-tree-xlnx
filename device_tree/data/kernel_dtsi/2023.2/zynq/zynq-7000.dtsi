@@ -17,12 +17,13 @@
 	#address-cells = <1>;
 	#size-cells = <1>;
 	compatible = "xlnx,zynq-7000";
+    model = "Xilinx Zynq";
 
-	cpus {
+	cpus_a9: cpus-a9@0 {
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		cpu0: cpu@0 {
+		ps7_cortexa9_0: cpu@0 {
 			compatible = "arm,cortex-a9";
 			device_type = "cpu";
 			reg = <0>;
@@ -30,13 +31,12 @@
 			clock-latency = <1000>;
 			cpu0-supply = <&regulator_vccpint>;
 			operating-points = <
-				/* kHz    uV */
 				666667  1000000
 				333334  1000000
 			>;
 		};
 
-		cpu1: cpu@1 {
+		ps7_cortexa9_1: cpu@1 {
 			compatible = "arm,cortex-a9";
 			device_type = "cpu";
 			reg = <1>;
@@ -541,7 +541,7 @@
 			reg = <0xf889c000 0x1000>;
 			clocks = <&clkc 27>, <&clkc 46>, <&clkc 47>;
 			clock-names = "apb_pclk", "dbg_trc", "dbg_apb";
-			cpu = <&cpu0>;
+			cpu = <&ps7_cortexa9_0>;
 			out-ports {
 				port {
 					ptm0_out_port: endpoint {
@@ -556,7 +556,7 @@
 			reg = <0xf889d000 0x1000>;
 			clocks = <&clkc 27>, <&clkc 46>, <&clkc 47>;
 			clock-names = "apb_pclk", "dbg_trc", "dbg_apb";
-			cpu = <&cpu1>;
+			cpu = <&ps7_cortexa9_1>;
 			out-ports {
 				port {
 					ptm1_out_port: endpoint {
