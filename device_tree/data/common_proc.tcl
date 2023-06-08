@@ -1862,7 +1862,7 @@ proc add_cross_property args {
 	set ip [hsi::get_cells -hier $src_handle]
 	set ipname [hsi get_property IP_NAME $ip]
 	set proctype [get_hw_family]
-	set valid_proclist "psv_cortexa72 psv_cortexr5 psu_cortexa53 psu_cortexr5 psu_pmu psv_pmc psv_psm microblaze"
+	set valid_proclist "psv_cortexa72 psv_cortexr5 psu_cortexa53 psu_cortexr5 psu_pmu psv_pmc psv_psm ps7_cortexa9 microblaze"
 	set type "hexint"
 	if {[llength $args] >= 6} {
 		set type [lindex $args 5]
@@ -1935,6 +1935,9 @@ proc add_cross_property args {
 								set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
 							}
 							set node [create_node -n "cpu" -l "ub${count}_cpu" -u 0 -d "pl.dtsi" -p $rt_node]
+						} "ps7_cortexa9" {
+							set index [string index $src_handle end]
+							set node [create_node -n "&ps7_cortexa9_${index}" -d "pcw.dtsi" -p root]
 						}
 					}
 				} else {
@@ -3046,7 +3049,42 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping ffa50800 label "ams_ps: ams_ps"
 		dict set def_ps_mapping ffa50c00 label "ams_pl: ams_pl"
 		dict set def_ps_mapping ff980000 label "lpd_xppu: xppu"
-
+	} else {
+		#dict set def_ps_mapping f8891000 label pmu
+		dict set def_ps_mapping f8007100 label adc
+		dict set def_ps_mapping e0008000 label can0
+		dict set def_ps_mapping e0009000 label can1
+		dict set def_ps_mapping e000a000 label gpio0
+		dict set def_ps_mapping e0004000 label i2c0
+		dict set def_ps_mapping e0005000 label i2c1
+		dict set def_ps_mapping f8f01000 label intc
+		dict set def_ps_mapping f8f00100 label intc
+		dict set def_ps_mapping f8f02000 label L2
+		dict set def_ps_mapping f8006000 label mc
+		#dict set def_ps_mapping f800c000 label ocmc
+		dict set def_ps_mapping e0000000 label uart0
+		dict set def_ps_mapping e0001000 label uart1
+		dict set def_ps_mapping e0006000 label spi0
+		dict set def_ps_mapping e0007000 label spi1
+		dict set def_ps_mapping e000d000 label qspi
+		dict set def_ps_mapping e000e000 label smcc
+		dict set def_ps_mapping e1000000 label nand0
+		dict set def_ps_mapping e2000000 label nor
+		dict set def_ps_mapping e000b000 label gem0
+		dict set def_ps_mapping e000c000 label gem1
+		dict set def_ps_mapping e0100000 label sdhci0
+		dict set def_ps_mapping e0101000 label sdhci1
+		dict set def_ps_mapping f8000000 label slcr
+		dict set def_ps_mapping f8003000 label dmac_s
+		dict set def_ps_mapping f8007000 label devcfg
+		dict set def_ps_mapping f8f00200 label global_timer
+		dict set def_ps_mapping f8001000 label ttc0
+		dict set def_ps_mapping f8002000 label ttc1
+		dict set def_ps_mapping f8f00600 label scutimer
+		dict set def_ps_mapping f8005000 label watchdog0
+		#dict set def_ps_mapping f8f00620 label scuwatchdog
+		dict set def_ps_mapping e0002000 label usb0
+		dict set def_ps_mapping e0003000 label usb1
 	}
 	return $def_ps_mapping
 }
@@ -4646,12 +4684,10 @@ proc gen_mb_interrupt_property {cpu_handle {intr_port_name ""}} {
 	set proctype [get_hw_family]
 	set bus_name [detect_bus_name $cpu_handle]
 	set count [get_microblaze_nr $cpu_handle]
-	if {[is_zynqmp_platform $proctype]} {
+	if { $count } {
 		set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
-	} elseif {[string match -nocase $proctype "versal"]} {
-		set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
+		set cpu_node [create_node -n "cpu" -l "ub${count}_cpu" -u 0 -d "pl.dtsi" -p $rt_node]
 	}
-	set cpu_node [create_node -n "cpu" -l "ub${count}_cpu" -u 0 -d "pl.dtsi" -p $rt_node]
 	if {[is_pl_ip $intc]} {
 		global dup_periph_handle
 		if { [dict exists $dup_periph_handle $intc] } {
@@ -5780,7 +5816,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 		if {[string match -nocase $ip_type "tsn_endpoint_ethernet_mac"]} {
 			set rt_node [create_node -n tsn_endpoint_ip_0 -l tsn_endpoint_ip_0 -d $default_dts -p $bus_node] 
 		} else {
-			set valid_proclist "psv_cortexa72 psv_cortexr5 psu_cortexa53 psu_cortexr5 psu_pmu psv_pmc psv_psm"
+			set valid_proclist "psv_cortexa72 psv_cortexr5 psu_cortexa53 psu_cortexr5 psu_pmu psv_pmc psv_psm ps7_cortexa9"
 			if {[lsearch $valid_proclist $ip_type] >= 0} {
 				switch $ip_type {
 					"psv_cortexa72" {
@@ -5801,6 +5837,9 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 						set node [create_node -n "&psu_cortexr5_${index}" -d "pcw.dtsi" -p root]
 					} "psu_pmu" {
 						set node [create_node -n "&psu_pmu_0" -d "pcw.dtsi" -p root]
+					} "ps7_cortexa9" {
+						set index [string index $drv_handle end]
+						set node [create_node -n "&ps7_cortexa9_${index}" -d "pcw.dtsi" -p root]
 					}
 				}
 			} else {
@@ -5979,14 +6018,21 @@ proc add_or_get_bus_node {ip_drv dts_file} {
 			add_prop "${bus_node}" "#size-cells" 1 int $dts 1
 		}
 	} else {
-			set bus_node $bus_name
+		set bus_node $bus_name
 		if {[string match -nocase $bus_node "amba_pl: amba_pl"]} {
+			if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"]} {
+				set addr_cells 2
+				set size_cells 2
+			} else {
+				set addr_cells 1
+				set size_cells 1
+			}
 			if {[catch {set val [pldt get $bus_node #address-cells]} msg]} {
-				add_prop $bus_node #address-cells 2 int $dts_file 
-				add_prop $bus_node #size-cells 2 int $dts_file 
-				add_prop $bus_node compatible "simple-bus" string $dts_file 
-				add_prop $bus_node ranges boolean $dts_file 
-			} else {}
+				add_prop $bus_node #address-cells $addr_cells int $dts_file
+				add_prop $bus_node #size-cells $size_cells int $dts_file
+				add_prop $bus_node compatible "simple-bus" string $dts_file
+				add_prop $bus_node ranges boolean $dts_file
+			}
 		}
 	}
 	return $bus_node
@@ -6010,7 +6056,6 @@ proc gen_root_node {drv_handle} {
 	}
 	switch $ip_name {
 		"ps7_cortexa9" {
-			create_dt_tree_from_dts_file
 			global dtsi_fname
 			update_system_dts_include [file tail ${dtsi_fname}]
 			# no root_node required as zynq-7000.dtsi
@@ -6091,11 +6136,7 @@ proc gen_root_node {drv_handle} {
 			set family [get_hw_family]
 			set count [get_microblaze_nr $drv_handle]
 			set bus_name [detect_bus_name $drv_handle]
-			if {[is_zynqmp_platform $family]} {
-				set root_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d ${default_dts} -p $bus_name]
-			} elseif {[string match -nocase $family "versal"]} {
-				set root_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d ${default_dts} -p $bus_name]
-			}
+			set root_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d ${default_dts} -p $bus_name]
 			add_prop $root_node "compatible" "cpus,cluster" string $default_dts
 			add_prop $root_node "#address-cells" 1 int $default_dts
 			add_prop $root_node "#size-cells" 0 int $default_dts
@@ -6103,15 +6144,9 @@ proc gen_root_node {drv_handle} {
 			return 0
 		}
 		default {
-			return -code error "Unknown arch"
+			return -code error "Unknown arch $ip_name"
 		}
 	}
-	add_prop "${root_node}" "#address-cells" 1 int $default_dts
-	add_prop "${root_node}" "#size-cells" 1 int $default_dts
-	add_prop "${root_node}" model $model string $default_dts
-	add_prop "${root_node}" compatible $compatible string $default_dts
-
-	return $root_node
 }
 
 proc cortexa9_opp_gen {drv_handle} {
