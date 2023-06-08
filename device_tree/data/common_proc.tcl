@@ -32,7 +32,6 @@ dict with driver_param dev_type {
 	lappend items psv_cortexr5 cpu
 	lappend items psu_cortexr5 cpu
 	lappend items psu_pmu cpu
-	lappend items ps7_pmu cpu
 	lappend items psv_pmc cpu
 	lappend items microblaze cpu
 }
@@ -1671,7 +1670,6 @@ proc get_drivers args {
 	dict set driverlist psu_ocmc driver ocmcps
 	dict set driverlist psv_ocmc driver ocmcps
 	dict set driverlist ps7_pl310 driver pl310ps
-	dict set driverlist ps7_pmu driver pmups
 	dict set driverlist psu_pmu driver pmups
 	dict set driverlist psv_pmc driver pmups
 	dict set driverlist psv_psm driver pmups
@@ -6189,7 +6187,7 @@ proc gen_cpu_nodes {drv_handle} {
 		"ps7_cortexa9" {
 			# skip node generation for static zynq-7000 dtsi
 			# TODO: this needs to be fixed to allow override
-			cortexa9_opp_gen $drv_handle
+			# cortexa9_opp_gen $drv_handle
 		}
 		"psu_cortexa53" {
 			# skip node generation for static zynqmp dtsi

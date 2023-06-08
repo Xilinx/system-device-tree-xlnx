@@ -143,7 +143,6 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "psu_ospi" "ospips"
 	dict set ::sdtgen::namespacelist "psv_pmc_ospi" "ospips"
 	dict set ::sdtgen::namespacelist "ps7_pl310" "pl310ps"
-	dict set ::sdtgen::namespacelist "ps7_pmu" "pmups"
 	dict set ::sdtgen::namespacelist "psu_pmu" "pmups"
 	dict set ::sdtgen::namespacelist "psv_pmc" "pmups"
 	dict set ::sdtgen::namespacelist "psv_psm" "pmups"
@@ -1619,7 +1618,6 @@ proc proc_mapping {} {
 			} else {
 				set_memmap $temp $mem_map_key $regprop
 			}
-			puts stderr "$temp $regprop"
 		#}]"
 		}
 	    #}]"
@@ -1717,7 +1715,6 @@ proc gen_cpu_cluster {os_handle} {
 		add_prop $cpu_node "#ranges-address-cells" "0x1" hexint $default_dts
 		global memmap
 		set values [dict keys $memmap]
-		puts stderr "$values"
 		set list_values "0xf0000000 &amba 0xf0000000 0x10000000"
 		foreach val $values {
 			set temp [get_memmap $val a53]
@@ -1829,13 +1826,13 @@ proc gen_cpu_cluster {os_handle} {
 		set cpu_node [create_node -l "cpus_microblaze_0" -n "cpus_microblaze" -u 0 -d ${default_dts} -p root]
 		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
 		add_prop $cpu_node "#ranges-size-cells" "0x1" hexint $default_dts
-	        add_prop "${cpu_node}" "#ranges-address-cells" "0x1" hexint $default_dts
+	        add_prop $cpu_node "#ranges-address-cells" "0x1" hexint $default_dts
 		#add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x247> , <&pmc_xppu 0x247> , <&pmc_xppu_npi 0x247" hexlist $default_dts
-	} else {
-        	set microblaze_node [create_node -l "cpus_microblaze_0" -n "cpus_microblaze" -u 0 -d ${default_dts} -p root]
-	        add_prop "${microblaze_node}" "compatible" "cpus,cluster" string $default_dts
-       		add_prop "${microblaze_node}" "#ranges-size-cells" "0x1" hexint $default_dts
-       	 	add_prop "${microblaze_node}" "#ranges-address-cells" "0x1" hexint $default_dts
+	} elseif {[is_zynqmp_platform $proctype]} {
+        	set cpu_node [create_node -l "cpus_microblaze_0" -n "cpus_microblaze" -u 0 -d ${default_dts} -p root]
+	        add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
+		add_prop $cpu_node "#ranges-size-cells" "0x1" hexint $default_dts
+		add_prop $cpu_node "#ranges-address-cells" "0x1" hexint $default_dts
 		#add_prop $microblaze_node "bus-master-id" "&lpd_xppu 0x40" hexlist $default_dts
 	}
 	global memmap
@@ -1864,14 +1861,14 @@ proc gen_cpu_cluster {os_handle} {
 	}
     	if {[string match -nocase $proctype "versal"]} {
 		add_prop $cpu_node "address-map" $list_values special $default_dts
-	} else {
-		add_prop $microblaze_node "address-map" $list_values special $default_dts
+	} elseif {[is_zynqmp_platform $proctype]} {
+		add_prop $cpu_node "address-map" $list_values special $default_dts
 	}
 	if {[string match -nocase $proctype "versal"]} {
 		set cpu_node [create_node -l "cpus_microblaze_1" -n "cpus_microblaze" -u 1 -d ${default_dts} -p root]
 		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
 		add_prop $cpu_node "#ranges-size-cells" "0x1" hexint $default_dts
-	   	add_prop "${cpu_node}" "#ranges-address-cells" "0x1" hexint $default_dts
+	   	add_prop $cpu_node "#ranges-address-cells" "0x1" hexint $default_dts
 		global memmap
 		set values [dict keys $memmap]
 		set list_values "0xf0000000 &amba 0xf0000000 0x10000000"
@@ -1892,12 +1889,10 @@ proc gen_cpu_cluster {os_handle} {
 		add_prop $cpu_node "address-map" $list_values special $default_dts
 		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x238> , <&pmc_xppu 0x238> , <&pmc_xppu_npi 0x238" hexlist $default_dts
 	}
+
 	set microblaze_proc [hsi::get_cells -hier -filter {IP_NAME==microblaze}]
-	
 	if {[llength $microblaze_proc] > 0} {
 		set plnode [create_node -l "amba_pl" -n "amba_pl" -d ${default_dts} -p root]
-		
-	
 	foreach proc $microblaze_proc {
 		set count [get_microblaze_nr $proc]
 		if {[string match -nocase $proctype "versal"]} {

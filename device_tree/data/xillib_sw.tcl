@@ -150,7 +150,6 @@ proc get_drivers_sw args {
 	dict set driverlist psu_ocmc driver ocmcps
 	dict set driverlist psv_ocmc driver ocmcps
 	dict set driverlist ps7_pl310 driver pl310ps
-	dict set driverlist ps7_pmu driver pmups
 	dict set driverlist psu_pmu driver pmups
 	dict set driverlist psv_pmc driver pmups
 	dict set driverlist psv_psm driver pmups
