@@ -6,8 +6,9 @@
     }
 
     proc slcrps_gen_clocks_node {parent_node dts_file} {
+	global pcwdt
 	set clocks_child_name "clkc"
-	set clkc_node [create_node -l $clocks_child_name -n $clocks_child_name -u 100 -p $parent_node -d $dts_file]
+	set clkc_node [pcwdt insert root end "&$clocks_child_name"]
 
 	if {[catch {set ps_clk_freq [hsi get_property CONFIG.C_INPUT_CRYSTAL_FREQ_HZ [hsi::get_cells -hier ps7_clockc_0]]} msg]} {
 		set ps_clk_freq ""
