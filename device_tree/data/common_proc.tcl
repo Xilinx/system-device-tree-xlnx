@@ -437,7 +437,6 @@ proc get_node args {
 		if {[string match -nocase $treeobj "pcwdt"]} {
 		set busname "&amba"
 		} else {
-
 			set busname [detect_bus_name $handle]
 		}
 	} elseif {[string match -nocase $ip_type "PROCESSOR"] || [string match -nocase $treeobj "pcwdt"]} {
@@ -4799,8 +4798,8 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 				continue
 			}
 			set ip_name $intc
+			set intc_name [hsi get_property IP_NAME $intc]
 			if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype]} {
-				set intc_name [hsi get_property IP_NAME $intc]
 				if {[llength $intc] > 1} {
 					foreach intr_cntr $intc {
 						if { [is_ip_interrupting_current_proc $intr_cntr] } {
@@ -4851,8 +4850,8 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 			set cur_intr_info ""
 			set valid_intc_list "ps7_scugic psu_acpu_gic psv_acpu_gic"
 			global intrpin_width
-			if { [string match -nocase $proctype "ps7_cortexa9"] }  {
-				if {[string match "[hsi get_property IP_NAME $intc]" "ps7_scugic"] } {
+			if { [string match -nocase $proctype "zynq"] }  {
+				if {[string match -nocase $intc_name "ps7_scugic"] } {
 					if {$intr_id > 32} {
 						set intr_id [expr $intr_id - 32]
 					}
@@ -4925,9 +4924,15 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 			set intc "gic"
 		}
 	}
+
+	# Legacy Linux Device trees have "gic" or "intc" as the interrupt-name labels.
+	# Need to maintain the same label reference for interrupt-parent of other nodes.
 	if {[string match -nocase $intc "gic"]} {
 		set intc "imux"
+	} elseif {[string match -nocase $intc_name "ps7_scugic"]} {
+		set intc "intc"
 	}
+
 	if {[is_pl_ip $intc]} {
 		global dup_periph_handle
 		if { [dict exists $dup_periph_handle $intc] } {
