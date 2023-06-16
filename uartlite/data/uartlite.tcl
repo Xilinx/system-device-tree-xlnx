@@ -1,4 +1,5 @@
     proc uartlite_generate {drv_handle} {
+        global systemdt
         set node [get_node $drv_handle]
         set dts_file [set_drv_def_dts $drv_handle]
         pldt append $node compatible "\ \, \"xlnx,xps-uartlite-1.00.a\""
@@ -25,6 +26,9 @@
                         if {[is_zynqmp_platform $proctype]} {
                            append bootargs "\ \, \"clk_ignore_unused\""
                         }
+        }
+        if {[catch {set val [systemdt get $chosen_node "stdout-path"]} msg]} {
+                add_prop $chosen_node "stdout-path" "serial0:${baud}n8" stringlist "system-top.dts"
         }
         set_drv_conf_prop $drv_handle C_BAUDRATE current-speed $node int
         if {[regexp "kintex*" $proctype match]} {
