@@ -4679,6 +4679,7 @@ proc gen_mb_interrupt_property {cpu_handle {intr_port_name ""}} {
 	set count [get_microblaze_nr $cpu_handle]
 	set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
 	set cpu_node [create_node -n "cpu" -l "$cpu_handle" -u $count -d "pl.dtsi" -p $rt_node]
+
 	if {[is_pl_ip $intc]} {
 		global dup_periph_handle
 		if { [dict exists $dup_periph_handle $intc] } {
@@ -5858,7 +5859,9 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	}
 
 	zynq_gen_pl_clk_binding $drv_handle
-	generate_mb_ccf_node $drv_handle
+
+	# generate_mb_ccf_node is not using drv_handle argument at all
+	# generate_mb_ccf_node $drv_handle
 	generate_cci_node $drv_handle $rt_node
 
 	set dts_file_list ""
@@ -6221,7 +6224,6 @@ proc gen_cpu_nodes {drv_handle} {
 	}
 	set drv_dt_prop_list [get_driver_conf_list $drv_handle]
         gen_drv_prop_from_ip $drv_handle
-	generate_mb_ccf_node $drv_handle
 	set bus_node [add_or_get_bus_node $drv_handle $default_dts]
 	set bus_label [lindex [split $bus_node ":"] 0]
 	set cpu_no 0
@@ -6231,6 +6233,7 @@ proc gen_cpu_nodes {drv_handle} {
 	foreach cpu ${processor_list} {
 		puts "cpu $cpu"
 		set slave [hsi::get_cells -hier $cpu]
+		generate_mb_ccf_node $slave
 		set cpu_nr [string index [hsi get_property NAME $slave] end]
 		if {[string match -nocase $processor_type "psu_pmu"]} {
 			set cpu_node [pcwdt insert root end "&psu_pmu_$cpu_nr"]
@@ -6327,24 +6330,21 @@ proc gen_mdio_node {drv_handle parent_node} {
 }
 
 proc gen_mb_ccf_subnode {drv_handle name freq reg} {
-	set cur_dts [current_dt_tree]
-	set default_dts [set_drv_def_dts $drv_handle]
+	set default_dts "pl.dtsi"
+	set clk_node [create_node -n clocks -l clock -p root -d ${default_dts}]
 
-	set clk_node [add_or_get_dt_node -n clocks -p / -d ${default_dts}]
-	add_new_dts_param "${clk_node}" "#address-cells" 1 int
-	add_new_dts_param "${clk_node}" "#size-cells" 0 int
+	add_prop "${clk_node}" "#address-cells" 1 int $default_dts
+	add_prop "${clk_node}" "#size-cells" 0 int $default_dts
 
 	set clk_subnode_name "clk_${name}"
-	set clk_subnode [add_or_get_dt_node -l ${clk_subnode_name} -n ${clk_subnode_name} -u $reg -p ${clk_node} -d ${default_dts}]
+	set clk_subnode [create_node -l ${clk_subnode_name} -n ${clk_subnode_name} -u $reg -p ${clk_node} -d ${default_dts}]
 	# clk subnode data
-	add_new_dts_param "${clk_subnode}" "compatible" "fixed-clock" stringlist
-	add_new_dts_param "${clk_subnode}" "#clock-cells" 0 int
+	add_prop "${clk_subnode}" "compatible" "fixed-clock" stringlist $default_dts
+	add_prop "${clk_subnode}" "#clock-cells" 0 int $default_dts
 
-	add_new_dts_param $clk_subnode "clock-output-names" $clk_subnode_name string
-	add_new_dts_param $clk_subnode "reg" $reg int
-	add_new_dts_param $clk_subnode "clock-frequency" $freq int
-
-	set_cur_working_dts $cur_dts
+	add_prop $clk_subnode "clock-output-names" $clk_subnode_name string $default_dts
+	add_prop $clk_subnode "reg" $reg int $default_dts
+	add_prop $clk_subnode "clock-frequency" $freq int $default_dts
 }
 
 proc generate_mb_ccf_node {drv_handle} {
@@ -6388,19 +6388,20 @@ proc gen_dev_ccf_binding args {
 				set bus_clk_cnt [lsearch -exact $bus_clk_list $clk_freq]
 				# create the node and assuming reg 0 is taken by cpu
 				gen_mb_ccf_subnode $drv_handle bus_${bus_clk_cnt} $clk_freq [expr ${bus_clk_cnt} + 1]
-				set clk_refs [lappend clk_refs &clk_bus_${bus_clk_cnt}]
+				set clk_refs [lappend clk_refs clk_bus_${bus_clk_cnt}]
 				set clk_names [lappend clk_names "$p"]
 				set clk_freqs [lappend clk_freqs "$clk_freq"]
 			}
 		}
-		if {[lsearch $binding_list "clocks"] >= 0} {
-			add_new_property $drv_handle "clocks" referencelist $clk_refs
+		set node [get_node $drv_handle]
+		if {[lsearch $binding_list "clocks"] >= 0 && ![string_is_empty $clk_refs]} {
+			add_prop $node "clocks" $clk_refs reference "pl.dtsi"
 		}
 		if {[lsearch $binding_list "clock-names"] >= 0} {
-			add_new_property $drv_handle "clock-names" stringlist $clk_names
+			add_prop $node "clock-names" $clk_names stringlist "pl.dtsi"
 		}
 		if {[lsearch $binding_list "clock-frequency"] >= 0} {
-			add_new_property $drv_handle "clock-frequency" hexintlist $clk_freqs
+			add_prop $node "clock-frequency" $clk_freqs hexlist "pl.dtsi"
 		}
 	}
 }
@@ -6483,7 +6484,7 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 		if { [llength $intr_pin] == 0 } {
 			return $intr_cntrl
 		}
-		set valid_cascade_proc "kintex zynq zynqmp zynquplus zynquplusRFSOC versal"
+		set valid_cascade_proc "kintex7 zynq zynqmp zynquplus zynquplusRFSOC versal"
 		set proctype [get_hw_family]
 		if { [string match -nocase [hsi get_property IP_NAME $periph] "axi_intc"] && [lsearch -nocase $valid_cascade_proc $proctype] >= 0 } {
 			set sinks [get_sink_pins $intr_pin]
