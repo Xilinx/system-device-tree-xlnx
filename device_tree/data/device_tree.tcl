@@ -1236,7 +1236,6 @@ Generates system device tree based on args given in:
 	set val_proclist "psv_cortexa72 psu_cortexa53 ps7_cortexa9"
 	set peri_list [hsi::get_cells -hier]
 	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
-	set microblaze [hsi::get_cells -hier -filter {IP_NAME==microblaze}]
 	set ps_design 0
 	set pl_design 0
 	foreach procperiph $proclist {
@@ -1244,12 +1243,15 @@ Generates system device tree based on args given in:
 		if {[lsearch $val_proclist $ip_name] >= 0} {
 			set ps_design 1
 		}
-		if {[string match -nocase $microblaze $ip_name]} {
+		if {[string match -nocase $ip_name "microblaze"]} {
 			set pl_design 1
 		}
 	}
 	if {$pl_design == 1 && $ps_design == 0} {
 		set val_proclist "microblaze"
+	}
+	if {$pl_design == 1 && $ps_design == 1} {
+		set val_proclist "$val_proclist microblaze"
 	}
 
 	set non_val_list "versal_cips axi_noc noc_mc_ddr4 noc_nmu noc_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat xlconstant xlslice axis_tdest_editor util_reduced_logic noc_nsw axis_ila pspmc psv_ocm_ram_0 psv_pmc_qspi_ospi add_keep_128 c_counter_binary"
@@ -1267,6 +1269,9 @@ Generates system device tree based on args given in:
 	foreach procc $proclist {
 		set index [string index $procc end]
 		set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $procc]]
+		if {[string match -nocase $ip_name "microblaze"]} {
+			set index 0
+		}
 		if {[lsearch $val_proclist $ip_name] >= 0 && $index == 0 } {
 			set drvname [dict get $::sdtgen::namespacelist $ip_name]
 			source [file join $path $drvname "data" "${drvname}.tcl"]
@@ -1892,19 +1897,17 @@ proc gen_cpu_cluster {os_handle} {
 
 	set microblaze_proc [hsi::get_cells -hier -filter {IP_NAME==microblaze}]
 	if {[llength $microblaze_proc] > 0} {
+		add_prop "root" "#address-cells" 1 int "system-top.dts"
+		add_prop "root" "#size-cells" 1 int "system-top.dts"
 		set plnode [create_node -l "amba_pl" -n "amba_pl" -d ${default_dts} -p root]
 	foreach proc $microblaze_proc {
 		set count [get_microblaze_nr $proc]
-		if {[string match -nocase $proctype "versal"]} {
-			set cpu_node [create_node -l "cpus_microblaze_${count}" -n "cpus_microblaze" -u $count -d ${default_dts} -p $plnode]
-		} elseif {[is_zynqmp_platform $proctype]} {
-			set cpu_node [create_node -l "cpus_microblaze_${count}" -n "cpus_microblaze" -u $count -d ${default_dts} -p $plnode]	
-		}
+		set cpu_node [create_node -l "cpus_microblaze_${count}" -n "cpus_microblaze" -u $count -d ${default_dts} -p $plnode]
 		add_prop $cpu_node "#ranges-size-cells" "0x1" hexint $default_dts
 		add_prop "${cpu_node}" "#ranges-address-cells" "0x1" hexint $default_dts
 		global memmap
 		set values [dict keys $memmap]
-		set list_values "0xf1000000 &amba 0xf1000000 0xeb00000"
+		set list_values ""
 		foreach val $values {
 			set temp [get_memmap $val $proc]
 			set com_val [split $temp ","]
@@ -1915,7 +1918,11 @@ proc gen_cpu_cluster {os_handle} {
 					set size "[lindex $value 3]"
 					set addr [string trimright $addr ">"]
 					set size [string trimright $size ">"]
-					set list_values [append list_values ">, \n\t\t\t      " "<$addr &${val} $addr $size"]
+					if {[string_is_empty $list_values]} {
+						set list_values "$addr &${val} $addr $size"
+					} else {
+						set list_values [append list_values ">, \n\t\t\t      " "<$addr &${val} $addr $size"]
+					}
 				}
 			}
 		}
