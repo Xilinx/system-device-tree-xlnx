@@ -2028,24 +2028,26 @@ proc update_alias {os_handle} {
 	}
 
 	set family [get_hw_family]
-	set uart_platform_map [dict create]
-	dict set uart_platform_map "versal" "psv_sbsauart"
-	dict set uart_platform_map "zynqmp" "psu_uart"
-	dict set uart_platform_map "zynq" "ps7_uart"
+	if {![regexp "kintex*" $family match]} {
+		set uart_platform_map [dict create]
+		dict set uart_platform_map "versal" "psv_sbsauart"
+		dict set uart_platform_map "zynqmp" "psu_uart"
+		dict set uart_platform_map "zynq" "ps7_uart"
 
-	set ps_uarts [hsi::get_cells -hier -filter "IP_NAME==[dict get $uart_platform_map $family]"]
+		set ps_uarts [hsi::get_cells -hier -filter "IP_NAME==[dict get $uart_platform_map $family]"]
 
-        if {[llength $ps_uarts] >= 2} {
-		set uart_address "ff000000 ff010000"
-                set addr [get_baseaddr [lindex $ps_uarts 0] noprefix]
-                set pos [lsearch $uart_address $addr]
-                set list_pos1 [lsearch $all_drivers [lindex $ps_uarts 0]]
-                set list_pos2 [lsearch $all_drivers [lindex $ps_uarts 1]]
-                if {$pos == 1} {
-                        set all_drivers [lreplace $all_drivers $list_pos1 $list_pos1 [lindex $ps_uarts 1]]
-                        set all_drivers [lreplace $all_drivers $list_pos2 $list_pos2 [lindex $ps_uarts 0]]
-                }
-        }
+	        if {[llength $ps_uarts] >= 2} {
+			set uart_address "ff000000 ff010000"
+	                set addr [get_baseaddr [lindex $ps_uarts 0] noprefix]
+	                set pos [lsearch $uart_address $addr]
+	                set list_pos1 [lsearch $all_drivers [lindex $ps_uarts 0]]
+	                set list_pos2 [lsearch $all_drivers [lindex $ps_uarts 1]]
+	                if {$pos == 1} {
+	                        set all_drivers [lreplace $all_drivers $list_pos1 $list_pos1 [lindex $ps_uarts 1]]
+	                        set all_drivers [lreplace $all_drivers $list_pos2 $list_pos2 [lindex $ps_uarts 0]]
+	                }
+	        }
+	}
 
 	foreach drv_handle $all_drivers {
 		if {[lsearch $design_pluarts $drv_handle] >= 0} {
