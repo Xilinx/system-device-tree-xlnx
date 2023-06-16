@@ -2,12 +2,8 @@
         set proctype [get_hw_family]
         set bus_name [detect_bus_name $drv_handle]
         set nr [get_microblaze_nr $drv_handle]
-        if {[is_zynqmp_platform $proctype]} {
-                set node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${nr}" -u $nr -d "pl.dtsi" -p $bus_name]
-        } elseif {[string match -nocase $proctype "versal"]} {
-                set node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${nr}" -u $nr -d "pl.dtsi" -p $bus_name]
-        }
-        set node [create_node -n "cpu" -l "ub${nr}_cpu" -u 0 -d "pl.dtsi" -p $node]
+        set node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${nr}" -u $nr -d "pl.dtsi" -p $bus_name]
+        set node [create_node -n "cpu" -l "$drv_handle" -u $nr -d "pl.dtsi" -p $node]
         set dts_file [set_drv_def_dts $drv_handle]
         set ip [hsi::get_cells -hier $drv_handle]
         set clk ""
@@ -51,6 +47,7 @@
         add_prop $node "model" $model string $dts_file
         set family [hsi get_property C_FAMILY [hsi::get_cells -hier $drv_handle]]
         add_prop $node "xlnx,family" $family string $dts_file
+        add_prop $node "reg" $nr hexint $dts_file
         # create root node
         set master_root_node [gen_root_node $drv_handle]
         set nodes [gen_cpu_nodes $drv_handle]
