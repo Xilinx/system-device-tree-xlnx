@@ -108,7 +108,7 @@ proc mig_7series_generate {drv_handle} {
                                 set_memmap "${drv_handle}_memory" psm $reg
                         }
                         if {[string match -nocase [hsi get_property IP_NAME $procc] "microblaze"]} {
-                                set_memmap "${drv_handle}_memory" $procc $reg
+                                set_memmap "${drv_handle}_memory" $procc "0x0 $base 0x0 $size"
                         }
                     }
                 add_prop "${memory_node}" "reg" $reg hexlist "system-top.dts" 1
@@ -116,14 +116,13 @@ proc mig_7series_generate {drv_handle} {
                 add_prop "${memory_node}" "device_type" $dev_type string "system-top.dts" 1
 
         }
-        set addr [hsi get_property CONFIG.C_BASEADDR [hsi::get_cells -hier $drv_handle]]
-        regsub -all {^0x} $addr {} addr
-        add_prop "${memory_node}" "reg" $reg hexlist "system-top.dts"
-        set dev_type memory
-        if {[string_is_empty $dev_type]} {set dev_type memory}
-        add_prop "${memory_node}" "device_type" $dev_type string "system-top.dts"
 
-        gen_compatible_property $drv_handle
-        set prop [hsi get_property CONFIG.compatible $drv_handle]
-        add_prop "${memory_node}" "compatible" $prop string "system-top.dts"
+        set slave [hsi::get_cells -hier ${drv_handle}]
+        set proctype [hsi get_property IP_TYPE $slave]
+        set vlnv [split [hsi get_property VLNV $slave] ":"]
+        set name [lindex $vlnv 2]
+        set ver [lindex $vlnv 3]
+        set comp_prop "xlnx,${name}-${ver}"
+        regsub -all {_} $comp_prop {-} comp_prop
+        add_prop "${memory_node}" "compatible" $comp_prop string "system-top.dts"
 }
