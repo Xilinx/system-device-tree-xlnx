@@ -1926,12 +1926,8 @@ proc add_cross_property args {
 						} "microblaze" {
 							set count [get_microblaze_nr $src_handle]
 							set bus_name [detect_bus_name $src_handle]
-							if {[is_zynqmp_platform $proctype]} {
-								set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
-							} elseif {[string match -nocase $proctype "versal"]} {
-								set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
-							}
-							set node [create_node -n "cpu" -l "ub${count}_cpu" -u 0 -d "pl.dtsi" -p $rt_node]
+							set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
+							set node [create_node -n "cpu" -l "$src_handle" -u $count -d "pl.dtsi" -p $rt_node]
 						} "ps7_cortexa9" {
 							set index [string index $src_handle end]
 							set node [create_node -n "&ps7_cortexa9_${index}" -d "pcw.dtsi" -p root]
@@ -4681,10 +4677,8 @@ proc gen_mb_interrupt_property {cpu_handle {intr_port_name ""}} {
 	set proctype [get_hw_family]
 	set bus_name [detect_bus_name $cpu_handle]
 	set count [get_microblaze_nr $cpu_handle]
-	if { $count } {
-		set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
-		set cpu_node [create_node -n "cpu" -l "ub${count}_cpu" -u 0 -d "pl.dtsi" -p $rt_node]
-	}
+	set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
+	set cpu_node [create_node -n "cpu" -l "$cpu_handle" -u $count -d "pl.dtsi" -p $rt_node]
 	if {[is_pl_ip $intc]} {
 		global dup_periph_handle
 		if { [dict exists $dup_periph_handle $intc] } {
@@ -5387,12 +5381,8 @@ proc gen_compatible_property {drv_handle} {
 		set proctype [get_hw_family]
 		set bus_name [detect_bus_name $drv_handle]
 		set count [get_microblaze_nr $drv_handle]
-		if {[is_zynqmp_platform $proctype]} {
-			set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
-		} elseif {[string match -nocase $proctype "versal"]} {
-			set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
-		}
-		set node [create_node -n "cpu" -l "ub${count}_cpu" -u 0 -d "pl.dtsi" -p $rt_node]
+		set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
+		set node [create_node -n "cpu" -l "$drv_handle" -u $count -d "pl.dtsi" -p $rt_node]
 		add_prop $node compatible "$comp_prop xlnx,microblaze" stringlist "pl.dtsi"	
 	} else {
 		set node [get_node $drv_handle]
@@ -5850,12 +5840,8 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 					set proctype [get_hw_family]
 					set bus_name [detect_bus_name $drv_handle]
 					set count [get_microblaze_nr $drv_handle]
-					if {[is_zynqmp_platform $proctype]} {
-						set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d ${default_dts} -p $bus_name]
-					} elseif {[string match -nocase $proctype "versal"]} {
-						set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d ${default_dts} -p $bus_name]
-					}
-					set rt_node [create_node -n "cpu" -l "ub${count}_cpu" -u 0 -d "pl.dtsi" -p $rt_node]
+					set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d ${default_dts} -p $bus_name]
+					set rt_node [create_node -n "cpu" -l "$drv_handle" -u $count -d "pl.dtsi" -p $rt_node]
 				} else {
 					if {[string match -nocase $dev_type "psv_fpd_smmutcu"]} {
 							set dev_type "psv_fpd_maincci"
@@ -6303,11 +6289,8 @@ proc gen_cpu_nodes {drv_handle} {
 			if {$cpu_no >= 1} {
 				break
 			}
-			if { $count } {
-				set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
-				set cpu_node [create_node -n "cpu" -l "ub${count}_cpu" -u 0 -d "pl.dtsi" -p $rt_node]
-			}
-			set cpu_node [create_node -n "cpu" -l "ub${count}_cpu" -u 0 -d "pl.dtsi" -p $rt_node]
+			set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
+			set cpu_node [create_node -n "cpu" -l "$drv_handle" -u $count -d "pl.dtsi" -p $rt_node]
 			add_prop $cpu_node "xlnx,ip-name" $processor_type string $default_dts
 		}
 		add_prop $cpu_node "bus-handle" $bus_label reference $default_dts
