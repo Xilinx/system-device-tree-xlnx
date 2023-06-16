@@ -19,7 +19,7 @@
         set proc_type [get_hw_family]
         if {[regexp "kintex*" $proc_type match]} {
                         gen_dev_ccf_binding $drv_handle "s_axi_aclk"
-                        set_drv_prop_if_empty $drv_handle "clock-names" "s_axi_aclk" stringlist
+                        set_drv_prop_if_empty $drv_handle "clock-names" "s_axi_aclk" $node stringlist
         }
            #Workaround: There is no unique way to differentiate the gt_ctrl, so hardcoding the size
            #for the address 0xa4010000 to 0x40000

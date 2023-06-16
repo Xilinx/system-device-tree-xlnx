@@ -69,10 +69,10 @@
 
     proc axi_cdma_generate_clk_nodes {drv_handle} {
         set proc_type [get_hw_family]
-
+        set node [get_node $drv_handle]
         if {[string match -nocase $proc_type "zynq"]} {
-            set_drv_prop_if_empty $drv_handle "clocks" "clkc 15>, <&clkc 15" reference
-            set_drv_prop_if_empty $drv_handle "clock-names" "s_axi_lite_aclk m_axi_aclk" stringlist
+            set_drv_prop_if_empty $drv_handle "clocks" "clkc 15>, <&clkc 15" $node reference
+            set_drv_prop_if_empty $drv_handle "clock-names" "s_axi_lite_aclk m_axi_aclk" $node stringlist
         } elseif if {[is_zynqmp_platform $proc_type]} {
             set clk_freq [get_clock_frequency [hsi::get_cells -hier $drv_handle] "s_axi_lite_aclk"]
             if {![string equal $clk_freq ""]} {
@@ -89,11 +89,11 @@
                 add_prop "${misc_clk_node}" "#clock-cells" 0 int "pl.dtsi"
                 add_prop "${misc_clk_node}" "clock-frequency" $clk_freq int "pl.dtsi"
             set clk_refs [lappend clk_refs misc_clk_${bus_clk_cnt}]
-            set_drv_prop_if_empty $drv_handle "clocks" "$clk_refs>, <&$clk_refs" reference
-            set_drv_prop_if_empty $drv_handle "clock-names" "s_axi_lite_aclk m_axi_aclk" stringlist
+            set_drv_prop_if_empty $drv_handle "clocks" "$clk_refs>, <&$clk_refs" $node reference
+            set_drv_prop_if_empty $drv_handle "clock-names" "s_axi_lite_aclk m_axi_aclk" $node stringlist
         } elseif {[regexp "kintex*" $proc_type match]} {
             gen_dev_ccf_binding $drv_handle "s_axi_lite_aclk m_axi_aclk"
-            set_drv_prop_if_empty $drv_handle "clock-names" "s_axi_lite_aclk m_axi_aclk" stringlist
+            set_drv_prop_if_empty $drv_handle "clock-names" "s_axi_lite_aclk m_axi_aclk" $node stringlist
         } else {
             error "Unknown arch"
         }
