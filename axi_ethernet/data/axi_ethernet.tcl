@@ -362,12 +362,6 @@
                         set intr_name [string trimleft $intr_name "\""]
                         set intr_name [string trimright $intr_name "\""]
                         append intr_names " " $intr_name " "  $int1 " " $int2
-                        set proctype [get_hw_family]
-                        if {[regexp "kintex*" $proctype match]} {
-                            set null ""
-                            add_prop $node "interrupt-names" $null stringlist "pl.dtsi"
-                            add_prop $node "interrupts" $null intlist "pl.dtsi"
-                        }
                     } else {
                         set intr_names $int_names
                     }
@@ -567,12 +561,6 @@
                 axi_ethernet_gen_drv_prop_eth_ip $drv_handle $eth_node
         }
         gen_dev_ccf_binding $drv_handle "s_axi_aclk"
-        }
-        set proctype [get_hw_family]
-        if {[regexp "kintex*" $proctype match]} {
-            set null ""
-            add_prop $node "zclock-names" $null stringlist "pl.dtsi"
-            add_prop $node "zclocks" $null reference "pl.dtsi"
         }
     }
 
