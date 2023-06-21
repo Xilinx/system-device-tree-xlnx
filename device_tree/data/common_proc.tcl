@@ -2022,6 +2022,7 @@ proc get_intr_id {drv_handle intr_port_name} {
 	set proctype [get_hw_family]
 	foreach pin ${intr_port_name} {
 		set intc [get_interrupt_parent $drv_handle $pin]
+		set intc_ipname [hsi get_property IP_NAME $intc]
 		if {[string_is_empty $intc] == 1} {continue}
 		if {[string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype]} {
 			if {[llength $intc] > 1} {
@@ -2031,7 +2032,6 @@ proc get_intr_id {drv_handle intr_port_name} {
 					}
 				}
 			}
-			set intc_ipname [hsi get_property IP_NAME $intc]
 			if {[is_zynqmp_platform $proctype] } {
 				if {[string match -nocase $intc_ipname "axi_intc"]} {
 					set intc [get_interrupt_parent $drv_handle $pin]
