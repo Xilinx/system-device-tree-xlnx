@@ -161,6 +161,7 @@
 
     proc axi_dma_generate_clk_nodes {drv_handle axiethernetfound tx_chan rx_chan} {
         set proc_type [get_hw_family]
+        set node [get_node $drv_handle]
         set clocknames "s_axi_lite_aclk"
         if {[string match -nocase $proc_type "zynq"]} {
                         set clocks "clkc 15"
@@ -176,8 +177,8 @@
                                 append clocknames " " "m_axi_s2mm_aclk"
                                 append clocks "" ">, <&clkc 15"
                         }
-                        set_drv_prop_if_empty $drv_handle "clocks" $clocks reference
-                        set_drv_prop_if_empty $drv_handle "clock-names" $clocknames stringlist
+                        set_drv_prop_if_empty $drv_handle "clocks" $clocks $node reference
+                        set_drv_prop_if_empty $drv_handle "clock-names" $clocknames $node stringlist
         } elseif {[is_zynqmp_platform $proc_type]} {
                         set clk_freq [get_clock_frequency [hsi::get_cells -hier $drv_handle] "s_axi_lite_aclk"]
                         if {![string equal $clk_freq ""]} {
@@ -207,8 +208,8 @@
                                 append clocknames " " "m_axi_s2mm_aclk"
                                 append clocks "" ">, <&$clk_refs"
                         }
-                        set_drv_prop_if_empty $drv_handle "clocks" "$clocks" reference
-                        set_drv_prop_if_empty $drv_handle "clock-names" "$clocknames" stringlist
+                        set_drv_prop_if_empty $drv_handle "clocks" "$clocks" $node reference
+                        set_drv_prop_if_empty $drv_handle "clock-names" "$clocknames" $node stringlist
                 } elseif {[regexp "kintex*" $proc_type match]} {
                         if { $axiethernetfound != 1 } {
                                 append clocknames " " "m_axi_sg_aclk"
@@ -220,7 +221,7 @@
                                 append clocknames " " "m_axi_s2mm_aclk"
                         }
                         gen_dev_ccf_binding $drv_handle "$clocknames"
-                        set_drv_prop_if_empty $drv_handle "clock-names" "$clocknames" stringlist
+                        set_drv_prop_if_empty $drv_handle "clock-names" "$clocknames" $node stringlist
                 } else {
                         error "Unknown arch"
                 }
