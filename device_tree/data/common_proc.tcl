@@ -602,6 +602,13 @@ proc write_value {type value} {
                         set val [append val "\]"]
                 } elseif {$type == "labelref" || $type == "reference"} {
                         set val "<&$value>"
+                } elseif {$type == "referencelist"} {
+                        set val "<"
+                        foreach element $value {
+                                append val "&$element" " "
+                        }
+                        set val [string trimright $val " "]
+                        set val [append val ">"]
                 } elseif {$type == "aliasref"} {
                         set val "$value"
                 } elseif {$type == "string"} {
@@ -2022,8 +2029,10 @@ proc get_intr_id {drv_handle intr_port_name} {
 	set proctype [get_hw_family]
 	foreach pin ${intr_port_name} {
 		set intc [get_interrupt_parent $drv_handle $pin]
-		set intc_ipname [hsi get_property IP_NAME $intc]
+		# If intc is returned as empty string (e.g. when pin is cdma_introut for axi_cdma),
+		# there is no need to proceed further
 		if {[string_is_empty $intc] == 1} {continue}
+		set intc_ipname [hsi get_property IP_NAME $intc]
 		if {[string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype]} {
 			if {[llength $intc] > 1} {
 				foreach intr_cntr $intc {
@@ -4663,7 +4672,7 @@ proc gen_mb_interrupt_property {cpu_handle {intr_port_name ""}} {
 	if { [is_intr_cntrl $intc] != 1 } {
 		set intf_pins [::hsi::get_intf_pins -of_objects $intc]
 		foreach intp $intf_pins {
-			set connectip [get_connected_stream_ip [get_cells -hier $intc] $intp]
+			set connectip [get_connected_stream_ip [hsi::get_cells -hier $intc] $intp]
 			if { [is_intr_cntrl $connectip] == 1 } {
 				set intc $connectip
 			}
@@ -6395,7 +6404,11 @@ proc gen_dev_ccf_binding args {
 		}
 		set node [get_node $drv_handle]
 		if {[lsearch $binding_list "clocks"] >= 0 && ![string_is_empty $clk_refs]} {
-			add_prop $node "clocks" $clk_refs reference "pl.dtsi"
+			# For axi_cdma, there are two clock names mapped:
+			# clock-names = "s_axi_lite_aclk", "m_axi_aclk";
+			# It is expected to get reference for them like below:
+			# clocks = <&clk_bus_0 &clk_bus_0>; That's why referencelist.
+			add_prop $node "clocks" $clk_refs referencelist "pl.dtsi"
 		}
 		if {[lsearch $binding_list "clock-names"] >= 0} {
 			add_prop $node "clock-names" $clk_names stringlist "pl.dtsi"
