@@ -83,7 +83,7 @@
                         if {[string match -nocase $proc_type "versal"]} {
                                 continue
                         } else {
-                                error "ERROR: ${drv_handle}: $irq port is not connected"
+                                dtg_warning "ERROR: ${drv_handle}: $irq port is not connected"
                         }
                 }
                 if { [string match -nocase $interrupt_names ""] } {
