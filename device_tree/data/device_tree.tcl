@@ -204,6 +204,8 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "psu_wdt" "wdtps"
 	dict set ::sdtgen::namespacelist "psv_wdt" "wdtps"
 	dict set ::sdtgen::namespacelist "ps7_xadc" "xadcps"
+	dict set ::sdtgen::namespacelist "psv_noc_pcie_1" "xdmapcie"
+	dict set ::sdtgen::namespacelist "qdma" "xdmapcie"
 }
 
 proc Pop {varname {nth 0}} {
