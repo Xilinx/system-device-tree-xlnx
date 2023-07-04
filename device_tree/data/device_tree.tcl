@@ -26,7 +26,6 @@ namespace eval ::sdtgen {
 
 proc init_proclist {} {
 	variable ::sdtgen::namespacelist
-
 	dict set ::sdtgen::namespacelist "RM" "RM"
 	dict set ::sdtgen::namespacelist "ai_engine" "ai_engine"
 	dict set ::sdtgen::namespacelist "psu_ams" "ams"
@@ -156,6 +155,8 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "psv_pmc_qspi" "qspips"
 	dict set ::sdtgen::namespacelist "ps7_ram" "ramps"
 	dict set ::sdtgen::namespacelist "usp_rf_data_converter" "rfdc"
+	dict set ::sdtgen::namespacelist "xdfe_cc_mixer" "dfemix"
+	dict set ::sdtgen::namespacelist "xdfe_nr_prach" "dfeprach"
 	dict set ::sdtgen::namespacelist "v_scenechange" "scene_change_detector"
 	dict set ::sdtgen::namespacelist "ps7_scugic" "scugic"
 	dict set ::sdtgen::namespacelist "psu_acpu_gic" "scugic"
