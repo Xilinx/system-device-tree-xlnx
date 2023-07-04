@@ -98,7 +98,7 @@
                                             if {[llength $ip_mem_handles]} {
                                                     set tpg_node [create_node -n "endpoint" -l tpg_out$drv_handle -p $port1_node -d $dts_file]
                                                     gen_endpoint $drv_handle "tpg_out$drv_handle"
-                                                    add_prop "$tpg_node" "remote-endpoint" $connectip$drv_handle reference $dts_file
+                                                    add_prop "$tpg_node" "remote-endpoint" $connectip reference $dts_file
                                                     gen_remoteendpoint $drv_handle "$connectip$drv_handle"
                                                     if {[string match -nocase [hsi get_property IP_NAME $connectip] "v_frmbuf_wr"] || [string match -nocase [hsi get_property IP_NAME $connectip] "axi_vdma"]} {
                                                             tpg_gen_frmbuf_node $connectip $drv_handle $dts_file
