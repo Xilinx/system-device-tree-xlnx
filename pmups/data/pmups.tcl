@@ -17,7 +17,6 @@
         set mainline_ker [get_user_config $common_file -mainline_kernel]
         global dtsi_fname
         set proc_type [get_ip_property $drv_handle IP_NAME]
-        set master_root_node [gen_root_node $drv_handle]
         set nodes [gen_cpu_nodes $drv_handle]
         set ip [hsi::get_cells -hier $drv_handle]
         set clk ""

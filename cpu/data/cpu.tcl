@@ -3,6 +3,8 @@
         set bus_name [detect_bus_name $drv_handle]
         set nr [get_microblaze_nr $drv_handle]
         set node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${nr}" -u $nr -d "pl.dtsi" -p $bus_name]
+        add_prop $node "compatible" "cpus,cluster" string "pl.dtsi"
+        add_prop $node "#cpu-mask-cells" 1 int "pl.dtsi"
         set node [create_node -n "cpu" -l "$drv_handle" -u $nr -d "pl.dtsi" -p $node]
         set dts_file [set_drv_def_dts $drv_handle]
         set ip [hsi::get_cells -hier $drv_handle]
@@ -48,8 +50,6 @@
         set family [hsi get_property C_FAMILY [hsi::get_cells -hier $drv_handle]]
         add_prop $node "xlnx,family" $family string $dts_file
         add_prop $node "reg" $nr hexint $dts_file
-        # create root node
-        set master_root_node [gen_root_node $drv_handle]
         set nodes [gen_cpu_nodes $drv_handle]
     }
 

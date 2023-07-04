@@ -1,9 +1,8 @@
     proc cpu_cortexa9_generate {drv_handle} {
         global dtsi_fname
         set dtsi_fname "zynq/zynq-7000.dtsi"
-        set path $::env(REPO)
-        # create root node
-        set master_root_node [gen_root_node $drv_handle]
+        update_system_dts_include [file tail ${dtsi_fname}]
+        set amba_node [create_node -n "&amba" -d "pcw.dtsi" -p root]
         set nodes [gen_cpu_nodes $drv_handle]
     }
 
