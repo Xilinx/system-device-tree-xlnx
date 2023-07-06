@@ -5686,6 +5686,11 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 		if {[string match -nocase $pcie_config "Endpoint Device"]} {
 			lappend ignore_list $ip_type
 		}
+		set node [get_node $drv_handle]
+		if {$node == 0} {
+			return
+		}
+		add_prop $node "xlnx,port-type" 0x1 hexint "pcw.dtsi" 1
 	}
 	if {[regexp "pmc_*" $ip_type match]} {
 	#	return 0
