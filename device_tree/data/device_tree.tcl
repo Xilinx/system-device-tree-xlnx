@@ -1177,6 +1177,7 @@ proc generate_sdt args {
 	global comp_str_dict
 	global cur_hw_design
 	global dup_periph_handle
+	global pl_design
 
         if {[llength $args]!= 0} {
                 set help_string "sdtgen generate_sdt
@@ -1240,28 +1241,10 @@ Generates system device tree based on args given in:
 	dict set ip_type_dict $cur_hw_design {}
 	dict set intr_id_dict $cur_hw_design {}
 
-	#set design_handles [hsi::get_cells -hier]
 	set list_offiles {}
-	set val_proclist "psv_cortexa72 psu_cortexa53 ps7_cortexa9"
 	set peri_list [hsi::get_cells -hier]
-	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
-	set ps_design 0
 	set pl_design 0
-	foreach procperiph $proclist {
-        	set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $procperiph]]
-		if {[lsearch $val_proclist $ip_name] >= 0} {
-			set ps_design 1
-		}
-		if {[string match -nocase $ip_name "microblaze"]} {
-			set pl_design 1
-		}
-	}
-	if {$pl_design == 1 && $ps_design == 0} {
-		set val_proclist "microblaze"
-	}
-	if {$pl_design == 1 && $ps_design == 1} {
-		set val_proclist "$val_proclist microblaze"
-	}
+	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
 
 	set non_val_list "versal_cips axi_noc noc_mc_ddr4 noc_nmu noc_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat xlconstant xlslice axis_tdest_editor util_reduced_logic noc_nsw axis_ila pspmc psv_ocm_ram_0 psv_pmc_qspi_ospi add_keep_128 c_counter_binary"
 	set non_val_ip_types "MONITOR BUS PROCESSOR"
@@ -1274,88 +1257,94 @@ Generates system device tree based on args given in:
 	# error.
 
 	remove_duplicate_addr $peri_list $non_val_list
-	
-	foreach procc $proclist {
-		set index [string index $procc end]
-		set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $procc]]
-		if {[string match -nocase $ip_name "microblaze"]} {
-			set index 0
+
+	# amba or amba_pl reference needs to be there in pcw.dtsi before
+	# getting IP related configs. Thus, running the cpu tcls beforehand
+	# helps.
+	foreach procperiph $proclist {
+		set proc_drv_handle [hsi::get_cells -hier $procperiph]
+        	set ip_name [hsi get_property IP_NAME $proc_drv_handle]
+
+        	# For tmr_manager designs, tmr_inject IPs also come as the processor
+        	# and tmr_manager doesnt have a driver. It is safe to add this if dict exist check.
+        	
+        	if { [dict exists $::sdtgen::namespacelist $ip_name] } {
+	        	set proc_drv_name [dict get $::sdtgen::namespacelist $ip_name]
+			source [file join $path $proc_drv_name "data" "${proc_drv_name}.tcl"]
+			${proc_drv_name}_generate $proc_drv_handle
 		}
-		if {[lsearch $val_proclist $ip_name] >= 0 && $index == 0 } {
-			set drvname [dict get $::sdtgen::namespacelist $ip_name]
-			source [file join $path $drvname "data" "${drvname}.tcl"]
-			${drvname}_generate $procc
-    			add_skeleton
-    			foreach drv_handle $peri_list {
-				set ip_name [get_ip_property $drv_handle IP_NAME]
-				set ip_type [get_ip_property $drv_handle IP_TYPE]
-				set skip1 0
-				if {[string match -nocase $ip_name ""]} {
-					set skip1 1
-				}
-				if {[lsearch -nocase $non_val_list $ip_name] >= 0} {
-					set skip1 1
-				}
-				if {[lsearch -nocase $non_val_ip_types $ip_type] >= 0 &&
-				     ![string match -nocase "axi_perf_mon" $ip_name]} {
-					set skip1 1
-				}
-				if {[string match -nocase $ip_name "gmii_to_rgmii"]} {
-					set skip1 1
-				}
-				if { [dict exists $dup_periph_handle $drv_handle] } {
-					set skip1 1
-				}
-				if { $skip1 == 0 } {
-					gen_peripheral_nodes $drv_handle "create_node_only"
-					gen_reg_property $drv_handle
-					gen_compatible_property $drv_handle
-					gen_ctrl_compatible $drv_handle
-					gen_drv_prop_from_ip $drv_handle
-					gen_interrupt_property $drv_handle
-					gen_clk_property $drv_handle
-					gen_xppu $drv_handle
-					gen_power_domains $drv_handle
-				}
-			}
-
-			# There are few driver's generate procs which require the interrupts and clocks properties
-			# of other IPs. So, all the dependent IP props need to be generated before calling that
-			# driver's generate proc. These IP includes axi_ethernet, mrmac, tsn and video related
-			# drivers.
-
-			foreach drv_handle $peri_list {
-				set ip_name [dict get $property_dict $cur_hw_design $drv_handle IP_NAME]
-				set ip_type [dict get $property_dict $cur_hw_design $drv_handle IP_TYPE]
-				set skip2 0
-				if {[lsearch -nocase $non_val_list1 $ip_name] >= 0} {
-					set skip2 1
-				}
-				if {[lsearch -nocase $non_val_ip_types1 $ip_type] >= 0 &&
-				     ![string match -nocase "axi_perf_mon" $ip_name]} {
-					set skip2 1
-				}
-				if { [dict exists $dup_periph_handle $drv_handle] } {
-					set skip2 1
-				}
-				if { $skip2 == 0 } {
-					if { [dict exists $::sdtgen::namespacelist $ip_name] } {
-						set drvname [dict get $::sdtgen::namespacelist $ip_name]
-						source [file join $path $drvname "data" "${drvname}.tcl"]
-						${drvname}_generate $drv_handle
-					}
-				}
-				update_endpoints $drv_handle
-			}
-			namespace forget ::
-		} elseif {[string match -nocase $ip_name "microblaze"]} {
-			set drvname [dict get $::sdtgen::namespacelist $ip_name]
-			source [file join $path $drvname "data" "${drvname}.tcl"]
-			${drvname}_generate $procc
-		} else {
-			continue
+		if {[string match -nocase $ip_name "microblaze"]} {
+			set pl_design 1
 		}
 	}
+
+	foreach drv_handle $peri_list {
+		set ip_name [get_ip_property $drv_handle IP_NAME]
+		set ip_type [get_ip_property $drv_handle IP_TYPE]
+		set skip1 0
+		if {[string match -nocase $ip_name ""]} {
+			set skip1 1
+		}
+		if {[lsearch -nocase $non_val_list $ip_name] >= 0} {
+			set skip1 1
+		}
+		if {[lsearch -nocase $non_val_ip_types $ip_type] >= 0 &&
+		     ![string match -nocase "axi_perf_mon" $ip_name]} {
+			set skip1 1
+		}
+		if {[string match -nocase $ip_name "gmii_to_rgmii"]} {
+			set skip1 1
+		}
+		if { [dict exists $dup_periph_handle $drv_handle] } {
+			set skip1 1
+		}
+		if { $skip1 == 0 } {
+			gen_peripheral_nodes $drv_handle "create_node_only"
+			gen_reg_property $drv_handle
+			gen_compatible_property $drv_handle
+			gen_ctrl_compatible $drv_handle
+			gen_drv_prop_from_ip $drv_handle
+			gen_interrupt_property $drv_handle
+			gen_clk_property $drv_handle
+			gen_xppu $drv_handle
+			gen_power_domains $drv_handle
+		}
+	}
+
+	# There are few driver's generate procs which require the interrupts and clocks properties
+	# of other IPs. So, all the dependent IP props need to be generated before calling that
+	# driver's generate proc. These IP includes axi_ethernet, mrmac, tsn and video related
+	# drivers.
+
+	foreach drv_handle $peri_list {
+		set ip_name [dict get $property_dict $cur_hw_design $drv_handle IP_NAME]
+		set ip_type [dict get $property_dict $cur_hw_design $drv_handle IP_TYPE]
+		set skip2 0
+		if {[lsearch -nocase $proclist $drv_handle] >= 0} {
+			set skip2 1
+		}
+		if {[lsearch -nocase $non_val_list1 $ip_name] >= 0} {
+			set skip2 1
+		}
+		if {[lsearch -nocase $non_val_ip_types1 $ip_type] >= 0 &&
+		     ![string match -nocase "axi_perf_mon" $ip_name]} {
+			set skip2 1
+		}
+		if { [dict exists $dup_periph_handle $drv_handle] } {
+			set skip2 1
+		}
+		if { $skip2 == 0 } {
+			if { [dict exists $::sdtgen::namespacelist $ip_name] } {
+				set drvname [dict get $::sdtgen::namespacelist $ip_name]
+				source [file join $path $drvname "data" "${drvname}.tcl"]
+				${drvname}_generate $drv_handle
+			}
+		}
+		update_endpoints $drv_handle
+	}
+
+	namespace forget ::
+
 	gen_board_info
 	gen_afi_node
     	gen_include_headers
@@ -1383,12 +1372,12 @@ Generates system device tree based on args given in:
 			gen_zocl_node
         	}
     	}
-	update_alias $drv_handle
-    	update_cpu_node $drv_handle
+	update_alias
+    	update_cpu_node
 	gen_r5_trustzone_config
 	proc_mapping
-    	update_chosen
-        gen_cpu_cluster $drv_handle
+	update_chosen
+	gen_cpu_cluster
 	set family $proctype
 	#set family [get_hw_family]
 	if {[is_zynqmp_platform $family]} {
@@ -1665,7 +1654,7 @@ proc update_chosen {} {
     	}
 }
 
-proc gen_cpu_cluster {os_handle} {
+proc gen_cpu_cluster {} {
 
 	set proctype [get_hw_family]
 	set default_dts "system-top.dts"
@@ -1941,7 +1930,7 @@ proc gen_cpu_cluster {os_handle} {
 	
 }
 
-proc update_cpu_node {os_handle} {
+proc update_cpu_node {} {
 	set default_dts "system-top.dts"
 	set proctype [get_hw_family]
     	if {[string match -nocase $proctype "versal"] } {
@@ -1995,7 +1984,7 @@ proc update_cpu_node {os_handle} {
     	}
 }
 
-proc update_alias {os_handle} {
+proc update_alias {} {
 
 	global env
 	set path $env(REPO)
