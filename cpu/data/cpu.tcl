@@ -2,55 +2,65 @@
         set proctype [get_hw_family]
         set bus_name [detect_bus_name $drv_handle]
         set nr [get_microblaze_nr $drv_handle]
+        set ip_name [get_ip_property $drv_handle IP_NAME]
         set node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${nr}" -u $nr -d "pl.dtsi" -p $bus_name]
         add_prop $node "compatible" "cpus,cluster" string "pl.dtsi"
         add_prop $node "#cpu-mask-cells" 1 int "pl.dtsi"
+
         set node [create_node -n "cpu" -l "$drv_handle" -u $nr -d "pl.dtsi" -p $node]
-        set dts_file [set_drv_def_dts $drv_handle]
-        set ip [hsi::get_cells -hier $drv_handle]
+        set comp_prop [gen_compatible_string $drv_handle]
+        add_prop $node compatible "$comp_prop xlnx,microblaze" stringlist "pl.dtsi"
+        add_prop $node "xlnx,ip-name" $ip_name string "pl.dtsi"
+        set model "$ip_name,[get_ip_version $drv_handle]"
+        add_prop $node "model" $model string "pl.dtsi"
+        set family [hsi get_property C_FAMILY $drv_handle]
+        add_prop $node "xlnx,family" $family string "pl.dtsi"
+        add_prop $node "reg" $nr hexint "pl.dtsi"
+        add_prop $node "bus-handle" "amba_pl" reference "pl.dtsi"
+
         set clk ""
-        set clkhandle [hsi::get_pins -of_objects $ip "CLK"]
+        set clkhandle [hsi::get_pins -of_objects $drv_handle "CLK"]
+
         if { [string compare -nocase $clkhandle ""] != 0 } {
                 set clk [hsi get_property CLK_FREQ $clkhandle]
         }
-        if { [llength $ip]  } {
-                add_prop $node "clock-frequency" $clk int $dts_file
-                add_prop $node "timebase-frequency" $clk int $dts_file
+        if { [llength $drv_handle]  } {
+                add_prop $node "clock-frequency" $clk int "pl.dtsi"
+                add_prop $node "timebase-frequency" $clk int "pl.dtsi"
         }
-        set icache_size [get_ip_param_value $ip "C_CACHE_BYTE_SIZE"]
+
+        set icache_size [get_ip_param_value $drv_handle "C_CACHE_BYTE_SIZE"]
         set isize  [cpu_check_64bit $icache_size]
-        set icache_base [get_ip_param_value $ip "C_ICACHE_BASEADDR"]
+        set icache_base [get_ip_param_value $drv_handle "C_ICACHE_BASEADDR"]
         set ibase  [cpu_check_64bit $icache_base]
-        set icache_high [get_ip_param_value $ip "C_ICACHE_HIGHADDR"]
+        set icache_high [get_ip_param_value $drv_handle "C_ICACHE_HIGHADDR"]
         set ihigh_base  [cpu_check_64bit $icache_high]
-        set dcache_size [get_ip_param_value $ip "C_DCACHE_BYTE_SIZE"]
+        set dcache_size [get_ip_param_value $drv_handle "C_DCACHE_BYTE_SIZE"]
         set dsize  [cpu_check_64bit $dcache_size]
-        set dcache_base [get_ip_param_value $ip "C_DCACHE_BASEADDR"]
+        set dcache_base [get_ip_param_value $drv_handle "C_DCACHE_BASEADDR"]
         set dbase  [cpu_check_64bit $dcache_base]
-        set dcache_high [get_ip_param_value $ip "C_DCACHE_HIGHADDR"]
+        set dcache_high [get_ip_param_value $drv_handle "C_DCACHE_HIGHADDR"]
         set dhigh_base  [cpu_check_64bit $dcache_high]
-        set icache_line_size [expr 4*[get_ip_param_value $ip "C_ICACHE_LINE_LEN"]]
-        set dcache_line_size [expr 4*[get_ip_param_value $ip "C_DCACHE_LINE_LEN"]]
+        set icache_line_size [expr 4*[get_ip_param_value $drv_handle "C_ICACHE_LINE_LEN"]]
+        set dcache_line_size [expr 4*[get_ip_param_value $drv_handle "C_DCACHE_LINE_LEN"]]
 
 
         if { [llength $icache_size] != 0 } {
-                add_prop $node "i-cache-baseaddr"  "$ibase" hexint $dts_file
-                add_prop $node "i-cache-highaddr" $ihigh_base hexint $dts_file
-                add_prop $node "i-cache-size" $isize int $dts_file
-                add_prop $node "i-cache-line-size" $icache_line_size int $dts_file
+                add_prop $node "i-cache-baseaddr"  "$ibase" hexint "pl.dtsi"
+                add_prop $node "i-cache-highaddr" $ihigh_base hexint "pl.dtsi"
+                add_prop $node "i-cache-size" $isize int "pl.dtsi"
+                add_prop $node "i-cache-line-size" $icache_line_size int "pl.dtsi"
         }
         if { [llength $dcache_size] != 0 } {
-                add_prop $node "d-cache-baseaddr"  "$dbase" hexint $dts_file
-                add_prop $node "d-cache-highaddr" $dhigh_base hexint $dts_file
-                add_prop $node "d-cache-size" $dsize int $dts_file
-                add_prop $node "d-cache-line-size" $dcache_line_size int $dts_file
+                add_prop $node "d-cache-baseaddr"  "$dbase" hexint "pl.dtsi"
+                add_prop $node "d-cache-highaddr" $dhigh_base hexint "pl.dtsi"
+                add_prop $node "d-cache-size" $dsize int "pl.dtsi"
+                add_prop $node "d-cache-line-size" $dcache_line_size int "pl.dtsi"
         }
-        set model "[hsi get_property IP_NAME $ip],[get_ip_version $ip]"
-        add_prop $node "model" $model string $dts_file
-        set family [hsi get_property C_FAMILY [hsi::get_cells -hier $drv_handle]]
-        add_prop $node "xlnx,family" $family string $dts_file
-        add_prop $node "reg" $nr hexint $dts_file
-        set nodes [gen_cpu_nodes $drv_handle]
+
+        gen_mb_interrupt_property $drv_handle
+        gen_drv_prop_from_ip $drv_handle
+        generate_mb_ccf_node $drv_handle
     }
 
     proc cpu_check_64bit {base} {
