@@ -5339,6 +5339,24 @@ proc check_base {reg base size} {
 	}
 }
 
+proc gen_compatible_string {drv_handle} {
+        set vlnv [split [hsi get_property VLNV [hsi::get_cells -hier $drv_handle]] ":"]
+        set name [lindex $vlnv 2]
+        if {[string_is_empty $name]} {
+                return 0
+        }
+        if {[string match -nocase $name "psv_fpd_smmutcu"]} {
+                set name "psv_fpd_maincci"
+        }
+        set ver [lindex $vlnv 3]
+        if {[string_is_empty $ver]} {
+                set comp_prop "xlnx,${name}"
+        } else {
+                set comp_prop "xlnx,${name}-${ver}"
+        }
+        return $comp_prop
+}
+
 proc gen_compatible_property {drv_handle} {
 	proc_called_by
 	set dts_file [set_drv_def_dts $drv_handle]
@@ -5370,20 +5388,7 @@ proc gen_compatible_property {drv_handle} {
 	if {[string match -nocase $proctype "processor"] && ![string match -nocase $ip_name "microblaze"]} {
 		return 0
 	}
-	set vlnv [split [hsi get_property VLNV $slave] ":"]
-	set name [lindex $vlnv 2]
-	if {[string match -nocase $name ""]} {
-		return 0
-	}
-	if {[string match -nocase $name "psv_fpd_smmutcu"]} {
-		set name "psv_fpd_maincci"
-	}
-	set ver [lindex $vlnv 3]
-	if {[string match -nocase $ver ""]} {
-		set comp_prop "xlnx,${name}"
-	} else {
-		set comp_prop "xlnx,${name}-${ver}"
-	}
+	set comp_prop [gen_compatible_string $slave]
 	if {[string match -nocase $ip_name "psv_pciea_attrib"]} {
 		set index [string index $drv_handle end]
 		set comp_prop "${comp_prop}${index}"
@@ -6079,137 +6084,6 @@ proc cortexa9_opp_gen {drv_handle} {
 	}
 }
 
-# Q: common function for all processor or one for each driver lib
-proc gen_cpu_nodes {drv_handle} {
-	set ip_name [get_ip_property $drv_handle IP_NAME]
-	switch $ip_name {
-		"ps7_cortexa9" {
-			# skip node generation for static zynq-7000 dtsi
-			# TODO: this needs to be fixed to allow override
-			# cortexa9_opp_gen $drv_handle
-		}
-		"psu_cortexa53" {
-			# skip node generation for static zynqmp dtsi
-		}
-		"psv_cortexa72" {
-		} "microblaze" {}
-		"psu_pmu" {
-		} "psv_pmc" {
-		} "psv_psm" {
-		} "psv_cortexr5" {
-		} "psu_cortexr5" {
-		} "microblaze" {
-		}
-		default {
-			error "Unknown arch $ip_name"
-		}
-	}
-
-	set dev_type [get_driver_config $drv_handle dev_type]
-	if {[string_is_empty $dev_type] == 1} {
-		set dev_type $drv_handle
-	}
-	gen_compatible_property $drv_handle
-	gen_mb_interrupt_property $drv_handle
-
-	set default_dts [set_drv_def_dts $drv_handle]
-	set processor_type [hsi get_property IP_NAME [hsi::get_cells -hier ${drv_handle}]]
-	set proc_list "psu_pmu psv_pmc psu_cortexr5 psu_cortexa53 psv_cortexa72 psv_cortexr5 ps7_cortexa9 psv_psm microblaze"
-	if {[lsearch -nocase $proc_list $processor_type] >= 0} {
-	} else {
-		set cpu_root_node [get_node $drv_handle]
-		add_prop $cpu_root_node "#address-cells" 1 int $default_dts
-		add_prop $cpu_root_node "#size-cells" 0 int $default_dts
-	}
-	if {[string match -nocase $processor_type "psv_cortexa72"] || [string match -nocase $processor_type "psu_cortexa53"] || \
-		[string match -nocase $processor_type "ps7_cortexa9"] || [string match -nocase $processor_type "microblaze"]} {
-		set processor_list [eval "hsi::get_cells -hier -filter { IP_TYPE == \"PROCESSOR\" && IP_NAME == \"${processor_type}\" }"]
-	} else {
-		set processor_list $drv_handle
-	}
-	set drv_dt_prop_list [get_driver_conf_list $drv_handle]
-        gen_drv_prop_from_ip $drv_handle
-	set bus_node [add_or_get_bus_node $drv_handle $default_dts]
-	set bus_label [lindex [split $bus_node ":"] 0]
-	set cpu_no 0
-	set compatiblelist ""
-	set slave [hsi::get_cells -hier ${drv_handle}]
-
-	foreach cpu ${processor_list} {
-		puts "cpu $cpu"
-		set slave [hsi::get_cells -hier $cpu]
-		generate_mb_ccf_node $slave
-		set cpu_nr [string index [hsi get_property NAME $slave] end]
-		if {[string match -nocase $processor_type "psu_pmu"]} {
-			set cpu_node [pcwdt insert root end "&psu_pmu_$cpu_nr"]
-			add_prop $cpu_node "microblaze_ddr_reserve_ea" [hsi get_property CONFIG.C_DDR_RESERVE_EA $slave] int $default_dts
-			add_prop $cpu_node "microblaze_ddr_reserve_sa" [hsi get_property CONFIG.C_DDR_RESERVE_SA $slave] int $default_dts
-			set compatiblelist [lappend compatiblelist "pmu-microblaze"]
-			set compatiblelist [lappend compatiblelist "pmu-microblaze-$cpu_nr"]
-			add_prop $cpu_node "xlnx,ip-name" $processor_type string $default_dts
-		} elseif {[string match -nocase $processor_type "psv_pmc"] || [string match -nocase $processor_type "psv_psm"]} {
-			if {[string match -nocase $processor_type "psv_pmc"]} {
-				set cpu_node [pcwdt insert root end "&psv_pmc_$cpu_nr"]
-			} else {
-				set cpu_node [pcwdt insert root end "&psv_psm_$cpu_nr"]
-			}
-			set compatiblelist [lappend compatiblelist "pmc-microblaze"]
-			set compatiblelist [lappend compatiblelist "pmc-microblaze-$cpu_nr"]
-			add_prop $cpu_node "xlnx,ip-name" $processor_type string $default_dts
-		} elseif {[string match -nocase $processor_type "psu_cortexr5"] || [string match -nocase $processor_type "psv_cortexr5"]} {
-			if {[string match -nocase $processor_type "psu_cortexr5"]} {
-				set cpu_node [pcwdt insert root end "&psu_cortexr5_${cpu_nr}"]
-			} else {
-				set cpu_node [pcwdt insert root end "&psv_cortexr5_${cpu_nr}"]
-			}
-			add_prop $cpu_node "cpu-frequency" [hsi get_property CONFIG.C_CPU_CLK_FREQ_HZ $slave] int $default_dts
-			set compatiblelist [lappend compatiblelist "arm,cortex-r5"]
-			set compatiblelist [lappend compatiblelist "arm,cortex-r5-$cpu"]
-			add_prop $cpu_node "xlnx,ip-name" $processor_type string $default_dts
-		} elseif {[string match -nocase $processor_type "psu_cortexa53"] || [string match -nocase $processor_type "psv_cortexa72"]} {
-			if {[string match -nocase $processor_type "psu_cortexa53"]} {
-				set cpu_node [pcwdt insert root end "&psu_cortexa53_${cpu_nr}"]
-			} else {
-				set cpu_node [pcwdt insert root end "&psv_cortexa72_${cpu_nr}"]
-			}
-			add_prop $cpu_node "cpu-frequency" [hsi get_property CONFIG.C_CPU_CLK_FREQ_HZ $slave] int $default_dts
-			add_prop $cpu_node "stamp-frequency" [hsi get_property CONFIG.C_TIMESTAMP_CLK_FREQ $slave] int $default_dts
-			if {[string match -nocase $processor_type "psu_cortexa53"]} {
-				set compatiblelist [lappend compatiblelist "arm,cortex-a53"]
-				set compatiblelist [lappend compatiblelist "arm,armv8"] 
-				set compatiblelist [lappend compatiblelist "arm,cortex-a53-$cpu_nr"]
-			} else {
-				set compatiblelist [lappend compatiblelist "arm,cortex-a72"]
-				set compatiblelist [lappend compatiblelist "arm,armv8"] 
-				set compatiblelist [lappend compatiblelist "arm,cortex-a72-$cpu_nr"]
-			}
-			add_prop $cpu_node "xlnx,ip-name" $processor_type string $default_dts
-		} elseif {[string match -nocase $processor_type "ps7_cortexa9"]} {
-			set cpu_node [pcwdt insert root end "&ps7_cortexa9_${cpu_nr}"]
-			set compatiblelist [lappend compatiblelist "arm,cortex-a9"]
-			set compatiblelist [lappend compatiblelist "arm,cortex-a9-$cpu_nr"]
-			add_prop $cpu_node "xlnx,ip-name" $processor_type string $default_dts
-		} else {
-			set proctype [get_hw_family]
-			set bus_name [detect_bus_name $drv_handle]
-			set count [get_microblaze_nr $drv_handle]
-			# Generate the node only for the single core
-			if {$cpu_no >= 1} {
-				break
-			}
-			set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
-			set cpu_node [create_node -n "cpu" -l "$drv_handle" -u $count -d "pl.dtsi" -p $rt_node]
-			add_prop $cpu_node "xlnx,ip-name" $processor_type string $default_dts
-		}
-		add_prop $cpu_node "bus-handle" $bus_label reference $default_dts
-		incr cpu_no
-	}
-	if {[lsearch -nocase $proc_list $processor_type] >= 0} {
-	} else {
-		add_prop $cpu_root_node "#cpus" $cpu_no int $default_dts
-	}
-}
-
 proc remove_all_tree {} {
 	# for testing
 	set test_dummy "for_test_dummy.dts"
@@ -6257,17 +6131,16 @@ proc generate_mb_ccf_node {drv_handle} {
 
 	proc_called_by
 	set family [get_hw_family]
-	if {[regexp "kintex*" $family match]} {
-		set cpu_clk_freq [get_clock_frequency $drv_handle "CLK"]
-		# issue:
-		# - hardcoded reg number cpu clock node
-		# - assume clk_cpu for mb cpu
-		# - only applies to master mb cpu
-		gen_mb_ccf_subnode $drv_handle cpu $cpu_clk_freq 0
-	}
+	set cpu_clk_freq [get_clock_frequency $drv_handle "CLK"]
+	# issue:
+	# - hardcoded reg number cpu clock node
+	# - assume clk_cpu for mb cpu
+	# - only applies to master mb cpu
+	gen_mb_ccf_subnode $drv_handle cpu $cpu_clk_freq 0
 }
 
 proc gen_dev_ccf_binding args {
+	global pl_design
 	proc_called_by
 	set drv_handle [lindex $args 0]
 	set pins [lindex $args 1]
@@ -6279,7 +6152,7 @@ proc gen_dev_ccf_binding args {
 	global bus_clk_list
 
 	set proctype [get_hw_family]
-	if {[regexp "kintex*" $proctype match]} {
+	if { $pl_design } {
 		set clk_refs ""
 		set clk_names ""
 		set clk_freqs ""
