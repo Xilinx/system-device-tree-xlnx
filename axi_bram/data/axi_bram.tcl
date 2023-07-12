@@ -19,22 +19,23 @@
                 if {$index == "-1"} {
                         continue
                         }
+                # TODO Fix this whole part, this is there in all memory IP tcls
                 foreach bank ${ip_mem_handles} {
-                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"]} {
+                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_cortexr52"]} {
                                 if {$r5 == 1} {
-                                         continue
+                                        continue
                                 }
                         }
-                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"]} {
+                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_cortexr52"]} {
                                 set r5 1
                         }
 
-                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexa53"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexa72"]} {
+                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexa53"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexa72"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_cortexa78"]} {
                                 if {$a53 == 1} {
                                         continue
                                 }
                         }
-                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexa53"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexa72"]} {
+                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexa53"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexa72"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_cortexa78"]} {
                                 set a53 1
                         }
                         if {$pmu == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psu_pmu"]} {
@@ -43,16 +44,16 @@
                         if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_pmu"]} {
                                 set pmu 1
                         }
-                        if {$pmc == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psv_pmc"]} {
+                        if {$pmc == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psv_pmc"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_pmc"]} {
                                 continue
                         }
-                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_pmc"]} {
+                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_pmc"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_pmc"]} {
                                 set pmc 1
                         }
-                        if {$psm == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psv_psm"]} {
+                        if {$psm == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psv_psm"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_psm"]} {
                                 continue
                         }
-                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_psm"]} {
+                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_psm"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_psm"]} {
                                 set psm 1
                         }
 

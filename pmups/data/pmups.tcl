@@ -7,8 +7,14 @@
                 add_prop $node "microblaze_ddr_reserve_sa" [hsi get_property CONFIG.C_DDR_RESERVE_SA $drv_handle] int "pcw.dtsi"
         } elseif {[string match -nocase $ip_name "psv_pmc"]} {
                 set node [pcwdt insert root end "&psv_pmc_0"]
-        } else {
+        } elseif {[string match -nocase $ip_name "psv_psm"]} {
                 set node [pcwdt insert root end "&psv_psm_0"]
+        } elseif {[string match -nocase $ip_name "psx_pmc"]} {
+                set node [pcwdt insert root end "&psx_pmc_0"]
+        } elseif {[string match -nocase $ip_name "psx_psm"]} {
+                set node [pcwdt insert root end "&psx_psm_0"]
+        } else {
+                error "Driver pmups is not valid for given handle $drv_handle"
         }
         add_prop $node "bus-handle" "amba" reference "pcw.dtsi"
         gen_drv_prop_from_ip $drv_handle
@@ -47,5 +53,3 @@
                 add_prop $node "d-cache-line-size" $dcache_line_size int "pcw.dtsi"
         }
     }
-
-
