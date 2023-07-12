@@ -26,6 +26,7 @@ namespace eval ::sdtgen {
 
 proc init_proclist {} {
 	variable ::sdtgen::namespacelist
+
 	dict set ::sdtgen::namespacelist "RM" "RM"
 	dict set ::sdtgen::namespacelist "ai_engine" "ai_engine"
 	dict set ::sdtgen::namespacelist "psu_ams" "ams"
@@ -74,6 +75,8 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "ps7_cortexa9" "cpu_cortexa9"
 	dict set ::sdtgen::namespacelist "psu_cortexr5" "cpu_cortexr5"
 	dict set ::sdtgen::namespacelist "psv_cortexr5" "cpu_cortexr5"
+	dict set ::sdtgen::namespacelist "psx_cortexr52" "cpu_cortexr5"
+	dict set ::sdtgen::namespacelist "psx_cortexa78" "cpu_cortexa78"
 	dict set ::sdtgen::namespacelist "psu_crl_apb" "crl_apb"
 	dict set ::sdtgen::namespacelist "ps7_ddrc" "ddrcps"
 	dict set ::sdtgen::namespacelist "psu_ddrc" "ddrcps"
@@ -145,6 +148,8 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "psu_pmu" "pmups"
 	dict set ::sdtgen::namespacelist "psv_pmc" "pmups"
 	dict set ::sdtgen::namespacelist "psv_psm" "pmups"
+	dict set ::sdtgen::namespacelist "psx_pmc" "pmups"
+	dict set ::sdtgen::namespacelist "psx_psm" "pmups"
 	dict set ::sdtgen::namespacelist "pr_decoupler" "pr_decoupler"
 	dict set ::sdtgen::namespacelist "prc dfx_controller" "prc"
 	dict set ::sdtgen::namespacelist "psu_ocm_ram_0" "psu_ocm"
@@ -207,6 +212,25 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "ps7_xadc" "xadcps"
 	dict set ::sdtgen::namespacelist "psv_noc_pcie_1" "xdmapcie"
 	dict set ::sdtgen::namespacelist "qdma" "xdmapcie"
+
+	dict set ::sdtgen::namespacelist "psx_apm" "apmps"
+	dict set ::sdtgen::namespacelist "psx_canfd" "canfdps"
+	dict set ::sdtgen::namespacelist "noc_mc_ddr5" "ddrpsv"
+	dict set ::sdtgen::namespacelist "psx_adma" "dmaps"
+	dict set ::sdtgen::namespacelist "psx_gdma" "dmaps"
+	dict set ::sdtgen::namespacelist "psx_csudma" "gpiops"
+	dict set ::sdtgen::namespacelist "psx_ethernet" "emacps"
+	dict set ::sdtgen::namespacelist "psx_gpio" "gpiops"
+	dict set ::sdtgen::namespacelist "psx_i3c" "i3cpsx"
+	dict set ::sdtgen::namespacelist "psx_acpu_gic" "scugic"
+	dict set ::sdtgen::namespacelist "psx_pmc_sd" "sdps"
+	dict set ::sdtgen::namespacelist "psx_pmc_qspi" "qspips"
+	dict set ::sdtgen::namespacelist "psx_ttc" "ttcps"
+	dict set ::sdtgen::namespacelist "psx_sbsauart" "uartps"
+	dict set ::sdtgen::namespacelist "psx_ocm" "ocmcps"
+	dict set ::sdtgen::namespacelist "axi_noc2" "ddrpsv"
+	dict set ::sdtgen::namespacelist "noc_mc_ddr5" "ddrpsv"
+	dict set ::sdtgen::namespacelist "psx_ocm_ram" "psu_ocm"
 }
 
 proc Pop {varname {nth 0}} {
@@ -1178,6 +1202,7 @@ proc generate_sdt args {
 	global cur_hw_design
 	global dup_periph_handle
 	global pl_design
+	global is_versal_net_platform
 
         if {[llength $args]!= 0} {
                 set help_string "sdtgen generate_sdt
@@ -1244,11 +1269,12 @@ Generates system device tree based on args given in:
 	set list_offiles {}
 	set peri_list [hsi::get_cells -hier]
 	set pl_design 0
+	set is_versal_net_platform 0
 	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
 
-	set non_val_list "versal_cips axi_noc noc_mc_ddr4 noc_nmu noc_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat xlconstant xlslice axis_tdest_editor util_reduced_logic noc_nsw axis_ila pspmc psv_ocm_ram_0 psv_pmc_qspi_ospi add_keep_128 c_counter_binary"
+	set non_val_list "versal_cips psx_wizard psxl dmac_slv axi_noc axi_noc2 noc_mc_ddr4 noc_mc_ddr5 noc_nmu noc_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat xlconstant xlslice axis_tdest_editor util_reduced_logic noc_nsw axis_ila pspmc psv_ocm_ram_0 psv_pmc_qspi_ospi add_keep_128 c_counter_binary"
 	set non_val_ip_types "MONITOR BUS PROCESSOR"
-	set non_val_list1 "psv_cortexa72 psu_cortexa53 ps7_cortexa9 versal_cips noc_nmu noc_nsu ila psu_iou_s noc_nsw pspmc"
+	set non_val_list1 "psv_cortexa72 psu_cortexa53 ps7_cortexa9 versal_cips psx_wizard noc_nmu noc_nsu ila psu_iou_s noc_nsw pspmc"
 	set non_val_ip_types1 "MONITOR BUS"
 
 	# Generate properties only once if different instances of the same IP is 
@@ -1275,6 +1301,9 @@ Generates system device tree based on args given in:
 		}
 		if {[string match -nocase $ip_name "microblaze"]} {
 			set pl_design 1
+		}
+		if {[string match -nocase $ip_name "psx_cortexa78"]} {
+			set is_versal_net_platform 1
 		}
 	}
 
@@ -1306,7 +1335,7 @@ Generates system device tree based on args given in:
 			gen_drv_prop_from_ip $drv_handle
 			gen_interrupt_property $drv_handle
 			gen_clk_property $drv_handle
-			gen_xppu $drv_handle
+			#gen_xppu $drv_handle
 			gen_power_domains $drv_handle
 		}
 	}
@@ -1476,6 +1505,7 @@ proc gen_r5_trustzone_config {} {
 }
 
 proc proc_mapping {} {
+	global is_versal_net_platform
 	set proctype [get_hw_family]
 	set default_dts "system-top.dts"
 	set proc_list [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
@@ -1484,8 +1514,13 @@ proc proc_mapping {} {
 	append periphs_list [hsi::get_cells -hier -filter {IP_TYPE==MEMORY_CNTLR}]
 	set family [get_hw_family]
 	if {[string match -nocase $family "versal"]} {
-		append periphs_list " [hsi::get_cells -hier -filter {IP_NAME==axi_noc}]"
-		append periphs_list " [hsi::get_cells -hier -filter {IP_NAME==noc_mc_ddr4}]"
+		if { $is_versal_net_platform } {
+			append periphs_list " [hsi::get_cells -hier -filter {IP_NAME==axi_noc2}]"
+			append periphs_list " [hsi::get_cells -hier -filter {IP_NAME==noc_mc_ddr5}]"
+		} else {
+			append periphs_list " [hsi::get_cells -hier -filter {IP_NAME==axi_noc}]"
+			append periphs_list " [hsi::get_cells -hier -filter {IP_NAME==noc_mc_ddr4}]"
+		}
 	}
 	global dup_periph_handle
         foreach val $proc_list {
@@ -1518,6 +1553,12 @@ proc proc_mapping {} {
                               	}
                        	}
 			if {[string match -nocase $iptype "psv_cortexa72"] && [string match -nocase $ipname "psv_rcpu_gic"]} {
+				continue
+			}
+			if {[string match -nocase $iptype "psx_cortexa78"] && [string match -nocase $ipname "psx_rcpu_gic"]} {
+				continue
+			}
+			if {[string match -nocase $iptype "psx_cortexr52"] && [string match -nocase $ipname "psx_acpu_gic"]} {
 				continue
 			}
 			if {[string match -nocase $iptype "psv_cortexr5"] && [string match -nocase $ipname "psv_acpu_gic"]} {
@@ -1595,6 +1636,8 @@ proc proc_mapping {} {
 
 			if {[string match -nocase $ipname "psv_rcpu_gic"] } {
 				set temp "gic_r5"
+			} elseif {[string match -nocase $ipname "psx_rcpu_gic"]} {
+				set temp "gic_r52"
 			}
 
 			set pl_ip [is_pl_ip $periph]
@@ -1605,10 +1648,16 @@ proc proc_mapping {} {
 			dict set mem_proc_key_map "psu_cortexa53" "a53"
 			dict set mem_proc_key_map "psu_cortexr5" "$val"
 			dict set mem_proc_key_map "psv_cortexr5" "$val"
+			dict set mem_proc_key_map "psx_cortexr52" "$val"
 			dict set mem_proc_key_map "psv_pmc" "pmc"
 			dict set mem_proc_key_map "psv_psm" "psm"
 			dict set mem_proc_key_map "psu_pmu" "pmu"
 			dict set mem_proc_key_map "ps7_cortexa9" "a53"
+			dict set mem_proc_key_map "psx_cortexa78" "a53"
+			dict set mem_proc_key_map "psx_pmc" "pmc"
+			dict set mem_proc_key_map "psx_psm" "psm"
+
+
 			dict set mem_proc_key_map "microblaze" "$val"
 
 			set mem_map_key [dict get $mem_proc_key_map $iptype]
@@ -1655,11 +1704,11 @@ proc update_chosen {} {
 }
 
 proc gen_cpu_cluster {} {
-
+	global is_versal_net_platform
 	set proctype [get_hw_family]
 	set default_dts "system-top.dts"
 	set ipi_list [hsi::get_cells -hier *ipi*]
-	set r5_procs [hsi::get_cells -hier -filter {IP_NAME==psv_cortexr5 || IP_NAME==psu_cortexr5}]
+	set r5_procs [hsi::get_cells -hier -filter {IP_NAME==psv_cortexr5 || IP_NAME==psu_cortexr5 || IP_NAME==psx_cortexr52}]
 	foreach val $ipi_list {
 		set temp [get_node $val]
 		set temp [string trimleft $temp "&"]
@@ -1758,10 +1807,14 @@ proc gen_cpu_cluster {} {
 			}
 		}
 		add_prop $cpu_node "address-map" $list_values special $default_dts
-		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x80" hexlist $default_dts
+		#add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x80" hexlist $default_dts
     	} elseif {[string match -nocase $proctype "versal"] } {
     		set r5_present 1
-        	set cpu_node [create_node -l "cpus_a72" -n "cpus-a72" -u 0 -d ${default_dts} -p root]
+    		set proc_name "a72"
+    		if { $is_versal_net_platform } {
+    			set proc_name "a78"
+    		}
+    		set cpu_node [create_node -l "cpus_${proc_name}" -n "cpus-${proc_name}" -u 0 -d ${default_dts} -p root]
 		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
 		add_prop $cpu_node "#ranges-size-cells" "0x2" hexint $default_dts
 		add_prop $cpu_node "#ranges-address-cells" "0x2" hexint $default_dts
@@ -1783,11 +1836,20 @@ proc gen_cpu_cluster {} {
 			}
 		}
 		add_prop $cpu_node "address-map" $list_values special $default_dts
-		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x260> , <&lpd_xppu 0x261" hexlist $default_dts
+		# TODO Fix this LPD_XPPU part
+		#add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x260> , <&lpd_xppu 0x261" hexlist $default_dts
     	}
     	if { $r5_present } {
-		for {set core 0} {$core < 2} {incr core} {
-			set cpu_node [create_node -l "cpus_r5_$core" -n "cpus-r5" -u $core -d ${default_dts} -p root]
+    		set r5_cores 2
+    		if { $is_versal_net_platform } {
+    			set r5_cores 4
+    		}
+		for {set core 0} {$core < $r5_cores} {incr core} {
+			set proc_name "r5"
+			if { $is_versal_net_platform } {
+				set proc_name "r52"
+	    		}
+			set cpu_node [create_node -l "cpus_${proc_name}_$core" -n "cpus-${proc_name}" -u $core -d ${default_dts} -p root]
 			add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
 			add_prop $cpu_node "#ranges-size-cells" "0x1" hexint $default_dts
 			add_prop $cpu_node "#ranges-address-cells" "0x1" hexint $default_dts
@@ -1817,11 +1879,11 @@ proc gen_cpu_cluster {} {
 				}
 			}
 			add_prop $cpu_node "address-map" $list_values special $default_dts
-		    	if {[string match -nocase $proctype "versal"] } {
-				add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x200> , <&lpd_xppu 0x204" hexlist $default_dts
-			} elseif {[is_zynqmp_platform $proctype]} {
-				add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x0> , <&lpd_xppu 0x10" hexlist $default_dts
-			}
+		    	# if {[string match -nocase $proctype "versal"] } {
+			# 	add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x200> , <&lpd_xppu 0x204" hexlist $default_dts
+			# } elseif {[is_zynqmp_platform $proctype]} {
+			# 	add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x0> , <&lpd_xppu 0x10" hexlist $default_dts
+			# }
 		}
 	}
 
@@ -1890,7 +1952,7 @@ proc gen_cpu_cluster {} {
 			}
 		}
 		add_prop $cpu_node "address-map" $list_values special $default_dts
-		add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x238> , <&pmc_xppu 0x238> , <&pmc_xppu_npi 0x238" hexlist $default_dts
+		#add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x238> , <&pmc_xppu 0x238> , <&pmc_xppu_npi 0x238" hexlist $default_dts
 	}
 
 	set microblaze_proc [hsi::get_cells -hier -filter {IP_NAME==microblaze}]
@@ -1933,9 +1995,15 @@ proc gen_cpu_cluster {} {
 proc update_cpu_node {} {
 	set default_dts "system-top.dts"
 	set proctype [get_hw_family]
+	global is_versal_net_platform
     	if {[string match -nocase $proctype "versal"] } {
-        	set current_proc "psv_cortexa72_"
-        	set total_cores 2
+    		if { $is_versal_net_platform } {
+    			set current_proc "psx_cortexa78_"
+        		set total_cores 16
+    		} else {
+    			set current_proc "psv_cortexa72_"
+        		set total_cores 2
+    		}
     	} elseif {[is_zynqmp_platform $proctype]} {
         	set current_proc "psu_cortexa53_"
         	set total_cores 4
@@ -1953,7 +2021,7 @@ proc update_cpu_node {} {
         	set procs [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
         	set pnames ""
 		foreach proc_name $procs {
-              		if {[regexp "psv_cortexa72*" $proc_name match]} {
+              		if {[regexp "psv_cortexa72*" $proc_name match] || [regexp "psx_cortexa78*" $proc_name match]} {
 	             		append pnames " " $proc_name
               		}
         	}
@@ -1985,7 +2053,7 @@ proc update_cpu_node {} {
 }
 
 proc update_alias {} {
-
+	global is_versal_net_platform
 	global env
 	set path $env(REPO)
 	set common_file "$path/device_tree/data/config.yaml"
@@ -2029,6 +2097,9 @@ proc update_alias {} {
 	if {![regexp "kintex*" $family match]} {
 		set uart_platform_map [dict create]
 		dict set uart_platform_map "versal" "psv_sbsauart"
+		if { $is_versal_net_platform } {
+			dict set uart_platform_map "versal" "psx_sbsauart"
+		}
 		dict set uart_platform_map "zynqmp" "psu_uart"
 		dict set uart_platform_map "zynq" "ps7_uart"
 
@@ -2107,6 +2178,7 @@ proc update_alias {} {
 }
 
 proc gen_ctrl_compatible {drv_handle} {
+	global is_versal_net_platform
 	set node [get_node $drv_handle]
 	set dts [set_drv_def_dts $drv_handle]
 	set baseaddr [get_baseaddr $drv_handle noprefix]
@@ -2129,31 +2201,34 @@ proc gen_ctrl_compatible {drv_handle} {
 	dict set pslist 0xf6390000 "xlnx,xmpu"
 	dict set pslist 0xf6500000 "xlnx,xmpu"
 	if {[string match -nocase $family "versal"]} {
-		set ctrl_addr_list "0xF11E0000 0xFF9C0000 0xF11F0000 0xF12D0000 0xF12E4000
-				0xF12E6000 0xF12E8000 0xF12EA000 0xF12EC000 0xF12D2000
-				0xF12D4000 0xF12D6000 0xF12D8000 0xF12DA000 0xF12DC000
-				0xF12DE000 0xF12E0000 0xF12E2000 0xF12EE000 0xF12B0000
-				0xFD1A0000 0xFF5E0000 0xF1260000 0xF1200000 0xF1250000
-				0xF1240000 0xFD360000 0xFD380000 0xFD700000 0xFD390000
-				0xFD610000 0xFD690000 0xFE5F0000 0xFFC9F000 0xFCB40000
-				0xFD370000 0xFE600000 0xF1330000 0xFF130000 0xFF140000
-				0xFF9B0000 0xFE400000 0xFE000000 0xFF0A0000 0xFF080000
-				0xFF410000 0xFF510000 0xFF990000 0xFF980000 0xF1160000
-				0xF11C0000 0xF11D0000 0xF1110000 0xF1020000 0xF1000000
-				0xF1080000 0xF1070000 0xF1060000 0xF0040000 0xF1320000
-				0xF1100000 0xF1270000 0xF11A0000 0xF12F0000 0xF1310000
-				0xF1300000 0xF0081000 0xF0082000 0xF0100000 0xF0280000
-				0xF0310000 0xF0282000 0xF0281000 0xF0284000 0xF0283000
-				0xF0300000 0xFFC90000 0xFFC80000 0xFFC88000 0xFFCF0000
-				0xFFCB0000 0xFFCA0000 0xFFCD0000 0xFFCC0000 0xFFCE0000
-				0xF0050000 0xF1210000 0xF1220000 0xF1230000 0xFD390000
-				0xF12F0000 0xFF980000 0xF6080000 0xF6220000 0xF6390000
-				0xF6500000"
-		if {[lsearch -nocase $ctrl_addr_list $baseaddr] >= 0} {
-			if {[catch {set tmp [dict get $pslist $baseaddr]} msg]} {
-				pcwdt append $node compatible "\ \, \"xlnx,ctrlregs\""
-			} else {
-				add_prop $node compatible "$tmp xlnx,ctrlregs" stringlist $dts
+		# What to do for Versal Net
+		if { !$is_versal_net_platform } {
+			set ctrl_addr_list "0xF11E0000 0xFF9C0000 0xF11F0000 0xF12D0000 0xF12E4000
+					0xF12E6000 0xF12E8000 0xF12EA000 0xF12EC000 0xF12D2000
+					0xF12D4000 0xF12D6000 0xF12D8000 0xF12DA000 0xF12DC000
+					0xF12DE000 0xF12E0000 0xF12E2000 0xF12EE000 0xF12B0000
+					0xFD1A0000 0xFF5E0000 0xF1260000 0xF1200000 0xF1250000
+					0xF1240000 0xFD360000 0xFD380000 0xFD700000 0xFD390000
+					0xFD610000 0xFD690000 0xFE5F0000 0xFFC9F000 0xFCB40000
+					0xFD370000 0xFE600000 0xF1330000 0xFF130000 0xFF140000
+					0xFF9B0000 0xFE400000 0xFE000000 0xFF0A0000 0xFF080000
+					0xFF410000 0xFF510000 0xFF990000 0xFF980000 0xF1160000
+					0xF11C0000 0xF11D0000 0xF1110000 0xF1020000 0xF1000000
+					0xF1080000 0xF1070000 0xF1060000 0xF0040000 0xF1320000
+					0xF1100000 0xF1270000 0xF11A0000 0xF12F0000 0xF1310000
+					0xF1300000 0xF0081000 0xF0082000 0xF0100000 0xF0280000
+					0xF0310000 0xF0282000 0xF0281000 0xF0284000 0xF0283000
+					0xF0300000 0xFFC90000 0xFFC80000 0xFFC88000 0xFFCF0000
+					0xFFCB0000 0xFFCA0000 0xFFCD0000 0xFFCC0000 0xFFCE0000
+					0xF0050000 0xF1210000 0xF1220000 0xF1230000 0xFD390000
+					0xF12F0000 0xFF980000 0xF6080000 0xF6220000 0xF6390000
+					0xF6500000"
+			if {[lsearch -nocase $ctrl_addr_list $baseaddr] >= 0} {
+				if {[catch {set tmp [dict get $pslist $baseaddr]} msg]} {
+					pcwdt append $node compatible "\ \, \"xlnx,ctrlregs\""
+				} else {
+					add_prop $node compatible "$tmp xlnx,ctrlregs" stringlist $dts
+				}
 			}
 		}
 	}
@@ -2174,7 +2249,6 @@ proc gen_xppu {drv_handle} {
 	set family [get_hw_family]
 
 	if {[string match -nocase $family "versal"] && [is_ps_ip $drv_handle]} {
-
 		dict set xppu	FF200000	addr	xmpu_pmc
 		dict set xppu	FD4D0000	addr	xmpu_fpd
 		dict set xppu	FD390000	addr	xmpu_fpd
