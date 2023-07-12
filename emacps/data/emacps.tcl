@@ -48,7 +48,7 @@
     }
 
     proc emacps_generate {drv_handle} {
-
+    	global is_versal_net_platform
         update_eth_mac_addr $drv_handle
         set node [get_node $drv_handle]
         set slave [hsi::get_cells -hier $drv_handle]
@@ -103,26 +103,58 @@
        }
 
         if {[string match -nocase $proc_type "versal"] } {
-        set versal_periph [hsi::get_cells -hier -filter {IP_NAME == versal_cips}]
-        set avail_param [hsi list_property [hsi::get_cells -hier $versal_periph]]
-        if {[lsearch -nocase $avail_param "CONFIG.PS_GEM_TSU_ENABLE"] >= 0} {
-                set val [hsi get_property CONFIG.PS_GEM_TSU_ENABLE [hsi::get_cells -hier $versal_periph]]
-                if {$val == 1} {
-                        set default_dts [set_drv_def_dts $drv_handle]
-                        set tsu_node [create_node -n "tsu_ext_clk" -l "tsu_ext_clk" -d $default_dts -p root]
-                        add_prop "${tsu_node}" "compatible" "fixed-clock" stringlist $default_dts
-                        add_prop "${tsu_node}" "#clock-cells" 0 int $default_dts
-                        set tsu-clk-freq [hsi get_property CONFIG.C_ENET_TSU_CLK_FREQ_HZ [hsi::get_cells -hier $drv_handle]]
-                        add_prop "${tsu_node}" "clock-frequency" ${tsu-clk-freq} int $default_dts
-                        set_drv_prop_if_empty $drv_handle "clock-names" "pclk hclk tx_clk rx_clk tsu_clk" stringlist
-                        if {[string match -nocase $node "gem0: ethernet@ff0c0000"]} {
-                                set_drv_prop_if_empty $drv_handle "clocks" "versal_clk 82>, <&versal_clk 88>, <&versal_clk 49>, <&versal_clk 48>, <&tsu_ext_clk" reference
-                        } elseif {[string match -nocase $node "gem1: ethernet@ff0d0000"]} {
-                                set_drv_prop_if_empty $drv_handle "clocks" "versal_clk 82>, <&versal_clk 89>, <&versal_clk 51>, <&versal_clk 50>, <&tsu_ext_clk" reference
-                        }
-                }
+	        if { $is_versal_net_platform } {
+			set versalnet_periph [hsi get_cells -hier -filter {IP_NAME == psx_wizard}]
+			set psx_pmcx_params [hsi get_property CONFIG.PSX_PMCX_CONFIG [hsi get_cells -hier $versalnet_periph]]
+			set psx_gem_tsu_enable ""
+			if {[llength $psx_pmcx_params]} {
+				set psx_gem_tsu ""
+				if {[dict exists $psx_pmcx_params "PSX_GEM_TSU"]} {
+					set psx_gem_tsu [dict get $psx_pmcx_params "PSX_GEM_TSU"]
+					if {[dict exists $psx_gem_tsu "ENABLE"]} {
+						set psx_gem_tsu_enable [dict get $psx_gem_tsu "ENABLE"]
+					}
+				}
+			}
+			if {$psx_gem_tsu_enable == 1} {
+				set default_dts [set_drv_def_dts $drv_handle]
+				set root_node [add_or_get_dt_node -n / -d ${default_dts}]
+				set tsu_node [add_or_get_dt_node -n "tsu_ext_clk" -l "tsu_ext_clk" -d $default_dts -p $root_node]
+				add_prop "${tsu_node}" "compatible" "fixed-clock" stringlist $default_dts
+				add_prop "${tsu_node}" "#clock-cells" 0 int $default_dts
+				set tsu-clk-freq [hsi get_property CONFIG.C_ENET_TSU_CLK_FREQ_HZ [hsi get_cells -hier $drv_handle]]
+				add_prop "${tsu_node}" "clock-frequency" ${tsu-clk-freq} int $default_dts
+				set_drv_prop_if_empty $drv_handle "clock-names" "pclk hclk tx_clk rx_clk tsu_clk" stringlist
+				if {[string match -nocase $node "&gem0"]} {
+					set_drv_prop_if_empty $drv_handle "clocks" "versal_net_clk 82>, <&versal_net_clk 88>, <&versal_net_clk 49>, <&versal_net_clk 48>, <&tsu_ext_clk" reference
+				} elseif {[string match -nocase $node "&gem1"]} {
+					set_drv_prop_if_empty $drv_handle "clocks" "versal_net_clk 82>, <&versal_net_clk 89>, <&versal_net_clk 51>, <&versal_net_clk 50>, <&tsu_ext_clk" reference
+				}
+			}
+
+		} else {
+			set versal_periph [hsi::get_cells -hier -filter {IP_NAME == versal_cips}]
+		        set avail_param [hsi list_property [hsi::get_cells -hier $versal_periph]]
+		        if {[lsearch -nocase $avail_param "CONFIG.PS_GEM_TSU_ENABLE"] >= 0} {
+		                set val [hsi get_property CONFIG.PS_GEM_TSU_ENABLE [hsi::get_cells -hier $versal_periph]]
+		                if {$val == 1} {
+		                        set default_dts [set_drv_def_dts $drv_handle]
+		                        set tsu_node [create_node -n "tsu_ext_clk" -l "tsu_ext_clk" -d $default_dts -p root]
+		                        add_prop "${tsu_node}" "compatible" "fixed-clock" stringlist $default_dts
+		                        add_prop "${tsu_node}" "#clock-cells" 0 int $default_dts
+		                        set tsu-clk-freq [hsi get_property CONFIG.C_ENET_TSU_CLK_FREQ_HZ [hsi::get_cells -hier $drv_handle]]
+		                        add_prop "${tsu_node}" "clock-frequency" ${tsu-clk-freq} int $default_dts
+		                        set_drv_prop_if_empty $drv_handle "clock-names" "pclk hclk tx_clk rx_clk tsu_clk" stringlist
+		                        if {[string match -nocase $node "gem0: ethernet@ff0c0000"]} {
+		                                set_drv_prop_if_empty $drv_handle "clocks" "versal_clk 82>, <&versal_clk 88>, <&versal_clk 49>, <&versal_clk 48>, <&tsu_ext_clk" reference
+		                        } elseif {[string match -nocase $node "gem1: ethernet@ff0d0000"]} {
+		                                set_drv_prop_if_empty $drv_handle "clocks" "versal_clk 82>, <&versal_clk 89>, <&versal_clk 51>, <&versal_clk 50>, <&tsu_ext_clk" reference
+		                        }
+		                }
+		        }
+		}
         }
-        }
+
         # check if gmii2rgmii converter is used.
         set conv_data [emacps_is_gmii2rgmii_conv_present $slave]
         set phya [lindex $conv_data 0]
