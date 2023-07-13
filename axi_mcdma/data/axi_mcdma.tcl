@@ -29,7 +29,7 @@
             set is_mrmac [axi_mcdma_is_mrmac_connected $drv_handle "M_AXIS_MM2S"]
         set tsn_inst_name [hsi get_cells -filter {IP_NAME =~ "*tsn*"}]
         if { $axiethernetfound || $is_xxv == 1 || $is_mrmac == 1 || [llength $tsn_inst_name] } {
-                pldt append $node compatible "\ \, \"xlnx,eth-dma\""    
+                pldt set $node compatible "\"xlnx,eth-mcdma\""
         }
             if { $axiethernetfound != 1 && $is_xxv != 1 && $is_mrmac != 1} {
                 set ip_prop CONFIG.c_include_mm2s_dre
