@@ -341,14 +341,25 @@ proc get_memmap args {
 }
 
 proc get_hw_family {} {
+	global pl_design
 	set family [hsi get_property FAMILY [hsi::get_hw_designs]]
+	if {[string_is_empty $family]} {
+		dtg_warning "Couldnt determine the family, may lead to unforeseen errors."
+		return
+	}
+	set known_APU_platforms "zynq zynqmp versal"
 	if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"] ||
 		[string match -nocase $family "zynquplusRFSOC"] } {
-		return "zynqmp"
+		set family "zynqmp"
 	}
-	return $family
+	if {[lsearch $known_APU_platforms $family] >= 0} {
+		return $family
+	} elseif { $pl_design } {
+		return "microblaze"
+	} else {
+		error "$family couldnt be found in the known APU platform lists. Please check get_hw_family API"
+	}
 }
-
 # set global dict_devicetree
 proc get_user_config args {
         set dict_devicetree  {}
@@ -2454,7 +2465,7 @@ proc update_system_dts_include {include_file} {
 	global count
 	set master_dts "system-top.dts"
 	set proctype [get_hw_family]
-	if {[regexp "kintex*" $proctype match]} {
+	if {[regexp "microblaze" $proctype match]} {
 		global env
 		set path $env(REPO)
 		#set drvname [get_drivers $drv_handle]
@@ -2473,7 +2484,7 @@ proc update_system_dts_include {include_file} {
 			
 			append cur_inc_list $include_file
 		} else {
-			if {[regexp "kintex*" $proctype match]} {
+			if {[regexp "microblaze" $proctype match]} {
 				append cur_inc_list "," $include_file
 				set field [split $cur_inc_list ","]
 				if {[regexp $dtsi_file $include_file match]} {
@@ -3864,7 +3875,7 @@ proc gen_axis_switch_clk_property {drv_handle dts_file node} {
        global bus_clk_list
        set clocknames ""
 	set proctype [get_hw_family]
-	if {[regexp "kintex*" $proctype match]} {
+	if {[regexp "microblaze" $proctype match]} {
 		return
 	}
        set clk_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $drv_handle] -filter {TYPE==clk&&DIRECTION==I}]
@@ -4127,7 +4138,7 @@ proc gen_clk_property {drv_handle} {
 	dtg_verbose "gen_clk_property:$drv_handle"
 	proc_called_by
 	set proctype [get_hw_family]
-	if {[regexp "kintex*" $proctype match]} {
+	if {[regexp "microblaze" $proctype match]} {
 		return
 	}
 
@@ -4871,7 +4882,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 		}
 		set connected_intc_name [hsi get_property IP_NAME $connected_intc]
 		set valid_gpio_list "ps7_gpio axi_gpio"
-		set valid_cascade_proc "kintex7 zynq zynqmp zynquplus versal zynquplusRFSOC"
+		set valid_cascade_proc "microblaze zynq zynqmp zynquplus versal zynquplusRFSOC"
 		# check whether intc is gpio or other
 		if {[lsearch  -nocase $valid_gpio_list $connected_intc_name] >= 0} {
 			set cur_intr_info ""
@@ -4923,7 +4934,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 				}
 			}
 
-			if {[regexp "kintex*" $proctype match]} {
+			if {[regexp "microblaze" $proctype match]} {
 				if {[string match -nocase [get_ip_property $drv_handle IP_NAME] "axi_intc"] } {
 					set intr_id [get_psu_interrupt_id $drv_handle "irq"]
 				} else {
@@ -5174,7 +5185,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 					set reg "$base $size"
 				}
 			} else {
-				if {[string match -nocase $proctype "zynq"] || [regexp "kintex*" $proctype match]} {
+				if {[string match -nocase $proctype "zynq"] || [regexp "microblaze" $proctype match]} {
 					set index [check_base $reg $base $size]
 					if {$index == "true" && $ip_name != "axi_fifo_mm_s"} {
 						continue
@@ -6372,7 +6383,7 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 		if { [llength $intr_pin] == 0 } {
 			return $intr_cntrl
 		}
-		set valid_cascade_proc "kintex7 zynq zynqmp zynquplus zynquplusRFSOC versal"
+		set valid_cascade_proc "microblaze zynq zynqmp zynquplus zynquplusRFSOC versal"
 		set proctype [get_hw_family]
 		if { [string match -nocase [hsi get_property IP_NAME $periph] "axi_intc"] && [lsearch -nocase $valid_cascade_proc $proctype] >= 0 } {
 			set sinks [get_sink_pins $intr_pin]
@@ -6423,7 +6434,7 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 	if { [llength $intr_sink_pins] == 0 || [string match $intr_sink_pins "{}"]} {
 		return $intr_cntrl
 	}
-	set valid_cascade_proc "kintex7 zynq zynqmp zynquplus zynquplusRFSOC versal"
+	set valid_cascade_proc "microblaze zynq zynqmp zynquplus zynquplusRFSOC versal"
 	foreach intr_sink ${intr_sink_pins} {
 		if {[llength $intr_sink] == 0} {
 			continue
@@ -6710,7 +6721,7 @@ proc get_psu_interrupt_id { ip_name port_name } {
 		return
 	}
 	set proctype [get_hw_family]
-	if {[regexp "kintex*" $proctype match]} {
+	if {[regexp "microblaze" $proctype match]} {
 		if {[string match -nocase "[hsi get_property IP_NAME $periph]" "axi_intc"]} {
 			set ip [hsi get_property IP_NAME $periph]
 			set cascade_master [hsi get_property CONFIG.C_CASCADE_MASTER [hsi::get_cells -hier $periph]]

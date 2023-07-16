@@ -16,7 +16,7 @@
         }
 
         set proctype [get_hw_family]
-        if {[regexp "kintex*" $proctype match]} {
+        if {[regexp "microblaze" $proctype match]} {
                  gen_dev_ccf_binding $drv_handle "s_axi_aclk"
         }
     }

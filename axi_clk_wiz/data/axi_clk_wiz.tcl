@@ -26,7 +26,7 @@
         add_prop $node "#clock-cells" 1 int "pl.dtsi"
 
         set family [get_hw_family]
-        if {[regexp "kintex*" $family match]} {
+        if {[regexp "microblaze" $family match]} {
                 gen_dev_ccf_binding $drv_handle "clk_in1 s_axi_aclk" "clocks clock-names"
         }
     }

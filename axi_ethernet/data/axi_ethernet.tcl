@@ -379,7 +379,7 @@
                     regsub -all "\{||\t" $intr_val1 {} intr_val1
                     regsub -all "\}||\t" $intr_val1 {} intr_val1
                     set proctype [get_hw_family]
-                    if {![regexp "kintex*" $proctype match]} {
+                    if {![regexp "microblaze" $proctype match]} {
                         add_prop "${nodep}" "interrupts" $intr_val1 intlist "pl.dtsi" 1
                     }
                 } else {
@@ -392,7 +392,7 @@
             }
             if {$connected_ipname == "axi_dma" || $connected_ipname == "axi_mcdma"} {
                 set proctype [get_hw_family]
-                if {![regexp "kintex*" $proctype match]} {
+                if {![regexp "microblaze" $proctype match]} {
                     set eth_clk_names [pldt get $node clock-names]
                     set eth_clks [pldt get $node clocks]
                     set eth_clks [string trimright $eth_clks ">"]

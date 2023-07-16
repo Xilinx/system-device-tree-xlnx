@@ -26,7 +26,7 @@
             }
 
         set proc_type [get_hw_family]
-        if {[regexp "kintex*" $proc_type match]} {
+        if {[regexp "microblaze" $proc_type match]} {
             gen_dev_ccf_binding $drv_handle "s_axi_aclk"
         }
     }

@@ -160,7 +160,7 @@
         axi_pcie_set_pcie_reg $drv_handle $proctype
         axi_pcie_set_pcie_ranges $drv_handle $proctype
         set_drv_prop $drv_handle interrupt-map-mask "0 0 0 7" $node intlist
-        if {[regexp "kintex*" $proctype match]} {
+        if {[regexp "microblaze" $proctype match]} {
                 set_drv_prop $drv_handle bus-range "0x0 0xff" $node hexint
         }
         # Add Interrupt controller child node

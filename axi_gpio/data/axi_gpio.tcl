@@ -17,7 +17,7 @@
                 add_prop $node "interrupt-controller" boolean "pl.dtsi"
         }
         set proc_type [get_hw_family]
-        if {[regexp "kintex*" $proc_type match]} {
+        if {[regexp "microblaze" $proc_type match]} {
                         gen_dev_ccf_binding $drv_handle "s_axi_aclk"
                         set_drv_prop_if_empty $drv_handle "clock-names" "s_axi_aclk" $node stringlist
         }

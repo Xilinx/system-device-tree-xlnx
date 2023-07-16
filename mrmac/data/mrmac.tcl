@@ -1834,7 +1834,7 @@
     proc mrmac_gen_mrmac_clk_property {drv_handle} {
         set dts_file [set_drv_def_dts $drv_handle]
         set proctype [get_hw_family]
-        if {[regexp "kintex*" $proctype match]} {
+        if {[regexp "microblaze" $proctype match]} {
                 return
         }
         set clocks ""

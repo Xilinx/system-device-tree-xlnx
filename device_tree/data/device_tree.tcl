@@ -1291,6 +1291,13 @@ Generates system device tree based on args given in:
 		set proc_drv_handle [hsi::get_cells -hier $procperiph]
         	set ip_name [hsi get_property IP_NAME $proc_drv_handle]
 
+        	if {[string match -nocase $ip_name "microblaze"]} {
+			set pl_design 1
+		}
+		if {[string match -nocase $ip_name "psx_cortexa78"]} {
+			set is_versal_net_platform 1
+		}
+
         	# For tmr_manager designs, tmr_inject IPs also come as the processor
         	# and tmr_manager doesnt have a driver. It is safe to add this if dict exist check.
         	
@@ -1298,12 +1305,6 @@ Generates system device tree based on args given in:
 	        	set proc_drv_name [dict get $::sdtgen::namespacelist $ip_name]
 			source [file join $path $proc_drv_name "data" "${proc_drv_name}.tcl"]
 			${proc_drv_name}_generate $proc_drv_handle
-		}
-		if {[string match -nocase $ip_name "microblaze"]} {
-			set pl_design 1
-		}
-		if {[string match -nocase $ip_name "psx_cortexa78"]} {
-			set is_versal_net_platform 1
 		}
 	}
 
@@ -2094,7 +2095,7 @@ proc update_alias {} {
 	}
 
 	set family [get_hw_family]
-	if {![regexp "kintex*" $family match]} {
+	if {![regexp "microblaze" $family match]} {
 		set uart_platform_map [dict create]
 		dict set uart_platform_map "versal" "psv_sbsauart"
 		if { $is_versal_net_platform } {

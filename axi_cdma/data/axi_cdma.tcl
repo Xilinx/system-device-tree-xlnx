@@ -37,7 +37,7 @@
 
         if {[string match -nocase $mainline_ker "none"]} {
                 set proc_type [get_hw_family]
-                if {[regexp "kintex*" $proc_type match]} {
+                if {[regexp "microblaze" $proc_type match]} {
                         gen_dev_ccf_binding $drv_handle "s_axi_lite_aclk m_axi_aclk"
                         set_drv_prop_if_empty $drv_handle "clock-names" "s_axi_lite_aclk m_axi_aclk" $node stringlist
                 }
@@ -91,7 +91,7 @@
             set clk_refs [lappend clk_refs misc_clk_${bus_clk_cnt}]
             set_drv_prop_if_empty $drv_handle "clocks" "$clk_refs>, <&$clk_refs" $node reference
             set_drv_prop_if_empty $drv_handle "clock-names" "s_axi_lite_aclk m_axi_aclk" $node stringlist
-        } elseif {[regexp "kintex*" $proc_type match]} {
+        } elseif {[regexp "microblaze" $proc_type match]} {
             gen_dev_ccf_binding $drv_handle "s_axi_lite_aclk m_axi_aclk"
             set_drv_prop_if_empty $drv_handle "clock-names" "s_axi_lite_aclk m_axi_aclk" $node stringlist
         } else {

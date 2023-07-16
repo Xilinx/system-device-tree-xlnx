@@ -69,7 +69,7 @@
         }
         } else {
                 set proc_type [get_hw_family]
-                if {[string match -nocase $proc_type "zynq"] || [regexp "kintex*" $proc_type match] } {
+                if {[string match -nocase $proc_type "zynq"] || [regexp "microblaze" $proc_type match] } {
                         set_drv_property $drv_handle axistream-connected "$connected_ip" $node reference
                         set_drv_property $drv_handle axistream-control-connected "$connected_ip" $node reference
                 }
@@ -91,7 +91,7 @@
         set mainline_ker [get_user_config $common_file -mainline_kernel]
         if {[string match -nocase $mainline_ker "none"]} {
         set proc_type [get_hw_family]
-        if {[regexp "kintex*" $proc_type match]} {
+        if {[regexp "microblaze" $proc_type match]} {
                 axi_dma_generate_clk_nodes $drv_handle $axiethernetfound $tx_chan $rx_chan
           }
         } else {
@@ -210,7 +210,7 @@
                         }
                         set_drv_prop_if_empty $drv_handle "clocks" "$clocks" $node reference
                         set_drv_prop_if_empty $drv_handle "clock-names" "$clocknames" $node stringlist
-                } elseif {[regexp "kintex*" $proc_type match]} {
+                } elseif {[regexp "microblaze" $proc_type match]} {
                         if { $axiethernetfound != 1 } {
                                 append clocknames " " "m_axi_sg_aclk"
                         }

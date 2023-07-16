@@ -193,7 +193,7 @@
             }
             set_drv_prop_if_empty $drv_handle "clocks" $clocks reference
             set_drv_prop_if_empty $drv_handle "clock-names" $clocknames stringlist
-        } elseif {[regexp "kintex*" $proctype match]} {
+        } elseif {[regexp "microblaze" $proctype match]} {
             if { $tx_chan ==1 } {
                 append clocknames " " "m_axi_mm2s_aclk"
                 append clocknames " " "m_axi_mm2s_aclk"

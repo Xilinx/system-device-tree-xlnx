@@ -31,7 +31,7 @@
                 add_prop $chosen_node "stdout-path" "serial0:${baud}n8" stringlist "system-top.dts"
         }
         set_drv_conf_prop $drv_handle C_BAUDRATE current-speed $node int
-        if {[regexp "kintex*" $proctype match]} {
+        if {[regexp "microblaze" $proctype match]} {
                  gen_dev_ccf_binding $drv_handle "s_axi_aclk"
         }
     }
