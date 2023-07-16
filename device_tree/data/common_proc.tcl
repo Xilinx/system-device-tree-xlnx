@@ -4756,6 +4756,10 @@ proc gen_mb_interrupt_property {cpu_handle {intr_port_name ""}} {
 	if {![string_is_empty $cpin]} {
 		set intc [hsi::get_cells -of_objects $cpin]
 	}
+	if {[string_is_empty $intc]} {
+		dtg_warning "no interrupt controller found for $cpu_handle"
+		return
+	}
 	if { [is_intr_cntrl $intc] != 1 } {
 		set intf_pins [::hsi::get_intf_pins -of_objects $intc]
 		foreach intp $intf_pins {
@@ -4764,10 +4768,6 @@ proc gen_mb_interrupt_property {cpu_handle {intr_port_name ""}} {
 				set intc $connectip
 			}
 		}
-	}
-	if {[string_is_empty $intc]} {
-		dtg_warning "no interrupt controller found"
-		return
 	}
 
 	set proctype [get_hw_family]
