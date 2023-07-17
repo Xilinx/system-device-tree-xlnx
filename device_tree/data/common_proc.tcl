@@ -721,7 +721,7 @@ proc create_node args {
 		}
 		Pop args
 	}
-	set ignore_list "fifo_generator clk_wiz clk_wizard xlconcat xlconstant util_vector_logic xlslice util_ds_buf proc_sys_reset axis_data_fifo v_vid_in_axi4s bufg_gt axis_tdest_editor util_reduced_logic gt_quad_base noc_nsw blk_mem_gen emb_mem_gen lmb_bram_if_cntlr perf_axi_tg noc_mc_ddr4 c_counter_binary timer_sync_1588 oddr axi_noc mailbox dp_videoaxi4s_bridge axi4svideo_bridge axi_vip xpm_cdc_gen bufgmux"
+	set ignore_list "fifo_generator clk_wiz clk_wizard xlconcat xlconstant util_vector_logic xlslice util_ds_buf proc_sys_reset axis_data_fifo v_vid_in_axi4s bufg_gt axis_tdest_editor util_reduced_logic gt_quad_base noc_nsw blk_mem_gen emb_mem_gen lmb_bram_if_cntlr perf_axi_tg noc_mc_ddr4 c_counter_binary timer_sync_1588 oddr axi_noc mailbox dp_videoaxi4s_bridge axi4svideo_bridge axi_vip xpm_cdc_gen bufgmux axi_apb_bridge gig_ethernet_pcs_pma"
 	set temp [lsearch $ignore_list $node_name]
 	if {$temp >= 0  && [string match -nocase $node_unit_addr ""]} {
 		set val_lab [string match -nocase $node_label ""]
