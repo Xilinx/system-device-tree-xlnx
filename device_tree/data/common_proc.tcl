@@ -342,6 +342,7 @@ proc get_memmap args {
 
 proc get_hw_family {} {
 	global pl_design
+	global ps_design
 	set family [hsi get_property FAMILY [hsi::get_hw_designs]]
 	if {[string_is_empty $family]} {
 		dtg_warning "Couldnt determine the family, may lead to unforeseen errors."
@@ -352,7 +353,7 @@ proc get_hw_family {} {
 		[string match -nocase $family "zynquplusRFSOC"] } {
 		set family "zynqmp"
 	}
-	if {[lsearch $known_APU_platforms $family] >= 0} {
+	if {[lsearch $known_APU_platforms $family] >= 0 && $ps_design} {
 		return $family
 	} elseif { $pl_design } {
 		return "microblaze"
