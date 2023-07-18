@@ -771,14 +771,15 @@ proc gen_board_info {} {
 			add_prop "root" "slrcount" $slrcount int $default_dts
 		}
 	}
-	if {$dtsi_file eq ""} {
-		set boardname [get_board_name]
-		if { [string length $boardname] != 0 } {
-			set fields [split $boardname ":"]
-			lassign $fields prefix board suffix
-			if { [string length $board] != 0 } {
+	set boardname [get_board_name]
+	if { [string length $boardname] != 0 } {
+		set fields [split $boardname ":"]
+		lassign $fields prefix board suffix
+		if { [string length $board] != 0 } {
+			if {$dtsi_file eq ""} {
 				add_prop "root" "compatible" "xlnx,${board}" string $default_dts
 			}
+			add_prop "root" "board" "${board}" string $default_dts
 		}
 	}
 	if {[file exists $dtsi_file]} {
