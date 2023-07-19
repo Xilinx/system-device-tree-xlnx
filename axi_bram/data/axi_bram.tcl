@@ -19,6 +19,13 @@
                 if {$index == "-1"} {
                         continue
                         }
+                set have_ecc [hsi get_property CONFIG.C_ECC [hsi::get_cells -hier $drv_handle]]
+                set ctrl_base [hsi get_property CONFIG.C_S_AXI_CTRL_BASEADDR [hsi::get_cells -hier $drv_handle]]
+                if { $ctrl_base > 0 &&  $have_ecc == 1} {
+                         set high [hsi get_property CONFIG.C_S_AXI_CTRL_HIGHADDR [hsi::get_cells -hier $drv_handle]]
+                         set size [format 0x%x [expr {${high} - ${ctrl_base} + 1}]]
+			 set_memmap "${drv_handle}" $procc "0x0 $ctrl_base 0x0 $size"
+                }
                 # TODO Fix this whole part, this is there in all memory IP tcls
                 foreach bank ${ip_mem_handles} {
                         if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_cortexr52"]} {
@@ -61,7 +68,7 @@
                         set base [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
                         set high [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
                 
-                        if {0} {
+                        if {1} {
                                 if {[string match -nocase $drv_ip "lmb_bram_if_cntlr"] } {
                                         set base [hsi get_property CONFIG.C_BASEADDR [hsi::get_cells -hier $drv_handle]]
                                         set high [hsi get_property CONFIG.C_HIGHADDR [hsi::get_cells -hier $drv_handle]]
