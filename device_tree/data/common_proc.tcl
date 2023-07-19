@@ -2257,11 +2257,19 @@ proc set_cur_working_dts {{dts_file ""}} {
 proc get_baseaddr {slave_ip {no_prefix ""}} {
 	# only returns the first addr
 	set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $slave_ip]]
-	if {[string match -nocase $slave_ip "psu_sata"] ||
-	    [string match -nocase $ip_name "psv_pmc_qspi"]} {
+	if {[string match -nocase $slave_ip "psu_sata"]} {
 		set addr [string tolower [hsi get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $slave_ip]]]
 	} else {
 		set ip_mem_handle [lindex [hsi::get_mem_ranges [hsi::get_cells -hier $slave_ip]] 0]
+		if {[string match -nocase $ip_name "psv_pmc_qspi"]} {
+			# Currently addresses for ps mapping is coming from static dtsi files originating from u-boot
+			# and it is very APU specific. To generate aliases, the code is also looking for those APU mapped
+			# addresses. For pmc_qspi, there can be different MASTER INTERFACEs and hence the BASE_value changes
+			# a/c to them. So, just as a workaround for the error during alias mapping for qspi, adding logic to
+			# specifically fetch the A72_0 mapped address of pmc_qspi.
+			set a72_0_proc [lindex [hsi get_cells -hier -filter IP_NAME==psv_cortexa72] 0]
+			set ip_mem_handle [lindex [hsi::get_mem_ranges -of_objects $a72_0_proc [hsi::get_cells -hier $slave_ip]] 0]
+		}
 		if { [string_is_empty $ip_mem_handle] } {
 			set avail_param [hsi list_property [hsi::get_cells -hier $slave_ip]]
 			if {[lsearch -nocase $avail_param "CONFIG.C_BASEADDR"] >= 0 } {
