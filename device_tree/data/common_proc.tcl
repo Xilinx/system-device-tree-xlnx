@@ -5459,6 +5459,7 @@ proc gen_compatible_string {drv_handle} {
         } else {
                 set comp_prop "xlnx,${name}-${ver}"
         }
+        regsub -all {_} $comp_prop {-} comp_prop
         return $comp_prop
 }
 

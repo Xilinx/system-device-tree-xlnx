@@ -25,8 +25,8 @@
 				continue
 		        }
         		foreach mem_handle ${ip_mem_handles} {
-				set base 0x0
-				set high [hsi get_property HIGH_VALUE $mem_handle]
+				set base [format "0x%x" [hsi get_property BASE_VALUE $mem_handle]]
+				set high [format "0x%x" [hsi get_property HIGH_VALUE $mem_handle]]
 				set mem_size [format 0x%x [expr {${high} - ${base} + 1}]]
 				if {[is_zynqmp_platform $proctype]} {
 					# Check if memory crossing 4GB map, then split 2GB below 32 bit limit
