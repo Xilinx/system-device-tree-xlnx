@@ -2,13 +2,19 @@
         global env
         global dtsi_fname
         set path $env(REPO)
-
         set node [get_node $drv_handle]
         if {$node == 0} {
                 return
         }
         set drvname [get_drivers $drv_handle]
-
+        set zynq_ultra_ps_handle [hsi::get_cells -hier -filter {IP_NAME == " zynq_ultra_ps_e"}]
+        if {[llength $zynq_ultra_ps_handle]} {
+                set nr_freq [hsi get_property CONFIG.PSU__CRL_APB__AMS_REF_CTRL__ACT_FREQMHZ $zynq_ultra_ps_handle]
+                if {![string_is_empty $nr_freq]} {
+                        set value [expr {int($nr_freq)}]
+                        add_prop $node "xlnx,clock-freq" $value hexint "pcw.dtsi"
+                }
+        }
         set common_file "$path/device_tree/data/config.yaml"
         set mainline_ker [get_user_config $common_file -mainline_kernel]
         if {[string match -nocase $mainline_ker "none"]} {
@@ -24,5 +30,3 @@
           }
         }
     }
-
-
