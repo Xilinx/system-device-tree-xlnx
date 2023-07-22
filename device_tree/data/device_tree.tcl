@@ -1202,12 +1202,7 @@ proc generate_sdt args {
 	global comp_str_dict
 	global cur_hw_design
 	global dup_periph_handle
-	global pl_design
-	# Needed for the designs where the family is zynqmp but it is a pure PL design.
-	# In above case family should be identified as the microblaze instead of zynqmp.
-	global ps_design
 
-	global is_versal_net_platform
 
         if {[llength $args]!= 0} {
                 set help_string "sdtgen generate_sdt
@@ -1273,16 +1268,15 @@ Generates system device tree based on args given in:
 
 	set list_offiles {}
 	set peri_list [hsi::get_cells -hier]
-	set pl_design 0
-	set ps_design 0
-	set is_versal_net_platform 0
+
 	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
-	set known_PS_procs "ps7_cortexa9 psu_cortexa53 psv_cortexa72 psx_cortexa78"
 
 	set non_val_list "versal_cips psx_wizard psxl dmac_slv axi_noc axi_noc2 noc_mc_ddr4 noc_mc_ddr5 noc_nmu noc_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat xlconstant xlslice axis_tdest_editor util_reduced_logic noc_nsw axis_ila pspmc psv_ocm_ram_0 psv_pmc_qspi_ospi add_keep_128 c_counter_binary"
 	set non_val_ip_types "MONITOR BUS PROCESSOR"
 	set non_val_list1 "psv_cortexa72 psu_cortexa53 ps7_cortexa9 versal_cips psx_wizard noc_nmu noc_nsu ila psu_iou_s noc_nsw pspmc"
 	set non_val_ip_types1 "MONITOR BUS"
+
+	set_hw_family $proclist
 
 	# Generate properties only once if different instances of the same IP is 
 	# having a common base address. (e.g. mailbox connected to muliple 
@@ -1297,17 +1291,6 @@ Generates system device tree based on args given in:
 	foreach procperiph $proclist {
 		set proc_drv_handle [hsi::get_cells -hier $procperiph]
         	set ip_name [hsi get_property IP_NAME $proc_drv_handle]
-
-        	if {[string match -nocase $ip_name "microblaze"]} {
-			set pl_design 1
-		}
-		if {[string match -nocase $ip_name "psx_cortexa78"]} {
-			set is_versal_net_platform 1
-		}
-		if {[lsearch -nocase $known_PS_procs $ip_name] >= 0} {
-			set ps_design 1
-		}
-
 
         	# For tmr_manager designs, tmr_inject IPs also come as the processor
         	# and tmr_manager doesnt have a driver. It is safe to add this if dict exist check.

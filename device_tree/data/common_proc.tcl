@@ -23,7 +23,7 @@ global or_id
 global or_cnt
 global mainlist
 global addrlist
-global is_versal_net_platform
+
 
 global driver_param
 set driver_param [dict create dev_type {items {}} alias {items {}}]
@@ -340,27 +340,50 @@ proc get_memmap args {
 	}
 }
 
-proc get_hw_family {} {
+proc set_hw_family {proclist} {
 	global pl_design
-	global ps_design
-	set family [hsi get_property FAMILY [hsi::get_hw_designs]]
-	if {[string_is_empty $family]} {
-		dtg_warning "Couldnt determine the family, may lead to unforeseen errors."
-		return
+	global design_family
+	global is_versal_net_platform
+	set design_family ""
+	set pl_design 0
+	set ps_design 0
+	set is_versal_net_platform 0
+
+	foreach procperiph $proclist {
+		set proc_drv_handle [hsi::get_cells -hier $procperiph]
+        	set ip_name [hsi get_property IP_NAME $proc_drv_handle]
+		switch $ip_name {
+			"psx_cortexa78" {
+				set design_family "versal"
+				set ps_design 1
+				set is_versal_net_platform 1
+			} "psv_cortexa72" {
+				set design_family "versal"
+				set ps_design 1
+			} "psu_cortexa53" {
+				set design_family "zynqmp"
+				set ps_design 1
+			} "ps7_cortexa9" {
+				set design_family "zynq"
+				set ps_design 1
+			} "microblaze" {
+				set pl_design 1
+			}
+		}
 	}
-	set known_APU_platforms "zynq zynqmp versal"
-	if {[string match -nocase $family "zynqmp"] || [string match -nocase $family "zynquplus"] ||
-		[string match -nocase $family "zynquplusRFSOC"] } {
-		set family "zynqmp"
-	}
-	if {[lsearch $known_APU_platforms $family] >= 0 && $ps_design} {
-		return $family
-	} elseif { $pl_design } {
-		return "microblaze"
-	} else {
-		error "$family couldnt be found in the known APU platform lists. Please check get_hw_family API"
+	if { !$ps_design && $pl_design} {
+		set design_family "microblaze"
+	} elseif {[string_is_empty $design_family]} {
+		error "Couldn't determine the hardware family, may lead to unforeseen issues"
 	}
 }
+
+
+proc get_hw_family {} {
+	global design_family
+	return $design_family
+}
+
 # set global dict_devicetree
 proc get_user_config args {
         set dict_devicetree  {}
