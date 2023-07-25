@@ -63,6 +63,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "vcu" "axi_vcu"
 	dict set ::sdtgen::namespacelist "axi_vdma" "axi_vdma"
 	dict set ::sdtgen::namespacelist "xadc_wiz" "axi_xadc"
+	dict set ::sdtgen::namespacelist "system_management_wiz" "sysmon"
 	dict set ::sdtgen::namespacelist "axis_switch" "axis_switch"
 	dict set ::sdtgen::namespacelist "psu_canfd" "canfdps"
 	dict set ::sdtgen::namespacelist "psv_canfd" "canfdps"

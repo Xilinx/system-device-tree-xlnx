@@ -8,6 +8,7 @@
         gen_drv_prop_from_ip $drv_handle
         gen_dev_ccf_binding $drv_handle "s_axi_aclk"
 
+        add_prop $node "xlnx,ip-type" 0 hexint $dts_file
         pldt append $node compatible "\ \, \"xlnx,axi-xadc-1.00.a\""
         set adc_ip [hsi::get_cells -hier $drv_handle]
         set has_dma [hsi get_property CONFIG.C_HAS_EXTERNAL_MUX $adc_ip]
