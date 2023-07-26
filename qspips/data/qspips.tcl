@@ -11,8 +11,8 @@
                        if {$node == 0} {
                             return
                        }
-                       add_prop "${node}" "/* hw design is missing feedback clock that's why spi-max-frequency is 40MHz */" "" comment $dts_file
-                       add_prop $drv_handle spi-max-frequency 40000000 int $dts_file
+                       add_prop "${node}" "//* hw design is missing feedback clock that's why spi-max-frequency is 40MHz */" "" comment $dts_file
+                       add_prop $node spi-max-frequency 40000000 int $dts_file
                    }
            }
         set is_stacked 0
