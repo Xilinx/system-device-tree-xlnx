@@ -13,7 +13,7 @@
         add_prop $node "xlnx,ip-name" $ip_name string "pl.dtsi"
         set model "$ip_name,[get_ip_version $drv_handle]"
         add_prop $node "model" $model string "pl.dtsi"
-        set family [hsi get_property C_FAMILY $drv_handle]
+        set family [hsi get_property CONFIG.C_FAMILY $drv_handle]
         add_prop $node "xlnx,family" $family string "pl.dtsi"
         add_prop $node "reg" $nr hexint "pl.dtsi"
         add_prop $node "bus-handle" "amba_pl" reference "pl.dtsi"
