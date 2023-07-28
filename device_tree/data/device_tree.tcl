@@ -1955,8 +1955,10 @@ proc gen_cpu_cluster {} {
 
 	set microblaze_proc [hsi::get_cells -hier -filter {IP_NAME==microblaze}]
 	if {[llength $microblaze_proc] > 0} {
-		add_prop "root" "#address-cells" 1 int "system-top.dts"
-		add_prop "root" "#size-cells" 1 int "system-top.dts"
+		if {[string match -nocase $proctype "microblaze"]} {
+			add_prop "root" "#address-cells" 1 int "system-top.dts"
+			add_prop "root" "#size-cells" 1 int "system-top.dts"
+		}
 		set plnode [create_node -l "amba_pl" -n "amba_pl" -d ${default_dts} -p root]
 	foreach proc $microblaze_proc {
 		set count [get_microblaze_nr $proc]
