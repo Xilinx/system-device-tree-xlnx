@@ -4322,7 +4322,7 @@ proc gen_clk_property {drv_handle} {
 			}
 			"versal" {
 				if { $is_versal_net_platform } {
-					set versal_periph [get_cells -hier -filter {IP_NAME == psx_wizard}]
+					set versal_periph [hsi get_cells -hier -filter {IP_NAME == psx_wizard}]
 				} else {
 					set versal_periph [hsi::get_cells -hier -filter {IP_NAME == versal_cips}]
 				}
@@ -4346,7 +4346,7 @@ proc gen_clk_property {drv_handle} {
 		}
 		if {[string match -nocase $proctype "versal"]} {
 			if { $is_versal_net_platform } {
-				set versal_periph [get_cells -hier -filter {IP_NAME == psx_wizard}]
+				set versal_periph [hsi get_cells -hier -filter {IP_NAME == psx_wizard}]
 			} else {
 				set versal_periph [hsi::get_cells -hier -filter {IP_NAME == versal_cips}]
 			}
