@@ -26,6 +26,7 @@
                          set size [format 0x%x [expr {${high} - ${ctrl_base} + 1}]]
 			 set_memmap "${drv_handle}" $procc "0x0 $ctrl_base 0x0 $size"
                 }
+
                 # TODO Fix this whole part, this is there in all memory IP tcls
                 foreach bank ${ip_mem_handles} {
                         if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_cortexr52"]} {
@@ -51,13 +52,13 @@
                         if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_pmu"]} {
                                 set pmu 1
                         }
-                        if {$pmc == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psv_pmc"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_pmc"]} {
+                        if {$pmc == 1 && ([string match -nocase [hsi get_property IP_NAME $procc] "psv_pmc"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_pmc"])} {
                                 continue
                         }
                         if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_pmc"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_pmc"]} {
                                 set pmc 1
                         }
-                        if {$psm == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psv_psm"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_psm"]} {
+                        if {$psm == 1 && ([string match -nocase [hsi get_property IP_NAME $procc] "psv_psm"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_psm"])} {
                                 continue
                         }
                         if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_psm"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_psm"]} {
@@ -109,19 +110,19 @@
                         } else {
                                 set reg "$base $size"
                         }
-                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"]} {
+                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_cortexr52"]} {
                                 set_memmap "${drv_handle}_memory" $procc $reg
                         }
-                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexa53"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexa72"]} {
+                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexa53"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexa72"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_cortexa78"]} {
                                 set_memmap "${drv_handle}_memory" a53 $reg
                         }
                         if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_pmu"]} {
                                 set_memmap "${drv_handle}_memory" pmu $reg
                         }
-                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_pmc"]} {
+                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_pmc"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_pmc"]} {
                                 set_memmap "${drv_handle}_memory" pmc $reg
                         }
-                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_psm"]} {
+                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_psm"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_psm"]} {
                                 set_memmap "${drv_handle}_memory" psm $reg
                         }
                         if {[string match -nocase [hsi get_property IP_NAME $procc] "microblaze"]} {
