@@ -3205,7 +3205,7 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping f8002000 label ttc1
 		dict set def_ps_mapping f8f00600 label scutimer
 		dict set def_ps_mapping f8005000 label watchdog0
-		#dict set def_ps_mapping f8f00620 label scuwatchdog
+		dict set def_ps_mapping f8f00620 label scuwdt
 		dict set def_ps_mapping e0002000 label usb0
 		dict set def_ps_mapping e0003000 label usb1
 	}

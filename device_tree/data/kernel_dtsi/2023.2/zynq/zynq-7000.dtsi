@@ -439,7 +439,7 @@
 			clocks = <&clkc 4>;
 		};
 
-		ps7_scuwdt_0: ps7_scuwdt@f8f00620 {
+		scuwdt: scuwatchdog@f8f00620 {
 			interrupt-parent = <&intc>;
 			interrupts = <1 14 4>;
 			compatible = "xlnx,ps7-scuwdt-1.00.a";
