@@ -3,7 +3,7 @@
  * dts file for Xilinx Versal
  *
  * (C) Copyright 2017-2022 Xilinx, Inc.
- * (C) Copyright 2022 Advanced Micro Devices, Inc. All Rights Reserved.
+ * (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
  *
  * Michal Simek <michal.simek@xilinx.com>
  */
@@ -937,7 +937,6 @@
 			xlnx,ipi-buf-index = <1>;
 			#address-cells = <2>;
 			#size-cells = <2>;
-			xlnx,ipi-target-count = <10>;
 			ranges;
 
 			ipi0_0: mailbox@0 {
@@ -1028,7 +1027,6 @@
 			xlnx,ipi-buf-index = <0xFFFF>;
 			#address-cells = <2>;
 			#size-cells = <2>;
-			xlnx,ipi-target-count = <10>;
 			ranges;
 
 			ipi1_0: mailbox@0 {
@@ -1103,7 +1101,6 @@
 			xlnx,ipi-buf-index = <0>;
 			#address-cells = <2>;
 			#size-cells = <2>;
-			xlnx,ipi-target-count = <10>;
 			ranges;
 
 			ipi2_0: mailbox@0 {
@@ -1194,7 +1191,6 @@
 			xlnx,ipi-buf-index = <2>;
 			#address-cells = <2>;
 			#size-cells = <2>;
-			xlnx,ipi-target-count = <10>;
 			ranges;
 
 			ipi3_0: mailbox@0 {
@@ -1285,7 +1281,6 @@
 			xlnx,ipi-buf-index = <3>;
 			#address-cells = <2>;
 			#size-cells = <2>;
-			xlnx,ipi-target-count = <10>;
 			ranges;
 
 			ipi4_0: mailbox@0 {
@@ -1376,7 +1371,6 @@
 			xlnx,ipi-buf-index = <4>;
 			#address-cells = <2>;
 			#size-cells = <2>;
-			xlnx,ipi-target-count = <10>;
 			ranges;
 
 			ipi5_0: mailbox@0 {
@@ -1467,7 +1461,6 @@
 			xlnx,ipi-buf-index = <5>;
 			#address-cells = <2>;
 			#size-cells = <2>;
-			xlnx,ipi-target-count = <10>;
 			ranges;
 
 			ipi6_0: mailbox@0 {
@@ -1558,7 +1551,6 @@
 			xlnx,ipi-buf-index = <6>;
 			#address-cells = <2>;
 			#size-cells = <2>;
-			xlnx,ipi-target-count = <10>;
 			ranges;
 
 			ipi7_0: mailbox@0 {
@@ -1649,7 +1641,6 @@
 			xlnx,ipi-buf-index = <7>;
 			#address-cells = <2>;
 			#size-cells = <2>;
-			xlnx,ipi-target-count = <10>;
 			ranges;
 
 			ipi8_0: mailbox@0 {
@@ -1740,7 +1731,6 @@
 			xlnx,ipi-buf-index = <0xFFFF>;
 			#address-cells = <2>;
 			#size-cells = <2>;
-			xlnx,ipi-target-count = <10>;
 			ranges;
 
 			ipi9_0: mailbox@0 {
