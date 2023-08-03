@@ -95,7 +95,7 @@
                             set base [string tolower [hsi get_property BASE_VALUE $ip_mem_handles]]
                             set csi_rx_node [create_node -n "endpoint" -l mipi_csirx_out$drv_handle -p $port_node -d $dts_file]
                             gen_endpoint $drv_handle "mipi_csirx_out$drv_handle"
-                            add_prop "$csi_rx_node" "remote-endpoint" $ip$drv_handle reference $dts_file
+                            add_prop "$csi_rx_node" "remote-endpoint" $ip reference $dts_file
                             gen_remoteendpoint $drv_handle $ip$drv_handle
                             if {[string match -nocase [hsi get_property IP_NAME $ip] "v_frmbuf_wr"]} {
                                     mipi_csi2_rx_gen_frmbuf_node $ip $drv_handle $dts_file

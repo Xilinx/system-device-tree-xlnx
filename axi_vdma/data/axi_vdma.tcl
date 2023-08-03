@@ -105,7 +105,7 @@
                 switch $proc_type {
                         "microblaze"  {
                                 gen_dev_ccf_binding $drv_handle "$clocknames"
-                                set_drv_prop_if_empty $drv_handle "clock-names" "$clocknames" stringlist
+                                set_drv_prop_if_empty $drv_handle "clock-names" "$clocknames" $node stringlist
                         }
                 }
         } else {
