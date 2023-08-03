@@ -30,7 +30,7 @@
 
         if { $axiethernetfound || $is_xxv == 1} {
             set compatstring "xlnx,eth-dma"
-            pldt append $node compatible "\ \, \"xlnx,eth-dma\""
+            pldt set $node compatible "\"xlnx,eth-dma\""
         } else {
             pldt append $node compatible "\ \, \"xlnx,axi-dma-1.00.a\""
         }
