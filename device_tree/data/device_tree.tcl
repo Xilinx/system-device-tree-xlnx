@@ -756,6 +756,37 @@ proc gen_include_dtfile {args} {
 	}
 }
 
+proc get_sem_property { prop } {
+	set pspmcCell [hsi::get_cells -hier -filter "IP_NAME==pspmc"]
+	if {$pspmcCell eq ""} {
+		set pspmcCell [hsi::get_cells -hier -filter "IP_NAME==pmcps"]
+	}
+	if {$pspmcCell eq ""} {
+		set pspmcCell [hsi::get_cells -hier -filter "IP_NAME==psxl"]
+	}
+	if {$pspmcCell ne ""} {
+		return [common::get_property $prop $pspmcCell]
+	} else {
+		set cipsCell [hsi::get_cells -hier -filter "IP_NAME==versal_cips"]
+		if {$cipsCell ne ""} {
+			set isHierIp [common::get_property IS_HIERARCHICAL $cipsCell]
+			if {$isHierIp} {
+				set ps_pmc_config [common::get_property CONFIG.PS_PMC_CONFIG $cipsCell]
+				set prop_exists [dict get $ps_pmc_config $prop]
+				if {$prop_exists} {
+					return [dict get $ps_pmc_config $prop]
+				} else {
+					return 0
+				}
+			} else {
+				return [common::get_property $prop $cipsCell]
+			}
+		}
+		return 0
+	}
+	return 0
+}
+
 proc gen_board_info {} {
 	global env
 	set path $env(REPO)
@@ -771,6 +802,14 @@ proc gen_board_info {} {
 		if {$slrcount != -1} {
 			add_prop "root" "slrcount" $slrcount int $default_dts
 		}
+	}
+	set sem_mem_scan [get_sem_property CONFIG.SEM_MEM_SCAN]
+	set sem_npi_scan [get_sem_property CONFIG.SEM_NPI_SCAN]
+	if {$sem_mem_scan != 0} {
+		add_prop "root" "semmem-scan" $sem_mem_scan int $default_dts
+	}
+	if {$sem_npi_scan != 0} {
+		add_prop "root" "semnpi-scan" $sem_npi_scan int $default_dts
 	}
 	set boardname [get_board_name]
 	if { [string length $boardname] != 0 } {
