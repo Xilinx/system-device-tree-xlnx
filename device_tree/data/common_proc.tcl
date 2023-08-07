@@ -1954,7 +1954,7 @@ proc add_cross_property args {
 				if {[string match -nocase $ipname "axi_mcdma"] && [string match -nocase $dest_prop "xlnx,include-sg"] } {
 					set value ""
 				}
-				if {[regexp -nocase {0x([0-9a-f]{9})} "$value" match]} {
+				if {[regexp -nocase {0x([0-9a-f]{9})} "$value" match] && ![string match -nocase $type "string"] } {
 					set temp [string range $value 2 end]
 					#set temp [string trimleft [string trimleft $temp 0] x]
 					set len [string length $temp]
