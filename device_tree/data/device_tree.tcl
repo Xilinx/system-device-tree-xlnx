@@ -1570,7 +1570,7 @@ proc proc_mapping {} {
 					CONFIG.C_S_AXI_BASEADDR=~0x* || \
 					CONFIG.C_S_AXI_CTRL_BASEADDR=~0x* \
 				)"
-			append periph_list ' [hsi::get_cells -hier -filter $hier_mem_filter]'
+			append periph_list " [hsi::get_cells -hier -filter $hier_mem_filter]"
 		}
 
 		set iptype [hsi get_property IP_NAME [hsi::get_cells -hier $val]]
