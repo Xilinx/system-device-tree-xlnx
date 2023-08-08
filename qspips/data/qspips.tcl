@@ -13,8 +13,17 @@
                        }
                        add_prop "${node}" "//* hw design is missing feedback clock that's why spi-max-frequency is 40MHz */" "" comment $dts_file
                        add_prop $node spi-max-frequency 40000000 int $dts_file
+                       add_prop $node qspi-fbclk 0 int $dts_file
+                   } elseif {[regexp "ENABLE 1" $fbclk matched]} {
+                       set node [gen_peripheral_nodes $drv_handle]
+                       if {$node == 0} {
+                            return
+                       }
+                       add_prop $node qspi-fbclk 1 int $dts_file
                    }
-           }
+	} else {
+                       add_prop $node qspi-fbclk 0 int $dts_file
+	}
         set is_stacked 0
         if { $qspi_mode == 2} {
                 set is_dual 1
