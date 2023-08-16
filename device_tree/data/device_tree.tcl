@@ -1581,7 +1581,7 @@ proc proc_mapping {} {
 				continue
 			}
 			if {[lsearch $periphs_list $periph] >= 0} {
-				set valid_periph "psu_qspi_linear psv_pmc_qspi axi_emc ps7_qspi_linear"
+				set valid_periph "psu_qspi_linear psv_pmc_qspi axi_emc ps7_qspi_linear axi_quad_spi axi_spi"
                               	if {[lsearch $valid_periph $ipname] >= 0} {
                               	} else {
                                 	continue
