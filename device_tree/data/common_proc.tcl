@@ -167,48 +167,39 @@ proc is_zynqmp_platform {proctype} {
 	}
 }
 
+proc set_microblaze_list {} {
+	global design_family
+	global is_versal_net_platform
+	global microblaze_list
+	set microblaze_list ""
+	if {[string match -nocase $design_family "versal"]} {
+		if {$is_versal_net_platform} {
+			set microblaze_list "psx_pmc psx_psm"
+		} else {
+			set microblaze_list "psv_pmc psv_psm"
+		}
+	} elseif {[string match -nocase $design_family "zynqmp"]} {
+		set microblaze_list "psu_pmu"
+	}
+	set soft_mb_handles [hsi::get_cells -hier -filter {IP_NAME==microblaze}]
+	if {![string_is_empty soft_mb_handles]} {
+		append microblaze_list " $soft_mb_handles"
+	}
+}
+
 # Saves the number of microblaze processors in microblaze_map dict
 # and returns the microblaze numbers found during a particular cmd
 # execution.
 proc get_microblaze_nr {drv_handle} {
-	global microblaze_map
-	set proctype [get_hw_family]
-	set microblaze_proc [hsi::get_cells -hier -filter {IP_NAME==microblaze}]
-	set theValue 1
-	set rt 0
-	if {[llength $microblaze_proc] >= 0} {
-		if {[catch {set rt [dict get $microblaze_map $drv_handle]} msg]} {
-			if {[catch {set len [dict size $microblaze_map]} msg]} {
-				set theValue 0
-			}
-			if {$theValue != 0} {
-				foreach theKey [dict keys $microblaze_map] {
-					set theValue [dict get $microblaze_map $theKey]
-				}
-			}
-			if {[string match -nocase $proctype "versal"]} {
-				if {$theValue } {
-					set val [expr $theValue + 1]
-					dict set microblaze_map $drv_handle $val
-					return $val
-				} else {
-					dict set microblaze_map $drv_handle 3
-					return 3
-				}
-			} elseif {[is_zynqmp_platform $proctype]} {
-				if {$theValue } {
-					set val [expr $theValue + 1]
-					dict set microblaze_map $drv_handle $val
-					return $val
-				} else {
-					dict set microblaze_map $drv_handle 2
-					return 2
-				}
-			}
-		}
+	global microblaze_list
+	set mb_index [lsearch $microblaze_list $drv_handle]
+	if {$mb_index >= 0} {
+		return $mb_index
+	} else {
+		error "$drv_handle couldn't be found in the microblaze list: $microblaze_list"
 	}
-	return $rt
 }
+
 proc get_driver_param args {
 	global driver_param
 	set drv_handle [lindex $args 0]

@@ -1242,6 +1242,7 @@ proc generate_sdt args {
 	global comp_str_dict
 	global cur_hw_design
 	global dup_periph_handle
+	global microblaze_list
 
 
         if {[llength $args]!= 0} {
@@ -1317,6 +1318,7 @@ Generates system device tree based on args given in:
 	set non_val_ip_types1 "MONITOR BUS"
 
 	set_hw_family $proclist
+	set_microblaze_list
 
 	# Generate properties only once if different instances of the same IP is 
 	# having a common base address. (e.g. mailbox connected to muliple 
