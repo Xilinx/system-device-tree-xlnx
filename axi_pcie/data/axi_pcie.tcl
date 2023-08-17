@@ -15,15 +15,12 @@
         } else {
                 set axibar_num [get_ip_property $drv_handle "CONFIG.AXIBAR_NUM"]
         }
-        if {[string match -nocase [get_ip_property $drv_handle IP_NAME] "pcie_dma_versal"]} {
-                   set axibar_num [get_ip_property $drv_handle "CONFIG.C_AXIBAR_NUM"]
-        }
         set range_type 0x02000000
         # 64-bit high address.
         set high_64bit 0x00000000
         set ranges ""
         for {set x 0} {$x < $axibar_num} {incr x} {
-                if {[string match -nocase [get_ip_property $drv_handle IP_NAME] "xdma"] || [string match -nocase [get_ip_property $drv_handle IP_NAME] "axi_pcie3"] || [string match -nocase [get_ip_property $drv_handle IP_NAME] "pcie_dma_versal"]} {
+                if {[string match -nocase [get_ip_property $drv_handle IP_NAME] "xdma"] || [string match -nocase [get_ip_property $drv_handle IP_NAME] "axi_pcie3"]} {
                         set axi_baseaddr [get_ip_property $drv_handle [format "CONFIG.axibar_%d" $x]]
                         set pcie_baseaddr [get_ip_property $drv_handle [format "CONFIG.axibar2pciebar_%d" $x]]
                         set axi_highaddr [get_ip_property $drv_handle [format "CONFIG.axibar_highaddr_%d" $x]]
@@ -48,7 +45,7 @@
                         set range_type 0x43000000
                 }
 
-                if {[string match -nocase [get_ip_property $drv_handle IP_NAME] "xdma"] || [string match -nocase [get_ip_property $drv_handle IP_NAME] "pcie_dma_versal"]} {
+                if {[string match -nocase [get_ip_property $drv_handle IP_NAME] "xdma"]} {
                         if {[regexp -nocase {([0-9a-f]{9})} "$pcie_baseaddr" match]} {
                                 set temp $pcie_baseaddr
                                 set temp [string trimleft [string trimleft $temp 0] x]
@@ -92,7 +89,7 @@
 
     proc axi_pcie_set_pcie_reg {drv_handle proctype} {
         set node [get_node $drv_handle]
-        if {[string match -nocase [get_ip_property $drv_handle IP_NAME] "xdma"] || [string match -nocase [get_ip_property $drv_handle IP_NAME] "axi_pcie3"] || [string match -nocase [get_ip_property $drv_handle IP_NAME] "pcie_dma_versal"]} {
+        if {[string match -nocase [get_ip_property $drv_handle IP_NAME] "xdma"] || [string match -nocase [get_ip_property $drv_handle IP_NAME] "axi_pcie3"]} {
                 set baseaddr [get_ip_property $drv_handle CONFIG.baseaddr]
                 set highaddr [get_ip_property $drv_handle CONFIG.highaddr]
                 set size [format 0x%X [expr $highaddr -$baseaddr + 1]]
@@ -164,23 +161,13 @@
                 set_drv_prop $drv_handle bus-range "0x0 0xff" $node hexint
         }
         # Add Interrupt controller child node
-        if {[string match -nocase $proctype "versal"]} {
-               set psv_pcieintc_cnt [get_count "psv_pci_intc_cnt"]
-               set pcie_child_intc_node [create_node -l "psv_pcie_intc_${psv_pcieintc_cnt}" -n interrupt-controller -p $node -d "pl.dtsi"]
-               set int_map "0 0 0 1 &psv_pcie_intc_${psv_pcieintc_cnt} 1>, <0 0 0 2 &psv_pcie_intc_${psv_pcieintc_cnt} 2>, <0 0 0 3 &psv_pcie_intc_${psv_pcieintc_cnt} 3>,\
-                       <0 0 0 4 &psv_pcie_intc_${psv_pcieintc_cnt} 4"
-               incr psv_pcieintc_cnt
-               set intr_names "misc msi0 msi1"
-                add_prop $node "interrupt-names" $intr_names stringlist "pl.dtsi" 1
-        } else {
-               set pcieintc_cnt [get_count "pci_intc_cnt"]
-               set pcie_child_intc_node [create_node -l "pcie_intc_${pcieintc_cnt}" -n interrupt-controller -p $node -d "pl.dtsi"]
-               set int_map "0 0 0 1 &pcie_intc_${pcieintc_cnt} 1>, <0 0 0 2 &pcie_intc_${pcieintc_cnt} 2>, <0 0 0 3 &pcie_intc_${pcieintc_cnt} 3>,\
+	set pcieintc_cnt [get_count "pci_intc_cnt"]
+	set pcie_child_intc_node [create_node -l "pcie_intc_${pcieintc_cnt}" -n interrupt-controller -p $node -d "pl.dtsi"]
+	set int_map "0 0 0 1 &pcie_intc_${pcieintc_cnt} 1>, <0 0 0 2 &pcie_intc_${pcieintc_cnt} 2>, <0 0 0 3 &pcie_intc_${pcieintc_cnt} 3>,\
                <0 0 0 4 &pcie_intc_${pcieintc_cnt} 4"
-               incr pcieintc_cnt
-        }
-        set_drv_prop $drv_handle interrupt-map $int_map $node hexlist
-        incr pcieintc_cnt
+	incr pcieintc_cnt
+	set_drv_prop $drv_handle interrupt-map $int_map $node hexlist
+	incr pcieintc_cnt
 
         add_prop "${pcie_child_intc_node}" "interrupt-controller" boolean "pl.dtsi"
         add_prop "${pcie_child_intc_node}" "#address-cells" 0 int "pl.dtsi"
