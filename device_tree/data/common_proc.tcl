@@ -4332,7 +4332,7 @@ proc gen_clk_property {drv_handle} {
 				}
                        	}
 			"zynq" {
-				set clklist "FCLK_CLK FCLK_CLK1 FCLK_CLK2 FCLK_CLK3"
+				set clklist "FCLK_CLK0 FCLK_CLK1 FCLK_CLK2 FCLK_CLK3"
 			} default {
 			}
 		}
@@ -4604,6 +4604,8 @@ proc gen_clk_property {drv_handle} {
 			set_drv_prop $drv_handle "clocks" "$refs" $node reference
 		}
 	}
+
+	zynq_gen_pl_clk_binding $drv_handle
 }
 
 proc overwrite_clknames {clknames drv_handle} {
@@ -4767,7 +4769,6 @@ proc set_drv_prop_if_empty args {
 	if {[catch {set tmp [set cur_prop_value [$treeobj get $node $prop_name]]} msg]} {
 	}
 	if {[string_is_empty $cur_prop_value] == 0} {
-		
 		dtg_debug "$drv_handle $prop_name property is not empty, current value is '$cur_prop_value'"
 		return -1
 	}
@@ -6026,8 +6027,6 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 		add_prop $rt_node "xlnx,ip-name" $ip_type string $default_dts
 		add_prop $rt_node "xlnx,name" $drv_handle string $default_dts
 	}
-
-	zynq_gen_pl_clk_binding $drv_handle
 
 	# generate_mb_ccf_node is not using drv_handle argument at all
 	# generate_mb_ccf_node $drv_handle
