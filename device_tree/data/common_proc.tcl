@@ -6032,31 +6032,6 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	# generate_mb_ccf_node $drv_handle
 	generate_cci_node $drv_handle $rt_node
 
-	set dts_file_list ""
-	if {[catch {set rt [report_property -return_string -regexp $drv_handle "CONFIG.*\\.dts(i|)"]} msg]} {
-		set rt ""
-	}
-	foreach line [split $rt "\n"] {
-		regsub -all {\s+} $line { } line
-		if {[regexp "CONFIG.*\\.dts(i|)" $line matched]} {
-			lappend dts_file_list [lindex [split $line " "] 0]
-		}
-	}
-	regsub -all {CONFIG.} $dts_file_list {} dts_file_list
-
-	set drv_dt_prop_list [get_driver_conf_list $drv_handle]
-	foreach dts_file ${dts_file_list} {
-		set dts_prop_list [hsi get_property CONFIG.${dts_file} $drv_handle]
-		set dt_node ""
-		if {[string_is_empty ${dts_prop_list}] == 0} {
-			foreach prop ${dts_prop_list} {
-				add_driver_prop $drv_handle $dt_node CONFIG.${prop}
-				# remove from default list
-				set drv_dt_prop_list [list_remove_element $drv_dt_prop_list "CONFIG.${prop}"]
-			}
-		}
-	}
-
 	return $rt_node
 }
 
