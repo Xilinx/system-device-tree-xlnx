@@ -1975,8 +1975,11 @@ proc gen_cpu_cluster {} {
 		}
 		set com_val [split $temp ","]
 		foreach value $com_val {
+			# coresight is mapped as a PS IP in gen_ps_mapping
+			# But it is not needed in pmc/psm cpu cluster
+			set ips_to_ignore "coresight"
 			# Ignore if a 40 bit address is mapped to PMU/PMC processor
-			if {![check_if_forty_bit_address $value]} {
+			if {![check_if_forty_bit_address $value] && [lsearch $ips_to_ignore $val] < 0} {
 				set addr "[lindex $value 1]"
 				set size "[lindex $value 3]"
 				set addr [string trimright $addr ">"]
@@ -2002,8 +2005,11 @@ proc gen_cpu_cluster {} {
 			set temp [get_memmap $val psm]
 			set com_val [split $temp ","]
 			foreach value $com_val {
+				# coresight is mapped as a PS IP in gen_ps_mapping
+				# But it is not needed in pmc/psm cpu cluster
+				set ips_to_ignore "coresight"
 				# Ignore if a 40 bit address is mapped to PSM
-				if {![check_if_forty_bit_address $value]} {
+				if {![check_if_forty_bit_address $value] && [lsearch $ips_to_ignore $val] < 0} {
 					set addr "[lindex $value 1]"
 					set size "[lindex $value 3]"
 					set addr [string trimright $addr ">"]
