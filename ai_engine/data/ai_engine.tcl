@@ -110,20 +110,46 @@
         set unit_addr [get_baseaddr ${ip} no_prefix]
         set aperture_id 0
         set aperture_node [create_node -n "aie_aperture" -u "${unit_addr}" -l "aie_aperture_${aperture_id}" -p ${node} -d "pl.dtsi"]
-        set reg [hsi get_property CONFIG.reg ${drv_handle}]
+        set reg [string trim [pldt get $node "reg"] \<\>]
         add_prop "${aperture_node}" "reg" $reg hexlist "pl.dtsi"
 
-        set intr_names "interrupt1"
-        set intr_num "0x0 0x94 0x1>, <0x0 0x95 0x1>, <0x0 0x96 0x1"
-        set power_domain "&versal_firmware 0x18224072"
-        add_prop "${aperture_node}" "interrupt-names" $intr_names string "pl.dtsi"
-        add_prop "${aperture_node}" "interrupts" $intr_num hexlist "pl.dtsi"
-        add_prop "${aperture_node}" "interrupt-parent" imux reference "pl.dtsi"
+        set name [hsi get_property NAME [hsi get_current_part $drv_handle]]
+        set part_num [string range $name 0 7]
+        set part_num_v70 [string range $name 0 4]
+
+        if {$part_num == "xcvp2502"} {
+                #s100
+                set power_domain "&versal_firmware 0x18225072"
+                add_prop "${aperture_node}" "xlnx,device-name" "100" int "pl.dtsi"
+                set aperture_nodeid 0x18801000
+        } elseif {$part_num == "xcvp2802"} {
+                #s200
+                set power_domain "&versal_firmware 0x18227072"
+                add_prop "${aperture_node}" "xlnx,device-name" "200" int "pl.dtsi"
+                set aperture_nodeid 0x18803000
+        } elseif {$part_num_v70 == "xcv70"} {
+                #v70
+                set power_domain "&versal_firmware 0x18224072"
+                add_prop "${aperture_node}" "xlnx,device-name" "0" int "pl.dtsi"
+                set aperture_nodeid 0x18800000
+        } else {
+                #NON SSIT devices
+                set intr_names "interrupt1"
+                lappend intr_names "interrupt2"
+                lappend intr_names "interrupt3"
+                set intr_num "0x0 0x94 0x4>, <0x0 0x95 0x4>, <0x0 0x96 0x4"
+                set power_domain "&versal_firmware 0x18224072"
+                add_prop "${aperture_node}" "interrupt-names" $intr_names stringlist "pl.dtsi"
+                add_prop "${aperture_node}" "interrupts" $intr_num hexlist "pl.dtsi"
+                add_prop "${aperture_node}" "interrupt-parent" imux reference "pl.dtsi"
+                add_prop "${aperture_node}" "xlnx,device-name" "0" int "pl.dtsi"
+                set aperture_nodeid 0x18800000
+        }
+
         add_prop "${aperture_node}" "power-domains" $power_domain string "pl.dtsi"
         add_prop "${aperture_node}" "#address-cells" "2" hexlist "pl.dtsi"
         add_prop "${aperture_node}" "#size-cells" "2" hexlist "pl.dtsi"
 
-        set aperture_nodeid 0x18800000
         add_prop "${aperture_node}" "xlnx,columns" "$::aie_array_cols_start $::aie_array_cols_num" intlist "pl.dtsi"
         add_prop "${aperture_node}" "xlnx,node-id" "${aperture_nodeid}" hexlist "pl.dtsi"
     }
