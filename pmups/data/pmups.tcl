@@ -5,14 +5,15 @@
                 add_prop $node "clock-frequency" [hsi get_property CONFIG.C_FREQ $drv_handle] hexint "pcw.dtsi"
                 add_prop $node "microblaze_ddr_reserve_ea" [hsi get_property CONFIG.C_DDR_RESERVE_EA $drv_handle] int "pcw.dtsi"
                 add_prop $node "microblaze_ddr_reserve_sa" [hsi get_property CONFIG.C_DDR_RESERVE_SA $drv_handle] int "pcw.dtsi"
-                # Below entry is needed for pmufw to work with unified embeddedsw. It is hardcoded in pmufw tcl if not defined.
-                add_prop $node "xlnx,pss-ref-clk-freq" 33330000 int "pcw.dtsi"
+                gen_pss_ref_clk_freq $drv_handle $node $ip_name
         } elseif {[string match -nocase $ip_name "psv_pmc"]} {
                 set node [pcwdt insert root end "&psv_pmc_0"]
+                gen_pss_ref_clk_freq $drv_handle $node $ip_name
         } elseif {[string match -nocase $ip_name "psv_psm"]} {
                 set node [pcwdt insert root end "&psv_psm_0"]
         } elseif {[string match -nocase $ip_name "psx_pmc"]} {
                 set node [pcwdt insert root end "&psx_pmc_0"]
+                gen_pss_ref_clk_freq $drv_handle $node $ip_name
         } elseif {[string match -nocase $ip_name "psx_psm"]} {
                 set node [pcwdt insert root end "&psx_psm_0"]
         } else {
@@ -21,6 +22,7 @@
         add_prop $node "bus-handle" "amba" reference "pcw.dtsi"
         gen_drv_prop_from_ip $drv_handle
         add_prop $node "xlnx,ip-name" $ip_name string "pcw.dtsi"
+
         set clk ""
         set clkhandle [hsi::get_pins -of_objects $drv_handle "CLK"]
         if { [string compare -nocase $clkhandle ""] != 0 } {

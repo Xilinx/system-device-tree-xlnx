@@ -12,5 +12,6 @@
         add_prop $cpu_node "cpu-frequency" [hsi get_property CONFIG.C_CPU_CLK_FREQ_HZ $drv_handle] int "pcw.dtsi"
         add_prop $cpu_node "stamp-frequency" [hsi get_property CONFIG.C_TIMESTAMP_CLK_FREQ $drv_handle] int "pcw.dtsi"
         gen_drv_prop_from_ip $drv_handle
+        gen_pss_ref_clk_freq $drv_handle $cpu_node $ip_name
         set amba_node [create_node -n "&${bus_name}" -d "pcw.dtsi" -p root]
     }

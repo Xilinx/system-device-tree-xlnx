@@ -787,6 +787,28 @@ proc get_sem_property { prop } {
 	return 0
 }
 
+proc gen_pss_ref_clk_freq {drv_handle node ip_name} {
+	set pss_ref_clk_mhz ""
+	if {[string match -nocase $ip_name "psu_pmu"]} {
+		set ps_periph [hsi::get_cells -hier zynq_ultra_ps_e_0]
+		if { [llength $ps_periph] == 1} {
+			set pss_ref_clk_mhz [common::get_property "CONFIG.PSU__PSS_REF_CLK__FREQMHZ" $ps_periph]
+		} else {
+			puts "WARNING: CONFIG.PSU__PSS_REF_CLK__FREQMHZ not found. Using default value for XPAR_PSU_PSS_REF_CLK_FREQ_HZ."
+			set pss_ref_clk_mhz 33333000
+		}
+	} else {
+		set pss_ref_clk_mhz [common::get_property CONFIG.C_PSS_REF_CLK_FREQ $drv_handle]
+		if { $pss_ref_clk_mhz == "" } {
+			puts "WARNING: CONFIG.C_PSS_REF_CLK_FREQ not found. Using default value for XPAR_PSU_PSS_REF_CLK_FREQ_HZ."
+			set pss_ref_clk_mhz 33333000
+		}
+	}
+	if {![string_is_empty $pss_ref_clk_mhz]} {
+	        add_prop $node "xlnx,pss-ref-clk-freq" $pss_ref_clk_mhz int "pcw.dtsi"
+	}
+}
+
 proc gen_board_info {} {
 	global env
 	set path $env(REPO)

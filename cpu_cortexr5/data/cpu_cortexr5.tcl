@@ -14,6 +14,7 @@
         add_prop $node "xlnx,ip-name" $ip_name string "pcw.dtsi"
         gen_drv_prop_from_ip $drv_handle
 
+        gen_pss_ref_clk_freq $drv_handle $node $ip_name
         add_prop $node "bus-handle" "amba" reference "pcw.dtsi"
     }
 

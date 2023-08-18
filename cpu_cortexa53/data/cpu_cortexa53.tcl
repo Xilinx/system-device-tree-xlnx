@@ -12,6 +12,7 @@
         add_prop $cpu_node "xlnx,ip-name" $ip_name string "pcw.dtsi"
         add_prop $cpu_node "bus-handle" $bus_name reference "pcw.dtsi"
         gen_drv_prop_from_ip $drv_handle
+        gen_pss_ref_clk_freq $drv_handle $cpu_node $ip_name
 
         set amba_node [create_node -n "&${bus_name}" -d "pcw.dtsi" -p root]
     }
