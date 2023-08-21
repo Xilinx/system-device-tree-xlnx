@@ -965,5 +965,11 @@
 			timeout-sec = <30>;
 			pretimeout-sec = <25>;
 		};
+
+		coresight: coresight@f0800000 {
+		    compatible = "xlnx,coresight-1.0";
+		    status = "disabled";
+		    reg = <0x0 0xf0800000 0x0 0x4000>;
+		};
 	};
 };

@@ -475,6 +475,12 @@
 			timeout-sec = <10>;
 		};
 
+		coresight: coresight@f8800000 {
+		    compatible = "xlnx,ps7-coresight-comp-1.00.a";
+		    status = "disabled";
+		    reg = <0xf8800000 0x100000>;
+		};
+
 		etb@f8801000 {
 			compatible = "arm,coresight-etb10", "arm,primecell";
 			reg = <0xf8801000 0x1000>;
