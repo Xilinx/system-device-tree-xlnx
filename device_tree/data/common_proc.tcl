@@ -65,6 +65,11 @@ dict with driver_param alias {
 	lappend items psu_sbsauart serial
 	lappend items psv_uart serial
 	lappend items psv_sbsauart serial
+	lappend items psx_sbsauart serial
+	lappend items ps7_coresight_comp serial
+	lappend items psu_coresight_0 serial
+	lappend items psv_coresight serial
+	lappend items psx_coresight serial
 }
 
 global set osmap [dict create]
@@ -1778,6 +1783,10 @@ proc get_drivers args {
 	dict set driverlist psv_uart driver uartps
 	dict set driverlist psv_sbsauart driver uartps
 	dict set driverlist psx_sbsauart driver uartps
+	dict set driverlist ps7_coresight_comp driver coresight
+	dict set driverlist psu_coresight_0 driver coresight
+	dict set driverlist psv_coresight driver coresight
+	dict set driverlist psx_coresight driver coresight
 	dict set driverlist ps7_usb driver usbps
 	dict set driverlist psu_usb_xhci driver usbps
 	dict set driverlist psv_usb_xhci driver usbps
@@ -3022,6 +3031,7 @@ proc gen_ps_mapping {} {
 			dict set def_ps_mapping ecd10000 label wwdt1
 			dict set def_ps_mapping ece10000 label wwdt2
 			dict set def_ps_mapping ecf10000 label wwdt3
+			dict set def_ps_mapping f0800000 label coresight
 		} else {
 			dict set def_ps_mapping f9000000 label "gic_a72: interrupt-controller"
 			dict set def_ps_mapping f9001000 label "gic_r5: interrupt-controller"
@@ -3206,6 +3216,7 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping f8f00620 label scuwdt
 		dict set def_ps_mapping e0002000 label usb0
 		dict set def_ps_mapping e0003000 label usb1
+		dict set def_ps_mapping f8800000 label coresight
 	}
 	return $def_ps_mapping
 }

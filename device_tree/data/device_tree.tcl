@@ -1751,6 +1751,7 @@ proc add_skeleton {} {
 proc update_chosen {} {
 	set default_dts "system-top.dts"
     	set chosen_node [create_node -n "chosen" -d ${default_dts} -p root]
+	set alias_node [create_node -n "aliases" -p root -d "system-top.dts"]
 
 	set bootargs ""
     	if {[llength $bootargs]} {
@@ -1762,6 +1763,17 @@ proc update_chosen {} {
     	if {[is_zynqmp_platform $family]} {
     		add_prop $chosen_node "bootargs" $bootargs string $default_dts
     	}
+
+	# If stdout-path is already not set via any of the uart driver tcls, set the stdout to
+	# coresight. serial0 will by default refer to coresight if there is no uart in design.
+	if {[catch {set val [systemdt get $chosen_node "stdout-path"]} msg]} {
+		set serial0_val ""
+		if {[catch {set serial0_val [systemdt get $alias_node "serial0"]} msg]} {
+		}
+		if {![string_is_empty $serial0_val]} {
+			add_prop $chosen_node "stdout-path" "serial0:115200n8" stringlist "system-top.dts"
+		}
+	}
 }
 
 proc gen_cpu_cluster {} {
@@ -2154,11 +2166,16 @@ proc update_alias {} {
     	}
 
 	set valid_pluarts "mdm axi_uartlite axi_uart16550"
+	set valid_coresights "ps7_coresight_comp psu_coresight_0 psv_coresight psx_coresight"
+
 	set design_pluarts ""
+	set design_coresight ""
 	foreach drv_handle $all_drivers {
 		set ip_name  [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
 		if {[lsearch $valid_pluarts $ip_name] >= 0} {
 			lappend design_pluarts $drv_handle
+		} elseif {[lsearch $valid_coresights $ip_name] >= 0} {
+			lappend design_coresight $drv_handle
 		}
 	}
 
@@ -2188,7 +2205,7 @@ proc update_alias {} {
 	}
 
 	foreach drv_handle $all_drivers {
-		if {[lsearch $design_pluarts $drv_handle] >= 0} {
+		if {[lsearch $design_pluarts $drv_handle] >= 0 || [lsearch $design_coresight $drv_handle] >= 0} {
 			continue
 		}
             	set ip_name  [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
@@ -2243,6 +2260,14 @@ proc update_alias {} {
 			set alias_node [create_node -n "aliases" -p root -d "system-top.dts"]
 			add_prop $alias_node $conf_name $value aliasref $default_dts
 		}
+	}
+
+	if {![string_is_empty $design_coresight]} {
+		set alias_count [get_count "serial"]
+		set conf_name "serial${alias_count}"
+		set value [lindex [split [get_node $design_coresight] ": "] 0]
+		set alias_node [create_node -n "aliases" -p root -d "system-top.dts"]
+		add_prop $alias_node $conf_name $value aliasref $default_dts
 	}
 }
 
