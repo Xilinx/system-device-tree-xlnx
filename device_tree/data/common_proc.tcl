@@ -1941,6 +1941,11 @@ proc add_cross_property args {
 	}
 	foreach conf_prop $src_prams {
 		set value [hsi get_property $conf_prop $ip]
+		# ddrc (&mc) reports some of the properties (like PARITY) as NA
+		# which results into wrong config structure entries.
+		if  {[string match -nocase $value "NA"]} {
+			continue
+		}
 		if {$conf_prop == "CONFIG.processor_mode"} {
 			set value "true"
 		}
@@ -2328,9 +2333,9 @@ proc get_highaddr {slave_ip {no_prefix ""}} {
              if {[lsearch -nocase $avail_param "CONFIG.C_HIGHADDR"] >= 0 } {
                     set addr [string tolower [hsi get_property CONFIG.C_HIGHADDR [hsi::get_cells -hier $slave_ip]]]
              } elseif {[lsearch -nocase $avail_param "CONFIG.C_S_AXI_HIGHADDR"] >= 0} {
-                    set addr [string tolower [hsi get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $slave_ip]]]
+                    set addr [string tolower [hsi get_property CONFIG.C_S_AXI_HIGHADDR [hsi::get_cells -hier $slave_ip]]]
              } elseif {[lsearch -nocase $avail_param "CONFIG.C_S_AXI_CTRL_HIGHADDR"] >= 0} {
-                    set addr [string tolower [hsi get_property CONFIG.C_S_AXI_CTRL_BASEADDR [hsi::get_cells -hier $slave_ip]]]
+                    set addr [string tolower [hsi get_property CONFIG.C_S_AXI_CTRL_HIGHADDR [hsi::get_cells -hier $slave_ip]]]
              } else {
                     return ""
              }
