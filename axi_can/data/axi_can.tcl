@@ -9,7 +9,7 @@
 		}
 
 		set ip_name [get_ip_property $drv_handle IP_NAME]
-		if {[string match -nocase $ip_name "can"]} {
+		if {[string equal -nocase $ip_name "can"]} {
 			set keyval [pldt append $node compatible "\ \, \"xlnx,axi-can-1.00.a\""]
 		}
 		set version [string tolower [hsi get_property VLNV $drv_handle]]
