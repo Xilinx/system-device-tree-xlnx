@@ -26,7 +26,7 @@
                                 } else {
                                         set lan_name "dp-phy0"
                                         set lan_phy_type "psgtr 3 6 0 $val"
-                                        set_drv_prop $drv_handle phy-names "$lan_name" stringlist
+                                        set_drv_prop $drv_handle phy-names "$lan_name" $node stringlist
                                         set_drv_prop $drv_handle phys "$lan_phy_type" $node reference
                                 }
                                 set_drv_prop $drv_handle xlnx,max-lanes 1 $node int
