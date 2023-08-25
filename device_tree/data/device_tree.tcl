@@ -1366,6 +1366,8 @@ Generates system device tree based on args given in:
 		}
 	}
 
+	set no_reg_drv_handle ""
+
 	foreach drv_handle $peri_list {
 		set ip_name [get_ip_property $drv_handle IP_NAME]
 		set ip_type [get_ip_property $drv_handle IP_TYPE]
@@ -1385,6 +1387,10 @@ Generates system device tree based on args given in:
 		}
 		if { [dict exists $dup_periph_handle $drv_handle] } {
 			set skip1 1
+		}
+		if { [string_is_empty [get_baseaddr ${drv_handle}]] } {
+			set skip1 1
+			lappend no_reg_drv_handle ${drv_handle}
 		}
 		if { $skip1 == 0 } {
 			gen_peripheral_nodes $drv_handle "create_node_only"
@@ -1409,6 +1415,9 @@ Generates system device tree based on args given in:
 		set ip_type [dict get $property_dict $cur_hw_design $drv_handle IP_TYPE]
 		set skip2 0
 		if {[lsearch -nocase $proclist $drv_handle] >= 0} {
+			set skip2 1
+		}
+		if {[lsearch -nocase $no_reg_drv_handle $drv_handle] >= 0} {
 			set skip2 1
 		}
 		if {[lsearch -nocase $non_val_list1 $ip_name] >= 0} {
