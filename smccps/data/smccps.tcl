@@ -1,5 +1,5 @@
     proc smccps_generate {drv_handle} {
-        set handle [hsi::get_cells -hier -filter {IP_NAME==ps7_nand}]
+        set handle [hsi::get_cells -hier -filter {IP_NAME==ps7_smcc}]
         set node [get_node $drv_handle]
         set dts_file [set_drv_def_dts $drv_handle]
         set reg [get_baseaddr [hsi::get_cells -hier $handle]]
