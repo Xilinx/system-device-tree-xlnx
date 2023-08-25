@@ -1,0 +1,12 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Xilinx ZC770 XM011 board DTS with NAND x16
+ *
+ * (C) Copyright 2023 Advanced Micro Devices, Inc. All Rights Reserved.
+ */
+
+#include "zynq-zc770-xm011.dtsi"
+
+/ {
+	model = "Xilinx ZC770 XM011 board (NAND x16)";
+};
