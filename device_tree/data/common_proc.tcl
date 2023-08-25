@@ -3205,7 +3205,7 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping e000d000 label qspi
 		dict set def_ps_mapping e000e000 label smcc
 		dict set def_ps_mapping e1000000 label nfc0
-		dict set def_ps_mapping e2000000 label nor
+		dict set def_ps_mapping e2000000 label nor0
 		dict set def_ps_mapping e000b000 label gem0
 		dict set def_ps_mapping e000c000 label gem1
 		dict set def_ps_mapping e0100000 label sdhci0
