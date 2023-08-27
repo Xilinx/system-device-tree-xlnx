@@ -5840,6 +5840,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 			return
 		}
 		add_prop $node "xlnx,port-type" 0x1 hexint "pcw.dtsi" 1
+		add_prop $node "xlnx,dma-addr" 0xfd0f0000 hexint "pcw.dtsi" 1
 	}
 	if {[regexp "pmc_*" $ip_type match]} {
 	#	return 0
