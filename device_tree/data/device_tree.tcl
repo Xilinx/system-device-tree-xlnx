@@ -1,8 +1,9 @@
 #
-# (C) Copyright 2014-2021 Xilinx, Inc.
+# (C) Copyright 2007-2012 PetaLogix Qld Pty Ltd
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
-# (C) Copyright 2007-2012 PetaLogix Qld Pty Ltd
+# (C) Copyright 2014-2022 Xilinx, Inc.
+# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # Michal SIMEK <monstr@monstr.eu>
 #
@@ -16,6 +17,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
+
 package require Tcl 8.5.14
 package require yaml
 package require struct
