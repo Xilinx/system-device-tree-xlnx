@@ -96,7 +96,16 @@ proc xdmapcie_generate {drv_handle} {
 		add_prop $node "#size-cells" 2 int "pl.dtsi"
 		add_prop $node "device_type" "pci" string "pl.dtsi"
 	} elseif {[string match -nocase [get_ip_property $drv_handle IP_NAME] "psv_noc_pcie_1"]} {
-		if {[string match -nocase [hsi get_property CONFIG.CPM_SLCR [hsi::get_cells -hier versal_cips_0_pspmc_0_psv_cpm]] "0xfca10000"]} {
+		set cpm_rev "0"
+		set cpm_handle [hsi::get_cells -hier versal_cips_0_cpm_0_psv_cpm]
+		set hsi_cpm_rev_num ""
+		if {[catch {set hsi_cpm_rev_num [hsi get_property CONFIG.CPM_REVISION_NUMBER $cpm_handle]} msg]} {
+		}
+		if {![string_is_empty $hsi_cpm_rev_num]} {
+		    set cpm_rev $hsi_cpm_rev_num
+		}
+
+		if {$cpm_rev == "0"} {
 			pcwdt append $node compatible "\ \, \"xlnx,versal-cpm-host-1.00\""
 			add_prop $node "xlnx,csr-slcr" "0x6 00000000" hexlist "pcw.dtsi" 1
 		} else {
