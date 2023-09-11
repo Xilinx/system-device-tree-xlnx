@@ -2327,6 +2327,11 @@ proc get_baseaddr {slave_ip {no_prefix ""}} {
 	}
 	if {![string_is_empty $no_prefix]} {
 		regsub -all {^0x} $addr {} addr
+		# Remove all the leading zeroes in the address.
+		set addr [string trimleft $addr 0]
+		if {[string_is_empty $addr]} {
+			set addr "0"
+		}
 	}
 	return $addr
 }

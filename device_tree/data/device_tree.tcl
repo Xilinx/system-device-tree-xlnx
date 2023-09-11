@@ -21,6 +21,7 @@
 package require Tcl 8.5.14
 package require yaml
 package require struct
+package require textutil::split
 
 namespace eval ::sdtgen {
     variable namespacelist [dict create]
@@ -1476,6 +1477,7 @@ Generates system device tree based on args given in:
 	gen_r5_trustzone_config
 	proc_mapping
 	update_chosen
+	update_memory_node
 	gen_cpu_cluster
 	set family $proctype
 	#set family [get_hw_family]
@@ -1786,6 +1788,31 @@ proc update_chosen {} {
 		}
 	}
 }
+
+proc update_memory_node {} {
+	# Update the generated memory node addresses if two memory nodes are having the same base addresses
+	# e.g. Two microblazes connected to one BRAM each. Each BRAM can start from 0. It leads to overwriting
+	# of one node by other. Thus, update their addresses with incremental leading zeroes.
+	set root_child_nodes [systemdt children root]
+	set mem_addr_counter [dict create]
+	foreach node $root_child_nodes {
+		if [regexp -nocase "memory@" $node match] {
+			set ip_name_addr [::textutil::split::splitx $node ": memory@"]
+			set mem_ip_handle [lindex $ip_name_addr 0]
+			set mem_addr [lindex $ip_name_addr 1]
+			if { [dict exists $mem_addr_counter $mem_addr] } {
+				set redundant_addr_count [dict get $mem_addr_counter $mem_addr]
+				incr redundant_addr_count
+				dict set mem_addr_counter $mem_addr $redundant_addr_count
+				set leading_zeroes [string repeat "0" $redundant_addr_count]
+				systemdt rename $node "$mem_ip_handle: memory@${leading_zeroes}$mem_addr"
+			} else {
+				dict set mem_addr_counter $mem_addr 0
+			}
+		}
+	}
+}
+
 
 proc gen_cpu_cluster {} {
 	global is_versal_net_platform
