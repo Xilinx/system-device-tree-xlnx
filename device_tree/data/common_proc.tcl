@@ -2301,7 +2301,7 @@ proc get_baseaddr {slave_ip {no_prefix ""}} {
 		set addr [string tolower [hsi get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $slave_ip]]]
 	} else {
 		set ip_mem_handle [lindex [hsi::get_mem_ranges [hsi::get_cells -hier $slave_ip]] 0]
-		if {[string match -nocase $ip_name "psv_pmc_qspi"]} {
+		if {[string match -nocase $ip_name "psv_pmc_qspi"] || [string match -nocase $ip_name "psv_coresight"]} {
 			# Currently addresses for ps mapping is coming from static dtsi files originating from u-boot
 			# and it is very APU specific. To generate aliases, the code is also looking for those APU mapped
 			# addresses. For pmc_qspi, there can be different MASTER INTERFACEs and hence the BASE_value changes
