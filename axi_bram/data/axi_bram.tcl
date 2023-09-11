@@ -22,11 +22,45 @@
         set bram_ip ""
         set slave [hsi::get_cells -hier ${drv_handle}]
         set baseaddr [get_baseaddr $drv_handle noprefix]
+        set dup_ilmb_dlmb_node 0
+
+        # HSI reports ilmb_ram and dlmb_ram as two different IPs even though it points to the same BRAM_CNTRL. The
+        # linker needs just one entry among these two and other is just a redundant data for us.
+        # e.g.: microblaze_0_local_memory_dlmb_bram_if_cntlr_0 and microblaze_0_local_memory_ilmb_bram_if_cntlr
+        # one out of these two are sufficient to be used under memory section. If both will be kept as memory, they
+        # will point to the same memory with different names leading to ambiguity. Moreover, In case of multiple
+        # microblazes in design, There will be 2 BRAM CNTRL, in total 4 IPs (2 ilmb and 2dlmb), out of which One
+        # from each CNTRL has to be preserved under the memory node.
+
+        set mb_proclist [hsi::get_cells -hier -filter {IP_NAME==microblaze}]
+        foreach mb_proc $mb_proclist {
+		set mb_proc_memmap [hsi::get_mem_ranges -of_objects $mb_proc]
+		if {[lsearch $mb_proc_memmap $drv_handle] < 0} {
+			continue
+		}
+		foreach periph $mb_proc_memmap {
+			set periph_handle [hsi get_cells -hier $periph]
+			if {[string match -nocase [get_ip_property $periph_handle IP_NAME] "lmb_bram_if_cntlr"]} {
+				set bram_base_addr [get_baseaddr $periph_handle noprefix]
+				if {[string match -nocase $bram_base_addr $baseaddr]} {
+					if {[systemdt exists "${periph_handle}_memory: memory@${bram_base_addr}"]} {
+						set dup_ilmb_dlmb_node 1
+						break
+					}
+				}
+			}
+		}
+        }
+
+        if { $dup_ilmb_dlmb_node == 1 } {
+		return
+        }
+
         set memory_node [create_node -n "memory" -l "${drv_handle}_memory" -u $baseaddr -p root -d "system-top.dts"]
         set ip_mem_handles [hsi::get_mem_ranges $slave]
         set drv_ip [get_ip_property $drv_handle IP_NAME]
         set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
-            foreach procc $proclist {
+        foreach procc $proclist {
 
                 set ip_mem_handles [hsi::get_mem_ranges $slave]
                 set firstelement [lindex $ip_mem_handles 0]
