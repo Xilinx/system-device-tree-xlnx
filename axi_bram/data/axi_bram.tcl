@@ -40,7 +40,8 @@
 		}
 		foreach periph $mb_proc_memmap {
 			set periph_handle [hsi get_cells -hier $periph]
-			if {[string match -nocase [get_ip_property $periph_handle IP_NAME] "lmb_bram_if_cntlr"]} {
+			if {![string_is_empty $periph_handle] \
+                                && [string match -nocase [get_ip_property $periph_handle IP_NAME] "lmb_bram_if_cntlr"]} {
 				set bram_base_addr [get_baseaddr $periph_handle noprefix]
 				if {[string match -nocase $bram_base_addr $baseaddr]} {
 					if {[systemdt exists "${periph_handle}_memory: memory@${bram_base_addr}"]} {
