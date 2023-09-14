@@ -22,12 +22,12 @@
                 return
         }
         set drvname [get_drivers $drv_handle]
-        set zynq_ultra_ps_handle [hsi::get_cells -hier -filter {IP_NAME == " zynq_ultra_ps_e"}]
+        set zynq_ultra_ps_handle [hsi::get_cells -hier -filter {IP_NAME == zynq_ultra_ps_e}]
         if {[llength $zynq_ultra_ps_handle]} {
                 set nr_freq [hsi get_property CONFIG.PSU__CRL_APB__AMS_REF_CTRL__ACT_FREQMHZ $zynq_ultra_ps_handle]
                 if {![string_is_empty $nr_freq]} {
-                        set value [expr {int($nr_freq)}]
-                        add_prop $node "xlnx,clock-freq" $value hexint "pcw.dtsi"
+                        set value [scan [expr $nr_freq * 1000000] "%d"]
+                        add_prop $node "xlnx,clock-freq" $value int "pcw.dtsi"
                 }
         }
         set common_file "$path/device_tree/data/config.yaml"
