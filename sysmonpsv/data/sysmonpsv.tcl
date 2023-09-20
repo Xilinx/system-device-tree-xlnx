@@ -41,7 +41,7 @@
             }
         }
         append numsupplies "/bits/8 <$num_supply_channels>"
-        add_prop $node "xlnx,numchannels" $numsupplies mixed $dts_file
+        add_prop $node "xlnx,numchannels" $numsupplies noformating $dts_file
     }
 
 
