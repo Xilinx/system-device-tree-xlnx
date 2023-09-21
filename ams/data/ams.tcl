@@ -26,7 +26,7 @@
         if {[llength $zynq_ultra_ps_handle]} {
                 set nr_freq [hsi get_property CONFIG.PSU__CRL_APB__AMS_REF_CTRL__ACT_FREQMHZ $zynq_ultra_ps_handle]
                 if {![string_is_empty $nr_freq]} {
-                        set value [scan [expr $nr_freq * 1000000] "%d"]
+                        set value [scan $nr_freq "%d"]
                         add_prop $node "xlnx,clock-freq" $value int "pcw.dtsi"
                 }
         }
