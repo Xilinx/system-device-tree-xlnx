@@ -13,349 +13,175 @@
 # GNU General Public License for more details.
 #
 
-    proc ddrps_gen_ps7_ddr_reg_property {drv_handle system_node} {
-        proc_called_by
-        set regprop [get_count "regp"]
-        set psu_cortexa53 ""
-        set proctype [get_hw_family]
-        if {[string match -nocase $proctype "zynq"]} {
-        	set value 0
-        } elseif {[string match -nocase $proctype "psu_pmu"]} {
-        	set value [ddrps_generate_secure_memory_pmu $drv_handle]
-        } elseif {[string match -nocase $proctype "psu_cortexr5"]} {
-        	set value [ddrps_generate_secure_memory_r5 $drv_handle]
-        } else {
-        	set value [ddrps_generate_secure_memory $drv_handle]
-        }
-        if { $value !=0} {
-        	add_prop $system_node reg $value hexlist "system-top.dts"
-        } else {
-        	set slave [hsi::get_cells -hier ${drv_handle}]
-        	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR || IP_TYPE==MICROBLAZE}]
-        	foreach procc $proclist {
-        		set ip_mem_handles [hsi::get_mem_ranges $slave]
-        		set firstelement [lindex $ip_mem_handles 0]
-			set index [lsearch [hsi::get_mem_ranges -of_objects $procc] [hsi::get_cells -hier $firstelement]]
-			if {$index == "-1"} {
-				continue
-		        }
-        		foreach mem_handle ${ip_mem_handles} {
-				set base [format "0x%x" [hsi get_property BASE_VALUE $mem_handle]]
-				set high [format "0x%x" [hsi get_property HIGH_VALUE $mem_handle]]
-				set mem_size [format 0x%x [expr {${high} - ${base} + 1}]]
-				if {[is_zynqmp_platform $proctype]} {
-					# Check if memory crossing 4GB map, then split 2GB below 32 bit limit
-					# and remaining above 32 bit limit
-					if { [expr {${mem_size} + ${base}}] >= [expr 0x100000000] } {
-						set low_mem_size [expr {0x80000000 - ${base}}]
-						set high_mem_size [expr {${mem_size} - ${low_mem_size}}]
-						set low_mem_size [format "0x%x" ${low_mem_size}]
-						set high_mem_size [ddrps_get_high_mem_size $high_mem_size]
-						set regval "0x0 ${base} 0x0 $low_mem_size>, <0x8 0x00000000 $high_mem_size"
-					} else {
-						set regval "0x0 ${base} 0x0 ${mem_size}"
-					}
-			        } else {
-					set regval "${base} ${mem_size}"
-					if {[string match -nocase [hsi get_property IP_NAME $procc] "ps7_cortexa9"]} {
-						set_memmap "${drv_handle}_memory" a53 "0x0 ${base} 0x0 ${mem_size}"
-					}
-				}
-			}
-        	}
-        	add_prop $system_node reg $regval hexlist "system-top.dts"
-        }
-    }
-
-    proc ddrps_generate_secure_memory {drv_handle} {
-        set regprop ""
-        set psu_cortexa53 ""
-        set r5_0 0
-        set r5_1 0
+    proc ddrps_gen_reg_prop {drv_handle} {
+        global ddr_baseaddr
+        set overall_addr_list ""
+        set proc_addr_list ""
         set a53 0
-        set pmu 0
         set slave [hsi::get_cells -hier ${drv_handle}]
-        set name [hsi get_property NAME [hsi::get_cells -hier $drv_handle]]
+        set name [hsi get_property NAME $slave]
         set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
+        set platform [get_hw_family]
+        set 32_bit_format 0
+
         foreach procc $proclist {
-		set ip_mem_handles [hsi::get_mem_ranges $slave]
-		set firstelement [lindex $ip_mem_handles 0]
-		set index [lsearch [hsi::get_mem_ranges -of_objects $procc] [hsi::get_cells -hier $firstelement]]
+		set proc_ip_name [hsi get_property IP_NAME $procc]
+		if {$a53 == 1 && ([string match -nocase ${proc_ip_name} "psu_cortexa53"] || [string match -nocase ${proc_ip_name} "ps7_cortexa9"]) } {
+			continue
+		}
+		if {[string match -nocase ${proc_ip_name} "psu_cortexa53"] || [string match -nocase ${proc_ip_name} "ps7_cortexa9"]} {
+			set a53 1
+		}
+		set proc_addr_list ""
+		set proc_mem_map [hsi::get_mem_ranges -of_objects $procc]
+		set index [lsearch $proc_mem_map $slave]
+
+		# Check if there is any memory bank is mapped to the current processor
 		if {$index == "-1"} {
 			continue
 	        }
-		set avail_param [hsi list_property [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
-		set addr_64 "0"
-		set size_64 "0"
-		foreach bank ${ip_mem_handles} {
-			if {$r5_0 == 1 && [string match -nocase [hsi get_property NAME $procc] "psu_cortexr5_0"]} {
-				continue
+		while {1} {
+			set index [lsearch -start $index $proc_mem_map $slave]
+			if {$index == "-1"} {
+				break
 			}
-			if {[string match -nocase [hsi get_property NAME $procc] "psu_cortexr5_0"]} {
-				set r5_0 1
-			}
-			if {$r5_1 == 1 && [string match -nocase [hsi get_property NAME $procc] "psu_cortexr5_1"]} {
-				continue
-			}
-			if {[string match -nocase [hsi get_property NAME $procc] "psu_cortexr5_1"]} {
-				set regprop ""
-				set r5_1 1
-			}
-			if {$a53 == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexa53"]} {
-				continue
-			}
-			if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexa53"]} {
-				set a53 1
-			}
-			if {$pmu == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psu_pmu"]} {
-				continue
-			}
-			if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_pmu"]} {
-				set pmu 1
-			}
-
-			set state [hsi get_property TRUSTZONE [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
-			set index [lsearch -start $index [hsi::get_mem_ranges -of_objects $procc] [hsi::get_cells -hier $bank]]
-			set base [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
-			set high [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
-			set mem_size [format 0x%x [expr {${high} - ${base} + 1}]]
-			if {[string match -nocase $name "psu_r5_ddr_0"]} {
-				set mem_size $high
-			}
-
-			if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
-				set addr_64 "1"
-				set temp $base
-				set temp [string trimleft [string trimleft $temp 0] x]
-				set len [string length $temp]
-				set rem [expr {${len} - 8}]
-				set high_base "0x[string range $temp $rem $len]"
-				set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
-				set low_base [format 0x%08x $low_base]
-			}
-			if {[regexp -nocase {0x([0-9a-f]{9})} "$mem_size" match]} {
-				set size_64 "1"
-				set temp $mem_size
-				set temp [string trimleft [string trimleft $temp 0] x]
-				set len [string length $temp]
-				set rem [expr {${len} - 8}]
-				set high_size "0x[string range $temp $rem $len]"
-				set low_size "0x[string range $temp 0 [expr {${rem} - 1}]]"
-				set low_size [format 0x%08x $low_size]
-			}
-			if {[string match $regprop ""]} {
-				if {[string match $addr_64 "1"] && [string match $size_64 "1"]} {
-					set regprop "$low_base $high_base $low_size $high_size"
-				} elseif {[string match $addr_64 "1"] && [string match $size_64 "0"]} {
-					set regprop "${low_base} ${high_base} 0x0 ${mem_size}"
-				} elseif {[string match $addr_64 "0"] && [string match $size_64 "1"]} {
-					set regprop "0x0 ${base} 0x0 ${mem_size}"
-				} else {
-					set regprop "0x0 ${base} 0x0 ${mem_size}"
-				}
-			} else {
-				if {[string match $addr_64 "1"] && [string match $size_64 "1"]} {
-					append regprop ">, " "<$low_base $high_base $low_size $high_size"
-				} elseif {[string match $addr_64 "1"] && [string match $size_64 "0"]} {
-					append regprop ">, " "<${low_base} ${high_base} 0x0 ${mem_size}"
-				} elseif {[string match $addr_64 "0"] && [string match $size_64 "1"]} {
-					append regprop ">, " "<0x0 ${base} 0x0 ${mem_size}"
-				} else {
-					append regprop ">, " "<0x0 ${base} 0x0 ${mem_size}"
-				}
-			}
-			if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"]} {
-				set_memmap "${drv_handle}_memory" $procc $regprop
-			}
-			if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexa53"]} {
-				set_memmap "${drv_handle}_memory" a53 $regprop
-			}
-			if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_pmu"]} {
-				set_memmap "${drv_handle}_memory" pmu $regprop
-			}
-			if {[string match -nocase [hsi get_property IP_NAME $procc] "microblaze"]} {
-				set_memmap "${drv_handle}_memory" $procc $regprop
-			}
-
+			set base [hsi get_property BASE_VALUE [lindex $proc_mem_map $index]]
+			set high [hsi get_property HIGH_VALUE [lindex $proc_mem_map $index]]
+			lappend overall_addr_list "$base $high"
+			lappend proc_addr_list "$base $high"
+			incr index
 		}
-		set addr_64 "0"
-		set size_64 "0"
-		set index [expr $index + 1]
+		if {[string match -nocase ${proc_ip_name} "psu_cortexr5"]} {
+			set_memmap "${drv_handle}_memory" $procc [ddrps_get_union_reg_prop $proc_addr_list $name $32_bit_format]
+		}
+		if {[string match -nocase ${proc_ip_name} "psu_cortexa53"] || [string match -nocase ${proc_ip_name} "ps7_cortexa9"]} {
+			set_memmap "${drv_handle}_memory" a53 [ddrps_get_union_reg_prop $proc_addr_list $name $32_bit_format]
+		}
+		if {[string match -nocase ${proc_ip_name} "psu_pmu"]} {
+			set_memmap "${drv_handle}_memory" pmu [ddrps_get_union_reg_prop $proc_addr_list $name $32_bit_format]
+		}
+		if {[string match -nocase ${proc_ip_name} "microblaze"]} {
+			set_memmap "${drv_handle}_memory" $procc [ddrps_get_union_reg_prop $proc_addr_list $name $32_bit_format]
+		}
 	}
-        return $regprop
-    }
 
-    proc ddrps_generate_secure_memory_pmu {drv_handle} {
-        set regprop [ get_os_parameter_value "regp"]
-        set psu_cortexa53 ""
-        set slave [get_cells -hier ${drv_handle}]
-        set ip_mem_handles [get_ip_mem_ranges $slave]
-        set firstelement [lindex $ip_mem_handles 0]
-        set index [lsearch [get_mem_ranges -of_objects [get_cells -hier psu_pmu_0]] [get_cells $firstelement]]
-        set avail_param [hsi list_property [lindex [get_mem_ranges -of_objects [get_cells -hier psu_pmu_0]] $index]]
-        set addr_64 "0"
-        set size_64 "0"
-        if {[lsearch -nocase $avail_param "TRUSTZONE"] >= 0} {
-        foreach bank ${ip_mem_handles} {
-            set state [hsi get_property TRUSTZONE [lindex [get_mem_ranges -of_objects [get_cells -hier psu_pmu_0]] $index]]
-            if {[string match -nocase $state "NonSecure"]} {
-                set index [lsearch -start $index [get_mem_ranges -of_objects [get_cells -hier psu_pmu_0]] [get_cells -hier $bank]]
-                set base [hsi get_property BASE_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier psu_pmu_0]] $index]]
-                set high [hsi get_property HIGH_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier psu_pmu_0]] $index]]
-                set mem_size [format 0x%x [expr {${high} - ${base} + 1}]]
-                if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
-                    set addr_64 "1"
-                    set temp $base
-                    set temp [string trimleft [string trimleft $temp 0] x]
-                    set len [string length $temp]
-                    set rem [expr {${len} - 8}]
-                    set high_base "0x[string range $temp $rem $len]"
-                    set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
-                    set low_base [format 0x%08x $low_base]
-                }
-                if {[regexp -nocase {0x([0-9a-f]{9})} "$mem_size" match]} {
-                    set size_64 "1"
-                    set temp $mem_size
-                    set temp [string trimleft [string trimleft $temp 0] x]
-                    set len [string length $temp]
-                    set rem [expr {${len} - 8}]
-                    set high_size "0x[string range $temp $rem $len]"
-                    set low_size "0x[string range $temp 0 [expr {${rem} - 1}]]"
-                    set low_size [format 0x%08x $low_size]
-                }
-                if {[string match $regprop ""]} {
-                    if {[string match $addr_64 "1"] && [string match $size_64 "1"]} {
-                        set regprop "$low_base $high_base $low_size $high_size"
-                    } elseif {[string match $addr_64 "1"] && [string match $size_64 "0"]} {
-                        set regprop "${low_base} ${high_base} 0x0 ${mem_size}"
-                    } elseif {[string match $addr_64 "0"] && [string match $size_64 "1"]} {
-                        set regprop "0x0 ${base} 0x0 ${mem_size}"
-                    } else {
-                        set regprop "0x0 ${base} 0x0 ${mem_size}"
-                    }
-                } else {
-                    if {[string match $addr_64 "1"] && [string match $size_64 "1"]} {
-                        append regprop ">, " "<$low_base $high_base $low_size $high_size"
-                    } elseif {[string match $addr_64 "1"] && [string match $size_64 "0"]} {
-                        append regprop ">, " "<${low_base} ${high_base} 0x0 ${mem_size}"
-                    } elseif {[string match $addr_64 "0"] && [string match $size_64 "1"]} {
-                        append regprop ">, " "<0x0 ${base} 0x0 ${mem_size}"
-                    } else {
-                        append regprop ">, " "<0x0 ${base} 0x0 ${mem_size}"
-                    }
-                }
-            }
-            set addr_64 "0"
-            set size_64 "0"
-            set index [expr $index + 1]
-        }
-        return $regprop
-        } else {
-        return 0
-        }
-    }
+	# get_baseaddr gives the address of the first memory bank mapped. In case of ZU+MB designs
+	# first bank can be mapped to mb whose mapped base address may not be same as the overall
+	# base address among all the banks. Thus, sorting the overall addr list to get the global
+	# lowest addr.
 
-    proc ddrps_generate_secure_memory_r5 {drv_handle} {
-        set regprop [ get_os_parameter_value "regp"]
-        set psu_cortexa53 ""
-        set slave [get_cells -hier ${drv_handle}]
-        set ip_mem_handles [get_ip_mem_ranges $slave]
-        set firstelement [lindex $ip_mem_handles 0]
-        set index [lsearch [get_mem_ranges -of_objects [get_cells -hier psu_cortexr5_0]] [get_cells $firstelement]]
-        set avail_param [hsi list_property [lindex [get_mem_ranges -of_objects [get_cells -hier psu_cortexr5_0]] $index]]
-        set addr_64 "0"
-        set size_64 "0"
-        if {[lsearch -nocase $avail_param "TRUSTZONE"] >= 0} {
-        foreach bank ${ip_mem_handles} {
-            set state [hsi get_property TRUSTZONE [lindex [get_mem_ranges -of_objects [get_cells -hier psu_cortexr5_0]] $index]]
-            if {[string match -nocase $state "NonSecure"]} {
-                set index [lsearch -start $index [get_mem_ranges -of_objects [get_cells -hier psu_cortexr5_0]] [get_cells -hier $bank]]
-                set base [hsi get_property BASE_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier psu_cortexr5_0]] $index]]
-                set high [hsi get_property HIGH_VALUE [lindex [get_mem_ranges -of_objects [get_cells -hier psu_cortexr5_0]] $index]]
-                set mem_size [format 0x%x [expr {${high} - ${base} + 1}]]
-                if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
-                    set addr_64 "1"
-                    set temp $base
-                    set temp [string trimleft [string trimleft $temp 0] x]
-                    set len [string length $temp]
-                    set rem [expr {${len} - 8}]
-                    set high_base "0x[string range $temp $rem $len]"
-                    set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
-                    set low_base [format 0x%08x $low_base]
-                }
-                if {[regexp -nocase {0x([0-9a-f]{9})} "$mem_size" match]} {
-                    set size_64 "1"
-                    set temp $mem_size
-                    set temp [string trimleft [string trimleft $temp 0] x]
-                    set len [string length $temp]
-                    set rem [expr {${len} - 8}]
-                    set high_size "0x[string range $temp $rem $len]"
-                    set low_size "0x[string range $temp 0 [expr {${rem} - 1}]]"
-                    set low_size [format 0x%08x $low_size]
-                }
-                if {[string match $regprop ""]} {
-                    if {[string match $addr_64 "1"] && [string match $size_64 "1"]} {
-                        set regprop "$low_base $high_base $low_size $high_size"
-                    } elseif {[string match $addr_64 "1"] && [string match $size_64 "0"]} {
-                        set regprop "${low_base} ${high_base} 0x0 ${mem_size}"
-                    } elseif {[string match $addr_64 "0"] && [string match $size_64 "1"]} {
-                        set regprop "0x0 ${base} 0x0 ${mem_size}"
-                    } else {
-                        set regprop "0x0 ${base} 0x0 ${mem_size}"
-                    }
-                } else {
-                    if {[string match $addr_64 "1"] && [string match $size_64 "1"]} {
-                        append regprop ">, " "<$low_base $high_base $low_size $high_size"
-                    } elseif {[string match $addr_64 "1"] && [string match $size_64 "0"]} {
-                        append regprop ">, " "<${low_base} ${high_base} 0x0 ${mem_size}"
-                    } elseif {[string match $addr_64 "0"] && [string match $size_64 "1"]} {
-                        append regprop ">, " "<0x0 ${base} 0x0 ${mem_size}"
-                    } else {
-                        append regprop ">, " "<0x0 ${base} 0x0 ${mem_size}"
-                    }
-                }
-            }
-            set addr_64 "0"
-            set size_64 "0"
-            set index [expr $index + 1]
-        }
-        return $regprop
-        } else {
-        return 0
-        }
+	set overall_addr_list [lsort -integer -index 0 $overall_addr_list]
+	set ddr_baseaddr [lindex [lindex $overall_addr_list 0] 0]
+	regsub -all {^0x} $ddr_baseaddr {} ddr_baseaddr
+	if {[string equal -nocase $platform "zynq"]} {
+		set 32_bit_format 1
+	}
+	return [ddrps_get_union_reg_prop $overall_addr_list $name $32_bit_format]
     }
 
     proc ddrps_generate {drv_handle} {
-        set baseaddr [get_baseaddr $drv_handle noprefix]
-        set system_node [create_node -l "${drv_handle}_memory" -n "memory" -u $baseaddr -p root -d "system-top.dts"]
-        ddrps_gen_ps7_ddr_reg_property $drv_handle $system_node
+        global ddr_baseaddr
         set dts_file "system-top.dts"
+        set reg_prop [ddrps_gen_reg_prop $drv_handle]
+        set system_node [create_node -l "${drv_handle}_memory" -n "memory" -u $ddr_baseaddr -p root -d $dts_file]
+        add_prop $system_node reg $reg_prop hexlist $dts_file
         add_prop $system_node "device_type" "memory" string $dts_file
-        set slave [hsi::get_cells -hier ${drv_handle}] 
-        set vlnv [split [hsi get_property VLNV $slave] ":"] 
-        set name [lindex $vlnv 2] 
-        set ver [lindex $vlnv 3] 
-        set comp_prop "xlnx,${name}-${ver}" 
-        regsub -all {_} $comp_prop {-} comp_prop 
-        add_prop $system_node "compatible" $comp_prop string $dts_file
+        add_prop $system_node "compatible" [gen_compatible_string $drv_handle] string $dts_file
     }
 
-    proc ddrps_get_high_mem_size {high_mem_size} {
-        set size "0x0 0x0"
-        set high_mem_size [format "0x%x" ${high_mem_size}]
-        if {[regexp -nocase {0x([0-9a-f]{9})} "$high_mem_size" match]} {
-                set temp $high_mem_size
-                set temp [string trimleft [string trimleft $temp 0] x]
-                set len [string length $temp]
-                set rem [expr {${len} - 8}]
-                set high_mem "0x[string range $temp $rem $len]"
-                set low_mem "0x[string range $temp 0 [expr {${rem} - 1}]]"
-                set low_mem [format 0x%08x $low_mem]
-                set size "$low_mem $high_mem"
-        } else {
-                set size "0x0 $high_mem_size"
-        }
-        return $size
+    proc ddrps_get_reg_format {base high name 32_bit_format} {
+	# Converts the base and high addresses into device tree reg format base and size
+	# Makes proper adjustements for 32 bit and 64 bit address and size formats
+
+	set reg ""
+	set addr_64 "0"
+	set size_64 "0"
+	set mem_size [format 0x%x [expr {${high} - ${base} + 1}]]
+	if {[string match -nocase $name "psu_r5_ddr_0"]} {
+		set mem_size $high
+	}
+	if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
+		set addr_64 "1"
+		set temp $base
+		set temp [string trimleft [string trimleft $temp 0] x]
+		set len [string length $temp]
+		set rem [expr {${len} - 8}]
+		set high_base "0x[string range $temp $rem $len]"
+		set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
+		set low_base [format 0x%08x $low_base]
+	}
+	if {[regexp -nocase {0x([0-9a-f]{9})} "$mem_size" match]} {
+		set size_64 "1"
+		set temp $mem_size
+		set temp [string trimleft [string trimleft $temp 0] x]
+		set len [string length $temp]
+		set rem [expr {${len} - 8}]
+		set high_size "0x[string range $temp $rem $len]"
+		set low_size "0x[string range $temp 0 [expr {${rem} - 1}]]"
+		set low_size [format 0x%08x $low_size]
+	}
+
+	if {[string match $addr_64 "1"] && [string match $size_64 "1"]} {
+		set reg "$low_base $high_base $low_size $high_size"
+	} elseif {[string match $addr_64 "1"] && [string match $size_64 "0"]} {
+		set reg "${low_base} ${high_base} 0x0 ${mem_size}"
+	} elseif {[string match $addr_64 "0"] && [string match $size_64 "1"]} {
+		set reg "0x0 ${base} 0x0 ${mem_size}"
+	} elseif { $32_bit_format } {
+		# For zynq where address and size cells are 1, memory node at the top
+		# should be in below format
+		set reg "${base} ${mem_size}"
+	} else {
+		set reg "0x0 ${base} 0x0 ${mem_size}"
+	}
+	return $reg
     }
 
+    proc ddrps_get_union_reg_prop {complete_addr_list name 32_bit_format} {
+	# Gets the list of all the (base_addr high_addr), figures out the unified address range.
+	#
+	# Sample Input: {0x20000000 0x3FFFFFFF} {0x20000000 0x3FFFFFFF} {0x20000000 0x3FFFFFFF}
+	# {0x20000000 0x3FFFFFFF} {0x20000000 0x3FFFFFFF} {0x20000000 0x3FFFFFFF} {0x20000000 0x3FFFFFFF}
+	# {0x20000000 0x3FFFFFFF} {0x0 0x7FEFFFFF} {0x7FF00000 0x7FFFFFFF} {0x0 0x7FEFFFFF} {0x7FF00000 0x7FFFFFFF}
+	#
+	# Output: <0x0 0x0 0x0 0x7ff00000>, <0x0 0x7FF00000 0x0 0x100000>
 
+	set regprop ""
+	set updated_addr_list [list]
+
+	# Pseudo code for below logic:
+	# a = [list of (base_addr_x high_addr_x)]
+	# b = []
+	# for begin,end in sorted(a):
+	#     if b and b[-1][1] >= begin:
+	#         b[-1][1] = max(b[-1][1], end)
+	#     else:
+	#         b.append([begin, end])
+	#
+
+	set complete_addr_list [lsort -integer -index 0 $complete_addr_list]
+	foreach addr_set $complete_addr_list {
+		lassign $addr_set curr_base_addr curr_high_addr
+		if {[llength $updated_addr_list] > 0 && [lindex [lindex $updated_addr_list end] end] >= $curr_base_addr} {
+			set new_end [lindex [lindex $updated_addr_list end] end]
+			if {$new_end < $curr_high_addr} {
+				set updated_addr_list [lreplace [lindex $updated_addr_list end] end end $curr_high_addr]
+			}
+		} else {
+			lappend updated_addr_list "$curr_base_addr $curr_high_addr"
+		}
+	}
+
+	# updated_addr_list at this point : {0x0 0x7FEFFFFF} {0x7FF00000 0x7FFFFFFF}
+
+	foreach addr_set $updated_addr_list {
+		lassign $addr_set curr_base_addr curr_high_addr
+		set reg_to_add [ddrps_get_reg_format $curr_base_addr $curr_high_addr $name $32_bit_format]
+		if {[string_is_empty $regprop]} {
+			set regprop $reg_to_add
+		} else {
+			append regprop ">, " "<$reg_to_add"
+		}
+	}
+	return $regprop
+    }
