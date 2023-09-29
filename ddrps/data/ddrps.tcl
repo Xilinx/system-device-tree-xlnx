@@ -70,7 +70,7 @@
 	# base address among all the banks. Thus, sorting the overall addr list to get the global
 	# lowest addr.
 
-	set overall_addr_list [lsort -integer -index 0 $overall_addr_list]
+	set overall_addr_list [lsort -real -index 0 $overall_addr_list]
 	set ddr_baseaddr [lindex [lindex $overall_addr_list 0] 0]
 	regsub -all {^0x} $ddr_baseaddr {} ddr_baseaddr
 	if {[string equal -nocase $platform "zynq"]} {
@@ -159,7 +159,7 @@
 	#         b.append([begin, end])
 	#
 
-	set complete_addr_list [lsort -integer -index 0 $complete_addr_list]
+	set complete_addr_list [lsort -real -index 0 $complete_addr_list]
 	foreach addr_set $complete_addr_list {
 		lassign $addr_set curr_base_addr curr_high_addr
 		if {[llength $updated_addr_list] > 0 && [lindex [lindex $updated_addr_list end] end] >= $curr_base_addr} {
