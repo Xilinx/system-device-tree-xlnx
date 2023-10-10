@@ -281,6 +281,10 @@ proc remove_duplicate_addr args {
 	foreach drv_handle $peri_list {
 		set periph_addr [get_baseaddr $drv_handle]
 		set ip_name [get_ip_property $drv_handle IP_NAME]
+		set hier_name [get_ip_property $drv_handle HIER_NAME]
+		if {![string_is_empty $hier_name] && [llength [split $hier_name "/"]] > 1} {
+			continue
+		}
 		# Ignore bram_cntrl, it will create issues in case of multiple microblazes having a
 		# bram cntrl each. bram specific logic is moved to axi_bram tcl
 		if {[string match -nocase $ip_name "lmb_bram_if_cntlr"]} {
