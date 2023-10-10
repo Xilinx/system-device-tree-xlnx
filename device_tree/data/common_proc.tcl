@@ -440,13 +440,14 @@ proc get_node args {
 
 	proc_called_by
 	set handle [lindex $args 0]
+	set handle [hsi::get_cells -hier $handle]
 	if { [dict exists $node_dict $cur_hw_design $handle] } {
 		return [dict get $node_dict $cur_hw_design $handle]
 	}
 	set non_val_list "versal_cips noc_nmu noc_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect noc_nsw"
 	set non_val_ip_types "MONITOR BUS PROCESSOR"
-	set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $handle]]
-	set ip_type [hsi get_property IP_TYPE [hsi::get_cells -hier $handle]]
+	set ip_name [hsi get_property IP_NAME $handle]
+	set ip_type [hsi get_property IP_TYPE $handle]
 	if {[lsearch -nocase $non_val_list $ip_name] >= 0} {
 		dict set node_dict $cur_hw_design $handle {}
 		return ""
@@ -462,7 +463,7 @@ proc get_node args {
 		set dts_file [set_drv_def_dts $handle]
 	}
 	set dts_file [set_drv_def_dts $handle]
-	set ip_type [hsi get_property IP_TYPE [hsi::get_cells -hier $handle]]
+	set ip_type [hsi get_property IP_TYPE $handle]
 	set addr [get_baseaddr $handle noprefix]
 	if {[string match -nocase $dts_file "pcw.dtsi"]} {
 		set treeobj "pcwdt"
@@ -488,7 +489,7 @@ proc get_node args {
 	#set childs [$treeobj children $busname]
 	#foreach child $childs {
 	#}
-	set dev_type [hsi get_property IP_NAME [hsi::get_cells -hier $handle]]
+	set dev_type [hsi get_property IP_NAME $handle]
 	if {[string match -nocase $dev_type "psv_fpd_smmutcu"]} {
 		set dev_type "psv_fpd_maincci"
 	}
@@ -5789,6 +5790,8 @@ proc ps7_reset_handle {drv_handle reset_pram conf_prop} {
 
 proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	# Check if the peripheral is in Secure or Non-secure zone
+	global node_dict
+	global cur_hw_design
 	proc_called_by
 	set status_enable_flow 0
 	set ip [hsi::get_cells -hier $drv_handle]
@@ -5808,7 +5811,11 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	if {[string_is_empty $dev_type] == 1} {
 		set ps_mapping [gen_ps_mapping]
 		if {[catch {set tmp [dict get $ps_mapping $unit_addr label]} msg]} {
-			set dev_type [hsi get_property IP_NAME [hsi::get_cells -hier $ip]]
+			set dev_type [get_ip_property $ip IP_NAME]
+			set hier_name [get_ip_property $ip HIER_NAME]
+			if {![string_is_empty $hier_name] && [llength [split $hier_name "/"]] > 1} {
+				set dev_type $ip
+			}
 		} else {
 			set value [split $tmp ": "]
 			set label [lindex $value 0]
@@ -6063,6 +6070,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	# generate_mb_ccf_node $drv_handle
 	generate_cci_node $drv_handle $rt_node
 
+	dict set node_dict $cur_hw_design $drv_handle $rt_node
 	return $rt_node
 }
 
