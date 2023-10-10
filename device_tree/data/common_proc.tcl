@@ -5592,8 +5592,11 @@ proc ip2drv_prop {ip_name prop_name_list} {
 			add_prop $node $drv_prop_name hexint "pl.dtsi"
 			continue
 		}
-
-		if {[string match -nocase $ip_prop_name "CONFIG.C_AXIS_SIGNAL_SET"] || [string match -nocase $ip_prop_name "CONFIG.C_USE_BRAM_BLOCK"] || [string match -nocase $ip_prop_name "CONFIG.C_ALGORITHM"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_TYPE"] || [string match -nocase $ip_prop_name "CONFIG.C_INTERFACE_TYPE"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_SLAVE_TYPE"] || [string match -nocase $ip_prop_name "CONFIG.device_port_type"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_WRITE_BASEADDR_SLV"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_WRITE_HIGHADDR_SLV"]|| [string match -nocase $ip_prop_name "CONFIG.C_PVR_USER1"] || [string match -nocase $ip_prop_name "CONFIG.Component_Name"]} {
+		set ignore_ip_props "CONFIG.C_AXIS_SIGNAL_SET CONFIG.C_USE_BRAM_BLOCK CONFIG.C_ALGORITHM \
+			CONFIG.C_AXI_TYPE CONFIG.C_INTERFACE_TYPE CONFIG.C_AXI_SLAVE_TYPE CONFIG.device_port_type \
+			CONFIG.C_AXI_WRITE_BASEADDR_SLV CONFIG.C_AXI_WRITE_HIGHADDR_SLV CONFIG.C_PVR_USER1 \
+			CONFIG.Component_Name"
+		if {[lsearch $ignore_ip_props $ip_prop_name] >= 0} {
 			continue
 		}
 
