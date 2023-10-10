@@ -61,7 +61,7 @@
                 set phy_node [create_node -n "vphy_lane" -u $ch -l vphy_lane$ch -p $node -d $dts_file]
                 add_prop "$phy_node" "#phy-cells" 4 int $dts_file
         }
-        set transceiver [hsi hsi get_property CONFIG.Transceiver [hsi get_cells -hier $drv_handle]]
+        set transceiver [hsi get_property CONFIG.Transceiver [hsi get_cells -hier $drv_handle]]
         switch $transceiver {
                         "GTXE2" {
                                 add_prop "${node}" "xlnx,transceiver-type" 1 int $dts_file
@@ -86,7 +86,7 @@
                         }
         }
 
-        set gt_direction [hsi hsi get_property CONFIG.C_GT_DIRECTION [hsi get_cells -hier $drv_handle]]
+        set gt_direction [hsi get_property CONFIG.C_GT_DIRECTION [hsi get_cells -hier $drv_handle]]
         switch $gt_direction {
                         "SIMPLEX_TX" {
                                 add_prop "${node}" "xlnx,gt-direction" 1  int $dts_file
