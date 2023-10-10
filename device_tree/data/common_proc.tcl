@@ -5592,6 +5592,7 @@ proc ip2drv_prop {ip_name prop_name_list} {
 			add_prop $node $drv_prop_name hexint "pl.dtsi"
 			continue
 		}
+
 		if {[string match -nocase $ip_prop_name "CONFIG.C_AXIS_SIGNAL_SET"] || [string match -nocase $ip_prop_name "CONFIG.C_USE_BRAM_BLOCK"] || [string match -nocase $ip_prop_name "CONFIG.C_ALGORITHM"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_TYPE"] || [string match -nocase $ip_prop_name "CONFIG.C_INTERFACE_TYPE"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_SLAVE_TYPE"] || [string match -nocase $ip_prop_name "CONFIG.device_port_type"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_WRITE_BASEADDR_SLV"] || [string match -nocase $ip_prop_name "CONFIG.C_AXI_WRITE_HIGHADDR_SLV"]|| [string match -nocase $ip_prop_name "CONFIG.C_PVR_USER1"] || [string match -nocase $ip_prop_name "CONFIG.Component_Name"]} {
 			continue
 		}
@@ -5660,25 +5661,21 @@ proc remove_duplicates {ip_handle} {
 		set inner ""
 		if {[regexp -nocase "CONFIG.C_.*" $prop match]} {
 			set temp [regsub -all {CONFIG.C_} $prop $inner]
-			dict set dictval $temp $prop
+			dict set dictval [string tolower $temp] $prop
 		}
 	}
 	foreach prop $par_handles {
-		set inner ""
-		set temp [regsub -all {^CONFIG.} $prop $inner]
-		set inner ""
-		set temp [regsub -all {^C_} $temp $inner]
+		set temp [regsub -all {^CONFIG.} $prop ""]
+		set temp [regsub -all {^C_} $temp ""]
+		set temp [string tolower $temp]
 		if {![dict exists $dictval $temp]} {
 			dict set dictval $temp $prop
 		}
-
 	}
 	set values [lsort -nocase -unique [dict keys $dictval]]
 	set tempvalues {}
 	foreach val $values {
-		if {[dict exists $dictval $val]} {
-			lappend tempvalues [dict get $dictval $val]
-		}
+		lappend tempvalues [dict get $dictval $val]
 	}
 	return $tempvalues
 }
