@@ -1373,7 +1373,6 @@ Generates system device tree based on args given in:
 				${drvname}_generate $drv_handle
 			}
 		}
-		update_endpoints $drv_handle
 	}
 
 	namespace forget ::
