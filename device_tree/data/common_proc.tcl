@@ -6131,23 +6131,47 @@ proc get_afi_val {val} {
 		} "32" {
 			set afival 2
 		} default {
+			set afival ""
 			dtg_warning "invalid value:$val"
 		}
 	}
 	return $afival
 }
 
-proc get_max_afi_val {val} {
+proc get_max_afi_val {val prop_name} {
 	set max_afival ""
-	switch $val {
-		"128" {
-			set max_afival 2
-		} "64" {
-			set max_afival 1
-		} "32" {
-			set max_afival 0
-		} default {
-			dtg_warning "invalid value:$val"
+	if {[string match $prop_name "CONFIG.C_MAXIGP2_DATA_WIDTH"]} {
+		switch $val {
+			"128" {
+				set max_afival 0x200
+			} "64" {
+				set max_afival 0x100
+			} "32" {
+				set max_afival 0x000
+			} default {
+				set max_afival ""
+				dtg_warning "invalid value:$val"
+			}
+		}
+	} else {
+		switch $val {
+			"128" {
+				set max_afival 2
+			} "64" {
+				set max_afival 1
+			} "32" {
+				set max_afival 0
+			} default {
+				set max_afival ""
+				dtg_warning "invalid value:$val"
+			}
+		}
+		if {![string_is_empty $max_afival]} {
+			if {[string match $prop_name "CONFIG.C_MAXIGP0_DATA_WIDTH"]} {
+				set max_afival [expr $max_afival <<8]
+			} elseif {[string match $prop_name "CONFIG.C_MAXIGP1_DATA_WIDTH"]} {
+				set max_afival [expr $max_afival << 10]
+			}
 		}
 	}
 	return $max_afival
