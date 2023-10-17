@@ -320,7 +320,7 @@
             set phytype [string tolower [hsi get_property CONFIG.BASE_R_KR $eth_ip]]
             add_prop $node phy-mode "$phytype" string $dts_file
             if {$core == 0} {
-                pldt set $node compatible "\ \"xlnx,xxv-ethernet-1.0\""
+                pldt set $node compatible "\"xlnx,xxv-ethernet-1.0\""
             }
             if { $core!= 0 && [llength $eth_node]} {
                 set compatible [pldt get $node compatible]
@@ -331,7 +331,7 @@
             }
         }
         if {$ip_name == "usxgmii"} {
-            pldt set $node compatible "\ \"xlnx,xxv-usxgmii-ethernet-1.0\""
+            pldt set $node compatible "\"xlnx,xxv-usxgmii-ethernet-1.0\""
             # phy-mode is usxgmii in this case ip_name also same
             add_prop $node phy-mode "$ip_name" string "pl.dtsi"
             add_prop $node "xlnx,usxgmii-rate" 1000 int "pl.dtsi"
