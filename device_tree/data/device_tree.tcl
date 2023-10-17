@@ -1518,7 +1518,8 @@ proc proc_mapping {} {
 	global is_versal_net_platform
 	set proctype [get_hw_family]
 	set default_dts "system-top.dts"
-	set proc_list [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
+	# For KSB designs dmac_mst IP is also coming as a PROCESSOR
+	set proc_list [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR && IP_NAME!=dmac_mst}]
 	set hier_periph_list [hsi::get_cells -hier -filter {IS_HIERARCHICAL==1}]
 	set periphs_list ""
 	append periphs_list [hsi::get_cells -hier -filter {IP_TYPE==MEMORY_CNTLR}]
