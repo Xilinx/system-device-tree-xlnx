@@ -32,7 +32,7 @@
         set reg_val ""
 
         # Number of known DDR regions is set to 8
-        # C*_DDR_LOW0 (* 0-3), C0_DDR_CH(1-3), C0_DDR_CH0_LEGACY (for KSB)
+        # C*_DDR_LOW0 (* 0-3), C0_DDR_CH(1-3), C0_DDR_CH0_LEGACY (for Versal Net)
         set num_of_known_regions 8
 
         # List that contains base_address of each DDR region (C0_DDR_LOW(0-3), C0_DDR_CH(1-3))
@@ -93,7 +93,7 @@
                 # Loop variable to go over all the interface blocks
                 set i 0
 
-                # TODO Check on interface block name: C0_DDR_CH0_LEGACY for KSB
+                # TODO Check on interface block name: C0_DDR_CH0_LEGACY for Versal Net.
 
                 # Loop through all the interface blocks mapped to the processor
                 foreach block_name $interface_block_names {
@@ -123,7 +123,7 @@
                                 set ddr_region_id 3
                                 ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id] $ddr_region_id
                                 lset region_accessed $ddr_region_id 1
-                        # For KSB interface_block_name is coming as C0_DDR_CH0_LEGACY
+                        # For Versal Net, interface_block_name is coming as C0_DDR_CH0_LEGACY
                         } elseif {[string match "C*_DDR_CH0*" $block_name]} {
                                 set ddr_region_id 4
                                 ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id]  $ddr_region_id
