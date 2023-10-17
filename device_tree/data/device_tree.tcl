@@ -244,6 +244,11 @@ proc Pop {varname {nth 0}} {
 	return $r
 }
 
+# Lately HSI started reporting verbose warnings from [Common 17-673]
+proc suppress_hsi_warnings {} {
+	hsi::set_msg_config -suppress -id "Common 17-673"
+}
+
 proc print_usage args {
         set help_str { 
             Usage: set/get_dt_param \[OPTION\]
@@ -1277,6 +1282,7 @@ Generates system device tree based on args given in:
 
 	set_hw_family $proclist
 	set_microblaze_list
+	suppress_hsi_warnings
 
 	# Generate properties only once if different instances of the same IP is 
 	# having a common base address. (e.g. mailbox connected to muliple 
