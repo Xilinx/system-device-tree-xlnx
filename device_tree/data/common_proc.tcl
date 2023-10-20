@@ -5600,7 +5600,7 @@ proc ip2drv_prop {ip_name prop_name_list} {
 		set ignore_ip_props "CONFIG.C_AXIS_SIGNAL_SET CONFIG.C_USE_BRAM_BLOCK CONFIG.C_ALGORITHM \
 			CONFIG.C_AXI_TYPE CONFIG.C_INTERFACE_TYPE CONFIG.C_AXI_SLAVE_TYPE CONFIG.device_port_type \
 			CONFIG.C_AXI_WRITE_BASEADDR_SLV CONFIG.C_AXI_WRITE_HIGHADDR_SLV CONFIG.C_PVR_USER1 \
-			CONFIG.Component_Name"
+			CONFIG.Component_Name CONFIG.C_FAMILY"
 		if {[lsearch $ignore_ip_props $ip_prop_name] >= 0} {
 			continue
 		}
