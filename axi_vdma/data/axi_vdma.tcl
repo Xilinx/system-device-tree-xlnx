@@ -139,8 +139,9 @@
         set modeIndex [string index $mode 0]
         set dts_file [set_drv_def_dts $drv_handle]
         set dma_channel [create_node -n "dma-channel" -u $addr -p $parent_node -d $dts_file]
-        add_prop $dma_channel "compatible" [format "xlnx,%s-%s-channel" $xdma $modellow] stringlist $dts_file
-        add_prop $dma_channel "xlnx,device-id" $devid hexint $dts_file
+        add_prop $dma_channel "compatible" [format "xlnx,%s-%s-channel" $xdma $modellow] stringlist $dts_file 1
+        add_prop $dma_channel "xlnx,device-id" $devid hexint $dts_file 1
+
         if {[string match -nocase $mode "S2MM"]} {
                 set vert_flip  [get_ip_param_value $ip C_ENABLE_VERT_FLIP]
                 if {$vert_flip == 1} {
