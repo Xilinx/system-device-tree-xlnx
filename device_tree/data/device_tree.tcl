@@ -114,6 +114,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "ps7_gpio" "gpiops"
 	dict set ::sdtgen::namespacelist "psu_gpio" "gpiops"
 	dict set ::sdtgen::namespacelist "psv_gpio" "gpiops"
+	dict set ::sdtgen::namespacelist "hdmi_gt_controller" "hdmi_gt_ctrl"
 	dict set ::sdtgen::namespacelist "i2s_receiver" "i2s_receiver"
 	dict set ::sdtgen::namespacelist "i2s_transmitter" "i2s_transmitter"
 	dict set ::sdtgen::namespacelist "ps7_i2c" "iicps"
