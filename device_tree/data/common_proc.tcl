@@ -5655,11 +5655,28 @@ proc ip2drv_prop {ip_name prop_name_list} {
 	}
 }
 
+# Video subsystems can have IP cores in it. Some examples of such IP cores are
+# axi_vdma, axi_timer, axi_gpio etc. These IP cores are not visible from the
+# processor and dont use the AXI Bus. "xlnx,is-hierarchy" is the property
+# which will differentiate such IP subcores from the generic peripherals.
+
+proc set_hier_info {drv_handle} {
+	set ip_type [get_ip_property $drv_handle IP_TYPE]
+	if {[string match -nocase $ip_type "PERIPHERAL"]} {
+		set mem_maps [hsi::get_mem_ranges [hsi get_cells -hier $drv_handle]]
+		if {[llength $mem_maps] == 0} {
+			set node [get_node $drv_handle]
+			add_prop $node "xlnx,is-hierarchy" boolean [set_drv_def_dts $drv_handle]
+		}
+	}
+}
+
 proc gen_drv_prop_from_ip {drv_handle} {
 	# check if we should generating the ip properties or not
 	set ip_name [get_ip_property $drv_handle IP_NAME] 
 	set prop_name_list [default_parameters $drv_handle]
 	ip2drv_prop $drv_handle $prop_name_list
+	set_hier_info $drv_handle
 }
 
 proc remove_duplicates {ip_handle} {
