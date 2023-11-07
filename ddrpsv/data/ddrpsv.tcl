@@ -31,9 +31,9 @@
         # Defined at the top to avoid scope issue if no DDR region is mapped
         set reg_val ""
 
-        # Number of known DDR regions is set to 8
-        # C*_DDR_LOW0 (* 0-3), C0_DDR_CH(1-3), C0_DDR_CH0_LEGACY (for Versal Net)
-        set num_of_known_regions 8
+        # Number of known DDR regions is set to 7 for versal, 11 for Versal Net
+        # Check ddrpsv_number_of_memory_regions API for more details on the regions.
+        set num_of_known_regions [ddrpsv_number_of_memory_regions $is_versal_net_platform]
 
         # List that contains base_address of each DDR region (C0_DDR_LOW(0-3), C0_DDR_CH(1-3))
         global base_addr_list
@@ -90,58 +90,10 @@
                        set a72 1
                 }
 
-                # Loop variable to go over all the interface blocks
-                set i 0
-
-                # TODO Check on interface block name: C0_DDR_CH0_LEGACY for Versal Net.
-
-                # Loop through all the interface blocks mapped to the processor
-                foreach block_name $interface_block_names {
-                        # ddr_region_id:
-                        #        specifies index of base_addr_list/high_addr_list
-                        #        for each DDR region.
-                        # lindex $region_accessed $ddr_region_id:
-                        #        status of each DDR region, if it is present or not.
-                        # ddrpsv_handle_address_details:
-                        #       to update the base_addr_list and high_ddr_list if needed.
-                        # i:
-                        #       loop variable to traverse across the mapped DDR region.
-                        #       This is needed as block_name dont have unique names.
-                        if {[string match "C*_DDR_LOW0*" $block_name]} {
-                                set ddr_region_id 0
-                                ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id] $ddr_region_id
-                                lset region_accessed $ddr_region_id 1
-                        } elseif {[string match "C*_DDR_LOW1*" $block_name]} {
-                                set ddr_region_id 1
-                                ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id] $ddr_region_id
-                                lset region_accessed $ddr_region_id 1
-                        } elseif {[string match "C*_DDR_LOW2*" $block_name]} {
-                                set ddr_region_id 2
-                                ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id] $ddr_region_id
-                                lset region_accessed $ddr_region_id 1
-                        } elseif {[string match "C*_DDR_LOW3*" $block_name] } {
-                                set ddr_region_id 3
-                                ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id] $ddr_region_id
-                                lset region_accessed $ddr_region_id 1
-                        # For Versal Net, interface_block_name is coming as C0_DDR_CH0_LEGACY
-                        } elseif {[string match "C*_DDR_CH0*" $block_name]} {
-                                set ddr_region_id 4
-                                ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id]  $ddr_region_id
-                                lset region_accessed $ddr_region_id 1
-                        } elseif {[string match "C*_DDR_CH1*" $block_name]} {
-                                set ddr_region_id 5
-                                ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id] $ddr_region_id
-                                lset region_accessed $ddr_region_id 1
-                        } elseif {[string match "C*_DDR_CH2*" $block_name]} {
-                                set ddr_region_id 6
-                                ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id] $ddr_region_id
-                                lset region_accessed $ddr_region_id 1
-                        } elseif {[string match "C*_DDR_CH3*" $block_name]} {
-                                set ddr_region_id 7
-                                ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id]  $ddr_region_id
-                                lset region_accessed $ddr_region_id 1
-                        }
-                        incr i
+                if { !$is_versal_net_platform } {
+                        set region_accessed [ddrpsv_addr_params $mapped_periph_list $interface_block_names $region_accessed]
+                } else {
+                        set region_accessed [ddrpsv_addr_params_versal_net $mapped_periph_list $interface_block_names $region_accessed]
                 }
 
                 # Generate reg_property available for the processor, combining all the regions
@@ -430,4 +382,165 @@
         if { $is_ddr_region_accessed == 0 || [string compare $temp [lindex $high_addr_list $ddr_region_id]] > 0} {
                 lset high_addr_list $ddr_region_id $temp
         }
+    }
+
+    proc ddrpsv_number_of_memory_regions {is_versal_net_platform} {
+        # HW designs can have multiple NOC IPs, and each of them can be connected to
+        # same DDR segment with different address ranges, and through different
+        # master interface channels.
+        # For each DDR segment, NOC IP interface whose base address is lowest in the design
+        # would be stored in base_addr_list and highest high address would be stored in
+        # high_address_list. Index of base_address_list/high_address_list where base/high
+        # address for specific DDR segment/DDR region is stored is as given below. These
+        # lowest and highest addresses would be used to create canonical definitions, which
+        # would be consumed by MMU/MPU tables in Cortex-A72/Cortex-R5 BSP.
+        # ---------------------------------------
+        # DDR segment        |       Index       |
+        #--------------------|-------------------|
+        #  DDR_LOW_0         |        0          |
+        #  DDR_LOW_1         |        1          |
+        #  DDR_LOW_2         |        2          |
+        #  DDR_LOW_3         |        3          |
+        #  DDR_CH_1          |        4          |
+        #  DDR_CH_2          |        5          |
+        #  DDR_CH_3          |        6          |
+        #----------------------------------------
+        #
+        #Versal-Net
+        #---------------------------------------
+        # DDR segment        |       Index       |
+        #--------------------|-------------------|
+        #  DDR_CH0_LEGACY    |        0          |
+        #  DDR_CH0_MED       |        1          |
+        #  DDR_CH0_HIGH0     |        2          |
+        #  DDR_CH0_HIGH1     |        3          |
+        #  DDR_CH_1          |        4          |
+        #  DDR_CH_1A         |        5          |
+        #  DDR_CH_2          |        6          |
+        #  DDR_CH_2A         |        7          |
+        #  DDR_CH_3          |        8          |
+        #  DDR_CH_3A         |        9          |
+        #  DDR_CH_4          |        10         |
+        #----------------------------------------
+        if { $is_versal_net_platform } {
+                return 11
+        } else {
+                return 7
+        }
+    }
+
+    proc ddrpsv_addr_params {mapped_periph_list interface_block_names region_accessed} {
+        # Loop variable to go over all the interface blocks
+        set i 0
+
+        # Loop through all the interface blocks mapped to the processor
+        foreach block_name $interface_block_names {
+                # ddr_region_id:
+                #        specifies index of base_addr_list/high_addr_list
+                #        for each DDR region.
+                # lindex $region_accessed $ddr_region_id:
+                #        status of each DDR region, if it is present or not.
+                # ddrpsv_handle_address_details:
+                #       to update the base_addr_list and high_ddr_list if needed.
+                # i:
+                #       loop variable to traverse across the mapped DDR region.
+                #       This is needed as block_name dont have unique names.
+                if {[string match "C*_DDR_LOW0*" $block_name]} {
+                        set ddr_region_id 0
+                        ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id] $ddr_region_id
+                        lset region_accessed $ddr_region_id 1
+                } elseif {[string match "C*_DDR_LOW1*" $block_name]} {
+                        set ddr_region_id 1
+                        ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id] $ddr_region_id
+                        lset region_accessed $ddr_region_id 1
+                } elseif {[string match "C*_DDR_LOW2*" $block_name]} {
+                        set ddr_region_id 2
+                        ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id] $ddr_region_id
+                        lset region_accessed $ddr_region_id 1
+                } elseif {[string match "C*_DDR_LOW3*" $block_name] } {
+                        set ddr_region_id 3
+                        ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id] $ddr_region_id
+                        lset region_accessed $ddr_region_id 1
+                } elseif {[string match "C*_DDR_CH1*" $block_name]} {
+                        set ddr_region_id 4
+                        ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id] $ddr_region_id
+                        lset region_accessed $ddr_region_id 1
+                } elseif {[string match "C*_DDR_CH2*" $block_name]} {
+                        set ddr_region_id 5
+                        ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id] $ddr_region_id
+                        lset region_accessed $ddr_region_id 1
+                } elseif {[string match "C*_DDR_CH3*" $block_name]} {
+                        set ddr_region_id 6
+                        ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id]  $ddr_region_id
+                        lset region_accessed $ddr_region_id 1
+                }
+                incr i
+        }
+        return $region_accessed
+    }
+
+    proc ddrpsv_addr_params_versal_net {mapped_periph_list interface_block_names region_accessed} {
+        # Loop variable to go over all the interface blocks
+        set i 0
+
+        # Loop through all the interface blocks mapped to the processor
+        foreach block_name $interface_block_names {
+                # ddr_region_id:
+                #        specifies index of base_addr_list/high_addr_list
+                #        for each DDR region.
+                # lindex $region_accessed $ddr_region_id:
+                #        status of each DDR region, if it is present or not.
+                # ddrpsv_handle_address_details:
+                #       to update the base_addr_list and high_ddr_list if needed.
+                # i:
+                #       loop variable to traverse across the mapped DDR region.
+                #       This is needed as block_name dont have unique names.
+                if {[string match "C*_DDR_CH0_LEGACY*" $block_name]} {
+                        set ddr_region_id 0
+                        ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id] $ddr_region_id
+                        lset region_accessed $ddr_region_id 1
+                } elseif {[string match "C*_DDR_CH0_MED*" $block_name]} {
+                        set ddr_region_id 1
+                        ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id] $ddr_region_id
+                        lset region_accessed $ddr_region_id 1
+                } elseif {[string match "C*_DDR_CH0_HIGH0*" $block_name]} {
+                        set ddr_region_id 2
+                        ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id] $ddr_region_id
+                        lset region_accessed $ddr_region_id 1
+                } elseif {[string match "C*_DDR_CH0_HIGH1*" $block_name] } {
+                        set ddr_region_id 3
+                        ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id] $ddr_region_id
+                        lset region_accessed $ddr_region_id 1
+                } elseif {[string match "C*_DDR_CH1*" $block_name]} {
+                        set ddr_region_id 4
+                        ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id] $ddr_region_id
+                        lset region_accessed $ddr_region_id 1
+                } elseif {[string match "C*_DDR_CH1A*" $block_name]} {
+                        set ddr_region_id 5
+                        ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id] $ddr_region_id
+                        lset region_accessed $ddr_region_id 1
+                } elseif {[string match "C*_DDR_CH2*" $block_name]} {
+                        set ddr_region_id 6
+                        ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id]  $ddr_region_id
+                        lset region_accessed $ddr_region_id 1
+                } elseif {[string match "C*_DDR_CH2A*" $block_name]} {
+                        set ddr_region_id 7
+                        ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id]  $ddr_region_id
+                        lset region_accessed $ddr_region_id 1
+                } elseif {[string match "C*_DDR_CH3*" $block_name]} {
+                        set ddr_region_id 8
+                        ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id]  $ddr_region_id
+                        lset region_accessed $ddr_region_id 1
+                } elseif {[string match "C*_DDR_CH3A*" $block_name]} {
+                        set ddr_region_id 9
+                        ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id]  $ddr_region_id
+                        lset region_accessed $ddr_region_id 1
+                } elseif {[string match "C*_DDR_CH4*" $block_name]} {
+                        set ddr_region_id 10
+                        ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id]  $ddr_region_id
+                        lset region_accessed $ddr_region_id 1
+                }
+                incr i
+        }
+        return $region_accessed
     }
