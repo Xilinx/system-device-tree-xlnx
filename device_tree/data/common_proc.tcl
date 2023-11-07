@@ -1857,6 +1857,11 @@ proc get_clock_frequency {ip_handle portname} {
 	set clkhandle [hsi::get_pins -of_objects $ip_handle $portname]
 	if {[string compare -nocase $clkhandle ""] != 0} {
 		set clk [hsi get_property CLK_FREQ $clkhandle ]
+		# For one Versal Net design, there is an IP clock_monitor_0 having
+		# "299994000:249995000:99998000:299994000" as clk_freq value .
+		if {![string is xdigit $clk]} {
+			set clk	""
+		}
 	}
 	return $clk
 }
