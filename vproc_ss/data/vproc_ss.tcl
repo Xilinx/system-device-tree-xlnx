@@ -13,18 +13,18 @@
 # GNU General Public License for more details.
 #
 
-    proc vproc_ss_generate {drv_handle} {
+proc vproc_ss_generate {drv_handle} {
 
-        set node [get_node $drv_handle]
-        if {$node == 0} {
-                return
-        }
-        set dts_file [set_drv_def_dts $drv_handle]
-        set topology [hsi get_property CONFIG.C_TOPOLOGY [hsi::get_cells -hier $drv_handle]]
-        vproc_ss_add_hier_instances $drv_handle
+	set node [get_node $drv_handle]
+	if {$node == 0} {
+		return
+	}
+	set dts_file [set_drv_def_dts $drv_handle]
+	set topology [hsi get_property CONFIG.C_TOPOLOGY [hsi::get_cells -hier $drv_handle]]
+	vproc_ss_add_hier_instances $drv_handle
 
 	set p_highaddress [hsi get_property CONFIG.C_HIGHADDR [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,highaddr" [format %08x $p_highaddress] hexint $dts_file
+	add_prop "${node}" "xlnx,highaddr" [format %08x $p_highaddress] hexint $dts_file
 
 	set name [hsi get_property NAME [hsi::get_cells -hier $drv_handle]]
 	pldt append $node compatible "\ \, \"xlnx,vpss-scaler-2.2\"\ \, \"xlnx,v-vpss-scaler-2.2\"\ \, \"xlnx,vpss-scaler\""
@@ -64,99 +64,70 @@
 	add_prop "${node}" "xlnx,use-uram" $use_uram int $dts_file
 	set max_data_width [hsi get_property CONFIG.C_MAX_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
 	add_prop "${node}" "xlnx,video-width" $max_data_width int $dts_file
-    }
+}
 
-    proc vproc_ss_add_hier_instances {drv_handle} {
-        set node [get_node $drv_handle]
-        set dts_file [set_drv_def_dts $drv_handle]
-        hsi::current_hw_instance $drv_handle
-        set gpios [hsi::get_cells -filter {IP_NAME==axi_gpio}]
+proc vproc_ss_add_hier_instances {drv_handle} {
+	set node [get_node $drv_handle]
+	set dts_file [set_drv_def_dts $drv_handle]
+	hsi::current_hw_instance $drv_handle
 
-	foreach gpio $gpios {
-		set name [hsi get_property NAME [hsi::get_cells $gpio]]
-		if {[regexp ".axis" $name match]} {
-			add_prop "$node" "rstaxis-present" 1 int $dts_file
-			add_prop "$node" "rstaxis-connected" $gpio reference $dts_file
+	set ip_subcores [dict create]
+	dict set ip_subcores "axi_vdma" "vdma"
+	dict set ip_subcores "axis_switch" "router"
+	dict set ip_subcores "v_csc" "csc"
+	dict set ip_subcores "v_deinterlacer" "deint"
+	dict set ip_subcores "v_hcresampler" "hcrsmplr"
+	dict set ip_subcores "v_hscaler" "hscale"
+	dict set ip_subcores "v_letterbox" "lbox"
+	dict set ip_subcores "v_vscaler" "vscale"
+
+	foreach ip [dict keys $ip_subcores] {
+		set ip_handle [hsi::get_cells -filter "IP_NAME==$ip"]
+		set ip_prefix [dict get $ip_subcores $ip]
+		puts "$ip_handle : $ip_prefix"
+		if {![string_is_empty $ip_handle]} {
+			add_prop "$node" "${ip_prefix}-present" 1 int $dts_file
+			add_prop "$node" "${ip_prefix}-connected" $ip_handle reference $dts_file
 		} else {
-			add_prop "$node" "rstaxis-present" 0 int $dts_file
-		}
-
-		if {[regexp ".axi_mm" $name match]} {
-			add_prop "$node" "rstaximm-present" 1 int $dts_file
-			add_prop "$node" "rstaximm-connected" $gpio reference $dts_file
-		} else {
-			add_prop "$node" "rstaximm-present" 0 int $dts_file
+			add_prop "$node" "${ip_prefix}-present" 0 int $dts_file
 		}
 	}
-        set vdma [hsi::get_cells -filter {IP_NAME==axi_vdma}]
-        if {$vdma != ""} {
-		add_prop "$node" "vdma-present" 1 int $dts_file
-                add_prop "$node" "vdma-connected" $vdma reference $dts_file
-        } else {
-                add_prop "$node" "vdma-present" 0 int $dts_file
-        }
-        set sw [hsi::get_cells -filter {IP_NAME==axis_switch}]
-        if {$sw != ""} {
-		add_prop "$node" "router-present" 1 int $dts_file
-                add_prop "$node" "router-connected" $sw reference $dts_file
-        } else {
-                add_prop "$node" "router-present" 0 int $dts_file
-        }
-        set csc [hsi::get_cells -filter {IP_NAME==v_csc}]
-        if {$csc != ""} {
-		add_prop "$node" "csc-present" 1 int $dts_file
-                add_prop "$node" "csc-connected" $csc reference $dts_file
-        } else {
-                add_prop "$node" "csc-present" 0 int $dts_file
-        }
-        set deint [hsi::get_cells -filter {IP_NAME==v_deinterlacer}]
-        if {$deint != ""} {
-		add_prop "$node" "deint-present" 1 int $dts_file
-                add_prop "$node" "deint-connected" $deint reference $dts_file
-        } else {
-                add_prop "$node" "deint-present" 0 int $dts_file
-        }
-        set hcr [hsi::get_cells -hier -filter {IP_NAME==v_hcresampler}]
-        if {$hcr != ""} {
-		add_prop "$node" "hcrsmplr-present" 1 int $dts_file
-                add_prop "$node" "hcrsmplr-connected" $hcr reference $dts_file
-        } else {
-                add_prop "$node" "hcrsmplr-present" 0 int $dts_file
-        }
-        set hsr [hsi::get_cells  -filter {IP_NAME==v_hscaler}]
-        if {$hsr != ""} {
-		add_prop "$node" "hscale-present" 1 int $dts_file
-                add_prop "$node" "hscale-connected" $hsr reference $dts_file
-        } else {
-                add_prop "$node" "hscale-present" 0 int $dts_file
-        }
-        set letter [hsi::get_cells  -filter {IP_NAME==v_letterbox}]
-        if {$letter != ""} {
-		add_prop "$node" "lbox-present" 1 int $dts_file
-                add_prop "$node" "lbox-connected" $letter reference $dts_file
-        } else {
-                add_prop "$node" "lbox-present" 0 int $dts_file
-        }
-        set vcrs [hsi::get_cells  -filter {IP_NAME==v_vcresampler}]
+
+	set gpios [hsi::get_cells -filter {IP_NAME==axi_gpio}]
+	if {[string_is_empty $gpios]} {
+		add_prop "$node" "rstaxis-present" 0 int $dts_file
+		add_prop "$node" "rstaximm-present" 0 int $dts_file
+	} else {
+		foreach gpio $gpios {
+			set name [hsi get_property NAME [hsi::get_cells $gpio]]
+			if {[regexp ".axis" $name match]} {
+				add_prop "$node" "rstaxis-present" 1 int $dts_file 1
+				add_prop "$node" "rstaxis-connected" $gpio reference $dts_file 1
+			}
+
+			if {[regexp ".axi_mm" $name match]} {
+				add_prop "$node" "rstaximm-present" 1 int $dts_file 1
+				add_prop "$node" "rstaximm-connected" $gpio reference $dts_file 1
+			}
+
+		}
+	}
+
+	set vcrs [hsi::get_cells  -filter {IP_NAME==v_vcresampler}]
 	foreach vcr $vcrs {
 		set name [hsi get_property NAME [hsi::get_cells $vcr]]
 		if {[regexp "._o" $name match]} {
 			add_prop "$node" "vcrsmplrout-present" 1 int $dts_file
 			add_prop "$node" "vcrsmplrout-connected" $vcr reference $dts_file
 		}
+
 		if {[regexp "._i" $name match]} {
 			add_prop "$node" "vcrsmplrin-present" 1 int $dts_file
 			add_prop "$node" "vcrsmplrin-connected" $vcr reference $dts_file
 		}
-	}
-        set vsc [hsi::get_cells  -filter {IP_NAME==v_vscaler}]
-        if {$vsc != ""} {
-		add_prop "$node" "vscale-present" 1 int $dts_file
-                add_prop "$node" "vscale-connected" $vsc reference $dts_file
-        } else {
-                add_prop "$node" "vscale-present" 0 int $dts_file
-        }
 
-    }
+	}
+	hsi::current_hw_instance
+}
 
 
