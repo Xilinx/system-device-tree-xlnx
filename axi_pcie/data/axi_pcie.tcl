@@ -168,6 +168,8 @@
                 add_prop $node "xlnx,port-type" 1 hexint "pl.dtsi" 1
 		add_prop $node "xlnx,csr-slcr" 0xa0000000 hexint "pl.dtsi" 1
         }
+	pldt append $node compatible "\ \, \"xlnx,axi-pcie-host-1.00.a\""
+        add_prop $node "xlnx,port-type" 1 hexint "pl.dtsi" 1
         add_prop $node device_type "pci" string "pl.dtsi"
         set proctype [get_hw_family]
         axi_pcie_set_pcie_reg $drv_handle $proctype
