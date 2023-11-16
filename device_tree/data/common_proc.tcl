@@ -440,10 +440,10 @@ proc get_node args {
 
 	proc_called_by
 	set handle [lindex $args 0]
-	set handle [hsi::get_cells -hier $handle]
 	if { [dict exists $node_dict $cur_hw_design $handle] } {
 		return [dict get $node_dict $cur_hw_design $handle]
 	}
+	set handle [hsi::get_cells -hier $handle]
 	set non_val_list "versal_cips noc_nmu noc_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect noc_nsw"
 	set non_val_ip_types "MONITOR BUS PROCESSOR"
 	set ip_name [hsi get_property IP_NAME $handle]
@@ -729,6 +729,9 @@ proc write_value {type value} {
 }
 
 proc create_node args {
+	global node_dict
+	global cur_hw_design
+
 	set node_name ""
 	set node_unit_addr ""
 	set node_label ""
@@ -944,6 +947,8 @@ proc create_node args {
         }
 	set drvnode [string trimleft $drvnode "\{"]
 	set drvnode [string trimright $drvnode "\}"]
+
+	dict set node_dict $cur_hw_design $node_label $drvnode
         return $drvnode
 }
 
@@ -1842,7 +1847,7 @@ proc get_drivers args {
 		}
 		return $drivers
 	} else {
-		set ipname [hsi get_property IP_NAME [hsi::get_cells -hier $val]]
+		set ipname [get_ip_property [hsi::get_cells -hier $val] IP_NAME]
 		if {[catch {set tmp [dict get $driverlist $ipname]} msg]} {
 			set drivers "generic"
 			return "generic"
@@ -2091,7 +2096,9 @@ proc get_ip_property {drv_handle parameter} {
 		return [dict get $property_dict $cur_hw_design $drv_handle $parameter]
 	}
 	set ip [hsi::get_cells -hier $drv_handle]
-	set val [hsi get_property ${parameter} $ip]
+	if {[catch {set val [hsi get_property ${parameter} $ip]} msg]} {
+		set val ""
+	}
 	dict set property_dict $cur_hw_design $drv_handle $parameter $val
 	return $val
 }
@@ -2306,11 +2313,11 @@ proc set_cur_working_dts {{dts_file ""}} {
 
 proc get_baseaddr {slave_ip {no_prefix ""}} {
 	# only returns the first addr
-	set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $slave_ip]]
+	set ip_name [get_ip_property [hsi::get_cells -hier $slave_ip] IP_NAME]
 	if {[string match -nocase $slave_ip "psu_sata"]} {
 		set addr [string tolower [hsi get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $slave_ip]]]
 	} else {
-		set ip_mem_handle [lindex [hsi::get_mem_ranges [hsi::get_cells -hier $slave_ip]] 0]
+		set ip_mem_handle [lindex [hsi::get_mem_ranges $slave_ip] 0]
 		if {[string match -nocase $ip_name "psv_pmc_qspi"] || [string match -nocase $ip_name "psv_coresight"]} {
 			# Currently addresses for ps mapping is coming from static dtsi files originating from u-boot
 			# and it is very APU specific. To generate aliases, the code is also looking for those APU mapped
@@ -2347,7 +2354,7 @@ proc get_baseaddr {slave_ip {no_prefix ""}} {
 }
 
 proc get_highaddr {slave_ip {no_prefix ""}} {
-	set ip_mem_handle [lindex [hsi::get_mem_ranges [hsi::get_cells -hier $slave_ip]] 0]
+	set ip_mem_handle [lindex [hsi::get_mem_ranges $slave_ip] 0]
         if { [string_is_empty $ip_mem_handle] } {
              set avail_param [hsi list_property [hsi::get_cells -hier $slave_ip]]
              if {[lsearch -nocase $avail_param "CONFIG.C_HIGHADDR"] >= 0 } {
@@ -5156,7 +5163,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 
 	set reg ""
 	set slave [hsi::get_cells -hier ${drv_handle}]
-	set ip_mem_handles [hsi::get_mem_ranges $slave]
+	set ip_mem_handles [hsi::get_mem_ranges $drv_handle]
 	if { [string_is_empty $ip_mem_handles] } {
 		set base ""
 		set proctype [get_hw_family]

@@ -1506,6 +1506,7 @@ proc proc_mapping {} {
 	global is_versal_net_platform
 	set proctype [get_hw_family]
 	set default_dts "system-top.dts"
+	set overall_periph_list [hsi::get_cells -hier]
 	# For Versal Net designs dmac_mst IP is also coming as a PROCESSOR
 	set proc_list [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR && IP_NAME!=dmac_mst}]
 	set hier_periph_list [hsi::get_cells -hier -filter {IS_HIERARCHICAL==1}]
@@ -1539,11 +1540,19 @@ proc proc_mapping {} {
 
 		set iptype [hsi get_property IP_NAME [hsi::get_cells -hier $val]]
 		foreach periph $periph_list {
-		    #puts "$periph: [time {
-			if {[catch {set ipname [hsi get_property IP_NAME [hsi::get_cells -hier $periph]]} msg]} {
-				set ipname ""
-				continue
+			# There can be a custom IP which is appearing in the output of get_mem_ranges
+			# but is missing in get_cells -hier. Such IP's base address and high address
+			# is generated in Vitis classic via the cpu tcls using xdefine_addr_params_for_ext_intf
+			# proc.
+			if {[lsearch $overall_periph_list $periph] < 0} {
+				set node [create_node -n ${periph} -l ${periph} -u [get_baseaddr $periph "no_prefix"] -d "pcw.dtsi" -p "&amba"]
+				gen_reg_property $periph "skip_ps_check"
+				add_prop $node "compatible" "${periph}" string pcw.dtsi
+				add_prop $node "xlnx,ip-name" "${periph}" string pcw.dtsi
+				add_prop $node "xlnx,name" "${periph}" string pcw.dtsi
+				add_prop $node status okay string pcw.dtsi
 			}
+			set ipname [get_ip_property [hsi::get_cells -hier $periph] IP_NAME]
 			if {[lsearch $periphs_list $periph] >= 0} {
 				set valid_periph "psu_qspi_linear psv_pmc_qspi axi_emc ps7_qspi_linear axi_quad_spi axi_spi"
                               	if {[lsearch $valid_periph $ipname] >= 0} {
@@ -1671,7 +1680,6 @@ proc proc_mapping {} {
 			} else {
 				set_memmap $temp $mem_map_key $regprop
 			}
-		#}]"
 		}
 	    #}]"
 		
