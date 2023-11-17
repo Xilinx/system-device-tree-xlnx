@@ -16,7 +16,7 @@
     proc ipipsu_generate {drv_handle} {
         set ipi_list [hsi get_cells -hier -filter {IP_NAME == "psu_ipi" || IP_NAME == "psv_ipi" || IP_NAME == "psx_ipi"}]
         set node [get_node $drv_handle]
-	set node_label [string trimleft $node "&"]
+	set node_label [hsi get_property NAME $drv_handle]
 	set buffer_base [hsi get_property CONFIG.C_BUFFER_BASE $drv_handle]
 	set base [get_baseaddr $drv_handle]
         add_prop $node "xlnx,ipi-target-count" [llength $ipi_list] int "pcw.dtsi"
