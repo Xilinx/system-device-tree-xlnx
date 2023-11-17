@@ -124,6 +124,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "iomodule" "iomodule"
 	dict set ::sdtgen::namespacelist "psu_ipi" "ipipsu"
 	dict set ::sdtgen::namespacelist "psv_ipi" "ipipsu"
+	dict set ::sdtgen::namespacelist "psx_ipi" "ipipsu"
 	dict set ::sdtgen::namespacelist "mig_7series" "mig_7series"
 	dict set ::sdtgen::namespacelist "ddr4" "mig_7series"
 	dict set ::sdtgen::namespacelist "ddr3" "mig_7series"
