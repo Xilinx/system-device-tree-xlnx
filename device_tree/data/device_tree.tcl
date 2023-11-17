@@ -2229,7 +2229,7 @@ proc update_alias {} {
 	if {![string_is_empty $design_coresight]} {
 		set alias_count [get_count "serial"]
 		set conf_name "serial${alias_count}"
-		set value [lindex [split [get_node $design_coresight] ": "] 0]
+		set value [lindex [split [get_node [lindex $design_coresight 0]] ": "] 0]
 		set alias_node [create_node -n "aliases" -p root -d "system-top.dts"]
 		add_prop $alias_node $conf_name $value aliasref $default_dts
 	}
