@@ -3721,6 +3721,8 @@ proc gen_xppu {drv_handle} {
 
 proc gen_power_domains {drv_handle} {
         global env
+        global is_versal_net_platform
+
         set path $env(REPO)
         set common_file "$path/device_tree/data/config.yaml"
         set dt_overlay [get_user_config $common_file -dt_overlay]
@@ -3734,26 +3736,43 @@ proc gen_power_domains {drv_handle} {
         set family [get_hw_family]
 
         if {[string match -nocase $family "versal"] && [is_ps_ip $drv_handle]} {
-               dict set node_id FFE00000 id 0x1831800b
-               dict set node_id FFE20000 id 0x1831800c
-               dict set node_id FFE90000 id 0x1831800d
-               dict set node_id FFEB0000 id 0x1831800e
-               dict set node_id psv_tcm_global id 0x1831800b
-               dict set node_id psv_r5_0_atcm_lockstep id 0x1831800b
-               dict set node_id psv_r5_0_btcm_lockstep id 0x1831800c
-               dict set node_id psv_r5_1_atcm_lockstep id 0x1831800d
-               dict set node_id psv_r5_1_btcm_lockstep id 0x1831800e
-               dict set node_id psv_ocm id 0x18314007
+		if { $is_versal_net_platform } {
+			set firmware_name "versal_net_firmware"
+			dict set node_id EBA00000 id 0x183180CB
+			dict set node_id EBA10000 id 0x183180CC
+			dict set node_id EBA20000 id 0x183180CD
+			dict set node_id EBA40000 id 0x183180CE
+			dict set node_id EBA50000 id 0x183180CF
+			dict set node_id EBA60000 id 0x183180D0
+			dict set node_id EBA80000 id 0x183180D1
+			dict set node_id EBA90000 id 0x183180D2
+			dict set node_id EBAA0000 id 0x183180D3
+			dict set node_id EBAC0000 id 0x183180D4
+			dict set node_id EBAD0000 id 0x183180D5
+			dict set node_id EBAE0000 id 0x183180D6
+		} else {
+			set firmware_name "versal_firmware"
+			dict set node_id FFE00000 id 0x1831800b
+			dict set node_id FFE20000 id 0x1831800c
+			dict set node_id FFE90000 id 0x1831800d
+			dict set node_id FFEB0000 id 0x1831800e
+			dict set node_id psv_tcm_global id 0x1831800b
+			dict set node_id psv_r5_0_atcm_lockstep id 0x1831800b
+			dict set node_id psv_r5_0_btcm_lockstep id 0x1831800c
+			dict set node_id psv_r5_1_atcm_lockstep id 0x1831800d
+			dict set node_id psv_r5_1_btcm_lockstep id 0x1831800e
+			dict set node_id psv_ocm id 0x18314007
+		}
+
                set baseaddr [string toupper $baseaddr]
                set tmp ""
                if {[catch {set tmp [dict get $node_id $ip id]} msg]} {
                }
                if {[catch {set tmp [dict get $node_id $baseaddr id]} msg]} {
                }
-               set prop "versal_firmware $tmp"
 
                if {![string match -nocase $tmp ""]} {
-                       add_prop $node "power-domains" $prop reference "pcw.dtsi"
+                       add_prop $node "power-domains" "$firmware_name $tmp" reference "pcw.dtsi"
                }
        } elseif {[is_zynqmp_platform $family]} {
                dict set node_id psu_r5_0_atcm_global id 15
