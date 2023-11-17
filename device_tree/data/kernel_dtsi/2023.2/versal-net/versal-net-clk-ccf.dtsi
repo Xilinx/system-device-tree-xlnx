@@ -407,3 +407,20 @@
 	clocks = <&versal_net_clk FPD_WWDT>;
 	power-domains = <&versal_net_firmware PM_DEV_FPD_SWDT_3>;
 };
+
+
+&psx_cortexr52_0 {
+         power-domains = <&versal_net_firmware PM_DEV_RPU_A_0>;
+};
+
+&psx_cortexr52_1 {
+         power-domains = <&versal_net_firmware PM_DEV_RPU_A_1>;
+};
+
+&psx_cortexr52_2 {
+         power-domains = <&versal_net_firmware PM_DEV_RPU_B_0>;
+};
+
+&psx_cortexr52_3 {
+         power-domains = <&versal_net_firmware PM_DEV_RPU_B_1>;
+};
