@@ -725,6 +725,190 @@
 			interrupts = <0 22 4>;
 		};
 
+		ipi0: mailbox@eb330000 {
+			status = "disabled";
+			compatible = "xlnx,zynqmp-ipi-mailbox";
+			interrupt-parent = <&imux>;
+			interrupts = <0 57 4>;
+			reg = <0x0 0xEB330000U 0x0 0x20>;
+			xlnx,ipi-bitmask = <0x4>;
+			xlnx,ipi-id = <0>;
+			xlnx,ipi-buf-index = <2>;
+			#address-cells = <2>;
+			#size-cells = <2>;
+			ranges;
+		};
+
+		ipi1: mailbox@eb340000 {
+			status = "disabled";
+			compatible = "xlnx,zynqmp-ipi-mailbox";
+			interrupt-parent = <&imux>;
+			interrupts = <0 58 4>;
+			reg = <0x0 0xEB340000U 0x0 0x20>;
+			xlnx,ipi-bitmask = <0x8>;
+			xlnx,ipi-id = <1>;
+			xlnx,ipi-buf-index = <3>;
+			#address-cells = <2>;
+			#size-cells = <2>;
+			ranges;
+		};
+
+		ipi2: mailbox@eb350000 {
+			status = "disabled";
+			compatible = "xlnx,zynqmp-ipi-mailbox";
+			interrupt-parent = <&imux>;
+			interrupts = <0 59 4>;
+			reg = <0x0 0xEB350000U 0x0 0x20>;
+			xlnx,ipi-bitmask = <0x10>;
+			xlnx,ipi-id = <2>;
+			xlnx,ipi-buf-index = <4>;
+			#address-cells = <2>;
+			#size-cells = <2>;
+			ranges;
+		};
+
+		ipi3: mailbox@eb360000 {
+			status = "disabled";
+			compatible = "xlnx,zynqmp-ipi-mailbox";
+			interrupt-parent = <&imux>;
+			interrupts = <0 60 4>;
+			reg = <0x0 0xEB360000U 0x0 0x20>;
+			xlnx,ipi-bitmask = <0x20>;
+			xlnx,ipi-id = <3>;
+			xlnx,ipi-buf-index = <5>;
+			#address-cells = <2>;
+			#size-cells = <2>;
+			ranges;
+		};
+
+
+		ipi4: mailbox@eb370000 {
+			status = "disabled";
+			compatible = "xlnx,zynqmp-ipi-mailbox";
+			interrupt-parent = <&imux>;
+			interrupts = <0 61 4>;
+			reg = <0x0 0xEB370000U 0x0 0x20>;
+			xlnx,ipi-bitmask = <0x40>;
+			xlnx,ipi-id = <4>;
+			xlnx,ipi-buf-index = <6>;
+			#address-cells = <2>;
+			#size-cells = <2>;
+			ranges;
+		};
+
+		ipi5: mailbox@eb380000 {
+			status = "disabled";
+			compatible = "xlnx,zynqmp-ipi-mailbox";
+			interrupt-parent = <&imux>;
+			interrupts = <0 60 4>;
+			reg = <0x0 0xEB380000U 0x0 0x20>;
+			xlnx,ipi-bitmask = <0x80>;
+			xlnx,ipi-id = <5>;
+			xlnx,ipi-buf-index = <7>;
+			#address-cells = <2>;
+			#size-cells = <2>;
+			ranges;
+		};
+
+
+		ipi6: mailbox@eb3a0000 {
+			status = "disabled";
+			compatible = "xlnx,zynqmp-ipi-mailbox";
+			interrupt-parent = <&imux>;
+			interrupts = <0 61 4>;
+			reg = <0x0 0xEB3a0000U 0x0 0x20>;
+			xlnx,ipi-bitmask = <0x200>;
+			xlnx,ipi-id = <6>;
+			xlnx,ipi-buf-index = <0xffff>;
+			#address-cells = <2>;
+			#size-cells = <2>;
+			ranges;
+		};
+
+		ipi7: mailbox@eb3b0000 {
+			status = "disabled";
+			compatible = "xlnx,zynqmp-ipi-mailbox";
+			interrupt-parent = <&imux>;
+			interrupts = <0 61 4>;
+			reg = <0x0 0xEB3b0000U 0x0 0x20>;
+			xlnx,ipi-bitmask = <0x40>;
+			xlnx,ipi-id = <6>;
+			xlnx,ipi-buf-index = <6>;
+			#address-cells = <2>;
+			#size-cells = <2>;
+			ranges;
+		};
+
+		ipi8: mailbox@eb3b1000 {
+			status = "disabled";
+			compatible = "xlnx,zynqmp-ipi-mailbox";
+			interrupt-parent = <&imux>;
+			interrupts = <0 62 4>;
+			reg = <0x0 0xEB3b1000U 0x0 0x20>;
+			xlnx,ipi-bitmask = <0x40>;
+			xlnx,ipi-id = <6>;
+			xlnx,ipi-buf-index = <6>;
+			#address-cells = <2>;
+			#size-cells = <2>;
+			ranges;
+		};
+
+		ipi9: mailbox@eb3b2000 {
+			status = "disabled";
+			compatible = "xlnx,zynqmp-ipi-mailbox";
+			interrupt-parent = <&imux>;
+			interrupts = <0 63 4>;
+			reg = <0x0 0xEB3b2000U 0x0 0x20>;
+			xlnx,ipi-bitmask = <0x40>;
+			xlnx,ipi-id = <6>;
+			xlnx,ipi-buf-index = <6>;
+			#address-cells = <2>;
+			#size-cells = <2>;
+			ranges;
+		};
+
+		ipi10: mailbox@eb3b3000 {
+			status = "disabled";
+			compatible = "xlnx,zynqmp-ipi-mailbox";
+			interrupt-parent = <&imux>;
+			interrupts = <0 64 4>;
+			reg = <0x0 0xEB3b3000U 0x0 0x20>;
+			xlnx,ipi-bitmask = <0x40>;
+			xlnx,ipi-id = <6>;
+			xlnx,ipi-buf-index = <6>;
+			#address-cells = <2>;
+			#size-cells = <2>;
+			ranges;
+		};
+
+		ipi11: mailbox@eb3b4000 {
+			status = "disabled";
+			compatible = "xlnx,zynqmp-ipi-mailbox";
+			interrupt-parent = <&imux>;
+			interrupts = <0 65 4>;
+			reg = <0x0 0xEB3b4000U 0x0 0x20>;
+			xlnx,ipi-bitmask = <0x40>;
+			xlnx,ipi-id = <6>;
+			xlnx,ipi-buf-index = <6>;
+			#address-cells = <2>;
+			#size-cells = <2>;
+			ranges;
+		};
+
+		ipi12: mailbox@eb3b5000 {
+			status = "disabled";
+			compatible = "xlnx,zynqmp-ipi-mailbox";
+			interrupt-parent = <&imux>;
+			interrupts = <0 66 4>;
+			reg = <0x0 0xEB3b5000U 0x0 0x20>;
+			xlnx,ipi-bitmask = <0x40>;
+			xlnx,ipi-id = <6>;
+			xlnx,ipi-buf-index = <6>;
+			#address-cells = <2>;
+			#size-cells = <2>;
+			ranges;
+		};
+
 		ospi: spi@f1010000 {
 			compatible = "xlnx,versal-ospi-1.0", "cdns,qspi-nor";
 			status = "disabled";
