@@ -3023,6 +3023,19 @@ proc gen_ps_mapping {} {
 	set def_ps_mapping [dict create]
 	if {[string match -nocase $family "versal"]} {
 		if { $is_versal_net_platform } {
+			dict set def_ps_mapping eb330000 label ipi0
+			dict set def_ps_mapping eb340000 label ipi1
+			dict set def_ps_mapping eb350000 label ipi2
+			dict set def_ps_mapping eb360000 label ipi3
+			dict set def_ps_mapping eb370000 label ipi4
+			dict set def_ps_mapping eb380000 label ipi5
+			dict set def_ps_mapping eb3a0000 label ipi6
+			dict set def_ps_mapping eb3b0000 label ipi7
+			dict set def_ps_mapping eb3b1000 label ipi8
+			dict set def_ps_mapping eb3b2000 label ipi9
+			dict set def_ps_mapping eb3b3000 label ipi10
+			dict set def_ps_mapping eb3b4000 label ipi11
+			dict set def_ps_mapping eb3b5000 label ipi12
 			dict set def_ps_mapping e2000000 label gic_a78
 			dict set def_ps_mapping eb9a0000 label gic_r52
 			dict set def_ps_mapping ebd00000 label adma0
