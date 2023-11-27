@@ -35,6 +35,7 @@ dict with driver_param dev_type {
 	lappend items psu_pmu cpu
 	lappend items psv_pmc cpu
 	lappend items microblaze cpu
+	lappend items microblaze_riscv cpu
 }
 
 dict with driver_param alias {
@@ -192,16 +193,35 @@ proc set_microblaze_list {} {
 	}
 }
 
-# Saves the number of microblaze processors in microblaze_map dict
-# and returns the microblaze numbers found during a particular cmd
-# execution.
+proc set_microblaze_riscv_list {} {
+        global design_family
+        global microblaze_riscv_list
+        set microblaze_riscv_list ""
+
+	set soft_mb_riscv_handles [hsi::get_cells -hier -filter {IP_NAME==microblaze_riscv}]
+        if {![string_is_empty soft_mb_riscv_handles]} {
+                append microblaze_riscv_list " $soft_mb_riscv_handles"
+        }
+}
+
+# Saves the number of microblaze/microblaze_riscv processors in
+# microblaze_map dict and returns the microblaze/microblaze_riscv numbers
+# found during a particular cmd execution.
 proc get_microblaze_nr {drv_handle} {
+	set proc_name [hsi get_property IP_NAME $drv_handle]
 	global microblaze_list
-	set mb_index [lsearch $microblaze_list $drv_handle]
-	if {$mb_index >= 0} {
-		return $mb_index
+	global microblaze_riscv_list
+
+	if {[string match -nocase "microblaze_riscv" $proc_name]} {
+		set proc_list [lrange $microblaze_riscv_list 0 end]
 	} else {
-		error "$drv_handle couldn't be found in the microblaze list: $microblaze_list"
+		set proc_list [lrange $microblaze_list 0 end]
+	}
+	set proc_index [lsearch $proc_list $drv_handle]
+	if {$proc_index >= 0} {
+		return $proc_index
+	} else {
+		error "$drv_handle couldn't be found in the ${proc_name} list: ${proc_list}"
 	}
 }
 
@@ -371,7 +391,7 @@ proc set_hw_family {proclist} {
 			} "ps7_cortexa9" {
 				set design_family "zynq"
 				set ps_design 1
-			} "microblaze" {
+			} "microblaze" - "microblaze_riscv" {
 				set pl_design 1
 			}
 		}
@@ -1670,6 +1690,7 @@ proc get_drivers args {
 	dict set driverlist psu_can driver canps
 	dict set driverlist psv_can driver canps
 	dict set driverlist microblaze driver cpu
+	dict set driverlist microblaze_riscv driver cpu
 	dict set driverlist psu_cortexa53 driver cpu_cortexa53
 	dict set driverlist psv_cortexa72 driver cpu_cortexa72
 	dict set driverlist ps7_cortexa9 driver cpu_cortexa9
@@ -1950,7 +1971,7 @@ proc add_cross_property args {
 	set ip [hsi::get_cells -hier $src_handle]
 	set ipname [hsi get_property IP_NAME $ip]
 	set proctype [get_hw_family]
-	set valid_proclist "psv_cortexa72 psv_cortexr5 psu_cortexa53 psu_cortexr5 psu_pmu psv_pmc psv_psm ps7_cortexa9 microblaze psx_cortexa78 psx_cortexr52 psx_pmc psx_psm"
+	set valid_proclist "psv_cortexa72 psv_cortexr5 psu_cortexa53 psu_cortexr5 psu_pmu psv_pmc psv_psm ps7_cortexa9 microblaze microblaze_riscv psx_cortexa78 psx_cortexr52 psx_pmc psx_psm"
 	set type "hexint"
 	if {[llength $args] >= 6} {
 		set type [lindex $args 5]
@@ -2025,12 +2046,12 @@ proc add_cross_property args {
 							set node [create_node -n "&psu_cortexr5_${index}" -d "pcw.dtsi" -p root]
 						} "psu_pmu" {
 							set node [create_node -n "&psu_pmu_0" -d "pcw.dtsi" -p root]
-						} "microblaze" {
+						} "microblaze" - "microblaze_riscv" {
 							set count [get_microblaze_nr $src_handle]
 							set bus_name [detect_bus_name $src_handle]
-							set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
+							set rt_node [create_node -n "cpus_${ipname}" -l "cpus_${ipname}_${count}" -u $count -d "pl.dtsi" -p $bus_name]
 							set node [create_node -n "cpu" -l "$src_handle" -u $count -d "pl.dtsi" -p $rt_node]
-						} "ps7_cortexa9" {
+                                                } "ps7_cortexa9" {
 							set index [string index $src_handle end]
 							set node [create_node -n "&ps7_cortexa9_${index}" -d "pcw.dtsi" -p root]
 						} "psx_cortexa78" {
@@ -3707,7 +3728,7 @@ proc gen_dfx_clk_property {drv_handle dts_file child_node dfx_node} {
        global bus_clk_list
        set clocknames ""
        set proctype [hsi get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]]
-       if {[string match -nocase $proctype "microblaze"]} {
+       if {[string match -nocase $proctype "microblaze"] || [string match -nocase $proctype "microblaze_riscv"]} {
                return
        }
        set clk_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $drv_handle] -filter {TYPE==clk&&DIRECTION==I}]
@@ -4871,7 +4892,8 @@ proc gen_mb_interrupt_property {cpu_handle {intr_port_name ""}} {
 	set proctype [get_hw_family]
 	set bus_name [detect_bus_name $cpu_handle]
 	set count [get_microblaze_nr $cpu_handle]
-	set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
+	set proc_name  [get_ip_property $cpu_handle IP_NAME]
+	set rt_node [create_node -n "cpus_${proc_name}" -l "cpus_${proc_name}_${count}" -u $count -d "pl.dtsi" -p $bus_name]
 	set cpu_node [create_node -n "cpu" -l "$cpu_handle" -u $count -d "pl.dtsi" -p $rt_node]
 
 	if {[is_pl_ip $intc]} {
@@ -4969,7 +4991,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 		}
 		set connected_intc_name [hsi get_property IP_NAME $connected_intc]
 		set valid_gpio_list "ps7_gpio axi_gpio"
-		set valid_cascade_proc "microblaze zynq zynqmp zynquplus versal zynquplusRFSOC"
+		set valid_cascade_proc "microblaze microblaze_riscv zynq zynqmp zynquplus versal zynquplusRFSOC"
 		# check whether intc is gpio or other
 		if {[lsearch  -nocase $valid_gpio_list $connected_intc_name] >= 0} {
 			set cur_intr_info ""
@@ -5569,7 +5591,8 @@ proc gen_compatible_property {drv_handle} {
 	set reg ""
 	set slave [hsi::get_cells -hier ${drv_handle}]
 	set proctype [hsi get_property IP_TYPE $slave]
-	if {[string match -nocase $proctype "processor"] && ![string match -nocase $ip_name "microblaze"]} {
+	if {[string match -nocase $proctype "processor"] && ![string match -nocase $ip_name "microblaze"] &&
+		![string match -nocase $ip_name "microblaze_riscv"]} {
 		return 0
 	}
 	set comp_prop [gen_compatible_string $slave]
@@ -5582,9 +5605,9 @@ proc gen_compatible_property {drv_handle} {
 		set proctype [get_hw_family]
 		set bus_name [detect_bus_name $drv_handle]
 		set count [get_microblaze_nr $drv_handle]
-		set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d "pl.dtsi" -p $bus_name]
+		set rt_node [create_node -n "cpus_${ip_name}" -l "cpus_${ip_name}_${count}" -u $count -d "pl.dtsi" -p $bus_name]
 		set node [create_node -n "cpu" -l "$drv_handle" -u $count -d "pl.dtsi" -p $rt_node]
-		add_prop $node compatible "$comp_prop xlnx,microblaze" stringlist "pl.dtsi"	
+		add_prop $node compatible "$comp_prop xlnx,${ip_name}" stringlist "pl.dtsi"
 	} else {
 		set node [get_node $drv_handle]
 		set_drv_prop_if_empty $drv_handle compatible $comp_prop $node stringlist
@@ -6087,11 +6110,11 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 					} 
 				}
 			} else {
-				if {[string match -nocase $ip_type "microblaze"]} {
+				if {[string match -nocase $ip_type "microblaze"] || [string match -nocase $ip_type "microblaze_riscv"]} {
 					set proctype [get_hw_family]
 					set bus_name [detect_bus_name $drv_handle]
 					set count [get_microblaze_nr $drv_handle]
-					set rt_node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${count}" -u $count -d ${default_dts} -p $bus_name]
+					set rt_node [create_node -n "cpus_${ip_type}" -l "cpus_${ip_type}_${count}" -u $count -d ${default_dts} -p $bus_name]
 					set rt_node [create_node -n "cpu" -l "$drv_handle" -u $count -d "pl.dtsi" -p $rt_node]
 				} else {
 					if {[string match -nocase $dev_type "psv_fpd_smmutcu"]} {
@@ -6493,7 +6516,7 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 		if { [llength $intr_pin] == 0 } {
 			return $intr_cntrl
 		}
-		set valid_cascade_proc "microblaze zynq zynqmp zynquplus zynquplusRFSOC versal"
+		set valid_cascade_proc "microblaze microblaze_riscv zynq zynqmp zynquplus zynquplusRFSOC versal"
 		set proctype [get_hw_family]
 		if { [string match -nocase [hsi get_property IP_NAME $periph] "axi_intc"] && [lsearch -nocase $valid_cascade_proc $proctype] >= 0 } {
 			set sinks [get_sink_pins $intr_pin]
@@ -6507,7 +6530,8 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 					lappend intr_cntrl [get_intr_cntrl_name $sink_periph "dout"]
 				} elseif { [llength $sink_periph ] && [is_intr_cntrl $sink_periph] == 1 } {
 					lappend intr_cntrl $sink_periph
-				} elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "microblaze"] } {
+				} elseif { [llength $sink_periph] && ([string match -nocase [hsi get_property IP_NAME $sink_periph] "microblaze"] ||
+			                 [string match -nocase [hsi get_property IP_NAME $sink_periph] "microblaze_riscv"])} {
 					lappend intr_cntrl $sink_periph
 				} elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "tmr_voter"] } {
 					lappend intr_cntrl $sink_periph
@@ -6544,7 +6568,7 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 	if { [llength $intr_sink_pins] == 0 || [string match $intr_sink_pins "{}"]} {
 		return $intr_cntrl
 	}
-	set valid_cascade_proc "microblaze zynq zynqmp zynquplus zynquplusRFSOC versal"
+	set valid_cascade_proc "microblaze microblaze_riscv zynq zynqmp zynquplus zynquplusRFSOC versal"
 	foreach intr_sink ${intr_sink_pins} {
 		if {[llength $intr_sink] == 0} {
 			continue

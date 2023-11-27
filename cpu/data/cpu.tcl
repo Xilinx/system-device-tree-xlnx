@@ -23,13 +23,13 @@
         set bus_name [detect_bus_name $drv_handle]
         set nr [get_microblaze_nr $drv_handle]
         set ip_name [get_ip_property $drv_handle IP_NAME]
-        set node [create_node -n "cpus_microblaze" -l "cpus_microblaze_${nr}" -u $nr -d "pl.dtsi" -p $bus_name]
+        set node [create_node -n "cpus_${ip_name}" -l "cpus_${ip_name}_${nr}" -u $nr -d "pl.dtsi" -p $bus_name]
         add_prop $node "compatible" "cpus,cluster" string "pl.dtsi"
         add_prop $node "#cpu-mask-cells" 1 int "pl.dtsi"
 
         set node [create_node -n "cpu" -l "$drv_handle" -u $nr -d "pl.dtsi" -p $node]
         set comp_prop [gen_compatible_string $drv_handle]
-        add_prop $node compatible "$comp_prop xlnx,microblaze" stringlist "pl.dtsi"
+        add_prop $node compatible "$comp_prop xlnx,${ip_name}" stringlist "pl.dtsi"
         add_prop $node "xlnx,ip-name" $ip_name string "pl.dtsi"
         set model "$ip_name,[get_ip_version $drv_handle]"
         add_prop $node "model" $model string "pl.dtsi"

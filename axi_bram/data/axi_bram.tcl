@@ -32,7 +32,7 @@
         # microblazes in design, There will be 2 BRAM CNTRL, in total 4 IPs (2 ilmb and 2dlmb), out of which One
         # from each CNTRL has to be preserved under the memory node.
 
-        set mb_proclist [hsi::get_cells -hier -filter {IP_NAME==microblaze}]
+        set mb_proclist [hsi::get_cells -hier -filter {IP_NAME==microblaze || IP_NAME==microblaze_riscv}]
         foreach mb_proc $mb_proclist {
 		set mb_proc_memmap [hsi::get_mem_ranges -of_objects $mb_proc]
 		if {[lsearch $mb_proc_memmap $drv_handle] < 0} {
@@ -175,7 +175,7 @@
                         if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_psm"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_psm"]} {
                                 set_memmap "${drv_handle}_memory" psm $reg
                         }
-                        if {[string match -nocase [hsi get_property IP_NAME $procc] "microblaze"]} {
+                        if {[string match -nocase [hsi get_property IP_NAME $procc] "microblaze"] || [string match -nocase [hsi get_property IP_NAME $procc] "microblaze_riscv"]} {
                                 set_memmap "${drv_handle}_memory" $procc "0x0 $base 0x0 $size"
                         }
                 }

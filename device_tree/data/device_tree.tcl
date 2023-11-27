@@ -73,6 +73,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "psu_can" "canps"
 	dict set ::sdtgen::namespacelist "psv_can" "canps"
 	dict set ::sdtgen::namespacelist "microblaze" "cpu"
+	dict set ::sdtgen::namespacelist "microblaze_riscv" "cpu"
 	dict set ::sdtgen::namespacelist "psu_cortexa53" "cpu_cortexa53"
 	dict set ::sdtgen::namespacelist "psv_cortexa72" "cpu_cortexa72"
 	dict set ::sdtgen::namespacelist "ps7_cortexa9" "cpu_cortexa9"
@@ -1194,6 +1195,7 @@ proc generate_sdt args {
 	global cur_hw_design
 	global dup_periph_handle
 	global microblaze_list
+	global microblaze_riscv_list
 
 
         if {[llength $args]!= 0} {
@@ -1270,6 +1272,7 @@ Generates system device tree based on args given in:
 
 	set_hw_family $proclist
 	set_microblaze_list
+	set_microblaze_riscv_list
 	suppress_hsi_warnings
 
 	# Generate properties only once if different instances of the same IP is 
@@ -1669,6 +1672,7 @@ proc proc_mapping {} {
 			dict set mem_proc_key_map "slv3_psv_pmc" "pmc"
 
 			dict set mem_proc_key_map "microblaze" "$val"
+			dict set mem_proc_key_map "microblaze_riscv" "$val"
 
 			set mem_map_key [dict get $mem_proc_key_map $iptype]
 			if {$pl_ip} {
@@ -2007,16 +2011,17 @@ proc gen_cpu_cluster {} {
 		#add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x238> , <&pmc_xppu 0x238> , <&pmc_xppu_npi 0x238" hexlist $default_dts
 	}
 
-	set microblaze_proc [hsi::get_cells -hier -filter {IP_NAME==microblaze}]
+	set microblaze_proc [hsi::get_cells -hier -filter {IP_NAME==microblaze || IP_NAME==microblaze_riscv}]
 	if {[llength $microblaze_proc] > 0} {
-		if {[string match -nocase $proctype "microblaze"]} {
+		if {[string match -nocase $proctype "microblaze"] || [string match -nocase $proctype "microblaze_riscv"]} {
 			add_prop "root" "#address-cells" 1 int "system-top.dts"
 			add_prop "root" "#size-cells" 1 int "system-top.dts"
 		}
 		set plnode [create_node -l "amba_pl" -n "amba_pl" -d ${default_dts} -p root]
 	foreach proc $microblaze_proc {
 		set count [get_microblaze_nr $proc]
-		set cpu_node [create_node -l "cpus_microblaze_${count}" -n "cpus_microblaze" -u $count -d ${default_dts} -p $plnode]
+		set proc_name [hsi get_property IP_NAME $proc]
+		set cpu_node [create_node -l "cpus_${proc_name}_${count}" -n "cpus_${proc_name}" -u $count -d ${default_dts} -p $plnode]
 		add_prop $cpu_node "#ranges-size-cells" "0x1" hexint $default_dts
 		add_prop "${cpu_node}" "#ranges-address-cells" "0x1" hexint $default_dts
 		global memmap
@@ -2093,7 +2098,8 @@ proc update_cpu_node {} {
 			add_prop "cpus" "/delete-node/ cpu@$i" boolean "system-top.dts"
             		continue
         	}
-		if {[string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $proc_name]] "microblaze"]} {
+		if {[string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $proc_name]] "microblaze"] ||
+		[string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $proc_name]] "microblaze_riscv"]} {
 			return
 		}
         	if {[string match -nocase $proc_name "$current_proc$i"] } {
