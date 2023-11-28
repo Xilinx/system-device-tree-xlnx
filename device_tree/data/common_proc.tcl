@@ -2884,34 +2884,24 @@ proc get_ip_type {ip_inst} {
 	# return 1 if it is soft ip
 	# return 0 if not
 	set ip_obj [hsi::get_cells -hier $ip_inst]
-	if {[llength $ip_obj] < 1} {
+	set ip_mem_map_obj [hsi::get_mem_ranges $ip_inst]
+	if {[llength $ip_obj] < 1 && [llength $ip_mem_map_obj] < 1} {
 		return -1
 	}
-	set ip_name [hsi get_property IP_NAME $ip_obj]
+	set family [get_hw_family]
+	set ip_name [get_ip_property $ip_obj IP_NAME]
 	set nochk_list "ai_engine noc_mc_ddr4 axi_noc"
-	if {[lsearch $nochk_list $ip_name] >= 0} {
+	# Set the IP type as PL IP if the design is a pure Microblaze(/RISCV) design.
+	if {[lsearch $nochk_list $ip_name] >= 0 || [regexp -nocase "microblaze" $family match]} {
 		dict set ip_type_dict $cur_hw_design $ip_inst 1
 		return 1
 	}
-	#if {[catch {set proplist [hsi list_property [hsi::get_cells -hier $ip_inst]]} msg]} {
-	#} else {
-	#	if {[lsearch -nocase $proplist "IS_PL"] >= 0} {
-			if {![catch {set prop [hsi get_property IS_PL [hsi::get_cells -hier $ip_inst]]} msg]} {
-				#if {$prop} {
-				#	return 1
-				#} else {
-				#	return 0
-				#}
-				dict set ip_type_dict $cur_hw_design $ip_inst $prop
-				return $prop
-			}
-		#}
-	#}
-	#set ip_name [hsi get_property IP_NAME $ip_obj]
-	if {![regexp "ps._*" "$ip_name" match]} {
-		dict set ip_type_dict $cur_hw_design $ip_inst 1
-		return 1
+
+	if {![catch {set prop [hsi get_property IS_PL [hsi::get_cells -hier $ip_inst]]} msg]} {
+		dict set ip_type_dict $cur_hw_design $ip_inst $prop
+		return $prop
 	}
+
 	dict set ip_type_dict $cur_hw_design $ip_inst 0
 	return 0
 

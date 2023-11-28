@@ -1548,12 +1548,17 @@ proc proc_mapping {} {
 			# is generated in Vitis classic via the cpu tcls using xdefine_addr_params_for_ext_intf
 			# proc.
 			if {[lsearch $overall_periph_list $periph] < 0} {
-				set node [create_node -n ${periph} -l ${periph} -u [get_baseaddr $periph "no_prefix"] -d "pcw.dtsi" -p "&amba"]
+				set exception_dts [set_drv_def_dts $periph]
+				set exception_bus "&amba"
+				if {[string match -nocase $exception_dts "pl.dtsi"]} {
+					set exception_bus "amba_pl: amba_pl"
+				}
+				set node [create_node -n ${periph} -l ${periph} -u [get_baseaddr $periph "no_prefix"] -d ${exception_dts} -p ${exception_bus}]
 				gen_reg_property $periph "skip_ps_check"
-				add_prop $node "compatible" "${periph}" string pcw.dtsi
-				add_prop $node "xlnx,ip-name" "${periph}" string pcw.dtsi
-				add_prop $node "xlnx,name" "${periph}" string pcw.dtsi
-				add_prop $node status okay string pcw.dtsi
+				add_prop $node "compatible" "${periph}" string ${exception_dts}
+				add_prop $node "xlnx,ip-name" "${periph}" string ${exception_dts}
+				add_prop $node "xlnx,name" "${periph}" string ${exception_dts}
+				add_prop $node status okay string ${exception_dts}
 			}
 			set ipname [get_ip_property [hsi::get_cells -hier $periph] IP_NAME]
 			if {[lsearch $periphs_list $periph] >= 0} {
