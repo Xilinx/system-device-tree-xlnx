@@ -44,7 +44,7 @@
                                 }
                         }
                 }
-                add_prop $node "xlnx,external-mux-channel" $chan_nr int $dts_file
+                add_prop $node "xlnx,external-mux-channel" $chan_nr int $dts_file 1
         }
     }
 
