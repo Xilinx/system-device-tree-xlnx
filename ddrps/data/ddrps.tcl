@@ -96,7 +96,7 @@
 	set reg ""
 	set addr_64 "0"
 	set size_64 "0"
-	set mem_size [format 0x%x [expr {${high} - ${base} + 1}]]
+	set mem_size [format 0x%X [expr {${high} - ${base} + 1}]]
 	if {[string match -nocase $name "psu_r5_ddr_0"]} {
 		set mem_size $high
 	}
@@ -108,7 +108,8 @@
 		set rem [expr {${len} - 8}]
 		set high_base "0x[string range $temp $rem $len]"
 		set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
-		set low_base [format 0x%08x $low_base]
+		set low_base [format 0x%08X $low_base]
+
 	}
 	if {[regexp -nocase {0x([0-9a-f]{9})} "$mem_size" match]} {
 		set size_64 "1"
@@ -118,7 +119,7 @@
 		set rem [expr {${len} - 8}]
 		set high_size "0x[string range $temp $rem $len]"
 		set low_size "0x[string range $temp 0 [expr {${rem} - 1}]]"
-		set low_size [format 0x%08x $low_size]
+		set low_size [format 0x%08X $low_size]
 	}
 
 	if {[string match $addr_64 "1"] && [string match $size_64 "1"]} {
@@ -126,7 +127,7 @@
 	} elseif {[string match $addr_64 "1"] && [string match $size_64 "0"]} {
 		set reg "${low_base} ${high_base} 0x0 ${mem_size}"
 	} elseif {[string match $addr_64 "0"] && [string match $size_64 "1"]} {
-		set reg "0x0 ${base} 0x0 ${mem_size}"
+		set reg "0x0 ${base} ${low_size} ${high_size}"
 	} elseif { $32_bit_format } {
 		# For zynq where address and size cells are 1, memory node at the top
 		# should be in below format
@@ -165,7 +166,7 @@
 		if {[llength $updated_addr_list] > 0 && [lindex [lindex $updated_addr_list end] end] >= $curr_base_addr} {
 			set new_end [lindex [lindex $updated_addr_list end] end]
 			if {$new_end < $curr_high_addr} {
-				set updated_addr_list [lreplace [lindex $updated_addr_list end] end end $curr_high_addr]
+				set updated_addr_list [list [lreplace [lindex $updated_addr_list end] end end $curr_high_addr]]
 			}
 		} else {
 			lappend updated_addr_list "$curr_base_addr $curr_high_addr"
