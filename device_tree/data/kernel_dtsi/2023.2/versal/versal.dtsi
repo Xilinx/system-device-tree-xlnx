@@ -893,7 +893,7 @@
 			compatible = "xlnx,zynqmp-csudma-1.0";
 			interrupt-parent = <&imux>;
 			interrupts = <0 0x83 4>;
-			reg = <0x0 0xf11c0000 0x0 0x40000>;
+			reg = <0x0 0xf11c0000 0x0 0x10000>;
 			xlnx,dma-type = <1>;
 		};
 
@@ -902,7 +902,7 @@
 			compatible = "xlnx,zynqmp-csudma-1.0";
 			interrupt-parent = <&imux>;
 			interrupts = <0 0x84 4>;
-			reg = <0x0 0xf11d0000 0x0 0x40000>;
+			reg = <0x0 0xf11d0000 0x0 0x10000>;
 			xlnx,dma-type = <2>;
 		};
 
