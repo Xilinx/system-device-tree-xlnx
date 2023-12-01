@@ -3059,6 +3059,8 @@ proc gen_ps_mapping {} {
 			dict set def_ps_mapping ebd70000 label adma7
 			dict set def_ps_mapping f1980000 label can0
 			dict set def_ps_mapping f1990000 label can1
+			dict set def_ps_mapping f11c0000 label dma0
+			dict set def_ps_mapping f11d0000 label dma1
 			dict set def_ps_mapping f19e0000 label gem0
 			dict set def_ps_mapping f19f0000 label gem1
 			dict set def_ps_mapping f19d0000 label gpio0
@@ -3067,6 +3069,7 @@ proc gen_ps_mapping {} {
 			dict set def_ps_mapping f1950000 label i2c1
 			dict set def_ps_mapping f1948000 label i3c0
 			dict set def_ps_mapping f1958000 label i3c1
+			dict set def_ps_mapping	f0300000 label iomodule0
 			dict set def_ps_mapping f1010000 label ospi
 			dict set def_ps_mapping f1030000 label qspi
 			dict set def_ps_mapping f12a0000 label rtc

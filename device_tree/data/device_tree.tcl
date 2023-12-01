@@ -123,6 +123,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "psv_i2c" "iicps"
 	dict set ::sdtgen::namespacelist "axi_intc" "intc"
 	dict set ::sdtgen::namespacelist "iomodule" "iomodule"
+	dict set ::sdtgen::namespacelist "psx_iomodule" "iomodule"
 	dict set ::sdtgen::namespacelist "psu_ipi" "ipipsu"
 	dict set ::sdtgen::namespacelist "psv_ipi" "ipipsu"
 	dict set ::sdtgen::namespacelist "psx_ipi" "ipipsu"
