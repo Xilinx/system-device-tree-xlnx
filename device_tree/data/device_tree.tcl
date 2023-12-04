@@ -254,53 +254,52 @@ proc print_usage args {
         return $help_str
 }
 
+proc set_sdt_default_repo {} {
+	global env
+	if { ![info exists ::env(REPO)] } {
+		if { ![info exists ::env(XILINX_VITIS)] } {
+			error "Please set XILINX_VITIS path, couldn't locate default system-device-tree repo path"
+		} else {
+			set env(REPO) [file join $env(XILINX_VITIS) "data" "system-device-tree-xlnx"]
+		}
+	}
+	return $env(REPO)
+}
+
 proc set_dt_param args {
         global env
-        set param [lindex $args 0]
-        set val [lindex $args 1]
-        set xsa ""
-        set sdt_path $env(XILINX_VITIS)
-	set env(REPO) $sdt_path/data/system-device-tree-xlnx/
-        set board ""
-        set dt_overlay ""
-        set mainline_kernel ""
-        set kernel_ver ""
-        set dir ""
-        set dt_zocl ""
-        set dt_warn ""
-        set env(include_dts) ""
-	if {[llength $args] == 0 || ![string match -* [lindex $args 0]]} {
-		print_usage
-	} else {
-	        while {[string match -* [lindex $args 0]]} {
-		if {[string match -nocase [lindex $args 1] ""] && ![string match -nocase [lindex $args 0] "-help"]} {
-			puts "invalid value for [lindex $args 0]"
-			print_usage
-		}
-       	         switch -glob -- [lindex $args 0] {
-       	                -force {set force_create 1}
-                        -xsa {set env(xsa) [Pop args 1]}
-                        -board_dts {set env(board) [Pop args 1]}
-                        -dt_overlay {set env(dt_overlay) [Pop args 1]}
-                        -mainline_kernel {set env(kernel) [Pop args 1] }
-                        -kernel_ver {set env(kernel_ver) [Pop args 1]}
-                        -dir {set env(dir) [Pop args 1]}
-			-repo {set env(REPO) [Pop args 1]}
-                        -dt_zocl {set env(dir) [Pop args 1]}
-                        -include_dts {set env(include_dts) [Pop args 1]}
-                        -debug {set env(debug) [Pop args 1]}
-			-verbose {set env(verbose) [Pop args 1]}
-                        -trace {set env(trace) [Pop args 1]}
-			-help {return [print_usage]}
-                        -  {Pop args ; break}
-                        default {
-                                error "set_dt_param bad option - [lindex $args 0]"
-				print_usage
+        if {[llength $args] == 0 || ![string match -* [lindex $args 0]]} {
+                print_usage
+        } else {
+                while {[string match -* [lindex $args 0]]} {
+                        if {[string match -nocase [lindex $args 1] ""] && ![string match -nocase [lindex $args 0] "-help"]} {
+                                puts "invalid value for [lindex $args 0]"
+                                print_usage
                         }
+                        switch -glob -- [lindex $args 0] {
+                                -force {set force_create 1}
+                                -xsa {set env(xsa) [Pop args 1]}
+                                -board_dts {set env(board) [Pop args 1]}
+                                -dt_overlay {set env(dt_overlay) [Pop args 1]}
+                                -mainline_kernel {set env(kernel) [Pop args 1] }
+                                -kernel_ver {set env(kernel_ver) [Pop args 1]}
+                                -dir {set env(dir) [Pop args 1]}
+                                -repo {set env(REPO) [Pop args 1]}
+                                -dt_zocl {set env(dir) [Pop args 1]}
+                                -include_dts {set env(include_dts) [Pop args 1]}
+                                -debug {set env(debug) [Pop args 1]}
+                                -verbose {set env(verbose) [Pop args 1]}
+                                -trace {set env(trace) [Pop args 1]}
+                                -help {return [print_usage]}
+                                -  {Pop args ; break}
+                                default {
+                                        error "set_dt_param bad option - [lindex $args 0]"
+                                        print_usage
+                                }
+                        }
+                        Pop args
                 }
-                Pop args
-        	}
-	}
+        }
 }
 
 proc get_dt_param args {
@@ -311,7 +310,9 @@ proc get_dt_param args {
                 -xsa {
                      if {[catch {set val $env(xsa)} msg ]} {}
                } -repo {
-                       if {[catch {set val $env(REPO)} msg ]} {}
+                        if {[catch {set val $env(REPO)} msg ]} {
+                                set val [set_sdt_default_repo]
+                       }
                } -board -
                  -board_dts {
                        if {[catch {set val $env(board)} msg ]} {}
@@ -1208,7 +1209,7 @@ Generates system device tree based on args given in:
         } 
 
 	global env
-	set path $env(REPO)
+	set path [set_sdt_default_repo]
 	if {[catch {set path $env(REPO)} msg]} {
 		set path "."
 		set env(REPO) $path
