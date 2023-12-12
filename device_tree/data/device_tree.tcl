@@ -203,6 +203,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "ps7_wdt" "wdtps"
 	dict set ::sdtgen::namespacelist "psu_wdt" "wdtps"
 	dict set ::sdtgen::namespacelist "psv_wdt" "wdtps"
+	dict set ::sdtgen::namespacelist "psv_wwdt" "wdttb"
 	dict set ::sdtgen::namespacelist "ps7_xadc" "xadcps"
 	dict set ::sdtgen::namespacelist "psv_noc_pcie_1" "xdmapcie"
 	dict set ::sdtgen::namespacelist "qdma" "xdmapcie"
@@ -225,6 +226,8 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "axi_noc2" "ddrpsv"
 	dict set ::sdtgen::namespacelist "noc_mc_ddr5" "ddrpsv"
 	dict set ::sdtgen::namespacelist "psx_ocm_ram" "psu_ocm"
+	dict set ::sdtgen::namespacelist "psx_wwdt" "wdttb"
+
 }
 
 proc Pop {varname {nth 0}} {
