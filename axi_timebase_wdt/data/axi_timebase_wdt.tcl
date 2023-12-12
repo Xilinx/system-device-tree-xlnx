@@ -32,6 +32,7 @@
         set_drv_conf_prop $drv_handle "C_WDT_INTERVAL" "xlnx,wdt-interval" $node
         set_drv_conf_prop $drv_handle "C_ENABLE_WINDOW_WDT" "xlnx,enable-window-wdt" $node
 
+	#Enable winwdt examples in PL
+	set_drv_conf_prop $drv_handle "C_ENABLE_WINDOW_WDT" "xlnx,winwdt-example" $node
+
     }
-
-
