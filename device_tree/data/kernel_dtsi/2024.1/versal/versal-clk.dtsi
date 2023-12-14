@@ -45,7 +45,7 @@
 	firmware {
 		versal_firmware: versal-firmware {
 			compatible = "xlnx,versal-firmware";
-			interrupt-parent = <&gic>;
+			interrupt-parent = <&imux>;
 			u-boot,dm-pre-reloc;
 			method = "smc";
 			#power-domain-cells = <1>;
@@ -127,7 +127,7 @@
 	};
 };
 
-&cpu0 {
+&psv_cortexa72_0 {
 	clocks = <&versal_clk ACPU>;
 };
 
