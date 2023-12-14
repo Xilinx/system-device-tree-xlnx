@@ -68,7 +68,6 @@
     }
 
     proc emacps_generate {drv_handle} {
-    	global is_versal_net_platform
         update_eth_mac_addr $drv_handle
         set node [get_node $drv_handle]
         set slave [hsi::get_cells -hier $drv_handle]
@@ -95,84 +94,57 @@
         }
 
         set proc_type [get_hw_family]
-        if {[is_zynqmp_platform $proc_type]} {
-            set zynq_periph [hsi::get_cells -hier -filter {IP_NAME == zynq_ultra_ps_e}]
-            set avail_param [hsi list_property [hsi::get_cells -hier $zynq_periph]]
-            if {[lsearch -nocase $avail_param "CONFIG.PSU__GEM__TSU__ENABLE"] >= 0} {
-                set val [hsi get_property CONFIG.PSU__GEM__TSU__ENABLE [hsi::get_cells -hier $zynq_periph]]
-                if {$val == 1} {
-                set default_dts "pcw.dtsi"
-                    set tsu_node [create_node -n "tsu_ext_clk" -l "tsu_ext_clk" -d $default_dts -p root]
-                add_prop $tsu_node "compatible" "fixed-clock" stringlist $default_dts
-                add_prop $tsu_node "#clock-cells" 0 int $default_dts
-                    set tsu-clk-freq [hsi get_property CONFIG.C_ENET_TSU_CLK_FREQ_HZ [hsi::get_cells -hier $drv_handle]]
-                add_prop "${tsu_node}" "clock-frequency" ${tsu-clk-freq} int $default_dts
-                    set_drv_prop_if_empty $drv_handle "clock-names" "pclk hclk tx_clk rx_clk tsu_clk" stringlist
-                    set_drv_prop_if_empty $drv_handle "clocks" "zynqmp_clk 31>, <&zynqmp_clk 107>, <&zynqmp_clk 48>, <&zynqmp_clk 52>, <&tsu_ext_clk" reference
-                if {[string match -nocase $node "&gem3"]} {
-                           set_drv_prop_if_empty $drv_handle "clocks" "zynqmp_clk 31>, <&zynqmp_clk 107>, <&zynqmp_clk 48>, <&zynqmp_clk 52>, <&tsu_ext_clk" reference
-                   } elseif {[string match -nocase $node "&gem2"]} {
-                           set_drv_prop_if_empty $drv_handle "clocks" "zynqmp_clk 31>, <&zynqmp_clk 106>, <&zynqmp_clk 47>, <&zynqmp_clk 51>, <&tsu_ext_clk" reference
-                   } elseif {[string match -nocase $node "&gem1"]} {
-                           set_drv_prop_if_empty $drv_handle "clocks" "zynqmp_clk 31>, <&zynqmp_clk 105>, <&zynqmp_clk 46>, <&zynqmp_clk 50>, <&tsu_ext_clk" reference
-                   } elseif {[string match -nocase $node "&gem0"]} {
-                           set_drv_prop_if_empty $drv_handle "clocks" "zynqmp_clk 31>, <&zynqmp_clk 104>, <&zynqmp_clk 45>, <&zynqmp_clk 49>, <&tsu_ext_clk" reference
-                   }
-           }
-          }
-       }
 
-        if {[string match -nocase $proc_type "versal"] } {
-	        if { $is_versal_net_platform } {
-			set versalnet_periph [hsi get_cells -hier -filter {IP_NAME == psx_wizard}]
-			set psx_pmcx_params [hsi get_property CONFIG.PSX_PMCX_CONFIG [hsi get_cells -hier $versalnet_periph]]
-			set psx_gem_tsu_enable ""
-			if {[llength $psx_pmcx_params]} {
-				set psx_gem_tsu ""
-				if {[dict exists $psx_pmcx_params "PSX_GEM_TSU"]} {
-					set psx_gem_tsu [dict get $psx_pmcx_params "PSX_GEM_TSU"]
-					if {[dict exists $psx_gem_tsu "ENABLE"]} {
-						set psx_gem_tsu_enable [dict get $psx_gem_tsu "ENABLE"]
-					}
+	set tsu_enable ""
+	set psx_wizard_periph [hsi get_cells -hier -filter {IP_NAME == psx_wizard}]
+	set ps_wizard_periph [hsi get_cells -hier -filter {IP_NAME == ps_wizard}]
+	set versal_periph [hsi::get_cells -hier -filter {IP_NAME == versal_cips}]
+	set zynq_periph [hsi::get_cells -hier -filter {IP_NAME == zynq_ultra_ps_e}]
+	set clk ""
+	if {![string_is_empty $psx_wizard_periph]} {
+		set psx_pmcx_params [hsi get_property CONFIG.PSX_PMCX_CONFIG [hsi get_cells -hier $psx_wizard_periph]]
+		set psx_gem_tsu_enable ""
+		if {[llength $psx_pmcx_params]} {
+			set psx_gem_tsu ""
+			if {[dict exists $psx_pmcx_params "PSX_GEM_TSU"]} {
+				set psx_gem_tsu [dict get $psx_pmcx_params "PSX_GEM_TSU"]
+				if {[dict exists $psx_gem_tsu "ENABLE"]} {
+					set tsu_enable [dict get $psx_gem_tsu "ENABLE"]
 				}
 			}
-			if {$psx_gem_tsu_enable == 1} {
-				set default_dts [set_drv_def_dts $drv_handle]
-				set root_node [add_or_get_dt_node -n / -d ${default_dts}]
-				set tsu_node [add_or_get_dt_node -n "tsu_ext_clk" -l "tsu_ext_clk" -d $default_dts -p $root_node]
-				add_prop "${tsu_node}" "compatible" "fixed-clock" stringlist $default_dts
-				add_prop "${tsu_node}" "#clock-cells" 0 int $default_dts
-				set tsu-clk-freq [hsi get_property CONFIG.C_ENET_TSU_CLK_FREQ_HZ [hsi get_cells -hier $drv_handle]]
-				add_prop "${tsu_node}" "clock-frequency" ${tsu-clk-freq} int $default_dts
-				set_drv_prop_if_empty $drv_handle "clock-names" "pclk hclk tx_clk rx_clk tsu_clk" stringlist
-				if {[string match -nocase $node "&gem0"]} {
-					set_drv_prop_if_empty $drv_handle "clocks" "versal_net_clk 82>, <&versal_net_clk 88>, <&versal_net_clk 49>, <&versal_net_clk 48>, <&tsu_ext_clk" reference
-				} elseif {[string match -nocase $node "&gem1"]} {
-					set_drv_prop_if_empty $drv_handle "clocks" "versal_net_clk 82>, <&versal_net_clk 89>, <&versal_net_clk 51>, <&versal_net_clk 50>, <&tsu_ext_clk" reference
-				}
-			}
-
-		} else {
-			set versal_periph [hsi::get_cells -hier -filter {IP_NAME == versal_cips}]
-		        set avail_param [hsi list_property [hsi::get_cells -hier $versal_periph]]
-		        if {[lsearch -nocase $avail_param "CONFIG.PS_GEM_TSU_ENABLE"] >= 0} {
-		                set val [hsi get_property CONFIG.PS_GEM_TSU_ENABLE [hsi::get_cells -hier $versal_periph]]
-		                if {$val == 1} {
-		                        set default_dts [set_drv_def_dts $drv_handle]
-		                        set tsu_node [create_node -n "tsu_ext_clk" -l "tsu_ext_clk" -d $default_dts -p root]
-		                        add_prop "${tsu_node}" "compatible" "fixed-clock" stringlist $default_dts
-		                        add_prop "${tsu_node}" "#clock-cells" 0 int $default_dts
-		                        set tsu-clk-freq [hsi get_property CONFIG.C_ENET_TSU_CLK_FREQ_HZ [hsi::get_cells -hier $drv_handle]]
-		                        add_prop "${tsu_node}" "clock-frequency" ${tsu-clk-freq} int $default_dts
-		                        set_drv_prop_if_empty $drv_handle "clock-names" "pclk hclk tx_clk rx_clk tsu_clk" stringlist
-		                        if {[string match -nocase $node "gem0: ethernet@ff0c0000"]} {
-		                                set_drv_prop_if_empty $drv_handle "clocks" "versal_clk 82>, <&versal_clk 88>, <&versal_clk 49>, <&versal_clk 48>, <&tsu_ext_clk" reference
-		                        } elseif {[string match -nocase $node "gem1: ethernet@ff0d0000"]} {
-		                                set_drv_prop_if_empty $drv_handle "clocks" "versal_clk 82>, <&versal_clk 89>, <&versal_clk 51>, <&versal_clk 50>, <&tsu_ext_clk" reference
-		                        }
-		                }
-		        }
 		}
+		set clk [emacps_set_tsu_ext_clk versal $node versal_net_clk]
+	} elseif {![string_is_empty $ps_wizard_periph]} {
+		set ps_pmc_params [hsi get_property CONFIG.PS_PMC_CONFIG [hsi get_cells -hier $ps_wizard_periph]]
+		set ps_gem_tsu_enable ""
+		if {[llength $ps_pmc_params]} {
+			set ps_gem_tsu ""
+			if {[dict exists $ps_pmc_params "PS_GEM_TSU"]} {
+				set ps_gem_tsu [dict get $ps_pmc_params "PS_GEM_TSU"]
+				if {[dict exists $ps_gem_tsu "ENABLE"]} {
+					set tsu_enable [dict get $ps_gem_tsu "ENABLE"]
+				}
+			}
+		}
+		set clk [emacps_set_tsu_ext_clk versal $node]
+	} elseif {![string_is_empty $versal_periph]} {
+		set tsu_enable [get_ip_property $versal_periph "CONFIG.PS_GEM_TSU_ENABLE"]
+		set clk [emacps_set_tsu_ext_clk versal $node]
+	} elseif {![string_is_empty $zynq_periph]} {
+		set tsu_enable [get_ip_property $zynq_periph "CONFIG.PSU__GEM__TSU__ENABLE"]
+		set clk [emacps_set_tsu_ext_clk zynqmp $node zynqmp_clk]
+	}
+
+	if {$tsu_enable == 1} {
+                set default_dts [set_drv_def_dts $drv_handle]
+                set tsu_node [create_node -n / -d $default_dts -p root]
+                set tsu_node [create_node -n "tsu_ext_clk" -l "tsu_ext_clk" -d $default_dts -p /]
+                add_prop "${tsu_node}" "compatible" "fixed-clock" stringlist $default_dts
+                add_prop "${tsu_node}" "#clock-cells" 0 int $default_dts
+                set tsu-clk-freq [hsi get_property CONFIG.C_ENET_TSU_CLK_FREQ_HZ [hsi::get_cells -hier $drv_handle]]
+                add_prop "${tsu_node}" "clock-frequency" ${tsu-clk-freq} int $default_dts
+                set_drv_prop_if_empty $drv_handle "clock-names" "pclk hclk tx_clk rx_clk tsu_clk" $node stringlist
+                set_drv_prop_if_empty $drv_handle "clocks" $clk $node reference
         }
 
         # check if gmii2rgmii converter is used.
@@ -429,4 +401,25 @@
            return $mdio_node
     }
 
-
+    proc emacps_set_tsu_ext_clk {platform node {clk "versal_clk"}} {
+	set clocks ""
+	if {[string match -nocase $platform "zynqmp"]} {
+		if {[string match -nocase $node "&gem3"]} {
+			set clocks "${clk} 31>, <&${clk} 107>, <&${clk} 48>, <&${clk} 52>, <&tsu_ext_clk"
+		} elseif {[string match -nocase $node "&gem2"]} {
+			set clocks "${clk} 31>, <&${clk} 106>, <&${clk} 47>, <&${clk} 51>, <&tsu_ext_clk"
+		} elseif {[string match -nocase $node "&gem1"]} {
+			set clocks "${clk} 31>, <&${clk} 105>, <&${clk} 46>, <&${clk} 50>, <&tsu_ext_clk"
+		} elseif {[string match -nocase $node "&gem0"]} {
+			set clocks "${clk} 31>, <&${clk} 104>, <&${clk} 45>, <&${clk} 49>, <&tsu_ext_clk"
+		}
+	}
+	if {[string match -nocase $platform "versal"]} {
+		if {[string match -nocase $node "&gem0"]} {
+			set clocks "${clk} 82>, <&${clk} 88>, <&${clk} 49>, <&${clk} 48>, <&tsu_ext_clk"
+		} elseif {[string match -nocase $node "&gem1"]} {
+			set clocks "${clk} 82>, <&${clk} 89>, <&${clk} 51>, <&${clk} 50>, <&tsu_ext_clk"
+		}
+	}
+	return $clocks
+    }
