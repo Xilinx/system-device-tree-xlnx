@@ -14,7 +14,7 @@
 #
 ---
 dict_devicetree:
-    kernel_ver: 2023.2
+    kernel_ver: 2024.1
     mainline_kernel: none
     board_dts: versal-vck190-reva
     dt_overlay: false
