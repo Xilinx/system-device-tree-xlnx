@@ -699,6 +699,9 @@ proc get_sem_property { prop } {
 	if {$pspmcCell eq ""} {
 		set pspmcCell [hsi::get_cells -hier -filter "IP_NAME==psxl"]
 	}
+	if {$pspmcCell eq ""} {
+		set pspmcCell [hsi::get_cells -hier -filter "IP_NAME==ps11"]
+	}
 	if {$pspmcCell ne ""} {
 		return [common::get_property $prop $pspmcCell]
 	} else {
@@ -925,7 +928,7 @@ proc gen_versal_clk {} {
        set periph_list [hsi::get_cells -hier]
        foreach periph $periph_list {
                set versal_ps [hsi get_property IP_NAME $periph]
-               if {[string match -nocase $versal_ps "versal_cips"] } {
+               if { $versal_ps in { "versal_cips" "ps_wizard" } } {
                        set ver [get_comp_ver $periph]
                        if {$ver < 3.0} {
                                set avail_param [hsi list_property [hsi get_cells -hier $periph]]
@@ -1270,9 +1273,9 @@ Generates system device tree based on args given in:
 
 	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
 
-	set non_val_list "versal_cips psx_wizard psxl dmac_slv axi_noc axi_noc2 noc_mc_ddr4 noc_mc_ddr5 noc_nmu noc_nsu noc2_nmu noc2_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat xlconstant xlslice axis_tdest_editor util_reduced_logic noc_nsw noc2_nsw axis_ila pspmc psv_ocm_ram_0 psv_pmc_qspi_ospi add_keep_128 c_counter_binary dbg_monmux"
+	set non_val_list "versal_cips psx_wizard psxl ps_wizard dmac_slv axi_noc axi_noc2 noc_mc_ddr4 noc_mc_ddr5 noc_nmu noc_nsu noc2_nmu noc2_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat xlconstant xlslice axis_tdest_editor util_reduced_logic noc_nsw noc2_nsw axis_ila pspmc psv_ocm_ram_0 psv_pmc_qspi_ospi add_keep_128 c_counter_binary dbg_monmux"
 	set non_val_ip_types "MONITOR BUS PROCESSOR"
-	set non_val_list1 "psv_cortexa72 psu_cortexa53 ps7_cortexa9 versal_cips psx_wizard noc_nmu noc_nsu ila psu_iou_s noc_nsw pspmc"
+	set non_val_list1 "psv_cortexa72 psu_cortexa53 ps7_cortexa9 versal_cips psx_wizard ps_wizard noc_nmu noc_nsu ila psu_iou_s noc_nsw pspmc"
 	set non_val_ip_types1 "MONITOR BUS"
 
 	set_hw_family $proclist
