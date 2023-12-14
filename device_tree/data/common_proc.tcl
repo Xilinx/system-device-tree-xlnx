@@ -916,7 +916,7 @@ proc create_node args {
 			if {[string match -nocase $node_label ""]} {
 				set drvnode [$treeobj insert $parent_obj end "$node_name"]	
 			} else {
-				set drvnode [$treeobj insert $parent_obj end "$node_label: $node_name"]	
+				set drvnode [$treeobj insert $parent_obj end "$node_label: $node_name"]
 			}
 		} else {
 			if {[string match -nocase $node_label ""]} {
@@ -1293,7 +1293,6 @@ proc create_busmap args {
 	}
 	return $values
 }
-
 
 proc write_dt args {
 	set dt [lindex $args 0]
@@ -4389,11 +4388,9 @@ proc gen_clk_property {drv_handle} {
 				set clklist "pl_clk0 pl_clk1 pl_clk2 pl_clk3"
 			}
 			"versal" {
-				if { $is_versal_net_platform } {
-					set versal_periph [hsi get_cells -hier -filter {IP_NAME == psx_wizard}]
-				} else {
-					set versal_periph [hsi::get_cells -hier -filter {IP_NAME == versal_cips}]
-				}
+				set versal_periph [hsi get_cells -hier -filter \
+					{ IP_NAME == psx_wizard || IP_NAME == versal_cips \
+					|| IP_NAME == ps_wizard }]
 				set ver [get_comp_ver $versal_periph]
 				if {$ver >= 3.0} {
                                		set clklist "pl0_ref_clk pl1_ref_clk pl2_ref_clk pl3_ref_clk"
@@ -4413,11 +4410,9 @@ proc gen_clk_property {drv_handle} {
 			}
 		}
 		if {[string match -nocase $proctype "versal"]} {
-			if { $is_versal_net_platform } {
-				set versal_periph [hsi get_cells -hier -filter {IP_NAME == psx_wizard}]
-			} else {
-				set versal_periph [hsi::get_cells -hier -filter {IP_NAME == versal_cips}]
-			}
+			set versal_periph [hsi get_cells -hier -filter \
+				{ IP_NAME == psx_wizard || IP_NAME == versal_cips \
+				|| IP_NAME == ps_wizard }]
                        set ver [get_comp_ver $versal_periph]
                        if {$ver >= 3.0} {
                        switch $pl_clk {
