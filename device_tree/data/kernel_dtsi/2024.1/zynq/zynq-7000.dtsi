@@ -17,12 +17,13 @@
 	#address-cells = <1>;
 	#size-cells = <1>;
 	compatible = "xlnx,zynq-7000";
+    model = "Xilinx Zynq";
 
-	cpus {
+	cpus_a9: cpus-a9@0 {
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		cpu0: cpu@0 {
+		ps7_cortexa9_0: cpu@0 {
 			compatible = "arm,cortex-a9";
 			device_type = "cpu";
 			reg = <0>;
@@ -30,13 +31,12 @@
 			clock-latency = <1000>;
 			cpu0-supply = <&regulator_vccpint>;
 			operating-points = <
-				/* kHz    uV */
 				666667  1000000
 				333334  1000000
 			>;
 		};
 
-		cpu1: cpu@1 {
+		ps7_cortexa9_1: cpu@1 {
 			compatible = "arm,cortex-a9";
 			device_type = "cpu";
 			reg = <1>;
@@ -212,6 +212,7 @@
 			clock-names = "uart_clk", "pclk";
 			reg = <0xE0000000 0x1000>;
 			interrupts = <0 27 4>;
+			interrupt-parent = <&intc>;
 		};
 
 		uart1: serial@e0001000 {
@@ -221,6 +222,7 @@
 			clock-names = "uart_clk", "pclk";
 			reg = <0xE0001000 0x1000>;
 			interrupts = <0 50 4>;
+			interrupt-parent = <&intc>;
 		};
 
 		spi0: spi@e0006000 {
@@ -264,6 +266,7 @@
 			reg = <0xe000b000 0x1000>;
 			status = "disabled";
 			interrupts = <0 22 4>;
+			interrupt-parent = <&intc>;
 			clocks = <&clkc 30>, <&clkc 30>, <&clkc 13>;
 			clock-names = "pclk", "hclk", "tx_clk";
 			#address-cells = <1>;
@@ -275,6 +278,7 @@
 			reg = <0xe000c000 0x1000>;
 			status = "disabled";
 			interrupts = <0 45 4>;
+			interrupt-parent = <&intc>;
 			clocks = <&clkc 31>, <&clkc 31>, <&clkc 14>;
 			clock-names = "pclk", "hclk", "tx_clk";
 			#address-cells = <1>;
@@ -435,6 +439,13 @@
 			clocks = <&clkc 4>;
 		};
 
+		scuwdt: scuwatchdog@f8f00620 {
+			interrupt-parent = <&intc>;
+			interrupts = <1 14 4>;
+			compatible = "xlnx,ps7-scuwdt-1.00.a";
+			reg = <0xf8f00620 0xe0>;
+		};
+
 		usb0: usb@e0002000 {
 			compatible = "xlnx,zynq-usb-2.20a", "chipidea,usb2";
 			status = "disabled";
@@ -462,6 +473,12 @@
 			interrupts = <0 9 1>;
 			reg = <0xf8005000 0x1000>;
 			timeout-sec = <10>;
+		};
+
+		coresight: coresight@f8800000 {
+		    compatible = "xlnx,ps7-coresight-comp-1.00.a";
+		    status = "disabled";
+		    reg = <0xf8800000 0x100000>;
 		};
 
 		etb@f8801000 {
@@ -541,7 +558,7 @@
 			reg = <0xf889c000 0x1000>;
 			clocks = <&clkc 27>, <&clkc 46>, <&clkc 47>;
 			clock-names = "apb_pclk", "dbg_trc", "dbg_apb";
-			cpu = <&cpu0>;
+			cpu = <&ps7_cortexa9_0>;
 			out-ports {
 				port {
 					ptm0_out_port: endpoint {
@@ -556,7 +573,7 @@
 			reg = <0xf889d000 0x1000>;
 			clocks = <&clkc 27>, <&clkc 46>, <&clkc 47>;
 			clock-names = "apb_pclk", "dbg_trc", "dbg_apb";
-			cpu = <&cpu1>;
+			cpu = <&ps7_cortexa9_1>;
 			out-ports {
 				port {
 					ptm1_out_port: endpoint {
