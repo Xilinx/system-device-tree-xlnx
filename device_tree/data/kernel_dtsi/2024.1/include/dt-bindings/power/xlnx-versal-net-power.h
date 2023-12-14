@@ -7,7 +7,7 @@
 #ifndef _DT_BINDINGS_VERSAL_NET_POWER_H
 #define _DT_BINDINGS_VERSAL_NET_POWER_H
 
-#include <dt-bindings/power/xlnx-versal-power.h>
+#include "xlnx-versal-power.h"
 
 #define PM_DEV_USB_1				(0x182240D7U)
 #define PM_DEV_FPD_SWDT_0			(0x182240DBU)
@@ -34,5 +34,23 @@
 #undef PM_DEV_TCM_1_B
 #undef PM_DEV_SWDT_FPD
 #undef PM_DEV_AI
+
+#define PM_DEV_RPU_A_0				(0x181100BFU)
+#define PM_DEV_RPU_A_1				(0x181100C0U)
+#define PM_DEV_RPU_B_0				(0x181100C1U)
+#define PM_DEV_RPU_B_1				(0x181100C2U)
+
+#define PM_DEV_TCM_A_0A				(0x183180CBU)
+#define PM_DEV_TCM_A_0B				(0x183180CCU)
+#define PM_DEV_TCM_A_0C				(0x183180CDU)
+#define PM_DEV_TCM_A_1A				(0x183180CEU)
+#define PM_DEV_TCM_A_1B				(0x183180CFU)
+#define PM_DEV_TCM_A_1C				(0x183180D0U)
+#define PM_DEV_TCM_B_0A				(0x183180D1U)
+#define PM_DEV_TCM_B_0B				(0x183180D2U)
+#define PM_DEV_TCM_B_0C				(0x183180D3U)
+#define PM_DEV_TCM_B_1A				(0x183180D4U)
+#define PM_DEV_TCM_B_1B				(0x183180D5U)
+#define PM_DEV_TCM_B_1C				(0x183180D6U)
 
 #endif

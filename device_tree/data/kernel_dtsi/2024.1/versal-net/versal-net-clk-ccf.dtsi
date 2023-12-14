@@ -58,7 +58,7 @@
 
 			versal_net_power: zynqmp-power { /* untested */
 				compatible = "xlnx,zynqmp-power";
-				interrupt-parent = <&gic>;
+				interrupt-parent = <&imux>;
 				interrupts = <0 57 4>;
 				mboxes = <&ipi_mailbox_pmu1 0>,
 					 <&ipi_mailbox_pmu1 1>;
@@ -123,7 +123,7 @@
 
 	zynqmp-ipi {
 		compatible = "xlnx,zynqmp-ipi-mailbox";
-		interrupt-parent = <&gic>;
+		interrupt-parent = <&imux>;
 		interrupts = <0 57 4>;
 		xlnx,ipi-id = <2>;
 		#address-cells = <2>;
@@ -143,67 +143,67 @@
 	};
 };
 
-&cpu0 {
+&psx_cortexa78_0 {
 	clocks = <&versal_net_clk ACPU_0>;
 };
 
-&cpu100 {
+&psx_cortexa78_1 {
 	clocks = <&versal_net_clk ACPU_0>;
 };
 
-&cpu200 {
+&psx_cortexa78_2 {
 	clocks = <&versal_net_clk ACPU_0>;
 };
 
-&cpu300 {
+&psx_cortexa78_3 {
 	clocks = <&versal_net_clk ACPU_0>;
 };
 
-&cpu10000 {
+&psx_cortexa78_4 {
 	clocks = <&versal_net_clk ACPU_1>;
 };
 
-&cpu10100 {
+&psx_cortexa78_5 {
 	clocks = <&versal_net_clk ACPU_1>;
 };
 
-&cpu10200 {
+&psx_cortexa78_6 {
 	clocks = <&versal_net_clk ACPU_1>;
 };
 
-&cpu10300 {
+&psx_cortexa78_7 {
 	clocks = <&versal_net_clk ACPU_1>;
 };
 
-&cpu20000 {
+&psx_cortexa78_8 {
 	clocks = <&versal_net_clk ACPU_2>;
 };
 
-&cpu20100 {
+&psx_cortexa78_9 {
 	clocks = <&versal_net_clk ACPU_2>;
 };
 
-&cpu20200 {
+&psx_cortexa78_10 {
 	clocks = <&versal_net_clk ACPU_2>;
 };
 
-&cpu20300 {
+&psx_cortexa78_11 {
 	clocks = <&versal_net_clk ACPU_2>;
 };
 
-&cpu30000 {
+&psx_cortexa78_12 {
 	clocks = <&versal_net_clk ACPU_3>;
 };
 
-&cpu30100 {
+&psx_cortexa78_13 {
 	clocks = <&versal_net_clk ACPU_3>;
 };
 
-&cpu30200 {
+&psx_cortexa78_14 {
 	clocks = <&versal_net_clk ACPU_3>;
 };
 
-&cpu30300 {
+&psx_cortexa78_15 {
 	clocks = <&versal_net_clk ACPU_3>;
 };
 
@@ -414,6 +414,22 @@
 };
 
 &lpd_wwdt1 {
-	clocks = <&versal_net_clk LPD_WWDT>;
-	power-domains = <&versal_net_firmware PM_DEV_LPD_SWDT_1>;
+        clocks = <&versal_net_clk LPD_WWDT>;
+        power-domains = <&versal_net_firmware PM_DEV_LPD_SWDT_1>;
+};
+
+&psx_cortexr52_0 {
+         power-domains = <&versal_net_firmware PM_DEV_RPU_A_0>;
+};
+
+&psx_cortexr52_1 {
+         power-domains = <&versal_net_firmware PM_DEV_RPU_A_1>;
+};
+
+&psx_cortexr52_2 {
+         power-domains = <&versal_net_firmware PM_DEV_RPU_B_0>;
+};
+
+&psx_cortexr52_3 {
+         power-domains = <&versal_net_firmware PM_DEV_RPU_B_1>;
 };
