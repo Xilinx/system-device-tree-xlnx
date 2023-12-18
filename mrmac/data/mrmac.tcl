@@ -20,6 +20,7 @@
                 return
         }
         set dts_file [set_drv_def_dts $drv_handle]
+        set compatible [get_comp_str $drv_handle]
         set keyval [pldt append $node compatible "\ \, \"xlnx,mrmac-ethernet-1.0\""]
         set_drv_prop $drv_handle compatible "$compatible" $node stringlist
         set mrmac_ip [hsi::get_cells -hier $drv_handle]
@@ -33,8 +34,8 @@
             } else {
                     set bus_node "amba_pl"
             }
-            set dts_file [current_dt_tree]
-        set mem_ranges [get_mem_ranges [hsi::get_cells -hier $drv_handle]]
+        set dts_file [set_drv_def_dts $drv_handle]
+        set mem_ranges [hsi get_mem_ranges [hsi::get_cells -hier $drv_handle]]
         dtg_verbose "mem_ranges:$mem_ranges"
             foreach mem_range $mem_ranges {
                    set base_addr [string tolower [hsi get_property BASE_VALUE $mem_range]]
@@ -279,11 +280,63 @@
         set mrmac_clk_len [expr {[llength [split $mrmac_clks ","]]}]
         set clk_list [split $mrmac_clks ","]
         set null ""
-        set_drv_prop $drv_handle "zclock-names1" $node $null
+        set_drv_prop $drv_handle "zclock-names1" $null $node stringlist
         set refs ""
         set_drv_prop $drv_handle "zclocks1" "$refs" $node stringlist
 
         set i 0
+        set s_axi_aclk ""
+        set s_axi_aclk_index0 ""
+        set rx_axi_clk0 ""
+        set rx_axi_clk_index0 ""
+        set rx_axi_clk1 ""
+        set rx_axi_clk_index1 ""
+        set rx_axi_clk2 ""
+        set rx_axi_clk_index2 ""
+        set rx_axi_clk3 ""
+        set rx_axi_clk_index3 ""
+        set rx_flexif_clk0 ""
+        set rx_flexif_clk_index0 ""
+        set rx_flexif_clk1 ""
+        set rx_flexif_clk_index1 ""
+        set rx_flexif_clk2 ""
+        set rx_flexif_clk_index2 ""
+        set rx_flexif_clk3 ""
+        set rx_flexif_clk_index3 ""
+        set rx_ts_clk0 ""
+        set rx_ts_clk0_index0 ""
+        set rx_ts_clk1 ""
+        set rx_ts_clk1_index1 ""
+        set rx_ts_clk2 ""
+        set rx_ts_clk2_index2 ""
+        set rx_ts_clk3 ""
+        set rx_ts_clk3_index3 ""
+
+        set tx_axi_clk0 ""
+        set tx_axi_clk_index0 ""
+        set tx_axi_clk1 ""
+        set tx_axi_clk_index1 ""
+        set tx_axi_clk2 ""
+        set tx_axi_clk_index2 ""
+        set tx_axi_clk3 ""
+        set tx_axi_clk_index3 ""
+        set tx_flexif_clk0 ""
+        set tx_flexif_clk_index0 ""
+        set tx_flexif_clk1 ""
+        set tx_flexif_clk_index1 ""
+        set tx_flexif_clk2 ""
+        set tx_flexif_clk_index2 ""
+        set tx_flexif_clk3 ""
+        set tx_flexif_clk_index3 ""
+        set tx_ts_clk0 ""
+        set tx_ts_clk_index0 ""
+        set tx_ts_clk1 ""
+        set tx_ts_clk_index1 ""
+        set tx_ts_clk2 ""
+        set tx_ts_clk_index2 ""
+        set tx_ts_clk3 ""
+        set tx_ts_clk_index3 ""
+
         while {$i < $mrmac_clkname_len} {
                 set clkname [lindex $mrmac_clk_names $i]
                 if {[string match -nocase $clkname "s_axi_aclk"]} {
@@ -494,8 +547,8 @@
         if {[llength $rxtod_pins]} {
            set rx_periph [hsi::get_cells -of_objects $rxtod_pins]
                    if {[llength $rx_periph]} {
-                           if {[string match -nocase [get_property IP_NAME $rx_periph] "mrmac_ptp_timestamp_if"]} {
-                                   set port_pins [::hsi::utils::get_sink_pins [hsi get_pins -of_objects [hsi get_cells -hier $rx_periph] "rx_timestamp_tod"]]
+                           if {[string match -nocase [hsi get_property IP_NAME $rx_periph] "mrmac_ptp_timestamp_if"]} {
+                                   set port_pins [get_sink_pins [hsi get_pins -of_objects [hsi get_cells -hier $rx_periph] "rx_timestamp_tod"]]
                                    set rx_periph [::hsi::get_cells -of_objects $port_pins]
                            }
                    }
@@ -557,25 +610,26 @@
         dtg_verbose "gt_reset_pins:$gt_reset_pins"
         set gt_reset_per ""
         if {[llength $gt_reset_pins]} {
-                set gt_reset_periph [::hsi::get_cells -of_objects $gt_reset_pins]
-                if {[string match -nocase [hsi get_property IP_NAME $gt_reset_periph] "xlconcat"]} {
-                        set intf "In0"
-                        set in1_pin [::hsi::get_pins -of_objects $gt_reset_periph -filter "NAME==$intf"]
-                        set sink_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $gt_reset_periph] $in1_pin]]
-                        set gt_per [::hsi::get_cells -of_objects $sink_pins]
-                        if {[string match -nocase [hsi get_property IP_NAME $gt_per] "xlslice"]} {
-                                set intf "Din"
-                                set in1_pin [::hsi::get_pins -of_objects $gt_per -filter "NAME==$intf"]
-                                set sink_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $gt_per] $in1_pin]]
-                                set gt_reset_per [::hsi::get_cells -of_objects $sink_pins]
-                                dtg_verbose "gt_reset_per:$gt_reset_per"
-                                if {[llength $gt_reset_per]} {
-                                        add_prop "$node" "xlnx,gtctrl" $gt_reset_per reference $dts_file
+                set gt_reset_periph [hsi get_cells -of_objects $gt_reset_pins]
+                if {[llength $gt_reset_periph]} {
+                        if {[string match -nocase [hsi get_property IP_NAME $gt_reset_periph] "xlconcat"]} {
+                                set intf "In0"
+                                set in1_pin [::hsi::get_pins -of_objects $gt_reset_periph -filter "NAME==$intf"]
+                                set sink_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $gt_reset_periph] $in1_pin]]
+                                set gt_per [::hsi::get_cells -of_objects $sink_pins]
+                                if {[string match -nocase [hsi get_property IP_NAME $gt_per] "xlslice"]} {
+                                        set intf "Din"
+                                        set in1_pin [::hsi::get_pins -of_objects $gt_per -filter "NAME==$intf"]
+                                        set sink_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $gt_per] $in1_pin]]
+                                        set gt_reset_per [::hsi::get_cells -of_objects $sink_pins]
+                                        dtg_verbose "gt_reset_per:$gt_reset_per"
+                                        if {[llength $gt_reset_per]} {
+                                                add_prop "$node" "xlnx,gtctrl" $gt_reset_per reference $dts_file
+                                        }
                                 }
                         }
                 }
         }
-
         set gt_pll_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $mrmac_ip] "mst_rx_resetdone_in"]]
         dtg_verbose "gt_pll_pins:$gt_pll_pins"
         set gt_pll_per ""
@@ -614,9 +668,9 @@
             if {$dt_overlay} {
                     set bus_node "overlay2"
             } else {
-                    set bus_node "amba_pl"
+                    set bus_node "amba_pl: amba_pl"
             }
-        set dts_file [current_dt_tree]
+        set dts_file [set_drv_def_dts $drv_handle]
         set mrmac1_base [format 0x%x [expr $base_addr + 0x1000]]
         set mrmac1_base_hex [format %x $mrmac1_base]
         set mrmac1_highaddr_hex [format 0x%x [expr $mrmac1_base + 0xFFF]]
@@ -731,7 +785,7 @@
                                    set port_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $rx_periph1] "rx_timestamp_tod"]]
                                    set rx_periph1 [::hsi::get_cells -of_objects $port_pins]
                            }
-                   }       
+                }
            if {[string match -nocase [hsi get_property IP_NAME $rx_periph1] "xlconcat"]} {
                    set intf "dout"
                    set inrx1_pin [hsi::get_pins -of_objects $rx_periph1 -filter "NAME==$intf"]
@@ -1052,7 +1106,7 @@
                                    set rxethmem [hsi get_property CONFIG.FIFO_DEPTH $sink_periph]
                                    # FIFO can be other than 8 bits, and we need the rxmem in bytes
                                    set rxethmem [expr $rxethmem * $fifo_width_bytes]
-                                   add_prop "${mrmac2_node}" "xlnx,rxmem" $rxethmem int
+                                   add_prop "${mrmac2_node}" "xlnx,rxmem" $rxethmem int $dts_file
                                    set fifo2_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $sink_periph] "m_axis_tdata"]]
                                    set mux_per2 [::hsi::get_cells -of_objects $fifo2_pin]
                                    if {[string match -nocase [hsi get_property IP_NAME $mux_per2] "mrmac_10g_mux"]} {
@@ -1097,7 +1151,7 @@
                            set port_pins [get_sink_pins [hsi get_pins -of_objects [hsi get_cells -hier $tod2_sink_periph] "tx_timestamp_tod"]]
                            set tod2_sink_periph [::hsi::get_cells -of_objects $port_pins]
                    }
-           
+
            if {[string match -nocase [hsi get_property IP_NAME $tod2_sink_periph] "xlconcat"]} {
                    set intf "dout"
                    set in2_pin [hsi::get_pins -of_objects $tod2_sink_periph -filter "NAME==$intf"]
@@ -1417,7 +1471,7 @@
                                    set rxethmem [hsi get_property CONFIG.FIFO_DEPTH $sink_periph]
                                    # FIFO can be other than 8 bits, and we need the rxmem in bytes
                                    set rxethmem [expr $rxethmem * $fifo_width_bytes]
-                                   add_prop "${mrmac3_node}" "xlnx,rxmem" $rxethmem int
+                                   add_prop "${mrmac3_node}" "xlnx,rxmem" $rxethmem int $dts_file
                                    set fifo3_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $sink_periph] "m_axis_tdata"]]
                                    set mux_per3 [hsi::get_cells -of_objects $fifo3_pin]
                                    if {[string match -nocase [hsi get_property IP_NAME $mux_per3] "mrmac_10g_mux"]} {
@@ -1431,7 +1485,7 @@
                                                            set fiforx_connect_ip3 [get_connected_stream_ip [hsi::get_cells -hier $fiforx3_per] "M_AXIS"]
                                                    }
                                                    if {[llength $fiforx_connect_ip3]} {
-                                               
+
                                                    if {[string match -nocase [hsi get_property IP_NAME $fiforx_connect_ip3] "axi_mcdma"]} {
                                                            add_prop "$mrmac3_node" "axistream-connected" "$fiforx_connect_ip3" reference
                                                            set num_queues [hsi get_property CONFIG.c_num_mm2s_channels $fiforx_connect_ip3]
@@ -1781,8 +1835,8 @@
     proc mrmac_generate_reg_property {node base high} {
         set size [format 0x%x [expr {${high} - ${base} + 1}]]
 
-        set proctype [hsi get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]]
-        if {[string match -nocase $proctype "psu_cortexa53"] || [string match -nocase $proctype "psv_cortexa72"] || [string match -nocase $proctype "psx_cortexa78"]} {
+        set proctype [get_hw_family]
+        if {[string match -nocase $proctype "versal"]} {
                 if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
                         set temp $base
                         set temp [string trimleft [string trimleft $temp 0] x]
@@ -1809,7 +1863,7 @@
         } else {
                 set reg "$base $size"
         }
-        add_prop "${node}" "reg" $reg int $dts_filehexlist
+        add_prop "${node}" "reg" $reg int "pl.dtsi"
     }
 
     proc mrmac_generate_intr_info {drv_handle node fifo_ip} {
@@ -1912,31 +1966,8 @@
                                         }
                                         if {[llength $clk_pl]} {
                                                 set num [regexp -all -inline -- {[0-9]+} $clk_pl]
-                                        }       
-                                        if {[string match -nocase $proctype "psu_cortexa53"]} {
-                                                        switch $num {
-                                                                        "0" {
-                                                                                set def_dts "pcw.dtsi"
-                                                                                set fclk_node [create_node -n "&fclk0" -d $def_dts -p root]
-                                                                                add_prop "${fclk_node}" "status" "okay" string $def_file
-                                                                                }
-                                                                        "1" {
-                                                                                set def_dts "pcw.dtsi"
-                                                                                 set fclk_node [create_node -n "&fclk1" -d $def_dts -p root]
-                                                                                add_prop "${fclk_node}" "status" "okay" string $def_file
-                                                                                }
-                                                                        "2" {
-                                                                                set def_dts "pcw.dtsi"
-                                                                                set fclk_node [create_node -n "&fclk2" -d $def_dts -p root]
-                                                                                add_prop "${fclk_node}" "status" "okay" string $def_file
-                                                                        }
-                                                                        "3" {
-                                                                                set def_dts "pcw.dtsi"
-                                                                                set fclk_node [create_node -n "&fclk3" -d $def_dts -p root]
-                                                                                add_prop "${fclk_node}" "status" "okay" string $def_file
-                                                                        }
-                                                        }
                                         }
+
                                         set dts_file "pl.dtsi"
                                         set bus_node [get_node $drv_handle]
                                         set clk_freq [mrmac_get_clk_frequency [hsi::get_cells -hier $drv_handle] "$clk"]
@@ -1944,7 +1975,7 @@
                                                 dtg_warning "clock frequency for the $clk is NULL"
                                                 continue
                                         }
-                                        set clk_freq [expr int $dts_file($clk_freq)]
+
                                         set iptype [get_ip_property $drv_handle IP_NAME]
                                         if {![string equal $clk_freq ""]} {
                                                 if {[lsearch $bus_clk_list $clk_freq] < 0} {
@@ -2000,18 +2031,19 @@
                                                 }
                                 }
                         }
-                        if {[string match -nocase $proctype "psu_cortexa53"] || [string match -nocase $proctype "psv_cortexa72"] || [string match -nocase $proctype "psx_cortexa78"]} {
+                        set clklist ""
+                        if {[string match -nocase $proctype "versal"]} {
                                 set clklist "pl_clk0 pl_clk1 pl_clk2 pl_clk3"
-                        } elseif {[string match -nocase $proctype "ps7_cortexa9"]} {
-                                set clklist "FCLK_CLK0 FCLK_CLK1 FCLK_CLK2 FCLK_CLK3"
                         }
                         foreach pin $pins {
-                                if {[lsearch $clklist $pin] >= 0} {
-                                        set pl_clk $pin
-                                        set is_pl_clk 1
+                                if { [llength $clklist]} {
+                                        if {[lsearch $clklist $pin] >= 0} {
+                                                set pl_clk $pin
+                                                set is_pl_clk 1
+                                        }
                                 }
                         }
-                        if {[string match -nocase $proctype "psv_cortexa72"] || [string match -nocase $proctype "psx_cortexa78"]} {
+                        if {[string match -nocase $proctype "versal"]} {
                                 switch $pl_clk {
                                                 "pl_clk0" {
                                                                 set pl_clk0 "versal_clk 65"
@@ -2038,60 +2070,7 @@
                                                 }
                                         }
                         }
-                        if {[string match -nocase $proctype "psu_cortexa53"]} {
-                                        switch $pl_clk {
-                                                        "pl_clk0" {
-                                                                        set pl_clk0 "zynqmp_clk 71"
-                                                                        set clocks [lappend clocks $pl_clk0]
-                                                                        set updat  [lappend updat $pl_clk0]
-                                                        }
-                                                        "pl_clk1" {
-                                                                        set pl_clk1 "zynqmp_clk 72"
-                                                                        set clocks [lappend clocks $pl_clk1]
-                                                                        set updat  [lappend updat $pl_clk1]
-                                                        }
-                                                        "pl_clk2" {
-                                                                        set pl_clk2 "zynqmp_clk 73"
-                                                                        set clocks [lappend clocks $pl_clk2]
-                                                                        set updat [lappend updat $pl_clk2]
-                                                        }
-                                                        "pl_clk3" {
-                                                                        set pl_clk3 "zynqmp_clk 74"
-                                                                        set clocks [lappend clocks $pl_clk3]
-                                                                        set updat [lappend updat $pl_clk3]
-                                                        }
-                                                        default {
-                                                                        dtg_debug "not supported pl_clk:$pl_clk"
-                                                        }
-                                        }
-                        }
-                        if {[string match -nocase $proctype "ps7_cortexa9"]} {
-                                                switch $pl_clk {
-                                                        "FCLK_CLK0" {
-                                                                        set pl_clk0 "clkc 15"
-                                                                        set clocks [lappend clocks $pl_clk0]
-                                                                        set updat  [lappend updat $pl_clk0]
-                                                        }
-                                                        "FCLK_CLK1" {
-                                                                        set pl_clk1 "clkc 16"
-                                                                        set clocks [lappend clocks $pl_clk1]
-                                                                        set updat  [lappend updat $pl_clk1]
-                                                        }
-                                                        "FCLK_CLK2" {
-                                                                        set pl_clk2 "clkc 17"
-                                                                        set clocks [lappend clocks $pl_clk2]
-                                                                        set updat [lappend updat $pl_clk2]
-                                                        }
-                                                        "FCLK_CLK3" {
-                                                                        set pl_clk3 "clkc 18"
-                                                                        set clocks [lappend clocks $pl_clk3]
-                                                                        set updat [lappend updat $pl_clk3]
-                                                        }       
-                                                        default {
-                                                                        dtg_debug "not supported pl_clk:$pl_clk"
-                                                        }
-                                                }
-                        }
+
                         if {[string match -nocase $is_clk_wiz "0"]&& [string match -nocase $is_pl_clk "0"]} {
                                         set dts_file "pl.dtsi"
                                         set bus_node [add_or_get_bus_node $drv_handle $dts_file]
@@ -2100,7 +2079,6 @@
                                                 dtg_warning "clock frequency for the $clk is NULL"
                                                 continue
                                         }
-                                        set clk_freq [expr int $dts_file($clk_freq)]
                                         set iptype [get_ip_property $drv_handle IP_NAME]
                                         if {![string equal $clk_freq ""]} {
                                                 if {[lsearch $bus_clk_list $clk_freq] < 0} {
@@ -2165,7 +2143,6 @@
                                         dtg_warning "clock frequency for the $clk is NULL"
                                         continue
                                 }
-                                set clk_freq [expr int $dts_file($clk_freq)]
                                 set iptype [get_ip_property $drv_handle IP_NAME]
                                 if {![string equal $clk_freq ""]} {
                                         if {[lsearch $bus_clk_list $clk_freq] < 0} {
@@ -2221,10 +2198,8 @@
                                 }
                         }
                 }
-                if {[string match -nocase $proctype "psu_cortexa53"] || [string match -nocase $proctype "psv_cortexa72"] || [string match -nocase $proctype "psx_cortexa78"]} {
+                if {[string match -nocase $proctype "versal"]} {
                         set clklist "pl_clk0 pl_clk1 pl_clk2 pl_clk3"
-                } elseif {[string match -nocase $proctype "ps7_cortexa9"]} {
-                        set clklist "FCLK_CLK0 FCLK_CLK1 FCLK_CLK2 FCLK_CLK3"
                 }
                 foreach pin $pins {
                         if {[lsearch $clklist $pin] >= 0} {
@@ -2232,7 +2207,7 @@
                                 set is_pl_clk 1
                         }
                 }
-                if {[string match -nocase $proctype "psv_cortexa72"] || [string match -nocase $proctype "psx_cortexa78"]} {
+                if {[string match -nocase $proctype "versal"]} {
                         switch $pl_clk {
                                 "pl_clk0" {
                                                 set pl_clk0 "versal_clk 65"
@@ -2259,60 +2234,7 @@
                                 }
                         }
                 }
-                if {[string match -nocase $proctype "psu_cortexa53"]} {
-                        switch $pl_clk {
-                                "pl_clk0" {
-                                                set pl_clk0 "zynqmp_clk 71"
-                                                set clocks [lappend clocks $pl_clk0]
-                                                set updat  [lappend updat $pl_clk0]
-                                }
-                                "pl_clk1" {
-                                                set pl_clk1 "zynqmp_clk 72"
-                                                set clocks [lappend clocks $pl_clk1]
-                                                set updat  [lappend updat $pl_clk1]
-                                }
-                                "pl_clk2" {
-                                                set pl_clk2 "zynqmp_clk 73"
-                                                set clocks [lappend clocks $pl_clk2]
-                                                set updat [lappend updat $pl_clk2]
-                                }
-                                "pl_clk3" {
-                                                set pl_clk3 "zynqmp_clk 74"
-                                                set clocks [lappend clocks $pl_clk3]
-                                                set updat [lappend updat $pl_clk3]
-                                }
-                                default {
-                                                dtg_warning "not supported pl_clk:$pl_clk"
-                                }
-                        }
-                }
-                if {[string match -nocase $proctype "ps7_cortexa9"]} {
-                        switch $pl_clk {
-                                "FCLK_CLK0" {
-                                                set pl_clk0 "clkc 15"
-                                                set clocks [lappend clocks $pl_clk0]
-                                                set updat  [lappend updat $pl_clk0]
-                                }
-                                "FCLK_CLK1" {
-                                                set pl_clk1 "clkc 16"
-                                                set clocks [lappend clocks $pl_clk1]
-                                                set updat  [lappend updat $pl_clk1]
-                                }
-                                "FCLK_CLK2" {
-                                                set pl_clk2 "clkc 17"
-                                                set clocks [lappend clocks $pl_clk2]
-                                                set updat [lappend updat $pl_clk2]
-                                }
-                                "FCLK_CLK3" {
-                                                set pl_clk3 "clkc 18"
-                                                set clocks [lappend clocks $pl_clk3]
-                                                set updat [lappend updat $pl_clk3]
-                                }
-                                default {
-                                                dtg_warning "not supported pl_clk:$pl_clk"
-                                }
-                        }
-                }
+
                 if {[string match -nocase $is_clk_wiz "0"]&& [string match -nocase $is_pl_clk "0"]} {
                         set dts_file "pl.dtsi"
                         set bus_node [add_or_get_bus_node $drv_handle $dts_file]
@@ -2321,7 +2243,6 @@
                                 dtg_warning "clock frequency for the $clk is NULL"
                                 continue
                         }
-                        set clk_freq [expr int $dts_file($clk_freq)]
                         set iptype [get_ip_property $drv_handle IP_NAME]
                         if {![string equal $clk_freq ""]} {
                                 if {[lsearch $bus_clk_list $clk_freq] < 0} {
