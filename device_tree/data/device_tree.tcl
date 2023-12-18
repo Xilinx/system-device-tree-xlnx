@@ -1447,7 +1447,9 @@ Generates system device tree based on args given in:
 		write_dt systemdt root "$dir/system-top.dts"
 		write_dt pldt root "$dir/pl.dtsi"
 		global set osmap
-		unset osmap
+		if {[info exists osmap]} {
+			unset osmap
+		}
 	}
 	destroy_tree
 }
