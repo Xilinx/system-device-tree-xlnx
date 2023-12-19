@@ -55,9 +55,11 @@ dict with driver_param alias {
 	lappend items psv_i2c i2c
 	lappend items psu_ospi spi
 	lappend items psv_pmc_ospi spi
+	lappend items psx_pmc_ospi spi
 	lappend items ps7_qspi spi
 	lappend items psu_qspi spi
 	lappend items psv_pmc_qspi spi
+	lappend items psx_pmc_qspi spi
 	lappend items mdm serial
 	lappend items axi_uartlite serial
 	lappend items axi_uart16550 serial

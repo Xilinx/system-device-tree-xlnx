@@ -142,6 +142,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "psv_ocm" "ocmcps"
 	dict set ::sdtgen::namespacelist "psu_ospi" "ospips"
 	dict set ::sdtgen::namespacelist "psv_pmc_ospi" "ospips"
+	dict set ::sdtgen::namespacelist "psx_pmc_ospi" "ospips"
 	dict set ::sdtgen::namespacelist "ps7_pl310" "pl310ps"
 	dict set ::sdtgen::namespacelist "psu_pmu" "pmups"
 	dict set ::sdtgen::namespacelist "psv_pmc" "pmups"
@@ -1273,7 +1274,7 @@ Generates system device tree based on args given in:
 
 	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
 
-	set non_val_list "versal_cips psx_wizard psxl ps_wizard dmac_slv axi_noc axi_noc2 noc_mc_ddr4 noc_mc_ddr5 noc_nmu noc_nsu noc2_nmu noc2_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat xlconstant xlslice axis_tdest_editor util_reduced_logic noc_nsw noc2_nsw axis_ila pspmc psv_ocm_ram_0 psv_pmc_qspi_ospi add_keep_128 c_counter_binary dbg_monmux"
+	set non_val_list "versal_cips psx_wizard psxl ps_wizard dmac_slv axi_noc axi_noc2 noc_mc_ddr4 noc_mc_ddr5 noc_nmu noc_nsu noc2_nmu noc2_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat xlconstant xlslice axis_tdest_editor util_reduced_logic noc_nsw noc2_nsw axis_ila pspmc psv_ocm_ram_0 psv_pmc_qspi_ospi psx_pmc_qspi_ospi add_keep_128 c_counter_binary dbg_monmux"
 	set non_val_ip_types "MONITOR BUS PROCESSOR"
 	set non_val_list1 "psv_cortexa72 psu_cortexa53 ps7_cortexa9 versal_cips psx_wizard ps_wizard noc_nmu noc_nsu ila psu_iou_s noc_nsw pspmc"
 	set non_val_ip_types1 "MONITOR BUS"
@@ -1572,7 +1573,7 @@ proc proc_mapping {} {
 			}
 			set ipname [get_ip_property [hsi::get_cells -hier $periph] IP_NAME]
 			if {[lsearch $periphs_list $periph] >= 0} {
-				set valid_periph "psu_qspi_linear psv_pmc_qspi axi_emc ps7_qspi_linear axi_quad_spi axi_spi"
+				set valid_periph "psu_qspi_linear psv_pmc_qspi axi_emc ps7_qspi_linear axi_quad_spi axi_spi psx_pmc_qspi"
                               	if {[lsearch $valid_periph $ipname] >= 0} {
                               	} else {
                                 	continue
@@ -1596,7 +1597,7 @@ proc proc_mapping {} {
 			if {[string match -nocase $iptype "psu_cortexr5"] && [string match -nocase $ipname "psu_acpu_gic"]} {
 				continue
 			}
-			if {[string match -nocase $ipname "psv_pmc_qspi_ospi"]} {
+			if {$ipname in {"psv_pmc_qspi_ospi" "psx_pmc_qspi_ospi"}} {
 				continue
 			}
 			if {[string match -nocase $ipname "psv_ipi"]} {
@@ -2149,6 +2150,9 @@ proc update_alias {} {
 		set pos [lsearch $all_drivers "psu_qspi*"]
 	} elseif {[string match -nocase $proctype "versal"]} {
 		set pos [lsearch $all_drivers "psv_pmc_qspi*"]
+		if {$is_versal_net_platform} {
+			set pos [lsearch $all_drivers "psx_pmc_qspi*"]
+		}
 	} else {
 		set pos [lsearch $all_drivers "psu_qspi*"]
 	}
@@ -2203,7 +2207,7 @@ proc update_alias {} {
 			continue
 		}
             	set ip_name  [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
-            	if {[string match -nocase $ip_name "psv_pmc_qspi"]} {
+		if {$ip_name in {"psv_pmc_qspi" "psx_pmc_qspi"}} {
                   	set ip_type [get_ip_property $drv_handle IP_TYPE]
                   	if {[string match -nocase $ip_type "PERIPHERAL"]} {
                         	continue
