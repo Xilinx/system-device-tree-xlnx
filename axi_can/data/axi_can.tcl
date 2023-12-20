@@ -23,6 +23,8 @@
 			return
 		}
 
+		set dts_file [set_drv_def_dts $drv_handle]
+
 		set ip_name [get_ip_property $drv_handle IP_NAME]
 		if {[string equal -nocase $ip_name "can"]} {
 			set keyval [pldt append $node compatible "\ \, \"xlnx,axi-can-1.00.a\""]
@@ -40,6 +42,12 @@
 			set_drv_conf_prop $drv_handle c_can_num_acf can-num-acf $node hexint
 			set_drv_conf_prop $drv_handle c_can_tx_dpth tx-fifo-depth $node hexint
 			set_drv_conf_prop $drv_handle c_can_rx_dpth rx-fifo-depth $node hexint
+
+			set ecc [hsi get_property CONFIG.ENABLE_ECC [hsi::get_cells -hier $drv_handle]]
+			if { $ecc == 1} {
+				add_prop $node "xlnx,has-ecc" "" boolean $dts_file
+			}
+
 		}
 
 		set proc_type [get_hw_family]
