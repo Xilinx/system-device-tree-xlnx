@@ -348,6 +348,25 @@
         if {![string_is_empty $connected_ip]} {
             set connected_ipname [hsi get_property IP_NAME $connected_ip]
             if {$connected_ipname == "axi_mcdma" || $connected_ipname == "axi_dma"} {
+	    set num_queues [hsi get_property CONFIG.c_num_mm2s_channels $connected_ip]
+		    set inhex [format %x $num_queues]
+		    set numqueues "/bits/ 16 <0x$inhex>"
+		    add_prop $node "xlnx,num-queues" $numqueues noformating "pl.dtsi"
+		    if {$version < 2018} {
+			 dtg_warning "quotes to be removed or use 2018.1 version for $node param xlnx,num-queues"
+		    }
+		    set id 1
+		    for {set i 2} {$i <= $num_queues} {incr i} {
+				set i [format "%x" $i]
+				append id "\""
+				append id " ,\"" $i
+				set i [expr 0x$i]
+		    }
+		    add_prop $node "xlnx,channel-ids" $id intlist "pl.dtsi"
+		if {$ip_name == "xxv_ethernet"  && $core!= 0 && [llength $eth_node]} {
+			add_prop $eth_node "xlnx,num-queues" $numqueues stringlist $dts_file
+			add_prop $eth_node "xlnx,channel-ids" $id stringlist $dts_file
+		}
                 set ipnode [get_node $target_handle]
                 set values [pldt getall $ipnode]
                 set intr_parent ""
@@ -377,9 +396,7 @@
                         set intr_val1 [string trimleft $intr_val1 "< "]
                         lappend intr_val1 $intr_val
                         set intr_name [pldt get $node interrupt-names]
-                        set intr_name [string trimleft $intr_name "\""]
-                        set intr_name [string trimright $intr_name "\""]
-                        append intr_names " " $intr_name " "  $int1 " " $int2
+                        append intr_names $intr_name " , \"$int1\" , \"$int2\""
                     } else {
                         set intr_names $int_names
                     }
@@ -391,7 +408,7 @@
                     if {$ip_name == "xxv_ethernet"  && $core!= 0 && [llength $eth_node]} {
                         add_prop "${eth_node}" "interrupts" $intr_val intlist $dts_file
                         add_prop "${eth_node}" "interrupt-parent" $intr_parent reference $dts_file
-                        add_prop "${eth_node}" "interrupt-names" $intr_names stringlist $dts_file
+                        add_prop "${eth_node}" "interrupt-names" $intr_names noformating $dts_file
                     } else {
                 if { $hasbuf == "true" && $ip_name == "axi_ethernet"} {
                     regsub -all "\{||\t" $intr_val1 {} intr_val1
@@ -404,7 +421,7 @@
                     add_prop "${nodep}" "interrupts" $intr_val intlist "pl.dtsi"
                 }
                 add_prop "${nodep}" "interrupt-parent" $intr_parent reference "pl.dtsi"
-                add_prop "${nodep}" "interrupt-names" $intr_names stringlist "pl.dtsi" 1
+                add_prop "${nodep}" "interrupt-names" $intr_names noformating "pl.dtsi" 1
             }
             }
             }
