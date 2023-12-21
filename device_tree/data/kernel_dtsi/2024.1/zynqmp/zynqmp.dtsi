@@ -314,16 +314,16 @@
 	amba_apu: apu-bus {
 		compatible = "simple-bus";
 		#address-cells = <2>;
-		#size-cells = <1>;
+		#size-cells = <2>;
 		ranges = <0 0 0 0 0xffffffff>;
 
 		gic_a53: interrupt-controller@f9010000 {
 			compatible = "arm,gic-400";
 			#interrupt-cells = <3>;
-			reg = <0x0 0xf9010000 0x10000>,
-			      <0x0 0xf9020000 0x20000>,
-			      <0x0 0xf9040000 0x20000>,
-			      <0x0 0xf9060000 0x20000>;
+			reg = <0x0 0xf9010000 0x0 0x10000>,
+			      <0x0 0xf9020000 0x0 0x20000>,
+			      <0x0 0xf9040000 0x0 0x20000>,
+			      <0x0 0xf9060000 0x0 0x20000>;
 			interrupt-controller;
 			interrupt-parent = <&gic_a53>;
 			interrupts = <1 9 0xf04>;
