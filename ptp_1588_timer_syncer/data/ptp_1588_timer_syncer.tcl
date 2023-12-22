@@ -26,7 +26,7 @@
         } elseif  {[string match -nocase $ip_ver "1.0"]} {
                 set keyval [pldt append $node compatible "\ \, \"xlnx,timer-syncer-1588-1.0\""]
         }
-        set_drv_prop $drv_handle compatible "$compatible" $node stringlist
+        set_drv_prop $drv_handle compatible "$compatible" $node noformating
     }
 
 
