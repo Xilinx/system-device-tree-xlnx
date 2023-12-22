@@ -3078,6 +3078,7 @@ proc gen_ps_mapping {} {
 			dict set def_ps_mapping f1050000 label sdhci1
 			dict set def_ps_mapping f1920000 label serial0
 			dict set def_ps_mapping f1930000 label serial1
+			dict set def_ps_mapping f1270000 label sysmon0
 			dict set def_ps_mapping ec000000 label smmu
 			dict set def_ps_mapping f1960000 label spi0
 			dict set def_ps_mapping f1970000 label spi1
