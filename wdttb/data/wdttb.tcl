@@ -17,4 +17,8 @@
         set node [get_node $drv_handle]
 		#Add a node to enable winwdt examples in PS and PL
 		add_prop $node "xlnx,winwdt-example" 1 int $dts_file
+
+	if {[string match -nocase $dts_file "pcw.dtsi"]} {
+		add_prop $node compatible "xlnx,versal-wwdt-1.0 xlnx,versal-wwdt" stringlist $dts_file
+	}
     }
