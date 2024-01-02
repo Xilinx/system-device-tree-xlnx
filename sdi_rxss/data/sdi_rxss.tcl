@@ -12,12 +12,13 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
-proc sdi_tx_generate {drv_handle} {
+proc sdi_rxss_generate {drv_handle} {
 	set node [get_node $drv_handle]
 	set dts_file [set_drv_def_dts $drv_handle]
 	if {$node == 0} {
 		return
 	}
+	sdi_rx_add_hier_instances $drv_handle
 
 	set line_rate [hsi get_property CONFIG.C_LINE_RATE [hsi get_cells -hier $drv_handle]]
 	switch $line_rate {
@@ -33,35 +34,31 @@ proc sdi_tx_generate {drv_handle} {
 		"12G_SDI_16DS" {
 			add_prop "${node}" "xlnx,line-rate" 3 int $dts_file 1
 		}
-		"3GSDI" {
-			add_prop "${node}" "xlnx,line-rate" 0 int $dts_file 1
-		}
-		"6GSDI" {
-			add_prop "${node}" "xlnx,line-rate" 1 int $dts_file 1
-		}
-		"12GSDI8DS" {
-			add_prop "${node}" "xlnx,line-rate" 2 int $dts_file 1
-		}
-		"12GSDI16DS" {
-			add_prop "${node}" "xlnx,line-rate" 3 int $dts_file 1
-		}
 		default {
 			add_prop "${node}" "xlnx,line-rate" 4 int $dts_file 1
 		}
 	}
-	set Isstd_352 [hsi get_property CONFIG.C_TX_INSERT_C_STR_ST352 [hsi get_cells -hier $drv_handle]]
-	if {$Isstd_352 == "flase"} {
-		add_prop "${node}" "xlnx,Isstd_352" 0 int $dts_file 1
-	} else {
-		add_prop "${node}" "xlnx,Isstd_352" 1 int $dts_file 1
-	}
-
-	set edh [hsi get_property CONFIG.C_INCLUDE_RX_EDH_PROCESSOR [hsi get_cells -hier $drv_handle]]
-	if {$edh == "true"} {
-		add_prop "${node}" "xlnx,include-edh" 1 int $dts_file 1
-	} else {
-		add_prop "${node}" "xlnx,include-edh" 0 int $dts_file 1
-	}
-
 }
 
+proc sdi_rx_add_hier_instances {drv_handle} {
+
+	set node [get_node $drv_handle]
+	set dts_file [set_drv_def_dts $drv_handle]
+	hsi::current_hw_instance $drv_handle
+
+	set ip_subcores [dict create]
+	dict set ip_subcores "v_smpte_uhdsdi_rx" "sdirx"
+
+	foreach ip [dict keys $ip_subcores] {
+		set ip_handle [hsi::get_cells -filter "IP_NAME==$ip"]
+		set ip_prefix [dict get $ip_subcores $ip]
+		if {![string_is_empty $ip_handle]} {
+			add_prop "$node" "${ip_prefix}-present" 1 int $dts_file
+			add_prop "$node" "${ip_prefix}-connected" $ip_handle reference $dts_file
+		} else {
+			add_prop "$node" "${ip_prefix}-present" 0 int $dts_file
+		}
+	}
+	hsi::current_hw_instance
+
+}
