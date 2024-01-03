@@ -44,9 +44,6 @@
                 set atg_mode_value 0
         }
 
-        if { ![string match -nocase $atg_mode "AXI4"] } {
-                return 0
-        }
         add_prop $node "xlnx,atg-mode" $atg_mode_value int "pl.dtsi" 1
         set atg_mode_l2_name [hsi get_property "CONFIG.C_ATG_MODE_L2" [hsi::get_cells -hier $drv_handle]]
         set adv_mode_name [string match -nocase $atg_mode_l2_name "Advanced"]
@@ -87,6 +84,11 @@
                 set axi_mode_value 0
         }
         add_prop $node "xlnx,axis-mode" $axi_mode_value int "pl.dtsi" 1
+
+        if { ![string match -nocase $atg_mode "AXI4"] } {
+                return 0
+        }
+
         set proc_type [get_hw_family]
         # set up interrupt-names
         set intr_list "irq_out err_out"
