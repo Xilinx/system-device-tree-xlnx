@@ -1561,7 +1561,8 @@ proc proc_mapping {} {
 				( \
 					CONFIG.C_BASEADDR=~0x* || \
 					CONFIG.C_S_AXI_BASEADDR=~0x* || \
-					CONFIG.C_S_AXI_CTRL_BASEADDR=~0x* \
+					CONFIG.C_S_AXI_CTRL_BASEADDR=~0x* || \
+					CONFIG.AXI_CTRL_BASEADDR=~0x*
 				)"
 			append periph_list " [hsi::get_cells -hier -filter $hier_mem_filter]"
 		}

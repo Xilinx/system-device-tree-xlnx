@@ -2357,6 +2357,9 @@ proc get_baseaddr {slave_ip {no_prefix ""}} {
 				set addr [string tolower [hsi get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $slave_ip]]]
 			} elseif {[lsearch -nocase $avail_param "CONFIG.C_S_AXI_CTRL_BASEADDR"] >= 0} {
 				set addr [string tolower [hsi get_property CONFIG.C_S_AXI_CTRL_BASEADDR [hsi::get_cells -hier $slave_ip]]]
+			} elseif {[lsearch -nocase $avail_param "CONFIG.AXI_CTRL_BASEADDR"] >= 0} {
+				# IP v_smpte_uhdsdi_tx led to this addition
+				set addr [string tolower [hsi get_property CONFIG.AXI_CTRL_BASEADDR [hsi::get_cells -hier $slave_ip]]]
 			} else {
 				return ""
 			}
@@ -2385,6 +2388,9 @@ proc get_highaddr {slave_ip {no_prefix ""}} {
                     set addr [string tolower [hsi get_property CONFIG.C_S_AXI_HIGHADDR [hsi::get_cells -hier $slave_ip]]]
              } elseif {[lsearch -nocase $avail_param "CONFIG.C_S_AXI_CTRL_HIGHADDR"] >= 0} {
                     set addr [string tolower [hsi get_property CONFIG.C_S_AXI_CTRL_HIGHADDR [hsi::get_cells -hier $slave_ip]]]
+             } elseif {[lsearch -nocase $avail_param "CONFIG.AXI_CTRL_HIGHADDR"] >= 0} {
+                    # IP v_smpte_uhdsdi_tx led to this addition
+                    set addr [string tolower [hsi get_property CONFIG.AXI_CTRL_HIGHADDR [hsi::get_cells -hier $slave_ip]]]
              } else {
                     return ""
              }
@@ -5208,6 +5214,11 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 		} elseif {[lsearch -nocase $avail_param "CONFIG.C_S_AXI_CTRL_BASEADDR"] >= 0} {
 			set base [string tolower [hsi get_property CONFIG.C_S_AXI_CTRL_BASEADDR [hsi::get_cells -hier $slave]]]
 			set high [string tolower [hsi get_property CONFIG.C_S_AXI_CTRL_HIGHADDR [hsi::get_cells -hier $slave]]]
+			set size [format 0x%x [expr {${high} - ${base} + 1}]]
+		} elseif {[lsearch -nocase $avail_param "CONFIG.AXI_CTRL_BASEADDR"] >= 0} {
+			# IP v_smpte_uhdsdi_tx led to this addition
+			set base [string tolower [hsi get_property CONFIG.AXI_CTRL_BASEADDR [hsi::get_cells -hier $slave]]]
+			set high [string tolower [hsi get_property CONFIG.AXI_CTRL_HIGHADDR [hsi::get_cells -hier $slave]]]
 			set size [format 0x%x [expr {${high} - ${base} + 1}]]
 		}
 		if {![string_is_empty $base]} {
