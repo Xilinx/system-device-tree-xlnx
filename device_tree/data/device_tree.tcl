@@ -1615,7 +1615,7 @@ proc proc_mapping {} {
 			if {$ipname in {"psv_pmc_qspi_ospi" "psx_pmc_qspi_ospi"}} {
 				continue
 			}
-			if {[string match -nocase $ipname "psv_ipi"]} {
+			if {[string match -nocase $ipname "psv_ipi"] || [string match -nocase $ipname "psx_ipi"]} {
 				continue
 			}
 			set regprop ""
@@ -1788,57 +1788,7 @@ proc gen_cpu_cluster {} {
 	global is_versal_net_platform
 	set proctype [get_hw_family]
 	set default_dts "system-top.dts"
-	set ipi_list [hsi::get_cells -hier *ipi*]
 	set r5_procs [hsi::get_cells -hier -filter {IP_NAME==psv_cortexr5 || IP_NAME==psu_cortexr5 || IP_NAME==psx_cortexr52}]
-	foreach val $ipi_list {
-		set temp [get_node $val]
-		set temp [string trimleft $temp "&"]
-		set val1 $temp
-		set len [llength $temp]
-		if {$len > 1} {
-			set temp [split $temp ":"]
-			set val1 [lindex $temp 0]
-		}
-
-		set cpu [hsi get_property CONFIG.C_CPU_NAME [hsi::get_cells -hier $val]]
-		if {[string match -nocase $cpu "A72"] || [string match -nocase $cpu "APU"]} {
-			set base [get_baseaddr $val]
-			set high [get_highaddr $val]
-                        set size [format 0x%x [expr {${high} - ${base} + 1}]]
-			set_memmap $val1 a53 "0x0 $base 0x0 $size"
-		}
-		if {[string match -nocase $cpu "RPU0"] || [string match -nocase $cpu "R5_0"]} {
-			set base [get_baseaddr $val]
-			set high [get_highaddr $val]
-        		set size [format 0x%x [expr {${high} - ${base} + 1}]]
-			set_memmap $val1 [lindex $r5_procs 0] "0x0 $base 0x0 $size"
-		}
-		if {[string match -nocase $cpu "RPU1"] || [string match -nocase $cpu "R5_1"]} {
-			set base [get_baseaddr $val]
-			set high [get_highaddr $val]
-                        set size [format 0x%x [expr {${high} - ${base} + 1}]]
-			set_memmap $val1 [lindex $r5_procs 1] "0x0 $base 0x0 $size"
-		}
-		if {[string match -nocase $cpu "PSM"]} {
-			set base [get_baseaddr $val]
-			set high [get_highaddr $val]
-                        set size [format 0x%x [expr {${high} - ${base} + 1}]]
-			set_memmap $val1 psm "0x0 $base 0x0 $size"
-		}
-		if {[string match -nocase $cpu "PMC"]} {
-			set base [get_baseaddr $val]
-			set high [get_highaddr $val]
-                        set size [format 0x%x [expr {${high} - ${base} + 1}]]
-			set_memmap $val1 pmc "0x0 $base 0x0 $size"
-		}
-		if {[string match -nocase $cpu "PMU"]} {
-			set base [get_baseaddr $val]
-			set high [get_highaddr $val]
-                        set size [format 0x%x [expr {${high} - ${base} + 1}]]
-			set_memmap $val1 pmu "0x0 $base 0x0 $size"
-		}
-
-	}
 	set r5_present 0
 
 	if {[string match -nocase [get_hw_family] "zynq"]} {
