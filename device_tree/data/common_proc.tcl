@@ -1751,6 +1751,7 @@ proc get_drivers args {
 	dict set driverlist iomodule driver iomodule
 	dict set driverlist psu_ipi driver ipipsu
 	dict set driverlist psv_ipi driver ipipsu
+	dict set driverlist psx_ipi driver ipipsu
 	dict set driverlist mig_7series driver mig_7series
 	dict set driverlist dd4 driver mig_7series
 	dict set driverlist ddr3 driver mig_7series
@@ -3048,12 +3049,15 @@ proc gen_ps_mapping {} {
 			dict set def_ps_mapping eb370000 label ipi4
 			dict set def_ps_mapping eb380000 label ipi5
 			dict set def_ps_mapping eb3a0000 label ipi6
-			dict set def_ps_mapping eb3b0000 label ipi7
-			dict set def_ps_mapping eb3b1000 label ipi8
-			dict set def_ps_mapping eb3b2000 label ipi9
-			dict set def_ps_mapping eb3b3000 label ipi10
-			dict set def_ps_mapping eb3b4000 label ipi11
-			dict set def_ps_mapping eb3b5000 label ipi12
+			dict set def_ps_mapping eb3b0000 label ipi_nobuf1
+			dict set def_ps_mapping eb3b1000 label ipi_nobuf2
+			dict set def_ps_mapping eb3b2000 label ipi_nobuf3
+			dict set def_ps_mapping eb3b3000 label ipi_nobuf4
+			dict set def_ps_mapping eb3b4000 label ipi_nobuf5
+			dict set def_ps_mapping eb3b5000 label ipi_nobuf6
+			dict set def_ps_mapping eb310000 label ipi_psm
+			dict set def_ps_mapping eb320000 label ipi_pmc
+			dict set def_ps_mapping eb390000 label ipi_pmc_nobuf
 			dict set def_ps_mapping e2000000 label gic_a78
 			dict set def_ps_mapping eb9a0000 label gic_r52
 			dict set def_ps_mapping ebd00000 label adma0
