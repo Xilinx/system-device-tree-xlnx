@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -29,6 +29,7 @@
         set_drv_conf_prop $drv_handle C_CLK_50_DDR_OTAP_DLY xlnx,clk-50-ddr-otap-dly $node hexint
         set_drv_conf_prop $drv_handle C_CLK_100_SDR_OTAP_DLY xlnx,clk-100-sdr-otap-dly $node hexint
         set_drv_conf_prop $drv_handle C_CLK_200_SDR_OTAP_DLY xlnx,clk-200-sdr-otap-dly $node hexint
+        set_drv_conf_prop $drv_handle C_CLK_200_DDR_OTAP_DLY xlnx,clk-200-ddr-otap-dly $node hexint
     }
 
 
