@@ -58,27 +58,59 @@
                 set phy_node [create_node -n "vphy_lane" -u $ch -l vphy_lane$ch -p $node -d $dts_file]
                 add_prop "$phy_node" "#phy-cells" 4 int $dts_file
         }
+	set rfreq 0
+	set afreq 0
         set transceiver [hsi get_property CONFIG.Transceiver [hsi::get_cells -hier $drv_handle]]
         switch $transceiver {
                         "GTXE2" {
                                 add_prop "${node}" "xlnx,transceiver-type" 1 int $dts_file
+				set rfreq [get_clk_pin_freq  $drv_handle "vid_phy_axi4lite_aclk"]
                         }
                         "GTHE2" {
                                 add_prop "${node}" "xlnx,transceiver-type" 2 int $dts_file
+				 set rfreq [get_clk_pin_freq  $drv_handle "vid_phy_axi4lite_aclk"]
                         }
                         "GTPE2" {
                                 add_prop "${node}" "xlnx,transceiver-type" 3 int $dts_file
+				set rfreq [get_clk_pin_freq  $drv_handle "vid_phy_axi4lite_aclk"]
                         }
                         "GTHE3" {
                                 add_prop "${node}" "xlnx,transceiver-type" 4 int $dts_file
+				set rfreq [get_clk_pin_freq  $drv_handle "drpclk"]
                         }
                         "GTHE4" {
                                 add_prop "${node}" "xlnx,transceiver-type" 5 int $dts_file
+				set rfreq [get_clk_pin_freq  $drv_handle "drpclk"]
+                        }
+                        "GTYE4" {
+                                add_prop "${node}" "xlnx,transceiver-type" 6 int $dts_file
+				set rfreq [get_clk_pin_freq  $drv_handle "drpclk"]
                         }
                         "GTHE5" {
                                 add_prop "${node}" "xlnx,transceiver-type" 6 int $dts_file
                         }
-        }
+			default {
+				puts "#error \"Video PHY currently supports only GTYE4, GTHE4, GTHE3, GTHE2, GTPE2 and GTXE2; $transceiver not supported\""
+			}
+	}
+
+	set afreq [get_clk_pin_freq  $drv_handle "vid_phy_axi4lite_aclk"]
+	if {$afreq == 0} {
+		set afreq "100000000"
+		puts "WARNING: Clock frequency information is not available in the design, \
+		      for peripheral $drv_handle . Assuming a default frequency of 100MHz. \
+		      If this is incorrect, the peripheral $drv_handle will be non-functional"
+	}
+
+	if {$rfreq == 0} {
+		set rfreq "100000000"
+		puts "WARNING: Clock frequency information is not available in the design, \
+		      for peripheral $drv_handle. Assuming a default frequency of 100MHz. \
+		      If this is incorrect, the peripheral $drv_handle will be non-functional"
+	}
+
+        add_prop "${node}" "xlnx,axi-aclk-freq-mhz" $afreq hexint $dts_file 1
+        add_prop "${node}" "xlnx,drpclk-freq" $rfreq hexint $dts_file 1
     }
 
 
