@@ -55,13 +55,12 @@
                 "PMU" {
                         set memmap_key "pmu"
                 }
-                default {
-                        error "Invalid CONFIG.C_CPU_NAME $cpu for $drv_handle"
-                }
         }
-        set high [get_highaddr $drv_handle]
-        set size [format 0x%x [expr {${high} - ${base} + 1}]]
-        set_memmap $node_label $memmap_key "0x0 $base 0x0 $size"
+	if {![string_is_empty $memmap_key]} {
+		set high [get_highaddr $drv_handle]
+		set size [format 0x%x [expr {${high} - ${base} + 1}]]
+		set_memmap $node_label $memmap_key "0x0 $base 0x0 $size"
+	}
 
 
 	set idx 0
