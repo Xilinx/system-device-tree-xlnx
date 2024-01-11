@@ -5174,7 +5174,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 		return 0
 	}
 	set ps_mapping [gen_ps_mapping]
-	if {[catch {set tmp [dict get $ps_mapping $unit_addr label]} msg]} {
+	if {[catch {set tmp [dict get $ps_mapping $unit_addr label]} msg] || [is_pl_ip $drv_handle]} {
 	} else {
 		return 0
 	}
@@ -5587,7 +5587,7 @@ proc gen_compatible_property {drv_handle} {
 	}
 	set tcm_addresses "ffe00000 ffe10000 ffe20000 ffe30000 ffe90000 ffeb0000"
 	set ps_mapping [gen_ps_mapping]
-	if {[catch {set tmp [dict get $ps_mapping $unit_addr label]} msg]} {
+	if {[catch {set tmp [dict get $ps_mapping $unit_addr label]} msg] || [is_pl_ip $drv_handle]} {
 	} else {
 		return 0
 	}
@@ -5884,7 +5884,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	set dev_type ""
 	if {[string_is_empty $dev_type] == 1} {
 		set ps_mapping [gen_ps_mapping]
-		if {[catch {set tmp [dict get $ps_mapping $unit_addr label]} msg]} {
+		if {[catch {set tmp [dict get $ps_mapping $unit_addr label]} msg] || [is_pl_ip $drv_handle]} {
 			set dev_type [get_ip_property $ip IP_NAME]
 			set hier_name [get_ip_property $ip HIER_NAME]
 			if {![string_is_empty $hier_name] && [llength [split $hier_name "/"]] > 1} {
