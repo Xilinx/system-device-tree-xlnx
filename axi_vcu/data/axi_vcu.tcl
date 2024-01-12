@@ -30,7 +30,7 @@
         set vcu_slcr_reg [format %08x [expr 0x$baseaddr + $slcr_offset]]
         set logicore_reg [format %08x [expr 0x$baseaddr + $logicore_offset]]
         set reg "0x0 0x$vcu_slcr_reg 0x0 0x1000>, <0x0 0x$logicore_reg 0x0 0x1000"
-        set_drv_prop $drv_handle reg $reg $node hexlist
+        add_prop $node "reg" $reg hexlist $dts_file 1
         set intr_val [pldt get $node interrupts]
         set intr_val [string trimright $intr_val ">"]
         set intr_val [string trimleft $intr_val "<"]
