@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2019-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -101,6 +101,7 @@
                 for {set index 0} {$index < $num_of_known_regions} {incr index} {
                         if {[lindex $region_accessed $index]} {
                                 set base_value [lindex $base_addr_list $index]
+                                set base_value [ddrpsv_check_tcm_overlapping $procc $base_value]
                                 set high_value [lindex $high_addr_list $index]
                                 dict set global_map_dict "$procc" "$index" "1 $base_value $high_value"
                                 set reg_val [ddrpsv_generate_reg_property $base_value $high_value]
@@ -543,4 +544,20 @@
                 incr i
         }
         return $region_accessed
+    }
+
+    # Vivado is allowing the DDR addresses accessible from RPU to start from 0.
+    # This leads to the DDR region's overlapping with the TCM region and results into linking error.
+    proc ddrpsv_check_tcm_overlapping {proc ddr_base_addr} {
+        set proc_ip [get_ip_property $proc IP_NAME]
+        if {[string match -nocase $proc_ip "psv_cortexr5"] || [string match -nocase $proc_ip "psx_cortexr52"]} {
+                set tcm_ip [hsi::get_cells -hier -filter {NAME=~"*tcm_ram_0" || NAME=~"*tcm_alias"}]
+                if {[llength $tcm_ip] == 1} {
+                        set tcm_high_addr [get_highaddr $tcm_ip]
+                        if {[string compare $tcm_high_addr $ddr_base_addr] > 0} {
+                                set ddr_base_addr [format 0x%x [expr {$tcm_high_addr + 1}]]
+                        }
+                }
+        }
+        return $ddr_base_addr
     }
