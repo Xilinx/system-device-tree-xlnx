@@ -2340,13 +2340,21 @@ proc set_cur_working_dts {{dts_file ""}} {
 	return $dt_tree_obj
 }
 
-proc get_baseaddr {slave_ip {no_prefix ""}} {
+proc get_baseaddr {slave_ip {no_prefix ""} {proc_handle ""}} {
 	# only returns the first addr
 	set ip_name [get_ip_property [hsi::get_cells -hier $slave_ip] IP_NAME]
 	if {[string match -nocase $slave_ip "psu_sata"]} {
 		set addr [string tolower [hsi get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $slave_ip]]]
 	} else {
 		set ip_mem_handle [lindex [hsi::get_mem_ranges $slave_ip] 0]
+		if {![string_is_empty $proc_handle]} {
+			# INTERFACE IPs (e.g. CCAT) are coming in get_mem_ranges -of_objects $proc_handle
+			# but not coming in output of INSTANCE filter of get_mem_ranges
+			set proc_filter_ip_mem_handle [lindex [hsi::get_mem_ranges -of_objects $proc_handle -filter INSTANCE==$slave_ip] 0]
+			if {![string_is_empty $proc_filter_ip_mem_handle]} {
+				set ip_mem_handle $proc_filter_ip_mem_handle
+			}
+		}
 		if {[string match -nocase $ip_name "psv_pmc_qspi"] || [string match -nocase $ip_name "psv_coresight"]} {
 			# Currently addresses for ps mapping is coming from static dtsi files originating from u-boot
 			# and it is very APU specific. To generate aliases, the code is also looking for those APU mapped
@@ -2385,8 +2393,16 @@ proc get_baseaddr {slave_ip {no_prefix ""}} {
 	return $addr
 }
 
-proc get_highaddr {slave_ip {no_prefix ""}} {
+proc get_highaddr {slave_ip {no_prefix ""} {proc_handle ""}} {
 	set ip_mem_handle [lindex [hsi::get_mem_ranges $slave_ip] 0]
+	if {![string_is_empty $proc_handle]} {
+		# INTERFACE IPs (e.g. CCAT) are coming in get_mem_ranges -of_objects $proc_handle
+		# but not coming in output of INSTANCE filter of get_mem_ranges
+		set proc_filter_ip_mem_handle [lindex [hsi::get_mem_ranges -of_objects $proc_handle -filter INSTANCE==$slave_ip] 0]
+		if {![string_is_empty $proc_filter_ip_mem_handle]} {
+			set ip_mem_handle $proc_filter_ip_mem_handle
+		}
+	}
         if { [string_is_empty $ip_mem_handle] } {
              set avail_param [hsi list_property [hsi::get_cells -hier $slave_ip]]
              if {[lsearch -nocase $avail_param "CONFIG.C_HIGHADDR"] >= 0 } {

@@ -1628,8 +1628,8 @@ proc proc_mapping {} {
 			set regprop ""
 			set addr_64 "0"
 			set size_64 "0"
-			set base [get_baseaddr $periph]
-			set high [get_highaddr $periph]
+			set base [get_baseaddr $periph "" $val]
+			set high [get_highaddr $periph "" $val]
 			set mem_size [format 0x%x [expr {${high} - ${base} + 1}]]
 			if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
                             set addr_64 "1"
