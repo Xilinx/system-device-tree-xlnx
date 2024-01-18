@@ -371,6 +371,8 @@ proc set_hw_family {proclist} {
 	global pl_design
 	global design_family
 	global is_versal_net_platform
+	global apu_proc_ip
+	set apu_proc_ip ""
 	set design_family ""
 	set pl_design 0
 	set ps_design 0
@@ -384,15 +386,19 @@ proc set_hw_family {proclist} {
 				set design_family "versal"
 				set ps_design 1
 				set is_versal_net_platform 1
+				set apu_proc_ip "psx_cortexa78"
 			} "psv_cortexa72" {
 				set design_family "versal"
 				set ps_design 1
+				set apu_proc_ip "psv_cortexa72"
 			} "psu_cortexa53" {
 				set design_family "zynqmp"
 				set ps_design 1
+				set apu_proc_ip "psu_cortexa53"
 			} "ps7_cortexa9" {
 				set design_family "zynq"
 				set ps_design 1
+				set apu_proc_ip "ps7_cortexa9"
 			} "microblaze" - "microblaze_riscv" {
 				set pl_design 1
 			}
@@ -5168,6 +5174,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 }
 
 proc gen_reg_property {drv_handle {skip_ps_check ""}} {
+	global apu_proc_ip
 	proc_called_by
         set unit_addr [get_baseaddr ${drv_handle} no_prefix]
 	if {$unit_addr == "" } {
@@ -5259,6 +5266,19 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 		}
 
 		return
+	} elseif {[llength $ip_mem_handles] > 1 && ![string_is_empty $apu_proc_ip]} {
+		# In case of PS+PL designs, Force the PS mapped memory range to appear first in list.
+		# It has been observed in a design that an IP is mapped to both PS and PL processor and
+		# is having more than 32bit address when mapped to PS, but the same IP's address (as
+		# obtained from HSI) when mapped to PL processor is truncated to lower 32 bits and is not
+		# intended to be used with PL. Baremetal always takes the first reg instance from the
+		# node unless specified otherwise and having PL mapped address first leads to wrong base
+		# address for such IPs in the BSP which is targeted for PS processor.
+		set apu_proc [lindex [hsi get_cells -hier -filter IP_NAME==$apu_proc_ip] 0]
+		set ip_mem_handle_apu [lindex [hsi::get_mem_ranges -of_objects $apu_proc -filter INSTANCE==$drv_handle] 0]
+		if {![string_is_empty $ip_mem_handle_apu]} {
+			set ip_mem_handles [linsert $ip_mem_handles 0 "$ip_mem_handle_apu"]
+		}
 	}
 	foreach mem_handle ${ip_mem_handles} {
 		set proctype [get_hw_family]
