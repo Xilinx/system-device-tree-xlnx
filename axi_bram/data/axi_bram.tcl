@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2021 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -14,15 +14,12 @@
 #
 
     proc axi_bram_generate {drv_handle} {
-        set r5 0
         set a53 0
-        set pmu 0
-        set psm 0
-        set pmc 0
         set bram_ip ""
         set slave [hsi::get_cells -hier ${drv_handle}]
         set baseaddr [get_baseaddr $drv_handle noprefix]
         set dup_ilmb_dlmb_node 0
+        global apu_proc_ip
 
         # HSI reports ilmb_ram and dlmb_ram as two different IPs even though it points to the same BRAM_CNTRL. The
         # linker needs just one entry among these two and other is just a redundant data for us.
@@ -62,7 +59,13 @@
         set drv_ip [get_ip_property $drv_handle IP_NAME]
         set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
         foreach procc $proclist {
-
+                set proc_ip_name [get_ip_property $procc IP_NAME]
+                if { $proc_ip_name == $apu_proc_ip} {
+                        if {$a53 == 1} {
+                                continue
+                        }
+                        set a53 1
+                }
                 set ip_mem_handles [hsi::get_mem_ranges $slave]
                 set firstelement [lindex $ip_mem_handles 0]
                 set index [lsearch [hsi::get_mem_ranges -of_objects $procc] [hsi::get_cells -hier $firstelement]]
@@ -79,42 +82,6 @@
 
                 # TODO Fix this whole part, this is there in all memory IP tcls
                 foreach bank ${ip_mem_handles} {
-                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_cortexr52"]} {
-                                if {$r5 == 1} {
-                                        continue
-                                }
-                        }
-                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_cortexr52"]} {
-                                set r5 1
-                        }
-
-                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexa53"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexa72"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_cortexa78"]} {
-                                if {$a53 == 1} {
-                                        continue
-                                }
-                        }
-                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexa53"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexa72"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_cortexa78"]} {
-                                set a53 1
-                        }
-                        if {$pmu == 1 && [string match -nocase [hsi get_property IP_NAME $procc] "psu_pmu"]} {
-                                continue
-                        }
-                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_pmu"]} {
-                                set pmu 1
-                        }
-                        if {$pmc == 1 && ([string match -nocase [hsi get_property IP_NAME $procc] "psv_pmc"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_pmc"])} {
-                                continue
-                        }
-                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_pmc"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_pmc"]} {
-                                set pmc 1
-                        }
-                        if {$psm == 1 && ([string match -nocase [hsi get_property IP_NAME $procc] "psv_psm"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_psm"])} {
-                                continue
-                        }
-                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_psm"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_psm"]} {
-                                set psm 1
-                        }
-
                         set index [lsearch -start $index [hsi::get_mem_ranges -of_objects $procc] [hsi::get_cells -hier $bank]]
                         set base [hsi get_property BASE_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
                         set high [hsi get_property HIGH_VALUE [lindex [hsi::get_mem_ranges -of_objects $procc] $index]]
@@ -163,8 +130,12 @@
                         if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_cortexr52"]} {
                                 set_memmap "${drv_handle}_memory" $procc $reg
                         }
-                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexa53"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexa72"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_cortexa78"]} {
-                                set_memmap "${drv_handle}_memory" a53 $reg
+                        if { $proc_ip_name == $apu_proc_ip} {
+                                if { $proc_ip_name == "ps7_cortexa9" } {
+                                        set_memmap "${drv_handle}_memory" a53 "0x0 $base 0x0 $size"
+                                } else {
+                                        set_memmap "${drv_handle}_memory" a53 $reg
+                                }
                         }
                         if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_pmu"]} {
                                 set_memmap "${drv_handle}_memory" pmu $reg
