@@ -428,11 +428,11 @@
 		interrupt-parent = <&gic_r52>;
 		u-boot,dm-pre-reloc;
 
-		gic_r52: interrupt-controller@eb9a0000 {
-			compatible = "arm,pl390";
+		gic_r52: interrupt-controller@e2000000 {
+			compatible = "arm,gic-v3";
 			#interrupt-cells = <3>;
 			interrupt-controller;
-			reg = <0x0 0xeb9a0000 0x0 0x1000>;
+			reg = <0x0 0xe2000000 0x0 0x10000>;
 		};
 	};
 

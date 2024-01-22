@@ -1694,6 +1694,9 @@ proc proc_mapping {} {
 				set temp "gic_r5"
 			} elseif {[string match -nocase $ipname "psx_rcpu_gic"]} {
 				set temp "gic_r52"
+				# Incase of R52, the address coming from the xsa seems incorrect
+				# hence override the regprop here to reflect properly in address-map
+				set regprop "0x0 0xe2000000 0x0 0x10000"
 			}
 
 			set pl_ip [is_pl_ip $periph]
