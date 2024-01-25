@@ -63,27 +63,27 @@
         set transceiver [hsi get_property CONFIG.Transceiver [hsi::get_cells -hier $drv_handle]]
         switch $transceiver {
                         "GTXE2" {
-                                add_prop "${node}" "xlnx,transceiver-type" 1 int $dts_file
+                                add_prop "${node}" "xlnx,transceiver-type" 1 int $dts_file 1
 				set rfreq [get_clk_pin_freq  $drv_handle "vid_phy_axi4lite_aclk"]
                         }
                         "GTHE2" {
-                                add_prop "${node}" "xlnx,transceiver-type" 2 int $dts_file
+                                add_prop "${node}" "xlnx,transceiver-type" 2 int $dts_file 1
 				 set rfreq [get_clk_pin_freq  $drv_handle "vid_phy_axi4lite_aclk"]
                         }
                         "GTPE2" {
-                                add_prop "${node}" "xlnx,transceiver-type" 3 int $dts_file
+                                add_prop "${node}" "xlnx,transceiver-type" 3 int $dts_file 1
 				set rfreq [get_clk_pin_freq  $drv_handle "vid_phy_axi4lite_aclk"]
                         }
                         "GTHE3" {
-                                add_prop "${node}" "xlnx,transceiver-type" 4 int $dts_file
+                                add_prop "${node}" "xlnx,transceiver-type" 4 int $dts_file 1
 				set rfreq [get_clk_pin_freq  $drv_handle "drpclk"]
                         }
                         "GTHE4" {
-                                add_prop "${node}" "xlnx,transceiver-type" 5 int $dts_file
+                                add_prop "${node}" "xlnx,transceiver-type" 5 int $dts_file 1
 				set rfreq [get_clk_pin_freq  $drv_handle "drpclk"]
                         }
                         "GTYE4" {
-                                add_prop "${node}" "xlnx,transceiver-type" 6 int $dts_file
+                                add_prop "${node}" "xlnx,transceiver-type" 6 int $dts_file 1
 				set rfreq [get_clk_pin_freq  $drv_handle "drpclk"]
                         }
                         "GTHE5" {

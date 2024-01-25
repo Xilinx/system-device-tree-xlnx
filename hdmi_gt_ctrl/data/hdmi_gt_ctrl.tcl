@@ -24,31 +24,31 @@
 	set transceiver [hsi get_property CONFIG.Transceiver [hsi get_cells -hier $drv_handle]]
         switch $transceiver {
                         "GTXE2" {
-                                add_prop "${node}" "xlnx,transceiver" 1 hexint $dts_file
+                                add_prop "${node}" "xlnx,transceiver" 1 hexint $dts_file 1
 				set rfreq [get_clk_pin_freq  $drv_handle "vid_phy_axi4lite_aclk"]
                         }
                         "GTHE2" {
-                                add_prop "${node}" "xlnx,transceiver" 2 hexint $dts_file
+                                add_prop "${node}" "xlnx,transceiver" 2 hexint $dts_file 1
 				set rfreq [get_clk_pin_freq  $drv_handle "vid_phy_axi4lite_aclk"]
                         }
                         "GTPE2" {
-                                add_prop "${node}" "xlnx,transceiver" 3 hexint $dts_file
+                                add_prop "${node}" "xlnx,transceiver" 3 hexint $dts_file 1
 				set rfreq [get_clk_pin_freq  $drv_handle "vid_phy_axi4lite_aclk"]
                         }
                         "GTHE3" {
-                                add_prop "${node}" "xlnx,transceiver" 4 hexint $dts_file
+                                add_prop "${node}" "xlnx,transceiver" 4 hexint $dts_file 1
 				set rfreq [get_clk_pin_freq  $drv_handle "drpclk"]
                         }
                         "GTHE4" {
-                                add_prop "${node}" "xlnx,transceiver" 5 hexint $dts_file
+                                add_prop "${node}" "xlnx,transceiver" 5 hexint $dts_file 1
 				set rfreq [get_clk_pin_freq  $drv_handle "drpclk"]
                         }
                         "GTYE4" {
-                                add_prop "${node}" "xlnx,transceiver" 6 hexint $dts_file
+                                add_prop "${node}" "xlnx,transceiver" 6 hexint $dts_file 1
 				set rfreq [get_clk_pin_freq  $drv_handle "drpclk"]
                         }
                         "GTYE5" {
-                                add_prop "${node}" "xlnx,transceiver" 7 hexint $dts_file
+                                add_prop "${node}" "xlnx,transceiver" 7 hexint $dts_file 1
 				set afreq [ get_clk_pin_freq  $drv_handle "axi4lite_aclk"]
 				set rfreq [ get_clk_pin_freq  $drv_handle "axi4lite_aclk"]
                         }
