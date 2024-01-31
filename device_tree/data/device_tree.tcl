@@ -132,6 +132,8 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "v_hdmi_tx_ss" "hdmi_tx_ss"
 	dict set ::sdtgen::namespacelist "v_hdmi_tx" "hdmi_tx"
 	dict set ::sdtgen::namespacelist "v_hdmi_rx" "hdmi_rx"
+	dict set ::sdtgen::namespacelist "hdcp22_tx" "hdmi_hdcp22_tx"
+	dict set ::sdtgen::namespacelist "hdcp22_rx" "hdmi_hdcp22_rx"
 	dict set ::sdtgen::namespacelist "v_smpte_uhdsdi_rx_ss" "sdi_rxss"
 	dict set ::sdtgen::namespacelist "v_smpte_uhdsdi_tx_ss" "sdi_txss"
 	dict set ::sdtgen::namespacelist "v_smpte_uhdsdi_rx" "sdi_rx"
