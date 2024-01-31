@@ -63,10 +63,17 @@
 	}
 
 
+	set proctype [get_hw_family]
+	if {[is_zynqmp_platform $proctype]} {
+		#Using a dictionary to create baseaddress-ID mapping
+		set ipi_id [dict create 0xff300000 0 0xff310000 1 0xff320000 2 0xff330000 3 0xff331000 4 0xff332000 5 0xff333000 6 0xff340000 7 0xff350000 8 0xff360000 9 0xff370000 10]
+	}
+
 	set idx 0
 	foreach ipi_slave $ipi_list {
 		set slv_node [create_node -n "child" -l "$child_node_label$node_space$idx" -u $idx -d "pcw.dtsi" -p $node]
 		set buffer_index [hsi get_property CONFIG.C_BUFFER_INDEX [hsi get_cells -hier $ipi_slave]]
+		set bit_position [hsi get_property CONFIG.C_BIT_POSITION [hsi get_cells -hier $ipi_slave]]
 		if {[string match -nocase $buffer_index "NIL"]} {
 			set buffer_index  0xffff
 		} else {
@@ -81,8 +88,11 @@
 			set buffer_index  0xffff
 		}
 		add_prop $slv_node "xlnx,ipi-buf-index" $buffer_index int "pcw.dtsi"
-		set bit_position [hsi get_property CONFIG.C_BIT_POSITION [hsi get_cells -hier $ipi_slave]]
-		add_prop $slv_node "xlnx,ipi-id" $bit_position int "pcw.dtsi"
+		if {[is_zynqmp_platform $proctype]} {
+			add_prop $slv_node "xlnx,ipi-id" [dict get $ipi_id [get_baseaddr $ipi_slave]] int "pcw.dtsi"
+		} else {
+			add_prop $slv_node "xlnx,ipi-id" $bit_position int "pcw.dtsi"
+		}
 		set bit_mask [expr 1 << $bit_position]
 		add_prop $slv_node "xlnx,ipi-bitmask" $bit_mask int "pcw.dtsi"
 		incr idx
