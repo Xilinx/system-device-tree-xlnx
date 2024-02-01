@@ -2345,6 +2345,9 @@ proc get_baseaddr {slave_ip {no_prefix ""} {proc_handle ""}} {
 	set ip_name [get_ip_property [hsi::get_cells -hier $slave_ip] IP_NAME]
 	if {[string match -nocase $slave_ip "psu_sata"]} {
 		set addr [string tolower [hsi get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $slave_ip]]]
+	} elseif {[string match -nocase $ip_name "psx_i3c"]} {
+		set addr1 [string tolower [hsi get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $slave_ip]]]
+		set addr [format 0x%08x [expr {$addr1  + 0x8000}]]
 	} else {
 		set ip_mem_handle [lindex [hsi::get_mem_ranges $slave_ip] 0]
 		if {![string_is_empty $proc_handle]} {
