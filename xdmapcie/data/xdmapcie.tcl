@@ -95,6 +95,22 @@ proc xdmapcie_generate {drv_handle} {
 		add_prop $node "#address-cells" 3 int "pl.dtsi"
 		add_prop $node "#size-cells" 2 int "pl.dtsi"
 		add_prop $node "device_type" "pci" string "pl.dtsi"
+		add_prop $node "#interrupt-cells" 1 int "pl.dtsi"
+		pldt unset $node "interrupt-names"
+		set intr_names "misc msi0 msi1"
+		add_prop $node "interrupt-names" $intr_names stringlist "pl.dtsi" 1
+		set first_reg_name "cfg"
+		set second_reg_name " breg"
+		set reg_name [append first_reg_name $second_reg_name]
+		add_prop "${node}" "reg-names" ${reg_name} stringlist "pl.dtsi"
+		set_drv_prop $drv_handle interrupt-map-mask "0 0 0 7" $node intlist
+		# Add Interrupt controller child node
+		set pcie_child_intc_node [create_node -l "pcie_intc_1" -n interrupt-controller -p $node -d "pl.dtsi"]
+		set int_map "0 0 0 1 &pcie_intc_1 0>, <0 0 0 2 &pcie_intc_1 1>, <0 0 0 3 &pcie_intc_1 2>, <0 0 0 4 &pcie_intc_1 3"
+		set_drv_prop $drv_handle interrupt-map $int_map $node hexlist
+		add_prop "${pcie_child_intc_node}" "interrupt-controller" boolean "pl.dtsi"
+		add_prop "${pcie_child_intc_node}" "#address-cells" 0 int "pl.dtsi"
+		add_prop "${pcie_child_intc_node}" "#interrupt-cells" 1 int "pl.dtsi"
 	} elseif {[string match -nocase [get_ip_property $drv_handle IP_NAME] "psv_noc_pcie_1"]} {
 		set cpm_rev "0"
 		set cpm_handle [hsi::get_cells -hier versal_cips_0_cpm_0_psv_cpm]
