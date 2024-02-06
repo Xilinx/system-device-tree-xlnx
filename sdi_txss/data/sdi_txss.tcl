@@ -53,11 +53,11 @@ proc sdi_tx_add_hier_instances {drv_handle} {
 	hsi::current_hw_instance $drv_handle
 
 	set ip_subcores [dict create]
-	#dict set ip_subcores "v_smpte_uhdsdi_tx" "sditx"
+	dict set ip_subcores "v_smpte_uhdsdi_tx" "sditx"
 	dict set ip_subcores "v_tc" "sdivtc"
 
 	foreach ip [dict keys $ip_subcores] {
-		set ip_handle [hsi::get_cells -filter "IP_NAME==$ip"]
+		set ip_handle [hsi::get_cells -hier -filter "IP_NAME==$ip"]
 		set ip_prefix [dict get $ip_subcores $ip]
 		if {![string_is_empty $ip_handle]} {
 			add_prop "$node" "${ip_prefix}-present" 1 int $dts_file
