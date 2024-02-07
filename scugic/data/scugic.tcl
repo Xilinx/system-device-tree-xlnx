@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -14,6 +14,14 @@
 #
 
     proc scugic_generate {drv_handle} {
+       set dts_file [set_drv_def_dts $drv_handle]
+       set proctype [get_hw_family]
+       set cpm_ip [hsi::get_cells -hier -filter IP_NAME==psv_cpm]
+
+       if {[string match -nocase $proctype "versal"] && \
+           [string match -nocase [hsi get_property CONFIG.APU_GIC_ITS_CTL [hsi get_cells -hier $drv_handle]] "0xF9020000"] && \
+           [llength $cpm_ip]} {
+            set node [create_node -n "&gic_its" -d $dts_file -p root]
+            add_prop $node "status" "okay" string $dts_file
+       }
     }
-
-
