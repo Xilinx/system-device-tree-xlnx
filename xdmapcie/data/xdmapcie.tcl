@@ -111,29 +111,5 @@ proc xdmapcie_generate {drv_handle} {
 		add_prop "${pcie_child_intc_node}" "interrupt-controller" boolean "pl.dtsi"
 		add_prop "${pcie_child_intc_node}" "#address-cells" 0 int "pl.dtsi"
 		add_prop "${pcie_child_intc_node}" "#interrupt-cells" 1 int "pl.dtsi"
-	} elseif {[string match -nocase [get_ip_property $drv_handle IP_NAME] "psv_noc_pcie_1"]} {
-		set cpm_rev "0"
-		set cpm_handle [hsi::get_cells -hier versal_cips_0_cpm_0_psv_cpm]
-		set hsi_cpm_rev_num ""
-		if {[catch {set hsi_cpm_rev_num [hsi get_property CONFIG.CPM_REVISION_NUMBER $cpm_handle]} msg]} {
-		}
-		if {![string_is_empty $hsi_cpm_rev_num]} {
-		    set cpm_rev $hsi_cpm_rev_num
-		}
-
-		if {$cpm_rev == "0"} {
-			pcwdt append $node compatible "\ \, \"xlnx,versal-cpm-host-1.00\""
-			add_prop $node "xlnx,csr-slcr" "0x6 00000000" hexlist "pcw.dtsi" 1
-		} else {
-			pcwdt append $node compatible "\ \, \"xlnx,versal-cpm5-host\""
-			add_prop $node "xlnx,csr-slcr" "0xfce20000" hexlist "pcw.dtsi" 1
-		}
-		add_prop $node "xlnx,num-of-bars" 0x2 hexint "pcw.dtsi" 1
-		add_prop $node "xlnx,port-type" 1 hexint "pcw.dtsi" 1
-		add_prop $node "#address-cells" 3 int "pcw.dtsi"
-		add_prop $node "#size-cells" 2 int "pcw.dtsi"
-		set ranges "0x02000000 0x00000000 0xe0000000 0x0 0xe0000000 0x00000000 0x10000000>, <0x43000000 0x00000080 0x00000000 0x00000080 0x00000000 0x00000000 0x80000000"
-		add_prop $node "ranges" $ranges hexlist "pcw.dtsi"
-		add_prop $node "device_type" "pci" string "pcw.dtsi"
         }
 }

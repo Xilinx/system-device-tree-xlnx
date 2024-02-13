@@ -1677,7 +1677,6 @@ proc get_drivers args {
 	dict set driverlist axi_pcie driver axi_pcie
 	dict set driverlist axi_pcie3 driver axi_pcie
 	dict set driverlist xdma driver axi_pcie
-	dict set driverlist psv_noc_pcie_1 driver xdmapcie
 	dict set driverlist qdma driver xdmapcie
 	dict set driverlist pcie_dma_versal driver axi_pcie
 	dict set driverlist axi_perf_mon driver axi_perf_mon

@@ -236,7 +236,6 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "psv_wdt" "wdtps"
 	dict set ::sdtgen::namespacelist "psv_wwdt" "wdttb"
 	dict set ::sdtgen::namespacelist "ps7_xadc" "xadcps"
-	dict set ::sdtgen::namespacelist "psv_noc_pcie_1" "xdmapcie"
 	dict set ::sdtgen::namespacelist "qdma" "xdmapcie"
 
 	dict set ::sdtgen::namespacelist "psx_apm" "apmps"
