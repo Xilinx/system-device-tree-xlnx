@@ -2347,6 +2347,25 @@ proc get_baseaddr {slave_ip {no_prefix ""} {proc_handle ""}} {
 	} elseif {[string match -nocase $ip_name "psx_i3c"]} {
 		set addr1 [string tolower [hsi get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $slave_ip]]]
 		set addr [format 0x%08x [expr {$addr1  + 0x8000}]]
+	} elseif {[string match -nocase $ip_name "psv_cpm"]} {
+		set rev_num -1
+		set cpm_unit_addr ""
+		set addr "0"
+		foreach drv [hsi::get_cells -hier -filter IP_NAME==psv_cpm] {
+			if {![regexp "pspmc.*" "$drv" match]} {
+				set rev_num [get_ip_property $drv CONFIG.CPM_REVISION_NUMBER]
+			}
+		}
+		if {$rev_num == 0} {
+			# CONFIG.CPM_SLCR is for cpm4
+			set cpm_unit_addr [hsi get_property CONFIG.CPM_SLCR [hsi::get_cells -hier $slave_ip]]
+		} elseif {$rev_num == 1} {
+			# CONFIG.CPM5_SLCR_ADDR is for cpm5
+			set cpm_unit_addr [hsi get_property CONFIG.CPM5_SLCR_ADDR [hsi::get_cells -hier $slave_ip]]
+		}
+		if {[llength $cpm_unit_addr]} {
+			set addr [string tolower $cpm_unit_addr]
+		}
 	} else {
 		set ip_mem_handle [lindex [hsi::get_mem_ranges $slave_ip] 0]
 		if {![string_is_empty $proc_handle]} {
@@ -3163,6 +3182,7 @@ proc gen_ps_mapping {} {
 			dict set def_ps_mapping fd4d0000 label "watchdog: watchdog"
 			dict set def_ps_mapping ff120000 label "watchdog1: watchdog"
 			dict set def_ps_mapping fca10000 label "cpm_pciea: pci"
+			dict set def_ps_mapping fcdd0000 label "cpm5_pcie: pci"
 			dict set def_ps_mapping ff060000 label "can0: can"
 			dict set def_ps_mapping ff070000 label "can1: can"
 			dict set def_ps_mapping ff330000 label "ipi3: mailbox"
