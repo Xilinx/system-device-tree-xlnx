@@ -5956,6 +5956,40 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	}
 	if {[string match -nocase $proc_type "versal"] } {
 		set ip_type [hsi get_property IP_NAME $ip]
+		if {[string match -nocase $ip_type "psv_cpm"]} {
+			set node [get_node $drv_handle]
+			set rev_num -1
+			set cpm_unit_addr ""
+			foreach drv [hsi::get_cells -hier -filter IP_NAME==psv_cpm] {
+				if {![regexp "pspmc.*" "$drv" match]} {
+					set rev_num [llength [hsi::get_cells -hier $drv -filter CONFIG.CPM_REVISION_NUMBER==1]]
+				}
+			}
+			if {$rev_num == 0} {
+				# csr-slcr is for cpm4
+				set reg "0x06 0x00000000 0x0 0x1000000>, <0x0 0xfca10000 0x0 0x1000"
+				add_prop $node "reg" $reg hexlist "pcw.dtsi"
+				set first_reg_name "cfg"
+				set second_reg_name " cpm_slcr"
+				set reg_name [append first_reg_name $second_reg_name]
+				add_prop "${node}" "reg-names" ${reg_name} stringlist "pcw.dtsi"
+				add_prop $node "xlnx,csr-slcr" "0x6 00000000" hexlist "pcw.dtsi" 1
+				add_prop $node "xlnx,num-of-bars" 0x2 hexint "pcw.dtsi" 1
+				add_prop $node "xlnx,port-type" 0x1 hexint "pcw.dtsi" 1
+			} elseif {$rev_num == 1} {
+				# csr-slcr is for cpm5
+				set reg "0x06 0x00000000 0x0 0x1000000>, <0x0 0xfcdd0000 0x0 0x1000>, <0x00 0xfce20000 0x00 0x1000000"
+				add_prop $node "reg" $reg hexlist "pcw.dtsi"
+				set first_reg_name "cfg"
+				set second_reg_name " cpm_slcr"
+				set third_reg_name " cpm_csr"
+				set reg_name [append first_reg_name $second_reg_name $third_reg_name]
+				add_prop "${node}" "reg-names" ${reg_name} stringlist "pcw.dtsi"
+				add_prop $node "xlnx,csr-slcr" "0xfce20000" hexlist "pcw.dtsi" 1
+				add_prop $node "xlnx,num-of-bars" 0x2 hexint "pcw.dtsi" 1
+				add_prop $node "xlnx,port-type" 0x1 hexint "pcw.dtsi" 1
+			}
+		}
 		if {[string match -nocase $ip_type "psv_cpm_slcr"]} {
 			set versal_periph [hsi::get_cells -hier -filter {IP_NAME == versal_cips}]
 			if {[llength $versal_periph]} {
