@@ -1717,9 +1717,9 @@ proc proc_mapping {} {
 			dict set mem_proc_key_map "psx_cortexa78" "a53"
 			dict set mem_proc_key_map "psx_pmc" "pmc"
 			dict set mem_proc_key_map "psx_psm" "psm"
-			dict set mem_proc_key_map "slv1_psv_pmc" "pmc"
-			dict set mem_proc_key_map "slv2_psv_pmc" "pmc"
-			dict set mem_proc_key_map "slv3_psv_pmc" "pmc"
+			dict set mem_proc_key_map "slv1_psv_pmc" "slv1_pmc"
+			dict set mem_proc_key_map "slv2_psv_pmc" "slv2_pmc"
+			dict set mem_proc_key_map "slv3_psv_pmc" "slv3_pmc"
 
 			dict set mem_proc_key_map "microblaze" "$val"
 			dict set mem_proc_key_map "microblaze_riscv" "$val"
