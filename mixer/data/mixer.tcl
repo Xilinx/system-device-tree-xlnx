@@ -52,8 +52,8 @@
                         set base [string tolower [hsi get_property BASE_VALUE $ip_mem_handles]]
                         set mixer_crtc [create_node -n "endpoint" -l mixer_crtc$drv_handle -p $mixer_port_node -d $dts_file]
                         gen_endpoint $drv_handle "mixer_crtc$drv_handle"
-                        add_prop "$mixer_crtc" "remote-endpoint" $outip$drv_handle reference $dts_file
-                        gen_remoteendpoint $drv_handle "$outip$drv_handle"
+#                        add_prop "$mixer_crtc" "remote-endpoint" $outip$drv_handle reference $dts_file
+#                        gen_remoteendpoint $drv_handle "$outip$drv_handle"
                 } else {
                         if {[string match -nocase [hsi get_property IP_NAME $outip] "system_ila"]} {
                                 continue
@@ -62,8 +62,8 @@
                         if {[llength $connectip]} {
                                 set mixer_crtc [create_node -n "endpoint" -l mixer_crtc$drv_handle -p $mixer_port_node -d $dts_file]
                                 gen_endpoint $drv_handle "mixer_crtc$drv_handle"
-                                add_prop "$mixer_crtc" "remote-endpoint" $connectip$drv_handle reference $dts_file
-                                gen_remoteendpoint $drv_handle "$connectip$drv_handle"
+                         #       add_prop "$mixer_crtc" "remote-endpoint" $connectip$drv_handle reference $dts_file
+                         #       gen_remoteendpoint $drv_handle "$connectip$drv_handle"
                         }
                 }
         } else {
@@ -608,7 +608,7 @@
         add_prop "$mixer_node1" "xlnx,logo-width" $logo_width int $dts_file
         set logo_height [hsi get_property CONFIG.MAX_LOGO_ROWS [hsi::get_cells -hier $drv_handle]]
         add_prop "$mixer_node1" "xlnx,logo-height" $logo_height int $dts_file
-        mixer_add_handles $drv_handle
+#        mixer_add_handles $drv_handle
     }
 
     proc mixer_gen_video_format {num node drv_handle max_data_width dts_file} {
