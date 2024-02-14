@@ -4273,9 +4273,22 @@ proc gen_axis_switch_clk_property {drv_handle dts_file node} {
 
 proc gen_clk_property {drv_handle} {
 	global is_versal_net_platform
+	global is_rm_design
+
 	if {[is_ps_ip $drv_handle]} {
 		return 0
 	}
+
+	set rp_info {}
+	if {$is_rm_design} {
+		set rp_info [get_rprm_for_drv $drv_handle]
+		if {[llength $rp_info] != 0} {
+			set firmware_name [get_partial_file [lindex $rp_info 1]]
+			set partial_fileName [file rootname $firmware_name]
+			set partial_fileName "${partial_fileName}_"
+		}
+	}
+
 	global env
 	set path $env(REPO)
 	#set drvname [get_drivers $drv_handle]
@@ -4605,15 +4618,24 @@ proc gen_clk_property {drv_handle} {
 					set bus_clk_list [lappend bus_clk_list $clk_freq]
 				}
 				set bus_clk_cnt [lsearch -exact $bus_clk_list $clk_freq]
-				set misc_clk_node [create_node -n "misc_clk_${bus_clk_cnt}" -l "misc_clk_${bus_clk_cnt}" \
-				-d ${dts_file} -p ${bus_node}]
+				if {[llength $rp_info] != 0} {
+					set misc_clk_node [create_node -n "${partial_fileName}misc_clk_${bus_clk_cnt}" -l "misc_clk_${bus_clk_cnt}" \
+					-d ${dts_file} -p ${bus_node}]
+				} else {
+					set misc_clk_node [create_node -n "misc_clk_${bus_clk_cnt}" -l "misc_clk_${bus_clk_cnt}" \
+					-d ${dts_file} -p ${bus_node}]
+				}
 				if {[catch {set compatible [pldt get $misc_clk_node "compatible"]} msg]} {
 				add_prop $misc_clk_node "compatible" "fixed-clock" stringlist $dts_file 1
 				add_prop $misc_clk_node "#clock-cells" 0 int $dts_file 1
 				add_prop $misc_clk_node "clock-frequency" $clk_freq int $dts_file 1
 				}
 				set clk_refs [lappend clk_refs misc_clk_${bus_clk_cnt}]
-				set updat [lappend updat misc_clk_${bus_clk_cnt}]
+				if {[llength $rp_info] != 0} {
+					set updat [lappend updat ${partial_fileName}misc_clk_${bus_clk_cnt}]
+				} else {
+					set updat [lappend updat misc_clk_${bus_clk_cnt}]
+				}
 			}
 		}
 		append clocknames " " "$clk"
@@ -4746,6 +4768,9 @@ proc get_comp_ver {drv_handle} {
 		return [dict get $comp_ver_dict $cur_hw_design $drv_handle]
 	}
 	set slave [hsi::get_cells -hier ${drv_handle}]
+	if {[string length $slave] == 0} {
+		return -1
+	}
 	set vlnv  [split [hsi::get_property VLNV $slave] ":"]
 	set ver   [lindex $vlnv 3]
 	dict set comp_ver_dict $cur_hw_design $drv_handle $ver
@@ -5004,6 +5029,7 @@ proc get_interrupt_parent {  periph_name intr_pin_name } {
 }
 
 proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
+	global is_rm_design
 	# generate interrupts and interrupt-parent properties for soft IP
 	proc_called_by
 	if {[is_ps_ip $drv_handle]} {
@@ -5190,6 +5216,27 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 		set intc "imux"
 	} elseif {[string match -nocase $intc_name "ps7_scugic"]} {
 		set intc "intc"
+	}
+
+
+	set rp_info {}
+	if {$is_rm_design} {
+		set rp_info [get_rprm_for_drv $drv_handle]
+	}
+	if {[llength $rp_info] != 0} {
+		if {[string match -nocase $intc "imux"]} {
+			set proctype [get_hw_family]
+			if {[is_zynqmp_platform $proctype]} {
+				set intc "gic_a53"
+			} else {
+				set intc "gic_a72"
+			}
+		} else {
+			set firmware_name [get_partial_file [lindex $rp_info 1]]
+			set partial_fileName [file rootname $firmware_name]
+			set partial_fileName "${partial_fileName}_"
+			set intc "${partial_fileName}${intc}"
+		}
 	}
 
 	if {[is_pl_ip $intc]} {
@@ -5679,8 +5726,10 @@ proc gen_compatible_property {drv_handle} {
 		set node [get_node $drv_handle]
 		set_drv_prop_if_empty $drv_handle compatible $comp_prop $node stringlist
 		if {[string match -nocase $ip_name "dfx_axi_shutdown_manager"]} {
-			pldt append $node compatible "\ \, \"xlnx,dfx-axi-shutdown-manager-1.00\""
 			pldt append $node compatible "\ \, \"xlnx,dfx-axi-shutdown-manager\""
+		}
+		if {[string match -nocase $ip_name "dfx_decoupler"]} {
+			pldt append $node compatible "\ \, \"xlnx,pr-decoupler\""
 		}
 		if {[lsearch -nocase $tcm_addresses $unit_addr] >= 0} {
 			pcwdt append $node compatible "\ \, \"mmio-sram\""

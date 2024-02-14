@@ -312,6 +312,7 @@ proc set_dt_param args {
                         switch -glob -- [lindex $args 0] {
                                 -force {set force_create 1}
                                 -xsa {set env(xsa) [Pop args 1]}
+				-rm_xsa {set env(rm_xsa) [Pop args 1]}
                                 -board_dts {set env(board) [Pop args 1]}
                                 -dt_overlay {set env(dt_overlay) [Pop args 1]}
                                 -mainline_kernel {set env(kernel) [Pop args 1] }
@@ -342,6 +343,8 @@ proc get_dt_param args {
        switch $param {
                 -xsa {
                      if {[catch {set val $env(xsa)} msg ]} {}
+               } -rm_xsa {
+                     if {[catch {set val $env(rm_xsa)} msg ]} {}
                } -repo {
                         if {[catch {set val $env(REPO)} msg ]} {
                                 set val [set_sdt_default_repo]
@@ -621,6 +624,10 @@ proc include_custom_dts {} {
 }
 
 proc gen_afi_node {} {
+	global rp_region_dict
+	global is_bridge_en
+
+	set is_bridge_en 0
 	set pllist [hsi::get_cells -filter {IS_PL==1}]
 	set dts "pl.dtsi"
 	set family [get_hw_family]
@@ -693,6 +700,25 @@ proc gen_afi_node {} {
 		if {[string match -nocase $family "versal"]} {
 			set hw_name [::hsi::get_hw_files -filter "TYPE == pdi"]
 			add_prop $amba_pl_node "firmware-name" "$hw_name" string $dts 1
+		}
+		set pr_regions [hsi::get_cells -hier -filter BD_TYPE==BLOCK_CONTAINER]
+		foreach rp $pr_regions {
+			set intf_pins [::hsi::get_intf_pins -of_objects $rp]
+			set fpga_inst [regexp -inline {\d+} $rp]
+			set pr_node [create_node -l "fpga_PR$fpga_inst" -n "fpga-PR$fpga_inst" -p $amba_pl_node -d $dts]
+			add_prop "${pr_node}" "compatible" "fpga-region" string $dts 1
+			add_prop "${pr_node}" "#address-cells" 2 int $dts 1
+			add_prop "${pr_node}" "#size-cells" 2 int $dts 1
+			add_prop "${pr_node}" "ranges" "" boolean $dts 1
+			foreach intf $intf_pins {
+				set connectip [get_connected_stream_ip [::hsi::get_cells -hier $rp] $intf]
+				if {[llength $connectip]} {
+					if { [::hsi::get_property IP_NAME $connectip] in { "dfx_decoupler" "dfx_axi_shutdown_manager" } } {
+						dict set rp_region_dict $rp $connectip
+						set is_bridge_en 1
+					}
+				}
+			}
 		}
 	}
 	
@@ -1219,7 +1245,26 @@ proc gen_zynqmp_pinctrl {} {
        }
 }
 
+proc move_match_elements_to_top {peri_list pattern} {
+	set newList {}
 
+	foreach drv_handle $peri_list {
+		set ip_name [hsi get_property IP_NAME $drv_handle]
+		if {[string match -nocase $pattern $ip_name]} {
+			set index [lsearch -exact $peri_list $drv_handle]
+			if {$index != -1} {
+				set newList [concat [list $drv_handle] [lreplace $peri_list $index $index]]
+			}
+		}
+	}
+	foreach element $peri_list {
+		if {[lsearch -exact $newList $element] == -1} {
+			lappend newList $element
+		}
+	}
+
+	return $newList
+}
 
 proc generate_sdt args {
 	variable ::sdtgen::namespacelist
@@ -1234,8 +1279,10 @@ proc generate_sdt args {
 	global dup_periph_handle
 	global microblaze_list
 	global microblaze_riscv_list
+	global rp_region_dict
+	global is_rm_design
 
-
+	set is_rm_design 0
         if {[llength $args]!= 0} {
                 set help_string "sdtgen generate_sdt
 Generates system device tree based on args given in:
@@ -1264,6 +1311,11 @@ Generates system device tree based on args given in:
 			\n\r		Ex: set_dt_param xsa <system.xsa>"
 		return
 	}
+	if {![catch {set rm_xsa $env(rm_xsa)} msg ]} {
+		set rm_xsa_exist 1
+	} else {
+		set rm_xsa_exist 0
+	}
 
 	source [file join $path "device_tree" "data" "common_proc.tcl"]
 	source [file join $path "device_tree" "data" "video_utils.tcl"]
@@ -1271,6 +1323,7 @@ Generates system device tree based on args given in:
 	source [file join $path "device_tree" "data" "xillib_hw.tcl"]
 	source [file join $path "device_tree" "data" "xillib_internal.tcl"]
 	source [file join $path "device_tree" "data" "xillib_sw.tcl"]
+	source [file join $path "device_tree" "data" "partial_proc.tcl"]
 
 	if { $::sdtgen::namespacelist == "" } {
 		init_proclist
@@ -1300,6 +1353,7 @@ Generates system device tree based on args given in:
 
 	set list_offiles {}
 	set peri_list [hsi::get_cells -hier]
+	set peri_list [move_match_elements_to_top $peri_list "axi_intc"]
 
 	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
 
@@ -1468,6 +1522,13 @@ Generates system device tree based on args given in:
 		write_dt systemdt root "$dir/system-top.dts"
 		write_dt pldt root "$dir/pl.dtsi"
 		write_dt pcwdt root "$dir/pcw.dtsi"
+		if {$rm_xsa_exist != 0} {
+			foreach partial_xsa $rm_xsa {
+				pldt destroy
+				::struct::tree pldt
+				generate_rm_sdt $xsa $partial_xsa $dir
+			}
+		}
 		global set osmap
 		unset osmap
 		
