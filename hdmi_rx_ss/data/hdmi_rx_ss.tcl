@@ -71,8 +71,7 @@ proc hdmirxss_add_hier_instances {drv_handle} {
 		add_prop "$node" "hdcptimer-present" 0 int $dts_file
 	} else {
 		foreach timer $timers {
-			set name [hsi get_property NAME [hsi::get_cells -hier $timer]]
-			if {[regexp "v_hdmi_rxss1_axi_timer" $name match]} {
+			if {[regexp -nocase $drv_handle $timer match]} {
 				add_prop "$node" "hdcptimer-present" 1 int $dts_file
 				add_prop "$node" "hdcptimer-connected" $timer reference $dts_file
 			} else {
