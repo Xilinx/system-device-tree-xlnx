@@ -19,8 +19,15 @@
         if {$node == 0} {
                 return
         }
+	set rx_max_gt_line_rate [hsi get_property CONFIG.Rx_Max_GT_Line_Rate [hsi get_cells -hier $drv_handle]]
+	add_prop "${node}" "xlnx,rx-max-gt-line-rate" $rx_max_gt_line_rate string $dts_file 1
+
+	set tx_max_gt_line_rate [hsi get_property CONFIG.Tx_Max_GT_Line_Rate [hsi get_cells -hier $drv_handle]]
+	add_prop "${node}" "xlnx,tx-max-gt-line-rate" $tx_max_gt_line_rate string $dts_file 1
+
 	set afreq  0
 	set rfreq  0
+
 	set transceiver [hsi get_property CONFIG.Transceiver [hsi get_cells -hier $drv_handle]]
         switch $transceiver {
                         "GTXE2" {
@@ -62,6 +69,7 @@
 				set afreq [get_clk_pin_freq  $drv_handle "vid_phy_axi4lite_aclk"]
 			}
         }
+
 	if {$afreq == 0} {
 		set afreq "100000000"
 		puts "WARNING: AXIlite clock frequency information is not available in the design, \
