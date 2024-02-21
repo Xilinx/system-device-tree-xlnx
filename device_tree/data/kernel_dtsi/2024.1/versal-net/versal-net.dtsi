@@ -3,7 +3,7 @@
  * dts file for Xilinx Versal NET
  *
  * Copyright (C) 2022, Xilinx, Inc.
- * Copyright (C) 2022, Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024, Advanced Micro Devices, Inc.
  *
  * Michal Simek <michal.simek@amd.com>
  */
@@ -14,6 +14,13 @@
 	#address-cells = <2>;
 	#size-cells = <2>;
 	interrupt-parent = <&imux>;
+
+	options {
+		u-boot {
+			compatible = "u-boot,config";
+			bootscr-address = /bits/ 64 <0x20000000>;
+		};
+	};
 
 	cpus_a78: cpus-a78@0 {
 		#address-cells = <1>;
@@ -213,20 +220,20 @@
 			device_type = "cpu";
 			enable-method = "psci";
 			reg = <0x30300>;
-            operating-points-v2 = <&cpu_opp_table>;
+			operating-points-v2 = <&cpu_opp_table>;
 		};
 		idle-states {
-                        entry-method = "psci";
+			entry-method = "psci";
 
-                        CPU_SLEEP_0: cpu-sleep-0 {
-                                compatible = "arm,idle-state";
-                                arm,psci-suspend-param = <0x40000000>;
-                                local-timer-stop;
-                                entry-latency-us = <300>;
-                                exit-latency-us = <600>;
-                                min-residency-us = <10000>;
-                        };
-                };
+			CPU_SLEEP_0: cpu-sleep-0 {
+				compatible = "arm,idle-state";
+				arm,psci-suspend-param = <0x40000000>;
+				local-timer-stop;
+				entry-latency-us = <300>;
+				exit-latency-us = <600>;
+				min-residency-us = <10000>;
+			};
+		};
 	};
 
 	cpus_r52: cpus-r52@0 {
@@ -258,9 +265,9 @@
 			device_type = "cpu";
 			reg = <0x0>;
 			operating-points-v2 = <&cpu_opp_table>;
-	    };
+		};
 
-	    psx_cortexr52_1: cpu@1 {
+		psx_cortexr52_1: cpu@1 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
 			reg = <0x1>;
@@ -268,40 +275,40 @@
 		};
 
 		psx_cortexr52_2: cpu@2 {
-	        compatible = "arm,cortex-r52";
-	        device_type = "cpu";
-	        reg = <0x2>;
-	        operating-points-v2 = <&cpu_opp_table>;
-	    };
+			compatible = "arm,cortex-r52";
+			device_type = "cpu";
+			reg = <0x2>;
+			operating-points-v2 = <&cpu_opp_table>;
+		};
 
-	    psx_cortexr52_3: cpu@3 {
-	        compatible = "arm,cortex-r52";
-	        device_type = "cpu";
-	        reg = <0x3>;
-	        operating-points-v2 = <&cpu_opp_table>;
-	    };
+		psx_cortexr52_3: cpu@3 {
+			compatible = "arm,cortex-r52";
+			device_type = "cpu";
+			reg = <0x3>;
+			operating-points-v2 = <&cpu_opp_table>;
+		};
 	};
 
 	cpus_microblaze_0: cpus_microblaze@0 {
 		#address-cells = <1>;
 		#size-cells = <0>;
-        psx_pmc_0: cpu@0 {
-            compatible = "pmc-microblaze";
-            device_type = "cpu";
-            reg = <0x0>;
-            operating-points-v2 = <&cpu_opp_table>;
-        };
+		psx_pmc_0: cpu@0 {
+			compatible = "pmc-microblaze";
+			device_type = "cpu";
+			reg = <0x0>;
+			operating-points-v2 = <&cpu_opp_table>;
+		};
 	};
 
 	cpus_microblaze_1: cpus_microblaze@1 {
 		#address-cells = <1>;
 		#size-cells = <0>;
-        psx_psm_0: cpu@0 {
-	        compatible = "psm-microblaze";
-	        device_type = "cpu";
-	        reg = <0x1>;
-	        operating-points-v2 = <&cpu_opp_table>;
-        };
+		psx_psm_0: cpu@0 {
+			compatible = "psm-microblaze";
+			device_type = "cpu";
+			reg = <0x1>;
+			operating-points-v2 = <&cpu_opp_table>;
+		};
 	};
 
 	cpu_opp_table: opp-table {
@@ -345,8 +352,8 @@
 			opp-hz = /bits/ 64 <2400000000>;
 			opp-microvolt = <1000000>;
 			clock-latency-ns = <500000>;
-        };
-    };
+		};
+	};
 	aliases {
 		serial0 = &serial0;
 		serial1 = &serial1;
@@ -388,8 +395,8 @@
 	};
 
 	versal_fpga: versal-fpga {
-                compatible = "xlnx,versal-fpga";
-        };
+		compatible = "xlnx,versal-fpga";
+	};
 
 	amba_apu: apu-bus {
 		compatible = "simple-bus";
@@ -416,7 +423,7 @@
 				msi-controller;
 				msi-cells = <1>;
 				reg = <0 0xe2040000 0 0x20000>;
-		        };
+			};
 		};
 	};
 
@@ -713,7 +720,7 @@
 			interrupt-parent = <&imux>;
 			interrupts = <0 41 4>, <0 41 4>;
 			clock-names = "pclk", "hclk", "tx_clk", "rx_clk",
-				      "tsu_clk";
+			              "tsu_clk";
 		};
 
 		gpio0: gpio@f19d0000 {
@@ -1179,9 +1186,9 @@
 				compatible = "snps,dwc3";
 				status = "disabled";
 				reg = <0 0xf1b00000 0 0x10000>;
-				interrupt-names = "dwc_usb3", "otg", "usb-wakeup";
+				interrupt-names = "host", "peripheral", "otg", "wakeup";
+				interrupts = <0 29 4>, <0 29 4>, <0 33 4>, <0 98 4>;
 				interrupt-parent = <&imux>;
-				interrupts = <0 29 4>, <0 33 4>, <0 98 4>;
 				snps,dis_u2_susphy_quirk;
 				snps,dis_u3_susphy_quirk;
 				snps,quirk-frame-length-adjustment = <0x20>;
@@ -1292,9 +1299,9 @@
 		};
 
 		coresight: coresight@f0800000 {
-		    compatible = "xlnx,coresight-1.0";
-		    status = "disabled";
-		    reg = <0x0 0xf0800000 0x0 0x4000>;
+			compatible = "xlnx,coresight-1.0";
+			status = "disabled";
+			reg = <0x0 0xf0800000 0x0 0x4000>;
 		};
 	};
 };

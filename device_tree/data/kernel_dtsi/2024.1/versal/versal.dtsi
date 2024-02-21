@@ -3,7 +3,7 @@
  * dts file for Xilinx Versal
  *
  * (C) Copyright 2017-2022 Xilinx, Inc.
- * (C) Copyright 2022 Advanced Micro Devices, Inc. All Rights Reserved.
+ * (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
  *
  * Michal Simek <michal.simek@xilinx.com>
  */
@@ -13,6 +13,13 @@
 	#address-cells = <2>;
 	#size-cells = <2>;
 	model = "Xilinx Versal";
+
+	options {
+		u-boot {
+			compatible = "u-boot,config";
+			bootscr-address = /bits/ 64 <0x20000000>;
+		};
+	};
 
 	cpus_a72: cpus-a72@0 {
 		#address-cells = <1>;
@@ -56,23 +63,23 @@
 	cpus_microblaze_0: cpus_microblaze@0 {
 		#address-cells = <1>;
 		#size-cells = <0>;
-                psv_pmc_0: cpu@0 {
-                        compatible = "pmc-microblaze";
-                        device_type = "cpu";
-                        reg = <0x0>;
-                        operating-points-v2 = <&cpu_opp_table>;
-                };
+		psv_pmc_0: cpu@0 {
+			compatible = "pmc-microblaze";
+			device_type = "cpu";
+			reg = <0x0>;
+			operating-points-v2 = <&cpu_opp_table>;
+		};
 	};
 
 	cpus_microblaze_1: cpus_microblaze@1 {
 		#address-cells = <1>;
 		#size-cells = <0>;
-                psv_psm_0: cpu@0 {
-                        compatible = "psm-microblaze";
-                        device_type = "cpu";
-                        reg = <0x1>;
-                        operating-points-v2 = <&cpu_opp_table>;
-                };
+		psv_psm_0: cpu@0 {
+			compatible = "psm-microblaze";
+			device_type = "cpu";
+			reg = <0x1>;
+			operating-points-v2 = <&cpu_opp_table>;
+		};
 
 	};
 
@@ -80,26 +87,26 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 		base-address = <0x0 0xff9a0000 0x0 0x10000>;
-                psv_cortexr5_0: cpu@0 {
-                        compatible = "arm,cortex-r5";
-                        device_type = "cpu";
-                        reg = <0x0>;
-                        operating-points-v2 = <&cpu_opp_table>;
-                        power-domains = <&versal_firmware 0x18110005>;
-                };
-        };
+		psv_cortexr5_0: cpu@0 {
+			compatible = "arm,cortex-r5";
+			device_type = "cpu";
+			reg = <0x0>;
+			operating-points-v2 = <&cpu_opp_table>;
+			power-domains = <&versal_firmware 0x18110005>;
+		};
+	};
 
-        cpus_r5_1: cpus-r5@1 {
+	cpus_r5_1: cpus-r5@1 {
 		#address-cells = <1>;
 		#size-cells = <0>;
 		base-address = <0x0 0xff9a0000 0x0 0x10000>;
-                psv_cortexr5_1: cpu@1 {
-                        compatible = "arm,cortex-r5";
-                        device_type = "cpu";
-                        reg = <0x1>;
-                        operating-points-v2 = <&cpu_opp_table>;
-                        power-domains = <&versal_firmware 0x18110006>;
-                };
+		psv_cortexr5_1: cpu@1 {
+			compatible = "arm,cortex-r5";
+			device_type = "cpu";
+			reg = <0x1>;
+			operating-points-v2 = <&cpu_opp_table>;
+			power-domains = <&versal_firmware 0x18110006>;
+		};
 	};
 
 	cpu_opp_table: cpu-opp-table {
@@ -155,9 +162,9 @@
 		compatible = "arm,armv8-timer";
 		interrupt-parent = <&imux>;
 		interrupts = <1 13 4>,
-			     <1 14 4>,
-			     <1 11 4>,
-			     <1 10 4>;
+		             <1 14 4>,
+		             <1 11 4>,
+		             <1 10 4>;
 	};
 
 	versal_fpga: versal-fpga {
@@ -191,7 +198,7 @@
 				msi-controller;
 				msi-cells = <1>;
 				reg = <0 0xf9020000 0 0x20000>;
-		        };
+			};
 		};
 	};
 
@@ -348,14 +355,14 @@
 				reg = <0x10000 0x90000>;
 				interrupt-parent = <&imux>;
 				interrupts = <0 106 4>,
-					     <0 106 4>,
-					     <0 106 4>,
-					     <0 106 4>,
-					     <0 106 4>,
-					     <0 106 4>,
-					     <0 106 4>,
-					     <0 106 4>,
-					     <0 106 4>;
+				             <0 106 4>,
+				             <0 106 4>,
+				             <0 106 4>,
+				             <0 106 4>,
+				             <0 106 4>,
+				             <0 106 4>,
+				             <0 106 4>,
+				             <0 106 4>;
 			};
 		};
 
@@ -473,7 +480,7 @@
 		};
 
 		gem0: ethernet@ff0c0000 {
-            compatible = "xlnx,versal-gem", "cdns,gem";
+			compatible = "xlnx,versal-gem", "cdns,gem";
 			status = "disabled";
 			reg = <0 0xff0c0000 0 0x1000>;
 			interrupts = <0 56 4>, <0 56 4>;
@@ -486,7 +493,7 @@
 		};
 
 		gem1: ethernet@ff0d0000 {
-            compatible = "xlnx,versal-gem", "cdns,gem";
+			compatible = "xlnx,versal-gem", "cdns,gem";
 			status = "disabled";
 			reg = <0 0xff0d0000 0 0x1000>;
 			interrupts = <0 58 4>, <0 58 4>;
@@ -819,8 +826,8 @@
 				compatible = "snps,dwc3";
 				status = "disabled";
 				reg = <0 0xfe200000 0 0x10000>;
-				interrupt-names = "dwc_usb3", "otg", "usb-wakeup";
-				interrupts = <0 0x16 4>, <0 0x1A 4>, <0x0 0x4a 0x4>;
+				interrupt-names = "host", "peripheral", "otg", "wakeup";
+				interrupts = <0 0x16 4>, <0 0x16 4>, <0 0x1a 4>, <0x0 0x4a 0x4>;
 				/* iommus = <&smmu 0x230>; */
 				snps,dis_u2_susphy_quirk;
 				snps,dis_u3_susphy_quirk;
@@ -1110,9 +1117,9 @@
 		};
 
 		coresight: coresight@f0800000 {
-		    compatible = "xlnx,coresight-1.0";
-		    status = "disabled";
-		    reg = <0x0 0xf0800000 0x0 0x10000>;
+			compatible = "xlnx,coresight-1.0";
+			status = "disabled";
+			reg = <0x0 0xf0800000 0x0 0x10000>;
 		};
 	};
 
@@ -1122,24 +1129,24 @@
 		#size-cells = <0x2>;
 
 		lpd_xppu: xppu@ff990000 {
-		    compatible = "xlnx,xppu";
-		    #firewall-cells = <0x0>;
-		    reg = <0x0 0xff990000 0x0 0x2000>;
-		    status = "disabled";
+			compatible = "xlnx,xppu";
+			#firewall-cells = <0x0>;
+			reg = <0x0 0xff990000 0x0 0x2000>;
+			status = "disabled";
 		};
 
 		pmc_xppu: xppu@f1310000 {
-		    compatible = "xlnx,xppu";
-		    #firewall-cells = <0x0>;
-		    reg = <0x0 0xf1310000 0x0 0x2000>;
-		    status = "disabled";
+			compatible = "xlnx,xppu";
+			#firewall-cells = <0x0>;
+			reg = <0x0 0xf1310000 0x0 0x2000>;
+			status = "disabled";
 		};
 
 		pmc_xppu_npi: xppu@f1300000 {
-		    compatible = "xlnx,xppu";
-		    #firewall-cells = <0x0>;
-		    reg = <0x0 0xf1300000 0x0 0x2000>;
-		    status = "disabled";
+			compatible = "xlnx,xppu";
+			#firewall-cells = <0x0>;
+			reg = <0x0 0xf1300000 0x0 0x2000>;
+			status = "disabled";
 		};
 	};
 
@@ -1149,52 +1156,52 @@
 		#size-cells = <0x2>;
 
 		fpd_xmpu: xmpu@fd390000 {
-		    compatible = "xlnx,xmpu";
-		    #firewall-cells = <0x0>;
-		    reg = <0x0 0xfd390000 0x0 0x1000>;
-		    status = "disabled";
+			compatible = "xlnx,xmpu";
+			#firewall-cells = <0x0>;
+			reg = <0x0 0xfd390000 0x0 0x1000>;
+			status = "disabled";
 		};
 
 		pmc_xmpu: xmpu@f12f0000 {
-		    compatible = "xlnx,xmpu";
-		    #firewall-cells = <0x0>;
-		    reg = <0x0 0xf12f0000 0x0 0x1000>;
-		    status = "disabled";
+			compatible = "xlnx,xmpu";
+			#firewall-cells = <0x0>;
+			reg = <0x0 0xf12f0000 0x0 0x1000>;
+			status = "disabled";
 		};
 
 		ocm_xmpu: xmpu@ff980000 {
-		    compatible = "xlnx,xmpu";
-		    #firewall-cells = <0x0>;
-		    reg = <0x0 0xff980000 0x0 0x1000>;
-		    status = "disabled";
+			compatible = "xlnx,xmpu";
+			#firewall-cells = <0x0>;
+			reg = <0x0 0xff980000 0x0 0x1000>;
+			status = "disabled";
 		};
 
 		ddrmc_xmpu_0: xmpu@f6080000 {
-		    compatible = "xlnx,xmpu";
-		    #firewall-cells = <0x0>;
-		    reg = <0x0 0xf6080000 0x0 0x1000>;
-		    status = "disabled";
+			compatible = "xlnx,xmpu";
+			#firewall-cells = <0x0>;
+			reg = <0x0 0xf6080000 0x0 0x1000>;
+			status = "disabled";
 		};
 
 		ddrmc_xmpu_1: xmpu@f6220000 {
-		    compatible = "xlnx,xmpu";
-		    #firewall-cells = <0x0>;
-		    reg = <0x0 0xf6220000 0x0 0x1000>;
-		    status = "disabled";
+			compatible = "xlnx,xmpu";
+			#firewall-cells = <0x0>;
+			reg = <0x0 0xf6220000 0x0 0x1000>;
+			status = "disabled";
 		};
 
 		ddrmc_xmpu_2: xmpu@f6390000 {
-		    compatible = "xlnx,xmpu";
-		    #firewall-cells = <0x0>;
-		    reg = <0x0 0xf6390000 0x0 0x1000>;
-		    status = "disabled";
+			compatible = "xlnx,xmpu";
+			#firewall-cells = <0x0>;
+			reg = <0x0 0xf6390000 0x0 0x1000>;
+			status = "disabled";
 		};
 
 		ddrmc_xmpu_3: xmpu@f6500000 {
-		    compatible = "xlnx,xmpu";
-		    #firewall-cells = <0x0>;
-		    reg = <0x0 0xf6500000 0x0 0x1000>;
-		    status = "disabled";
+			compatible = "xlnx,xmpu";
+			#firewall-cells = <0x0>;
+			reg = <0x0 0xf6500000 0x0 0x1000>;
+			status = "disabled";
 		};
 	};
 };

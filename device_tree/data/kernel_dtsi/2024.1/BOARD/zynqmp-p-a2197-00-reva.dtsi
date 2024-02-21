@@ -3,7 +3,7 @@
  * dts file for Xilinx Versal a2197 RevA System Controller
  *
  * (C) Copyright 2021-2022 Xilinx, Inc.
- * (C) Copyright 2022 Advanced Micro Devices, Inc. All Rights Reserved.
+ * (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
  *
  * Michal Simek <michal.simek@xilinx.com>
  */
@@ -31,31 +31,31 @@
         };
 
 
-	ref_clk: ref_clk {
+	ref_clk: ref-clk {
 		status = "okay";
 		compatible = "xlnx,fclk";
 		clocks = <&si570_ref_clk>;
 	};
 
-	ddr4_dimm1_si570: ddr4_dimm1_si570 {
+	ddr4_dimm1_si570: ddr4-dimm1-si570 {
 		status = "okay";
 		compatible = "xlnx,fclk";
 		clocks = <&si570_ddr_dimm1>;
 	};
 
-	ddr4_dimm2_si570: ddr4_dimm2_si570 {
+	ddr4_dimm2_si570: ddr4-dimm2-si570 {
 		status = "okay";
 		compatible = "xlnx,fclk";
 		clocks = <&si570_ddr_dimm2>;
 	};
 
-	lpddr4_si570: lpddr4_si570 {
+	lpddr4_si570: lpddr4-si570 {
 		status = "okay";
 		compatible = "xlnx,fclk";
 		clocks = <&si570_lpddr4>;
 	};
 
-	hsdp_si570: hsdp_si570 {
+	hsdp_si570: hsdp-si570 {
 		status = "okay";
 		compatible = "xlnx,fclk";
 		clocks = <&si570_hsdp>;

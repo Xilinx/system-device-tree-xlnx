@@ -3,7 +3,7 @@
  * dts file for Xilinx ZynqMP
  *
  * (C) Copyright 2014-2022 Xilinx, Inc.
- * (C) Copyright 2022 Advanced Micro Devices, Inc. All Rights Reserved.
+ * (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
  *
  * Michal Simek <michal.simek@xilinx.com>
  *
@@ -22,6 +22,13 @@
 	#address-cells = <2>;
 	#size-cells = <2>;
 	model = "Xilinx ZynqMP";
+
+	options {
+		u-boot {
+			compatible = "u-boot,config";
+			bootscr-address = /bits/ 64 <0x20000000>;
+		};
+	};
 
 	cpus_a53: cpus-a53@0 {
 		#address-cells = <1>;
@@ -260,11 +267,17 @@
 				efuse_spkid: efuse-spkid@5c {
 					reg = <0x5c 0x4>;
 				};
+				efuse_aeskey: efuse-aeskey@60 {
+					reg = <0x60 0x20>;
+				};
 				efuse_ppk0hash: efuse-ppk0hash@a0 {
 					reg = <0xa0 0x30>;
 				};
 				efuse_ppk1hash: efuse-ppk1hash@d0 {
 					reg = <0xd0 0x30>;
+				};
+				efuse_pufuser: efuse-pufuser@100 {
+					reg = <0x100 0x7F>;
 				};
 			};
 
@@ -1218,8 +1231,8 @@
 				status = "disabled";
 				reg = <0x0 0xfe200000 0x0 0x40000>;
 				interrupt-parent = <&imux>;
-				interrupt-names = "dwc_usb3", "otg", "hiber";
-				interrupts = <0 65 4>, <0 69 4>, <0 75 4>;
+				interrupt-names = "host", "peripheral", "otg", "hiber";
+				interrupts = <0 65 4>, <0 65 4>, <0 69 4>, <0 75 4>;
 				iommus = <&smmu 0x860>;
 				snps,quirk-frame-length-adjustment = <0x20>;
 				clock-names = "ref";
@@ -1249,8 +1262,8 @@
 				status = "disabled";
 				reg = <0x0 0xfe300000 0x0 0x40000>;
 				interrupt-parent = <&imux>;
-				interrupt-names = "dwc_usb3", "otg", "hiber";
-				interrupts = <0 70 4>, <0 74 4>, <0 76 4>;
+				interrupt-names = "host", "peripheral", "otg", "hiber";
+				interrupts = <0 70 4>, <0 70 4>, <0 74 4>, <0 76 4>;
 				iommus = <&smmu 0x861>;
 				snps,quirk-frame-length-adjustment = <0x20>;
 				clock-names = "ref";
