@@ -1523,6 +1523,7 @@ Generates system device tree based on args given in:
 		delete_tree pldt root
 		delete_tree pcwdt root
 		write_dt systemdt root "$dir/system-top.dts"
+		move_match_node_to_top pldt root "misc_clk_*"
 		write_dt pldt root "$dir/pl.dtsi"
 		write_dt pcwdt root "$dir/pcw.dtsi"
 		if {$rm_xsa_exist != 0} {
@@ -1546,6 +1547,22 @@ Generates system device tree based on args given in:
 		}
 	}
 	destroy_tree
+}
+
+proc move_match_node_to_top {tree parent match} {
+    # Get the children of the parent node
+    set children [$tree children $parent]
+
+    foreach child $children {
+        # Check if the child matches the condition
+        if {[string match $match $child]} {
+            # Move the matching child node to the top
+	    $tree move $parent 0 $child
+        } else {
+            # Recursively move matching nodes to the top within the child node
+            move_match_node_to_top $tree $child $match
+        }
+    }
 }
 
 proc delete_tree {dttree head} {

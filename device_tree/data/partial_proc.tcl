@@ -430,6 +430,7 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 	}
 	platform remove $rm_ws
 	delete_tree pldt root
+	move_match_node_to_top pldt root "misc_clk_*"
 	write_rm_dt pldt root "$dir/$rm_ws/$partial_file"
 	file rename "$dir/$firmware_name" "$dir/$rm_ws/$firmware_name"
 }
