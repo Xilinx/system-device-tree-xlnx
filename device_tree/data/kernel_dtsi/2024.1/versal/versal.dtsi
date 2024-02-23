@@ -1123,6 +1123,30 @@
 		};
 	};
 
+	psv_r5_0_atcm_global: psv_r5_0_atcm_global@ffe00000 {
+		compatible = "xlnx,psv-tcm-global-1.0" , "mmio-sram";
+		power-domains = <&versal_firmware 0x1831800b>;
+		reg = <0x0 0xffe00000 0x0 0x10000>;
+	};
+
+	psv_r5_0_btcm_global: psv_r5_0_btcm_global@ffe20000 {
+		compatible = "xlnx,psv-tcm-global-1.0" , "mmio-sram";
+		power-domains = <&versal_firmware 0x1831800c>;
+		reg = <0x0 0xffe20000 0x0 0x10000>;
+	};
+
+	psv_r5_1_atcm_global: psv_r5_1_atcm_global@ffe90000 {
+		compatible = "xlnx,psv-tcm-global-1.0" , "mmio-sram";
+		power-domains = <&versal_firmware 0x1831800d>;
+		reg = <0x0 0xffe90000 0x0 0x10000>;
+	};
+
+	psv_r5_1_btcm_global: psv_r5_1_btcm_global@ffeb0000 {
+		compatible = "xlnx,psv-tcm-global-1.0" , "mmio-sram";
+		power-domains = <&versal_firmware 0x1831800e>;
+		reg = <0x0 0xffeb0000 0x0 0x10000>;
+	};
+
 	amba_xppu: indirect-bus@1 {
 		compatible = "indirect-bus";
 		#address-cells = <0x2>;

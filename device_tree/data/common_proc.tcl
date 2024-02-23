@@ -3217,6 +3217,10 @@ proc gen_ps_mapping {} {
 			dict set def_ps_mapping f6220000 label "ddrmc_xmpu_1: xmpu"
 			dict set def_ps_mapping f6390000 label "ddrmc_xmpu_2: xmpu"
 			dict set def_ps_mapping f6400000 label "ddrmc_xmpu_3: xmpu"
+			dict set def_ps_mapping ffe00000 label psv_r5_0_atcm_global
+			dict set def_ps_mapping ffe20000 label psv_r5_0_btcm_global
+			dict set def_ps_mapping ffe90000 label psv_r5_1_atcm_global
+			dict set def_ps_mapping ffeb0000 label psv_r5_1_btcm_global
 		}
 	} elseif {[is_zynqmp_platform $family]} {
 		dict set def_ps_mapping f9010000 label "gic_a53: interrupt-controller"
