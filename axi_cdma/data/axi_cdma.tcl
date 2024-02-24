@@ -69,7 +69,7 @@
     proc axi_cdma_add_dma_channel {drv_handle parent_node xdma addr mode devid} {
         set modellow [string tolower $mode]
         set modeIndex [string index $mode 0]
-        set dma_channel [create_node -n "dma-channel" -u $addr -p $parent_node -d "pl.dtsi"] 
+        set dma_channel [create_node -n "dma-channel" -l "dma_channel_$addr" -u $addr -p $parent_node -d "pl.dtsi"]
 
         add_prop $dma_channel "compatible" [format "xlnx,%s-channel" $xdma] stringlist "pl.dtsi"
         add_prop $dma_channel "xlnx,device-id" $devid hexint "pl.dtsi"
