@@ -701,7 +701,10 @@ proc gen_afi_node {} {
 			}
 		} 
 		if {[string match -nocase $family "versal"]} {
-			set hw_name [::hsi::get_hw_files -filter "TYPE == pdi"]
+			set hw_name [::hsi::get_hw_files -filter "TYPE == pl_pdi"]
+			if {![llength $hw_name]}  {
+				set hw_name [::hsi::get_hw_files -filter "TYPE == pdi"]
+			}
 			add_prop $amba_pl_node "firmware-name" "$hw_name" string $dts 1
 		}
 		set pr_regions [hsi::get_cells -hier -filter BD_TYPE==BLOCK_CONTAINER]
