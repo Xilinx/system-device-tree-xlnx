@@ -32,7 +32,7 @@
 
         } else {
         set freq [get_clk_pin_freq $ip "$clock_port"]
-        add_prop $node "clock-frequency" $freq int $dts_file
+        add_prop $node "xlnx,clock-freq" $freq int $dts_file
         }
 
         set proctype [get_hw_family]
