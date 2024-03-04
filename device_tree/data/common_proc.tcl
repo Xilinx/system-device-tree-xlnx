@@ -2169,6 +2169,7 @@ proc get_intr_id {drv_handle intr_port_name} {
 				foreach intr_cntr $intc {
 					if { [is_ip_interrupting_current_proc $intr_cntr] } {
 						set intc $intr_cntr
+						set intc_ipname [hsi get_property IP_NAME $intc]
 					}
 				}
 			}
