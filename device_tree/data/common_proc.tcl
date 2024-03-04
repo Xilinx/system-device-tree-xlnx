@@ -4981,7 +4981,13 @@ proc gen_mb_interrupt_property {cpu_handle {intr_port_name ""}} {
 			set intc $intc
 		}
 	}
-	add_prop $cpu_node "interrupt-handle" $intc reference "pl.dtsi" 1
+	# For preset_wrapper designs, the intc IP is not mapped to the microblaze processor
+	# but it appears in get_cells -hier ouput. Moreover, the intc may not have the base
+	# address in such cases which will lead to missing reference for intc in the SDT.
+	# Therefore, check the presence of intc before its reference as handle.
+	if {[lsearch -nocase [hsi::get_mem_ranges -of_objects $slave] $intc] >= 0} {
+		add_prop $cpu_node "interrupt-handle" $intc reference "pl.dtsi" 1
+	}
 }
 
 proc get_interrupt_parent {  periph_name intr_pin_name } {
