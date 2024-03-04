@@ -1363,7 +1363,7 @@ Generates system device tree based on args given in:
 
 	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
 
-	set non_val_list "versal_cips psx_wizard psxl ps_wizard dmac_slv axi_noc axi_noc2 noc_mc_ddr4 noc_mc_ddr5 noc_nmu noc_nsu noc2_nmu noc2_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat xlconstant xlslice axis_tdest_editor util_reduced_logic noc_nsw noc2_nsw axis_ila pspmc psv_ocm_ram_0 psv_pmc_qspi_ospi psx_pmc_qspi_ospi add_keep_128 c_counter_binary dbg_monmux"
+	set non_val_list "versal_cips psx_wizard psxl ps_wizard dmac_slv axi_noc axi_noc2 noc_mc_ddr4 noc_mc_ddr5 ddr3 ddr4 mig_7series noc_nmu noc_nsu noc2_nmu noc2_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat xlconstant xlslice axis_tdest_editor util_reduced_logic noc_nsw noc2_nsw axis_ila pspmc psv_ocm_ram_0 psv_pmc_qspi_ospi psx_pmc_qspi_ospi add_keep_128 c_counter_binary dbg_monmux"
 	set non_val_ip_types "MONITOR BUS PROCESSOR"
 	set non_val_list1 "psv_cortexa72 psu_cortexa53 ps7_cortexa9 versal_cips psx_wizard ps_wizard noc_nmu noc_nsu ila psu_iou_s noc_nsw pspmc"
 	set non_val_ip_types1 "MONITOR BUS"
@@ -1640,15 +1640,9 @@ proc proc_mapping {} {
 	set periphs_list ""
 	append periphs_list [hsi::get_cells -hier -filter {IP_TYPE==MEMORY_CNTLR}]
 	set family [get_hw_family]
-	if {[string match -nocase $family "versal"]} {
-		if { $is_versal_net_platform } {
-			append periphs_list " [hsi::get_cells -hier -filter {IP_NAME==axi_noc2}]"
-			append periphs_list " [hsi::get_cells -hier -filter {IP_NAME==noc_mc_ddr5}]"
-		} else {
-			append periphs_list " [hsi::get_cells -hier -filter {IP_NAME==axi_noc}]"
-			append periphs_list " [hsi::get_cells -hier -filter {IP_NAME==noc_mc_ddr4}]"
-		}
-	}
+	append periphs_list " [hsi::get_cells -hier -filter { \
+		IP_NAME==axi_noc2 || IP_NAME==noc_mc_ddr5 || IP_NAME==axi_noc || IP_NAME==noc_mc_ddr4 || \
+		IP_NAME==ddr3 || IP_NAME==ddr4 || IP_NAME==mig_7series}]"
 	global dup_periph_handle
         foreach val $proc_list {
 		#puts "$val: [time {
