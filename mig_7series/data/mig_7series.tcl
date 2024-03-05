@@ -16,6 +16,7 @@
 proc mig_7series_generate {drv_handle} {
         global apu_proc_ip
         set apu_proc_found 0
+        set 64_bit 0
         set baseaddr [get_baseaddr $drv_handle no_prefix]
         set memory_node [create_node -n "memory" -l "${drv_handle}_memory" -u $baseaddr -p root -d "system-top.dts"]
         set slave [hsi::get_cells -hier ${drv_handle}]
@@ -53,7 +54,8 @@ proc mig_7series_generate {drv_handle} {
                                 set size [format 0x%x [expr {${high} - ${base}}]]
                         }
 
-                        if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"]} {
+                        if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"]  || [string length [string trimleft $base "0x"]] > 8} {
+                                set 64_bit 1
                                 if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
                                         set temp $base
                                         set temp [string trimleft [string trimleft $temp 0] x]
@@ -95,8 +97,12 @@ proc mig_7series_generate {drv_handle} {
                         if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_psm"]} {
                                 set_memmap "${drv_handle}_memory" psm $reg
                         }
-                        if {[string match -nocase [hsi get_property IP_NAME $procc] "microblaze"]} {
-                                set_memmap "${drv_handle}_memory" $procc "0x0 $base 0x0 $size"
+                        if {[string match -nocase [hsi get_property IP_NAME $procc] "microblaze"] || [string match -nocase [hsi get_property IP_NAME $procc] "microblaze_riscv"]} {
+                                if {$64_bit} {
+                                        set_memmap "${drv_handle}_memory" $procc $reg
+                                } else {
+                                        set_memmap "${drv_handle}_memory" $procc "0x0 $base 0x0 $size"
+                                }
                         }
                     }
                 add_prop "${memory_node}" "reg" $reg hexlist "system-top.dts" 1

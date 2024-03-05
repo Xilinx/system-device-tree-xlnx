@@ -5329,7 +5329,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 			set size [format 0x%x [expr {${high} - ${base} + 1}]]
 		}
 		if {![string_is_empty $base]} {
-			if {[string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_pmc"] || [is_zynqmp_platform $proctype]} {
+			if {[string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype] || [string length [string trimleft $base "0x"]] > 8} {
 				# check if base address is 64bit and split it as MSB and LSB
 				if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 					set temp $base
@@ -5390,7 +5390,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 			set size [format 0x%x [expr {${high} - ${base} + 1}]]
 
 			if {[string_is_empty $reg]} {
-				if {[string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_pmc"] || [is_zynqmp_platform $proctype]} {
+				if {[string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype] || [string length [string trimleft $base "0x"]] > 8} {
 					# check if base address is 64bit and split it as MSB and LSB
 					if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 						set temp $base
@@ -5425,7 +5425,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 						continue
 					}
 				}
-				if {[string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_pmc"] || [is_zynqmp_platform $proctype]} {
+				if {[string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype]} {
 					set index [check_64_base $reg $base $size]
 					if {$index == "true" && $ip_name != "axi_fifo_mm_s"} {
 						continue
@@ -5433,7 +5433,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 				}
 				# ensure no duplication
 				if {![regexp ".*${reg}.*" "$base $size" matched]} {
-					if {[string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_pmc"] || [is_zynqmp_platform $proctype]} {
+					if {[string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype]} {
 						set base1 "0x0 $base"
 						set size1 "0x0 $size"
 						if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {

@@ -19,6 +19,7 @@
         set slave [hsi::get_cells -hier ${drv_handle}]
         set baseaddr [get_baseaddr $drv_handle noprefix]
         set dup_ilmb_dlmb_node 0
+        set 64_bit 0
         global apu_proc_ip
 
         # HSI reports ilmb_ram and dlmb_ram as two different IPs even though it points to the same BRAM_CNTRL. The
@@ -77,7 +78,30 @@
                 if { $ctrl_base > 0 &&  $have_ecc == 1} {
                          set high [hsi get_property CONFIG.C_S_AXI_CTRL_HIGHADDR [hsi::get_cells -hier $drv_handle]]
                          set size [format 0x%x [expr {${high} - ${ctrl_base} + 1}]]
-			 set_memmap "${drv_handle}" $procc "0x0 $ctrl_base 0x0 $size"
+                         if {[regexp -nocase {0x([0-9a-f]{9})} "$ctrl_base" match]} {
+                                set temp $ctrl_base
+                                set temp [string trimleft [string trimleft $temp 0] x]
+                                set len [string length $temp]
+                                set rem [expr {${len} - 8}]
+                                set high_base "0x[string range $temp $rem $len]"
+                                set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
+                                set low_base [format 0x%08x $low_base]
+                                if {[regexp -nocase {0x([0-9a-f]{9})} "$size" match]} {
+                                        set temp $size
+                                        set temp [string trimleft [string trimleft $temp 0] x]
+                                        set len [string length $temp]
+                                        set rem [expr {${len} - 8}]
+                                        set high_size "0x[string range $temp $rem $len]"
+                                        set low_size  "0x[string range $temp 0 [expr {${rem} - 1}]]"
+                                        set low_size [format 0x%08x $low_size]
+                                        set reg "$low_base $high_base $low_size $high_size"
+                                } else {
+                                        set reg "$low_base $high_base 0x0 $size"
+                                }
+                         } else {
+                                set reg "0x0 $ctrl_base 0x0 $size"
+                         }
+                         set_memmap "${drv_handle}" $procc $reg
                 }
 
                 # TODO Fix this whole part, this is there in all memory IP tcls
@@ -100,7 +124,8 @@
                         set size [format 0x%x [expr {${high} - ${base} + 1}]]
                         set proctype [get_hw_family]
                         if {[is_zynqmp_platform $proctype] || \
-                                [string match -nocase $proctype "versal"]} {
+                                [string match -nocase $proctype "versal"] || [string length [string trimleft $base "0x"]] > 8} {
+                                set 64_bit 1
                                 if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
                                         set temp $base
                                         set temp [string trimleft [string trimleft $temp 0] x]
@@ -147,7 +172,11 @@
                                 set_memmap "${drv_handle}_memory" psm $reg
                         }
                         if {[string match -nocase [hsi get_property IP_NAME $procc] "microblaze"] || [string match -nocase [hsi get_property IP_NAME $procc] "microblaze_riscv"]} {
-                                set_memmap "${drv_handle}_memory" $procc "0x0 $base 0x0 $size"
+                                if {$64_bit} {
+                                        set_memmap "${drv_handle}_memory" $procc $reg
+                                } else {
+                                        set_memmap "${drv_handle}_memory" $procc "0x0 $base 0x0 $size"
+                                }
                         }
                 }
                 add_prop "${memory_node}" "reg" $reg hexlist "system-top.dts" 1
