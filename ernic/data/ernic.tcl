@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2019-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -31,12 +31,12 @@
         set intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $drv_handle] $dma_pin]
         set valid_eth_list "l_ethernet"
         if {[string_is_empty ${intf}]} {
-                return 0
+                return ""
         }
         set connected_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $intf]
         if {[string_is_empty ${connected_ip}]} {
                 dtg_warning "$drv_handle connected ip is NULL for the pin $intf"
-                return 0
+                return ""
         }
         set iptype [hsi get_property IP_NAME [hsi::get_cells -hier $connected_ip]]
         if {[string match -nocase $iptype "axis_data_fifo"] } {
