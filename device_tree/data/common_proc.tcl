@@ -6495,7 +6495,11 @@ proc gen_mb_ccf_subnode {drv_handle name freq reg} {
 	add_prop "${clk_node}" "#size-cells" 0 int $default_dts
 
 	set clk_subnode_name "clk_${name}"
-	set clk_subnode [create_node -l ${clk_subnode_name} -n ${clk_subnode_name} -u $reg -p ${clk_node} -d ${default_dts}]
+	set clk_subnode_label "clk_${name}"
+	if {[string match -nocase $name "cpu"]} {
+		set clk_subnode_label "clk_${name}_$reg"
+	}
+	set clk_subnode [create_node -l ${clk_subnode_label} -n ${clk_subnode_name} -u $reg -p ${clk_node} -d ${default_dts}]
 	# clk subnode data
 	add_prop "${clk_subnode}" "compatible" "fixed-clock" stringlist $default_dts
 	add_prop "${clk_subnode}" "#clock-cells" 0 int $default_dts
@@ -6515,7 +6519,7 @@ proc generate_mb_ccf_node {drv_handle} {
 	# - hardcoded reg number cpu clock node
 	# - assume clk_cpu for mb cpu
 	# - only applies to master mb cpu
-	gen_mb_ccf_subnode $drv_handle cpu $cpu_clk_freq 0
+	gen_mb_ccf_subnode $drv_handle cpu $cpu_clk_freq [lsearch [hsi::get_cells -hier -filter {IP_NAME==microblaze}] $drv_handle]
 }
 
 proc gen_dev_ccf_binding args {
