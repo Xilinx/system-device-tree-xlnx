@@ -3,7 +3,7 @@
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # Michal SIMEK <monstr@monstr.eu>
 #
@@ -19,14 +19,16 @@
 #
 
     proc cpu_generate {drv_handle} {
+        global mb_dict_64_bit
         set proctype [get_hw_family]
-        set bus_name [detect_bus_name $drv_handle]
+        set bus_name [add_or_get_bus_node $drv_handle "pl.dtsi"]
         set nr [get_microblaze_nr $drv_handle]
         set ip_name [get_ip_property $drv_handle IP_NAME]
         set node [create_node -n "cpus_${ip_name}" -l "cpus_${ip_name}_${nr}" -u $nr -d "pl.dtsi" -p $bus_name]
         add_prop $node "compatible" "cpus,cluster" string "pl.dtsi"
         add_prop $node "#cpu-mask-cells" 1 int "pl.dtsi"
-
+        add_prop $node #address-cells 1 int "pl.dtsi"
+        add_prop $node #size-cells 0 int "pl.dtsi"
         set node [create_node -n "cpu" -l "$drv_handle" -u $nr -d "pl.dtsi" -p $node]
         set comp_prop [gen_compatible_string $drv_handle]
         add_prop $node compatible "$comp_prop xlnx,${ip_name}" stringlist "pl.dtsi"
@@ -83,6 +85,15 @@
         gen_mb_interrupt_property $drv_handle
         gen_drv_prop_from_ip $drv_handle
         generate_mb_ccf_node $drv_handle
+
+        set addr_size [get_ip_property $drv_handle CONFIG.C_ADDR_SIZE]
+        if {![string_is_empty $addr_size]} {
+                set cell_size 1
+                if {[expr $addr_size] > 32} {
+                        set cell_size 2
+                }
+                dict set mb_dict_64_bit $drv_handle $cell_size
+        }
     }
 
     proc cpu_check_64bit {base} {

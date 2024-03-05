@@ -1287,6 +1287,7 @@ proc generate_sdt args {
 	global microblaze_riscv_list
 	global rp_region_dict
 	global is_rm_design
+	global mb_dict_64_bit
 
 	set is_rm_design 0
         if {[llength $args]!= 0} {
@@ -1882,6 +1883,7 @@ proc update_memory_node {} {
 
 proc gen_cpu_cluster {} {
 	global is_versal_net_platform
+	global mb_dict_64_bit
 	set proctype [get_hw_family]
 	set default_dts "system-top.dts"
 	set r5_procs [hsi::get_cells -hier -filter {IP_NAME==psv_cortexr5 || IP_NAME==psu_cortexr5 || IP_NAME==psx_cortexr52}]
@@ -2090,30 +2092,38 @@ proc gen_cpu_cluster {} {
 
 	set microblaze_proc [hsi::get_cells -hier -filter {IP_NAME==microblaze || IP_NAME==microblaze_riscv}]
 	if {[llength $microblaze_proc] > 0} {
-		if {[string match -nocase $proctype "microblaze"] || [string match -nocase $proctype "microblaze_riscv"]} {
-			add_prop "root" "#address-cells" 1 int "system-top.dts"
-			add_prop "root" "#size-cells" 1 int "system-top.dts"
-		}
+		set root_cell_size 1
 		set plnode [create_node -l "amba_pl" -n "amba_pl" -d ${default_dts} -p root]
-	foreach proc $microblaze_proc {
-		set count [get_microblaze_nr $proc]
-		set proc_name [hsi get_property IP_NAME $proc]
-		set cpu_node [create_node -l "cpus_${proc_name}_${count}" -n "cpus_${proc_name}" -u $count -d ${default_dts} -p $plnode]
-		add_prop $cpu_node "#ranges-size-cells" "0x1" hexint $default_dts
-		add_prop "${cpu_node}" "#ranges-address-cells" "0x1" hexint $default_dts
-		global memmap
-		set values [dict keys $memmap]
-		set list_values ""
-		foreach val $values {
-			set temp [get_memmap $val $proc]
-			set com_val [split $temp ","]
-			foreach value $com_val {
-				# Ignore if a 40 bit address is mapped to Microblaze
-				if {![check_if_forty_bit_address $value]} {
-					set addr "[lindex $value 1]"
-					set size "[lindex $value 3]"
-					set addr [string trimright $addr ">"]
-					set size [string trimright $size ">"]
+		foreach proc $microblaze_proc {
+			set count [get_microblaze_nr $proc]
+			set proc_name [hsi get_property IP_NAME $proc]
+			set cpu_node [create_node -l "cpus_${proc_name}_${count}" -n "cpus_${proc_name}" -u $count -d ${default_dts} -p $plnode]
+			set cell_size [dict get $mb_dict_64_bit $proc]
+			if { $root_cell_size < $cell_size } {
+				set root_cell_size $cell_size
+			}
+			add_prop $cpu_node "#ranges-size-cells" "0x${cell_size}" hexint $default_dts
+			add_prop "${cpu_node}" "#ranges-address-cells" "0x${cell_size}" hexint $default_dts
+			global memmap
+			set values [dict keys $memmap]
+			set list_values ""
+			foreach val $values {
+				set temp [get_memmap $val $proc]
+				set com_val [split $temp ","]
+				foreach value $com_val {
+					if {[expr $cell_size > 1]} {
+						set addr "[lindex $value 0] [lindex $value 1]"
+						set size "[lindex $value 2] [lindex $value 3]"
+						set addr [string trimright $addr ">"]
+						set addr [string trimleft $addr "<"]
+						set size [string trimright $size ">"]
+						set size [string trimleft $size "<"]
+					} else {
+						set addr "[lindex $value 1]"
+						set size "[lindex $value 3]"
+						set addr [string trimright $addr ">"]
+						set size [string trimright $size ">"]
+					}
 					if {[string_is_empty $list_values]} {
 						set list_values "$addr &${val} $addr $size"
 					} else {
@@ -2121,9 +2131,12 @@ proc gen_cpu_cluster {} {
 					}
 				}
 			}
+			add_prop $cpu_node "address-map" $list_values special $default_dts
 		}
-		add_prop $cpu_node "address-map" $list_values special $default_dts
-	}
+		if {[string match -nocase $proctype "microblaze"]} {
+			add_prop "root" "#address-cells" $root_cell_size int "system-top.dts"
+			add_prop "root" "#size-cells" $root_cell_size int "system-top.dts"
+		}
 	}
 	
 }

@@ -419,6 +419,7 @@ proc get_hw_family {} {
 
 # set global dict_devicetree
 proc get_user_config args {
+	proc_called_by
         set dict_devicetree  {}
 	set val [get_dt_param [lindex $args 1]]
 	if {[string match -nocase $val ""]} {
@@ -2662,6 +2663,7 @@ proc get_dts_include {} {
 }
 
 proc set_drv_def_dts {drv_handle} {
+	proc_called_by
 	global env
 	#set path $env(REPO)
 
