@@ -1288,6 +1288,9 @@ proc generate_sdt args {
 	global rp_region_dict
 	global is_rm_design
 	global mb_dict_64_bit
+	global baseaddr_dict
+	global highaddr_dict
+	global processor_ip_list
 
 	set is_rm_design 0
         if {[llength $args]!= 0} {
@@ -1357,12 +1360,30 @@ Generates system device tree based on args given in:
 	dict set comp_str_dict $cur_hw_design {}
 	dict set ip_type_dict $cur_hw_design {}
 	dict set intr_id_dict $cur_hw_design {}
+	dict set baseaddr_dict $cur_hw_design {}
+	dict set highaddr_dict $cur_hw_design {}
 
 	set list_offiles {}
 	set peri_list [hsi::get_cells -hier]
 	set peri_list [move_match_elements_to_top $peri_list "axi_intc"]
 
 	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
+	set processor_ip_list [list]
+
+	# TODO: Consolidate this.
+	# This can't be merged to the loop running for each cpu.tcl.
+	# remove_duplicate_addr uses get_baseaddr and get_baseaddr uses processor_ip_list.
+	# Cant move remove_duplicate_addr after cpu tcl processing as gen_mb_interrupt_property
+	# is being used inside cpu.tcl which uses dup_periph_handle defined under
+	# remove_duplicate_addr.
+
+	foreach procperiph $proclist {
+		set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $procperiph]]
+		if {[lsearch -exact $processor_ip_list $ip_name] == -1} {
+			# If not present, append it to the list
+			lappend processor_ip_list $ip_name
+		}
+	}
 
 	set non_val_list "versal_cips psx_wizard psxl ps_wizard dmac_slv axi_noc axi_noc2 noc_mc_ddr4 noc_mc_ddr5 ddr3 ddr4 mig_7series noc_nmu noc_nsu noc2_nmu noc2_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat xlconstant xlslice axis_tdest_editor util_reduced_logic noc_nsw noc2_nsw axis_ila pspmc psv_ocm_ram_0 psv_pmc_qspi_ospi psx_pmc_qspi_ospi add_keep_128 c_counter_binary dbg_monmux"
 	set non_val_ip_types "MONITOR BUS PROCESSOR"

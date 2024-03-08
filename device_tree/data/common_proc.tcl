@@ -2341,7 +2341,27 @@ proc set_cur_working_dts {{dts_file ""}} {
 	return $dt_tree_obj
 }
 
+proc remove_prefix_from_addr {addr} {
+	regsub -all {^0x} $addr {} addr
+	# Remove all the leading zeroes in the address.
+	set addr [string trimleft $addr 0]
+	if {[string_is_empty $addr]} {
+		set addr "0"
+	}
+	return $addr
+}
+
 proc get_baseaddr {slave_ip {no_prefix ""} {proc_handle ""}} {
+	global baseaddr_dict
+	global cur_hw_design
+	global processor_ip_list
+	if { [string_is_empty $proc_handle] && [dict exists $baseaddr_dict $cur_hw_design $slave_ip] } {
+		set baseaddr [dict get $baseaddr_dict $cur_hw_design $slave_ip]
+		if {![string_is_empty $no_prefix]} {
+			set baseaddr [remove_prefix_from_addr $baseaddr]
+		}
+		return $baseaddr
+	}
 	# only returns the first addr
 	set ip_name [get_ip_property [hsi::get_cells -hier $slave_ip] IP_NAME]
 	if {[string match -nocase $slave_ip "psu_sata"]} {
@@ -2369,23 +2389,18 @@ proc get_baseaddr {slave_ip {no_prefix ""} {proc_handle ""}} {
 			set addr [string tolower $cpm_unit_addr]
 		}
 	} else {
-		set ip_mem_handle [lindex [hsi::get_mem_ranges $slave_ip] 0]
+		set ip_mem_handle [hsi::get_mem_ranges $slave_ip]
 		if {![string_is_empty $proc_handle]} {
 			# INTERFACE IPs (e.g. CCAT) are coming in get_mem_ranges -of_objects $proc_handle
 			# but not coming in output of INSTANCE filter of get_mem_ranges
 			set proc_filter_ip_mem_handle [lindex [hsi::get_mem_ranges -of_objects $proc_handle -filter INSTANCE==$slave_ip] 0]
 			if {![string_is_empty $proc_filter_ip_mem_handle]} {
-				set ip_mem_handle $proc_filter_ip_mem_handle
+				set addr [string tolower [hsi get_property BASE_VALUE $proc_filter_ip_mem_handle]]
+				if {![string_is_empty $no_prefix]} {
+					set addr [remove_prefix_from_addr $addr]
+				}
+				return $addr
 			}
-		}
-		if {[string match -nocase $ip_name "psv_pmc_qspi"] || [string match -nocase $ip_name "psv_coresight"]} {
-			# Currently addresses for ps mapping is coming from static dtsi files originating from u-boot
-			# and it is very APU specific. To generate aliases, the code is also looking for those APU mapped
-			# addresses. For pmc_qspi, there can be different MASTER INTERFACEs and hence the BASE_value changes
-			# a/c to them. So, just as a workaround for the error during alias mapping for qspi, adding logic to
-			# specifically fetch the A72_0 mapped address of pmc_qspi.
-			set a72_0_proc [lindex [hsi get_cells -hier -filter IP_NAME==psv_cortexa72] 0]
-			set ip_mem_handle [lindex [hsi::get_mem_ranges -of_objects $a72_0_proc [hsi::get_cells -hier $slave_ip]] 0]
 		}
 		if { [string_is_empty $ip_mem_handle] } {
 			set avail_param [hsi list_property [hsi::get_cells -hier $slave_ip]]
@@ -2402,28 +2417,52 @@ proc get_baseaddr {slave_ip {no_prefix ""} {proc_handle ""}} {
 				return ""
 			}
 		} else {
-			set addr [string tolower [hsi get_property BASE_VALUE $ip_mem_handle]]
+			set handle_count 0
+			# For versal PS IPs, check the Master Interface and use the mem_handles where
+			# master interface starts with any of the available processor IPs. Many a times,
+			# these IPs can have master interfaces as CPM_PCIE_NOC_0 or FPD_AXI_NOC_1 where
+			# the addresses may overflow as these are not part of processor views.
+			if {[string match -nocase [get_hw_family] "versal"] && [is_ps_ip $slave_ip]} {
+				for {} {$handle_count < [llength $ip_mem_handle]} {incr handle_count} {
+					set master_intf [hsi get_property MASTER_INTERFACE [lindex $ip_mem_handle $handle_count]]
+					set pattern [join [lmap prefix $processor_ip_list {string cat $prefix*}] "|"]
+					if {[regexp $pattern $master_intf] || [string_is_empty $master_intf]} {
+						break
+					}
+				}
+			}
+			set addr [string tolower [hsi get_property BASE_VALUE [lindex $ip_mem_handle $handle_count]]]
 		}
 	}
+	dict set baseaddr_dict $cur_hw_design $slave_ip $addr
 	if {![string_is_empty $no_prefix]} {
-		regsub -all {^0x} $addr {} addr
-		# Remove all the leading zeroes in the address.
-		set addr [string trimleft $addr 0]
-		if {[string_is_empty $addr]} {
-			set addr "0"
-		}
+		set addr [remove_prefix_from_addr $addr]
 	}
 	return $addr
 }
 
 proc get_highaddr {slave_ip {no_prefix ""} {proc_handle ""}} {
-	set ip_mem_handle [lindex [hsi::get_mem_ranges $slave_ip] 0]
+	global highaddr_dict
+	global cur_hw_design
+	global processor_ip_list
+	if { [string_is_empty $proc_handle] && [dict exists $highaddr_dict $cur_hw_design $slave_ip] } {
+		set highaddr [dict get $highaddr_dict $cur_hw_design $slave_ip]
+		if {![string_is_empty $no_prefix]} {
+			set highaddr [remove_prefix_from_addr $highaddr]
+		}
+		return $highaddr
+	}
+	set ip_mem_handle [hsi::get_mem_ranges $slave_ip]
 	if {![string_is_empty $proc_handle]} {
 		# INTERFACE IPs (e.g. CCAT) are coming in get_mem_ranges -of_objects $proc_handle
 		# but not coming in output of INSTANCE filter of get_mem_ranges
 		set proc_filter_ip_mem_handle [lindex [hsi::get_mem_ranges -of_objects $proc_handle -filter INSTANCE==$slave_ip] 0]
 		if {![string_is_empty $proc_filter_ip_mem_handle]} {
-			set ip_mem_handle $proc_filter_ip_mem_handle
+			set addr [string tolower [hsi get_property HIGH_VALUE $proc_filter_ip_mem_handle]]
+			if {![string_is_empty $no_prefix]} {
+				set addr [remove_prefix_from_addr $addr]
+			}
+			return $addr
 		}
 	}
         if { [string_is_empty $ip_mem_handle] } {
@@ -2441,10 +2480,25 @@ proc get_highaddr {slave_ip {no_prefix ""} {proc_handle ""}} {
                     return ""
              }
         } else {
-		set addr [string tolower [hsi get_property HIGH_VALUE $ip_mem_handle]]
+		set handle_count 0
+		# For versal PS IPs, check the Master Interface and use the mem_handles where
+		# master interface starts with any of the available processor IPs. Many a times,
+		# these IPs can have master interfaces as CPM_PCIE_NOC_0 or FPD_AXI_NOC_1 where
+		# the addresses may overflow as these are not part of processor views.
+		if {[string match -nocase [get_hw_family] "versal"] && [is_ps_ip $slave_ip]} {
+			for {} {$handle_count < [llength $ip_mem_handle]} {incr handle_count} {
+				set master_intf [hsi get_property MASTER_INTERFACE [lindex $ip_mem_handle $handle_count]]
+				set pattern [join [lmap prefix $processor_ip_list {string cat $prefix*}] "|"]
+				if {[regexp $pattern $master_intf] || [string_is_empty $master_intf]} {
+					break
+				}
+			}
+		}
+		set addr [string tolower [hsi get_property HIGH_VALUE [lindex $ip_mem_handle $handle_count]]]
 	}
+	dict set highaddr_dict $cur_hw_design $slave_ip $addr
 	if {![string_is_empty $no_prefix]} {
-		regsub -all {^0x} $addr {} addr
+		set addr [remove_prefix_from_addr $addr]
 	}
 	return $addr
 }
@@ -5373,9 +5427,16 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 		# node unless specified otherwise and having PL mapped address first leads to wrong base
 		# address for such IPs in the BSP which is targeted for PS processor.
 		set apu_proc [lindex [hsi get_cells -hier -filter IP_NAME==$apu_proc_ip] 0]
+		set pmc_proc [hsi get_cells -hier -filter IP_NAME=="psv_pmc"]
 		set ip_mem_handle_apu [lindex [hsi::get_mem_ranges -of_objects $apu_proc -filter INSTANCE==$drv_handle] 0]
 		if {![string_is_empty $ip_mem_handle_apu]} {
 			set ip_mem_handles [linsert $ip_mem_handles 0 "$ip_mem_handle_apu"]
+		} elseif {![string_is_empty $pmc_proc]} {
+			set pmc_proc_0 [lindex $pmc_proc 0]
+			set ip_mem_handle_pmc [lindex [hsi::get_mem_ranges -of_objects $pmc_proc -filter INSTANCE==$drv_handle] 0]
+			if {![string_is_empty $ip_mem_handle_pmc]} {
+				set ip_mem_handles [linsert $ip_mem_handles 0 "$ip_mem_handle_pmc"]
+			}
 		}
 	}
 	foreach mem_handle ${ip_mem_handles} {
