@@ -25,6 +25,7 @@ package require textutil::split
 
 namespace eval ::sdtgen {
     variable namespacelist [dict create]
+    variable loader_path [file normalize [info script]]
 }
 
 proc init_proclist {} {
@@ -292,12 +293,9 @@ proc print_usage args {
 
 proc set_sdt_default_repo {} {
 	global env
+	variable ::sdtgen::loader_path
 	if { ![info exists ::env(REPO)] } {
-		if { ![info exists ::env(XILINX_VITIS)] } {
-			error "Please set XILINX_VITIS path, couldn't locate default system-device-tree repo path"
-		} else {
-			set env(REPO) [file join $env(XILINX_VITIS) "data" "system-device-tree-xlnx"]
-		}
+		set env(REPO) [file dirname [file dirname [file dirname $::sdtgen::loader_path]]]
 	}
 	return $env(REPO)
 }
