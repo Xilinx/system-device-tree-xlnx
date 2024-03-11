@@ -1303,5 +1303,10 @@
 			status = "disabled";
 			reg = <0x0 0xf0800000 0x0 0x4000>;
 		};
+		pmc_trng: pmc_trng@f1230000 {
+			compatible = "xlnx,psx-pmc-trng-11.0";
+			status = "disabled";
+			reg = <0x0 0xf1230000 0x0 0x10000>;
+		};
 	};
 };

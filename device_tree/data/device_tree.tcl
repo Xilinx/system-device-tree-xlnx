@@ -261,6 +261,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "noc_mc_ddr5" "ddrpsv"
 	dict set ::sdtgen::namespacelist "psx_ocm_ram" "psu_ocm"
 	dict set ::sdtgen::namespacelist "psx_wwdt" "wdttb"
+	dict set ::sdtgen::namespacelist "psx_pmc_trng" "trngpsx"
 
 }
 

@@ -3206,6 +3206,7 @@ proc gen_ps_mapping {} {
 			dict set def_ps_mapping ea430000 label lpd_wwdt1
 			dict set def_ps_mapping f03f0000 label pmc_wwdt
 			dict set def_ps_mapping f0800000 label coresight
+			dict set def_ps_mapping f1230000 label pmc_trng
 		} else {
 			dict set def_ps_mapping f9000000 label "gic_a72: interrupt-controller"
 			dict set def_ps_mapping f9001000 label "gic_r5: interrupt-controller"
