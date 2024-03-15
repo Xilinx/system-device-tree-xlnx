@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2017-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -296,9 +296,7 @@ proc rfdc_add_param_hsi {drv_handle args} {
             if {[llength $value] == 0} {
                     set value 0
             }
-			puts $arg
             if { [string first "_Sampling_Rate" $arg] > -1 || [string first "_Refclk_Freq" $arg] > -1 || [string first "_Fabric_Freq" $arg] > -1 || [string first "_Fs_Max" $arg] > -1 || [string match "*_NCO_Freq*" $arg]} {
-			puts "here"
                     append data " " [rfdc_convert_double_to_le_byte_code_format $value]
             } elseif { [string first "C_BASEADDR" $arg] > -1 } {
                     set high_addr 0x00000000
@@ -310,7 +308,6 @@ proc rfdc_add_param_hsi {drv_handle args} {
                     append data " " [rfdc_convert_int_to_le_byte_code_format $low_addr]
                     append data " " [rfdc_convert_int_to_le_byte_code_format $high_addr]
             } else {
-			puts "there"
                     if {[string compare -nocase "false" $value] == 0} {
                             set value 0
                     } elseif {[string compare -nocase "true" $value] == 0} {
@@ -321,5 +318,5 @@ proc rfdc_add_param_hsi {drv_handle args} {
     }
     set node [get_node $drv_handle]
     set dts_file [set_drv_def_dts $drv_handle]
-    add_prop $node "param-list" $data bytesequence $dts_file
+    add_prop $node "param-list" $data hexbytesequence $dts_file
 }
