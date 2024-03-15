@@ -671,6 +671,8 @@ proc write_value {type value} {
                                 set val [append val "[format %02x $element] "]
                         }
                         set val [append val "\]"]
+                } elseif {$type == "hexbytesequence"} {
+                    set val "\[$value\]"
                 } elseif {$type == "labelref" || $type == "reference"} {
                         set val "<&$value>"
                 } elseif {$type == "referencelist"} {
