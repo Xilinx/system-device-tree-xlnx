@@ -73,36 +73,6 @@
                 if {$index == "-1"} {
                         continue
                         }
-                set have_ecc [hsi get_property CONFIG.C_ECC [hsi::get_cells -hier $drv_handle]]
-                set ctrl_base [hsi get_property CONFIG.C_S_AXI_CTRL_BASEADDR [hsi::get_cells -hier $drv_handle]]
-                if { $ctrl_base > 0 &&  $have_ecc == 1} {
-                         set high [hsi get_property CONFIG.C_S_AXI_CTRL_HIGHADDR [hsi::get_cells -hier $drv_handle]]
-                         set size [format 0x%x [expr {${high} - ${ctrl_base} + 1}]]
-                         if {[regexp -nocase {0x([0-9a-f]{9})} "$ctrl_base" match]} {
-                                set temp $ctrl_base
-                                set temp [string trimleft [string trimleft $temp 0] x]
-                                set len [string length $temp]
-                                set rem [expr {${len} - 8}]
-                                set high_base "0x[string range $temp $rem $len]"
-                                set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
-                                set low_base [format 0x%08x $low_base]
-                                if {[regexp -nocase {0x([0-9a-f]{9})} "$size" match]} {
-                                        set temp $size
-                                        set temp [string trimleft [string trimleft $temp 0] x]
-                                        set len [string length $temp]
-                                        set rem [expr {${len} - 8}]
-                                        set high_size "0x[string range $temp $rem $len]"
-                                        set low_size  "0x[string range $temp 0 [expr {${rem} - 1}]]"
-                                        set low_size [format 0x%08x $low_size]
-                                        set reg "$low_base $high_base $low_size $high_size"
-                                } else {
-                                        set reg "$low_base $high_base 0x0 $size"
-                                }
-                         } else {
-                                set reg "0x0 $ctrl_base 0x0 $size"
-                         }
-                         set_memmap "${drv_handle}" $procc $reg
-                }
 
                 # TODO Fix this whole part, this is there in all memory IP tcls
                 foreach bank ${ip_mem_handles} {
@@ -152,10 +122,12 @@
                         } else {
                                 set reg "$base $size"
                         }
+                        set proc_key $procc
                         if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_cortexr52"]} {
                                 set_memmap "${drv_handle}_memory" $procc $reg
                         }
                         if { $proc_ip_name == $apu_proc_ip} {
+                                set proc_key a53
                                 if { $proc_ip_name == "ps7_cortexa9" } {
                                         set_memmap "${drv_handle}_memory" a53 "0x0 $base 0x0 $size"
                                 } else {
@@ -164,12 +136,15 @@
                         }
                         if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_pmu"]} {
                                 set_memmap "${drv_handle}_memory" pmu $reg
+                                set proc_key pmu
                         }
                         if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_pmc"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_pmc"]} {
                                 set_memmap "${drv_handle}_memory" pmc $reg
+                                set proc_key pmc
                         }
                         if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_psm"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_psm"]} {
                                 set_memmap "${drv_handle}_memory" psm $reg
+                                set proc_key psm
                         }
                         if {[string match -nocase [hsi get_property IP_NAME $procc] "microblaze"] || [string match -nocase [hsi get_property IP_NAME $procc] "microblaze_riscv"]} {
                                 if {$64_bit} {
@@ -182,6 +157,38 @@
                 add_prop "${memory_node}" "reg" $reg hexlist "system-top.dts" 1
                 set dev_type memory
                 add_prop "${memory_node}" "device_type" $dev_type string "system-top.dts" 1
+                set have_ecc [hsi get_property CONFIG.C_ECC [hsi::get_cells -hier $drv_handle]]
+                set ctrl_base [hsi get_property CONFIG.C_S_AXI_CTRL_BASEADDR [hsi::get_cells -hier $drv_handle]]
+                if { $ctrl_base > 0 &&  $have_ecc == 1} {
+                         set high [hsi get_property CONFIG.C_S_AXI_CTRL_HIGHADDR [hsi::get_cells -hier $drv_handle]]
+                         set size [format 0x%x [expr {${high} - ${ctrl_base} + 1}]]
+                         if {[regexp -nocase {0x([0-9a-f]{9})} "$ctrl_base" match]} {
+                                set temp $ctrl_base
+                                set temp [string trimleft [string trimleft $temp 0] x]
+                                set len [string length $temp]
+                                set rem [expr {${len} - 8}]
+                                set high_base "0x[string range $temp $rem $len]"
+                                set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
+                                set low_base [format 0x%08x $low_base]
+                                if {[regexp -nocase {0x([0-9a-f]{9})} "$size" match]} {
+                                        set temp $size
+                                        set temp [string trimleft [string trimleft $temp 0] x]
+                                        set len [string length $temp]
+                                        set rem [expr {${len} - 8}]
+                                        set high_size "0x[string range $temp $rem $len]"
+                                        set low_size  "0x[string range $temp 0 [expr {${rem} - 1}]]"
+                                        set low_size [format 0x%08x $low_size]
+                                        set reg "$low_base $high_base $low_size $high_size"
+                                } else {
+                                        set reg "$low_base $high_base 0x0 $size"
+                                }
+                         } else {
+                                set reg "0x0 $ctrl_base 0x0 $size"
+                         }
+                         set_memmap "${drv_handle}" $proc_key $reg
+                } else {
+                         set_memmap "${drv_handle}" $proc_key $reg
+                }
         }
         if {0} {
         set ip_mem_handle [lindex [hsi::get_mem_ranges [hsi::get_cells -hier $slave]] 0]
