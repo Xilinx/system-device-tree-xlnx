@@ -23,5 +23,7 @@
            [llength $cpm_ip]} {
             set node [create_node -n "&gic_its" -d $dts_file -p root]
             add_prop $node "status" "okay" string $dts_file
+            set reg "0x0 0xf9020000 0x0 0x20000"
+            set_memmap "gic_its" a53 $reg
        }
     }
