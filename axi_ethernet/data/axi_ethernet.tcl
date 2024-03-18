@@ -317,8 +317,10 @@
             pldt append $node compatible "\ \, \"xlnx,ten-gig-eth-mac\""
         }
         if {$ip_name == "xxv_ethernet"} {
+            add_prop $node "managed" "in-band-status" string $dts_file
             set phytype [string tolower [hsi get_property CONFIG.BASE_R_KR $eth_ip]]
-            add_prop $node phy-mode "$phytype" string $dts_file
+            set linerate [hsi get_property CONFIG.LINE_RATE $eth_ip]
+            add_prop $node phy-mode "${linerate}g$phytype" string $dts_file
             if {$core == 0} {
                 pldt set $node compatible "\"xlnx,xxv-ethernet-1.0\""
             }
@@ -327,7 +329,8 @@
                     set compatible [string trimright $compatible "\""]
                     set compatible [string trimleft $compatible "\""]
                     add_prop $eth_node "compatible" $compatible string "pl.dtsi"
-                    add_prop $eth_node "phy-mode" $phytype string "pl.dtsi"
+                add_prop $eth_node "managed" "in-band-status" string $dts_file
+                add_prop $eth_node "phy-mode" "${linerate}g$phytype" string "pl.dtsi"
             }
         }
         if {$ip_name == "usxgmii"} {
