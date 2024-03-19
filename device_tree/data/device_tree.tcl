@@ -1688,12 +1688,16 @@ proc proc_mapping {} {
 			# is generated in Vitis classic via the cpu tcls using xdefine_addr_params_for_ext_intf
 			# proc.
 			if {[lsearch $overall_periph_list $periph] < 0} {
+				set base_addr [get_baseaddr $periph "no_prefix"]
+				if {[string_is_empty $base_addr]} {
+					continue
+				}
 				set exception_dts [set_drv_def_dts $periph]
 				set exception_bus "&amba"
 				if {[string match -nocase $exception_dts "pl.dtsi"]} {
 					set exception_bus "amba_pl: amba_pl"
 				}
-				set node [create_node -n ${periph} -l ${periph} -u [get_baseaddr $periph "no_prefix"] -d ${exception_dts} -p ${exception_bus}]
+				set node [create_node -n ${periph} -l ${periph} -u $base_addr -d ${exception_dts} -p ${exception_bus}]
 				gen_reg_property $periph "skip_ps_check"
 				add_prop $node "compatible" "${periph}" string ${exception_dts}
 				add_prop $node "xlnx,ip-name" "${periph}" string ${exception_dts}

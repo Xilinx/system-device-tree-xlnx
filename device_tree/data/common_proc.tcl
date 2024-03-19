@@ -2431,6 +2431,13 @@ proc get_baseaddr {slave_ip {no_prefix ""} {proc_handle ""}} {
 					}
 				}
 			}
+			# In one of the design, MAXIL, ps_pl_axil kind of IPs are coming in APU/RPU processor maps,
+			# but none of the memory instances has valid processor as its master interface. Add a check
+			# to return invalid baseaddress for such cases. Such IPs are not part of hsi get_cells -hier
+			# output but are appearing under get_mem_ranges outputs (similar to CCAT case).
+			if {$handle_count >= [llength $ip_mem_handle]} {
+				return ""
+			}
 			set addr [string tolower [hsi get_property BASE_VALUE [lindex $ip_mem_handle $handle_count]]]
 		}
 	}
