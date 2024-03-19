@@ -6590,7 +6590,7 @@ proc generate_mb_ccf_node {drv_handle} {
 	# - hardcoded reg number cpu clock node
 	# - assume clk_cpu for mb cpu
 	# - only applies to master mb cpu
-	gen_mb_ccf_subnode $drv_handle cpu $cpu_clk_freq [lsearch [hsi::get_cells -hier -filter {IP_NAME==microblaze}] $drv_handle]
+	gen_mb_ccf_subnode $drv_handle cpu $cpu_clk_freq [lsearch [hsi::get_cells -hier -filter {IP_NAME==microblaze || IP_NAME==microblaze_riscv}] $drv_handle]
 }
 
 proc gen_dev_ccf_binding args {
