@@ -187,6 +187,9 @@
                          }
                          set_memmap "${drv_handle}" $proc_key $reg
                 } else {
+                         if {[llength $reg] == 2} {
+                                set reg "0x0 [lindex $reg 0] 0x0 [lindex $reg 1]"
+                         }
                          set_memmap "${drv_handle}" $proc_key $reg
                 }
         }
