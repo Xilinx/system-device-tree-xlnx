@@ -23,6 +23,8 @@
                 return
         }
 
+	add_prop $node "gpio-controller" boolean "pl.dtsi"
+	add_prop $node "#gpio-cells" 2 int "pl.dtsi"
         pldt append $node compatible "\ \, \"xlnx,xps-gpio-1.00.a\""
         set intr_present [hsi get_property CONFIG.C_INTERRUPT_PRESENT [hsi::get_cells -hier $drv_handle]]
         if {[string match $intr_present "1"]} {

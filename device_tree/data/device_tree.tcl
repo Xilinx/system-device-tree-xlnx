@@ -65,6 +65,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "axi_traffic_gen" "axi_traffic_gen"
 	dict set ::sdtgen::namespacelist "axi_usb2_device" "axi_usb2_device"
 	dict set ::sdtgen::namespacelist "vcu" "axi_vcu"
+	dict set ::sdtgen::namespacelist "vdu" "axi_vdu"
 	dict set ::sdtgen::namespacelist "axi_vdma" "axi_vdma"
 	dict set ::sdtgen::namespacelist "xadc_wiz" "axi_xadc"
 	dict set ::sdtgen::namespacelist "system_management_wiz" "sysmon"
