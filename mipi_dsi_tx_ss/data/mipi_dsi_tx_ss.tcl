@@ -51,14 +51,13 @@ proc dsitx_add_hier_instances {drv_handle} {
 	hsi::current_hw_instance $drv_handle
 
 	#Example :
-	#hsi::get_cells -hier -filter {IP_NAME==mipi_csi2_rx_ctrl}
-	#csirx_0_rx
+	#hsi::get_cells -hier -filter {IP_NAME==mipi_dsi2_tx_ctrl}
+	#dsitx_0_tx
 	#
 
 	set ip_subcores [dict create]
 	dict set ip_subcores "mipi_dsi_tx_ctrl" "dsi-tx"
 	dict set ip_subcores "mipi_dphy" "dphy"
-#	dict set ip_subcores "hdcp22_rx" "hdcp22"
 
 	foreach ip [dict keys $ip_subcores] {
 		set ip_handle [hsi::get_cells -hier -filter "IP_NAME==$ip"]

@@ -64,6 +64,13 @@ proc mipi_csi2_rx_ss_generate {drv_handle} {
                 add_prop "${node}" "xlnx,dphy-mode" 0 int $dts_file 1
 	}
 
+	set cphymode [hsi get_property CONFIG.C_PHY_MODE [hsi::get_cells -hier $drv_handle]]
+        if  {[string match -nocase "dphy" $dphymode]} {
+                add_prop "${node}" "xlnx,mipi-rx-phy-mode" 1 int $dts_file 1
+        } else {
+                add_prop "${node}" "xlnx,mipi-rx-phy-mode" 0 int $dts_file 1
+	}
+
         if { [string match -nocase "true" $en_csi_v2_0] && [string match -nocase "true" $en_vcx] && [string match -nocase $cmn_vc "ALL"]} {
                 add_prop "${node}" "xlnx,cmn-vc" 16  int $dts_file 1
         } elseif {[string match -nocase "true" $en_csi_v2_0] && [string match -nocase "false" $en_vcx]  && [string match -nocase $cmn_vc "ALL"]} {
@@ -107,10 +114,10 @@ proc csirx2_add_hier_instances {drv_handle} {
 	set ip_subcores [dict create]
 	dict set ip_subcores "mipi_csi2_rx_ctrl" "csirx"
 	dict set ip_subcores "mipi_dphy" "dphy"
-#	dict set ip_subcores "hdcp22_rx" "hdcp22"
+	dict set ip_subcores "mipi_rx_phy" "rxphy"
 	foreach ip [dict keys $ip_subcores] {
 
-		if { $ip eq "mipi_dphy"} {
+		if { $ip eq "mipi_dphy" || $ip eq "mipi_rx_phy" } {
 			if {[string match -nocase "false" $dphy_en_reg_if]} {
 				continue
 			}
