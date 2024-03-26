@@ -3,7 +3,7 @@
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # Michal SIMEK <monstr@monstr.eu>
 #
@@ -48,4 +48,6 @@
         if {![string_is_empty $mem_compatible_string]} {
                 add_prop ${memory_node} "compatible" "${mem_compatible_string}-memory" string "system-top.dts"
         }
+        add_prop "${memory_node}" "xlnx,ip-name" [get_ip_property $drv_handle IP_NAME] string "system-top.dts"
+        add_prop "${memory_node}" "memory_type" "linear_flash" string "system-top.dts"
     }

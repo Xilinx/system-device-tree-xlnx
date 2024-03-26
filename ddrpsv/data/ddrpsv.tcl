@@ -203,6 +203,8 @@
                 set memory_node [create_node -n memory -l "${drv_handle}_memory" -u [regsub -all {^0x} ${global_node_base_addr} {}] -p root -d "system-top.dts"]
                 add_prop "${memory_node}" "compatible" $comp_prop string $dts_file
                 add_prop "${memory_node}" "device_type" "memory" string $dts_file
+                add_prop "${memory_node}" "xlnx,ip-name" [get_ip_property $drv_handle IP_NAME] string $dts_file
+                add_prop "${memory_node}" "memory_type" "memory" string $dts_file
                 add_prop "${memory_node}" "reg" [join $ov_update ">, <"] hexlist $dts_file
         }
 

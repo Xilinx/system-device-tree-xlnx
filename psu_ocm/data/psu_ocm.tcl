@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2021 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -131,6 +131,8 @@
                 add_prop "${memory_node}" "reg" $reg hexlist $dts_file 1
                 set dev_type memory
                 add_prop "${memory_node}" "device_type" $dev_type string $dts_file 1
+                add_prop "${memory_node}" "xlnx,ip-name" [get_ip_property $drv_handle IP_NAME] string $dts_file
+                add_prop "${memory_node}" "memory_type" "memory" string $dts_file
                 
         }
         set slave [hsi::get_cells -hier ${drv_handle}]

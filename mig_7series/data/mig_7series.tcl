@@ -108,6 +108,8 @@ proc mig_7series_generate {drv_handle} {
                 add_prop "${memory_node}" "reg" $reg hexlist "system-top.dts" 1
                 set dev_type memory
                 add_prop "${memory_node}" "device_type" $dev_type string "system-top.dts" 1
+                add_prop "${memory_node}" "xlnx,ip-name" [get_ip_property $drv_handle IP_NAME] string "system-top.dts"
+                add_prop "${memory_node}" "memory_type" "memory" string "system-top.dts"
 
         }
 

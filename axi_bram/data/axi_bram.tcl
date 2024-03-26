@@ -157,6 +157,8 @@
                 add_prop "${memory_node}" "reg" $reg hexlist "system-top.dts" 1
                 set dev_type memory
                 add_prop "${memory_node}" "device_type" $dev_type string "system-top.dts" 1
+                add_prop "${memory_node}" "xlnx,ip-name" [get_ip_property $drv_handle IP_NAME] string "system-top.dts"
+                add_prop "${memory_node}" "memory_type" "memory" string "system-top.dts"
                 set have_ecc [hsi get_property CONFIG.C_ECC [hsi::get_cells -hier $drv_handle]]
                 set ctrl_base [hsi get_property CONFIG.C_S_AXI_CTRL_BASEADDR [hsi::get_cells -hier $drv_handle]]
                 if { $ctrl_base > 0 &&  $have_ecc == 1} {

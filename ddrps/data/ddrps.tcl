@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -87,6 +87,8 @@
         add_prop $system_node reg $reg_prop hexlist $dts_file
         add_prop $system_node "device_type" "memory" string $dts_file
         add_prop $system_node "compatible" [gen_compatible_string $drv_handle] string $dts_file
+        add_prop $system_node "xlnx,ip-name" [get_ip_property $drv_handle IP_NAME] string $dts_file
+        add_prop $system_node "memory_type" "memory" string $dts_file
     }
 
     proc ddrps_get_reg_format {base high name 32_bit_format} {
