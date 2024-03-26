@@ -184,8 +184,10 @@
                             set is_sgmii [hsi get_property CONFIG.c_is_sgmii $sink_periph]
                             if {$phy_type == "1000BASEX"} {
                                  add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x5 int
+                                 add_prop $node "phy-mode" "1000base-x" string $dts_file 1
                             } elseif { $is_sgmii == "true"} {
                                  add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x4 int
+                                 add_prop $node "phy-mode" "sgmii" string $dts_file 1
                             } else {
                                  dtg_warning "unsupported phytype:$phy_type"
                             }
@@ -236,8 +238,10 @@
                               set is_sgmii [hsi get_property CONFIG.c_is_sgmii $connected_ip]
                               if {$phy_type == "1000BASEX"} {
                                       add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x5 int $dts_file
+                                      add_prop $node "phy-mode" "1000base-x" string $dts_file  1
                               } elseif { $is_sgmii == "true"} {
                                       add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x4 int $dts_file
+                                      add_prop $node "phy-mode" "sgmii" string $dts_file 1
                               } else {
                                       dtg_warning "unsupported phytype:$phy_type"
                               }
@@ -283,8 +287,10 @@
                                set is_sgmii [hsi get_property CONFIG.c_is_sgmii $connected_ip]
                                if {$phy_type == "1000BASEX"} {
                                        add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x5 int $dts_fil
+                                       add_prop $node "phy-mode" "1000base-x" string $dts_file 1
                                } elseif { $is_sgmii == "true"} {
                                        add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x4 int $dts_fil
+                                       add_prop $node "phy-mode" "sgmii" string $dts_file 1
                                } else {
                                        dtg_warning "unsupported phytype:$phy_type"
                                }
@@ -329,8 +335,10 @@
                                set is_sgmii [hsi get_property CONFIG.c_is_sgmii $connected_ip]
                                if {$phy_type == "1000BASEX"} {
                                        add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x5 int $dts_file
+                                       add_prop $node "phy-mode" "1000base-x" string $dts_file 1
                                } elseif { $is_sgmii == "true"} {
                                        add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x4 int $dts_file
+                                       add_prop $node "phy-mode" "sgmii" string $dts_file 1
                                } else {
                                        dtg_warning "unsupported phytype:$phy_type"
                                }
@@ -376,8 +384,10 @@
                                set is_sgmii [hsi get_property CONFIG.c_is_sgmii $connected_ip]
                                if {$phy_type == "1000BASEX"} {
                                        add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x5 int $dts_file
+                                       add_prop $node "phy-mode" "1000base-x" string $dts_file 1
                                } elseif { $is_sgmii == "true"} {
                                        add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x4 int $dts_file
+                                       add_prop $node "phy-mode" "sgmii" string $dts_file 1
                                 } else {
                                       dtg_warning "unsupported phytype:$phy_type"
                               }
