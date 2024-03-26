@@ -5335,7 +5335,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 	}
 }
 
-proc gen_reg_property {drv_handle {skip_ps_check ""}} {
+proc gen_reg_property {drv_handle {skip_ps_check ""} {set_node_prop 1}} {
 	global apu_proc_ip
 	proc_called_by
         set unit_addr [get_baseaddr ${drv_handle} no_prefix]
@@ -5343,7 +5343,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 		return 0
 	}
 	set ps_mapping [gen_ps_mapping]
-	if {[catch {set tmp [dict get $ps_mapping $unit_addr label]} msg] || [is_pl_ip $drv_handle]} {
+	if {[catch {set tmp [dict get $ps_mapping $unit_addr label]} msg] || [is_pl_ip $drv_handle] || ![string_is_empty $skip_ps_check]} {
 	} else {
 		return 0
 	}
@@ -5424,7 +5424,9 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 				set reg "$base $size"
 			}
 
-			set_drv_prop_if_empty $drv_handle reg $reg $node hexlist
+			if {$set_node_prop} {
+				set_drv_prop_if_empty $drv_handle reg $reg $node hexlist
+			}
 		}
 
 		return
@@ -5536,12 +5538,16 @@ proc gen_reg_property {drv_handle {skip_ps_check ""}} {
 				}
 			}
 	}
+	if {$set_node_prop} {
+		set_drv_prop_if_empty $drv_handle reg $reg $node hexlist
+	}
 	set_drv_prop_if_empty $drv_handle reg $reg $node hexlist
 	set ip_name [get_ip_property $drv_handle IP_NAME]
 	if {[string match -nocase $ip_name "psv_pciea_attrib"]} {
 		set ranges " 0x02000000 0x00000000 0xe0000000 0x0 0xe0000000 0x00000000 0x10000000>, \n\t\t\t      <0x43000000 0x00000080 0x00000000 0x00000080 0x00000000 0x00000000 0x80000000"
 		add_prop $node "ranges" $ranges hexlist "pcw.dtsi"
 	}
+	return $reg
 }
 
 proc check_64_base {reg base size} {

@@ -247,6 +247,9 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "ps7_xadc" "xadcps"
 	dict set ::sdtgen::namespacelist "qdma" "xdmapcie"
 
+	dict set ::sdtgen::namespacelist "psu_qspi_linear" "linear_spi"
+	dict set ::sdtgen::namespacelist "ps7_qspi_linear" "linear_spi"
+
 	dict set ::sdtgen::namespacelist "psx_apm" "apmps"
 	dict set ::sdtgen::namespacelist "psx_canfd" "canfdps"
 	dict set ::sdtgen::namespacelist "noc_mc_ddr5" "ddrpsv"
@@ -1295,6 +1298,9 @@ proc generate_sdt args {
 	global baseaddr_dict
 	global highaddr_dict
 	global processor_ip_list
+	global linear_spi_list
+
+	set linear_spi_list "psu_qspi_linear ps7_qspi_linear"
 
 	set is_rm_design 0
         if {[llength $args]!= 0} {
@@ -1389,7 +1395,7 @@ Generates system device tree based on args given in:
 		}
 	}
 
-	set non_val_list "versal_cips psx_wizard psxl ps_wizard dmac_slv axi_noc axi_noc2 noc_mc_ddr4 noc_mc_ddr5 ddr3 ddr4 mig_7series noc_nmu noc_nsu noc2_nmu noc2_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat xlconstant xlslice axis_tdest_editor util_reduced_logic noc_nsw noc2_nsw axis_ila pspmc psv_ocm_ram_0 psv_pmc_qspi_ospi psx_pmc_qspi_ospi add_keep_128 c_counter_binary dbg_monmux"
+	set non_val_list "versal_cips psx_wizard psxl ps_wizard dmac_slv axi_noc axi_noc2 noc_mc_ddr4 noc_mc_ddr5 ddr3 ddr4 mig_7series noc_nmu noc_nsu noc2_nmu noc2_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat xlconstant xlslice axis_tdest_editor util_reduced_logic noc_nsw noc2_nsw axis_ila pspmc psv_ocm_ram_0 psv_pmc_qspi_ospi psx_pmc_qspi_ospi add_keep_128 c_counter_binary dbg_monmux ${linear_spi_list}"
 	set non_val_ip_types "MONITOR BUS PROCESSOR"
 	set non_val_list1 "psv_cortexa72 psu_cortexa53 ps7_cortexa9 versal_cips psx_wizard ps_wizard noc_nmu noc_nsu ila psu_iou_s noc_nsw pspmc"
 	set non_val_ip_types1 "MONITOR BUS"
@@ -1657,6 +1663,7 @@ proc gen_r5_trustzone_config {} {
 
 proc proc_mapping {} {
 	global is_versal_net_platform
+	global linear_spi_list
 	set proctype [get_hw_family]
 	set default_dts "system-top.dts"
 	set overall_periph_list [hsi::get_cells -hier]
@@ -1711,7 +1718,7 @@ proc proc_mapping {} {
 			}
 			set ipname [get_ip_property [hsi::get_cells -hier $periph] IP_NAME]
 			if {[lsearch $periphs_list $periph] >= 0} {
-				set valid_periph "psu_qspi_linear psv_pmc_qspi axi_emc ps7_qspi_linear axi_quad_spi axi_spi psx_pmc_qspi"
+				set valid_periph "psv_pmc_qspi axi_quad_spi psx_pmc_qspi axi_emc ${linear_spi_list}"
                               	if {[lsearch $valid_periph $ipname] >= 0} {
                               	} else {
                                 	continue
@@ -1838,8 +1845,18 @@ proc proc_mapping {} {
 				} else {
 					set_memmap [dict get $dup_periph_handle $periph] $mem_map_key $regprop
 				}
-			} else {
+			} elseif {[lsearch $linear_spi_list $ipname] < 0} {
 				set_memmap $temp $mem_map_key $regprop
+			}
+
+			if {[lsearch $linear_spi_list $ipname] >= 0 || $ipname in {"axi_emc"}} {
+				set temp [get_node "${periph}_memory"]
+				if {[llength $temp] > 1} {
+					set temp [lindex [split $temp ":"] 0]
+				}
+				if {![string_is_empty $temp]} {
+					set_memmap $temp $mem_map_key $regprop
+				}
 			}
 		}
 	    #}]"
