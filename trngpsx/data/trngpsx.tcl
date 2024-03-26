@@ -22,7 +22,7 @@ proc trngpsx_generate {drv_handle} {
 		return
 	}
 	for {set instance 0} {$instance < $pki_num_insts} {incr instance} {
-		set instance_base_addr [format %x [expr $pki_trng_baseaddress + [expr {$instance * $pki_trng_offset}]]]
+		set instance_base_addr [format %lx [expr $pki_trng_baseaddress + [expr {$instance * $pki_trng_offset}]]]
 		set instance_node_label "psx_pki_trng${instance}"
 		set trng_node [create_node -l $instance_node_label -n "psx_pki_trng" -u $instance_base_addr -d "pcw.dtsi" -p "&amba"]
 		add_prop $trng_node "compatible" "xlnx,psx-pmc-trng-11.0" string "pcw.dtsi"
