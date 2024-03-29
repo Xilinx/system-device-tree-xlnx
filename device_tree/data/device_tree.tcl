@@ -649,6 +649,24 @@ proc gen_afi_node {} {
 			set hw_name [::hsi::get_hw_files -filter "TYPE == bit"]
 			add_prop $amba_pl_node "firmware-name" "$hw_name.bin" string $dts 1
 
+			set zynq_periph [hsi::get_cells -hier -filter {IP_NAME == zynq_ultra_ps_e}]
+			set pl_clk_buf_props "CONFIG.C_PL_CLK0_BUF CONFIG.C_PL_CLK1_BUF CONFIG.C_PL_CLK2_BUF CONFIG.C_PL_CLK3_BUF"
+			foreach prop ${pl_clk_buf_props} {
+				set val [hsi get_property $prop $zynq_periph]
+				if {[string match -nocase $val "true"]} {
+					set index [lsearch $pl_clk_buf_props $prop]
+					set clk_num [expr {71 + $index}]
+					set clocking_node [create_node -n "clocking${index}" -l "clocking${index}" -p $amba_pl_node -d $dts]
+					add_prop "${clocking_node}" "compatible" "xlnx,fclk" string $dts 1
+					add_prop "${clocking_node}" "clocks" "zynqmp_clk $clk_num" reference $dts 1
+					add_prop "${clocking_node}" "clock-output-names" "fabric_clk" string $dts 1
+					add_prop "${clocking_node}" "#clock-cells" 0 int $dts 1
+					add_prop "${clocking_node}" "assigned-clocks" "zynqmp_clk $clk_num" reference $dts 1
+					set freq [hsi get_property CONFIG.PSU__CRL_APB__PL${index}_REF_CTRL__ACT_FREQMHZ $zynq_periph]
+					add_prop "${clocking_node}" "assigned-clock-rates" [scan [expr $freq * 1000000] "%d"] int $dts 1
+				}
+			}
+
 			set afi_ip [hsi::get_cells -hier -filter {IP_NAME==psu_afi}]
 			if {[llength $afi_ip] > 0} {
 				set node [create_node -l "afi0" -n "afi0" -p $amba_pl_node -d "pl.dtsi"]
@@ -656,7 +674,6 @@ proc gen_afi_node {} {
 				add_prop $node "status" "okay" string $dts 1
 				set config_afi ""
 				set prefix ""
-				set zynq_periph [hsi::get_cells -hier -filter {IP_NAME == zynq_ultra_ps_e}]
 
 				set total_saxigp_data_width_num 7
 				for {set data_width_num 0} {$data_width_num < $total_saxigp_data_width_num} {incr data_width_num} {
@@ -689,23 +706,8 @@ proc gen_afi_node {} {
 				}
 
 				add_prop "${node}" "config-afi" "$config_afi" special $dts
-
-				set pl_clk_buf_props "CONFIG.C_PL_CLK0_BUF CONFIG.C_PL_CLK1_BUF CONFIG.C_PL_CLK2_BUF CONFIG.C_PL_CLK3_BUF"
-				foreach prop ${pl_clk_buf_props} {
-					set val [hsi get_property $prop $zynq_periph]
-					if {[string match -nocase $val "true"]} {
-						set index [lsearch $pl_clk_buf_props $prop]
-						set clk_num [expr {71 + $index}]
-						set clocking_node [create_node -n "clocking${index}" -l "clocking${index}" -p $amba_pl_node -d $dts]
-						add_prop "${clocking_node}" "compatible" "xlnx,fclk" string $dts 1
-						add_prop "${clocking_node}" "clocks" "zynqmp_clk $clk_num" reference $dts 1
-						add_prop "${clocking_node}" "clock-output-names" "fabric_clk" string $dts 1
-						add_prop "${clocking_node}" "#clock-cells" 0 int $dts 1
-						add_prop "${clocking_node}" "assigned-clocks" "zynqmp_clk $clk_num" reference $dts 1
-						set freq [hsi get_property CONFIG.PSU__CRL_APB__PL${index}_REF_CTRL__ACT_FREQMHZ $zynq_periph]
-						add_prop "${clocking_node}" "assigned-clock-rates" [scan [expr $freq * 1000000] "%d"] int $dts 1
-					}
-				}
+				set resets "zynqmp_reset 116>, <&zynqmp_reset 117>, <&zynqmp_reset 118>, <&zynqmp_reset 119"
+				add_prop "${node}" "resets" "$resets" reference $dts
 			}
 		} 
 		if {[string match -nocase $family "versal"]} {
