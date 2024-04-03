@@ -766,6 +766,7 @@ proc create_node args {
 	set node_name ""
 	set node_unit_addr ""
 	set node_label ""
+	set drv_handle ""
 	while {[string match -* [lindex $args 0]]} {
 		switch -glob -- [lindex $args 0] {
 			-force {set force_create 1}
@@ -778,6 +779,7 @@ proc create_node args {
 			-p* {set parent_obj [Pop args 1]
 				}
 			-d* {set dts_file [Pop args 1]}
+			-h* {set drv_handle [Pop args 1]}
 			--  {Pop args ; break}
 			default {
 				error "add_or_get_dt_node bad option - [lindex $args 0]"
@@ -979,7 +981,12 @@ proc create_node args {
 	set drvnode [string trimleft $drvnode "\{"]
 	set drvnode [string trimright $drvnode "\}"]
 
-	dict set node_dict $cur_hw_design $node_label $drvnode
+	if {![string_is_empty $node_label]} {
+		dict set node_dict $cur_hw_design $node_label $drvnode
+	} elseif {![string_is_empty $drv_handle]} {
+		dict set node_dict $cur_hw_design $drv_handle $drvnode
+	}
+
         return $drvnode
 }
 
