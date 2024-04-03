@@ -1,5 +1,5 @@
 #
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -21,7 +21,7 @@ proc cpu_cortexa78_generate {drv_handle} {
 	set bus_name "amba"
 	set fields [split [get_ip_property $drv_handle NAME] "_"]
         set cpu_nr [lindex $fields end]
-        set cpu_node [pcwdt insert root end "&psx_cortexa78_${cpu_nr}"]
+        set cpu_node [create_node -n "&psx_cortexa78_${cpu_nr}" -d "pcw.dtsi" -p root -h $drv_handle]
         set ip_name [get_ip_property $drv_handle IP_NAME]
         add_prop $cpu_node "xlnx,ip-name" $ip_name string "pcw.dtsi"
         add_prop $cpu_node "bus-handle" $bus_name reference "pcw.dtsi"

@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -18,10 +18,10 @@
         set dtsi_fname "zynq/zynq-7000.dtsi"
         update_system_dts_include [file tail ${dtsi_fname}]
         set bus_name "amba"
-        # TODO: Figure out a way to get the current number of processor
-        set cpu_nr [string index [get_ip_property $drv_handle NAME] end]
+        set fields [split [get_ip_property $drv_handle NAME] "_"]
+        set cpu_nr [lindex $fields end]
         set ip_name [get_ip_property $drv_handle IP_NAME]
-        set cpu_node [pcwdt insert root end "&ps7_cortexa9_${cpu_nr}"]
+        set cpu_node [create_node -n "&ps7_cortexa9_${cpu_nr}" -d "pcw.dtsi" -p root -h $drv_handle]
         add_prop $cpu_node "xlnx,ip-name" $ip_name string "pcw.dtsi"
         add_prop $cpu_node "bus-handle" $bus_name reference "pcw.dtsi"
         gen_drv_prop_from_ip $drv_handle

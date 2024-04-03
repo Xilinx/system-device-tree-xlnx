@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -16,21 +16,22 @@
     proc pmups_generate {drv_handle} {
         set ip_name [get_ip_property $drv_handle IP_NAME]
         if {[string match -nocase $ip_name "psu_pmu"]} {
-                set node [pcwdt insert root end "&psu_pmu_0"]
+                set node [create_node -n "&psu_pmu_0" -d "pcw.dtsi" -p root -h $drv_handle]
                 add_prop $node "clock-frequency" [hsi get_property CONFIG.C_FREQ $drv_handle] hexint "pcw.dtsi"
                 add_prop $node "microblaze_ddr_reserve_ea" [hsi get_property CONFIG.C_DDR_RESERVE_EA $drv_handle] int "pcw.dtsi"
                 add_prop $node "microblaze_ddr_reserve_sa" [hsi get_property CONFIG.C_DDR_RESERVE_SA $drv_handle] int "pcw.dtsi"
                 gen_pss_ref_clk_freq $drv_handle $node $ip_name
         } elseif {[string match -nocase $ip_name "psv_pmc"]} {
-                set node [pcwdt insert root end "&psv_pmc_0"]
+                set node [create_node -n "&psv_pmc_0" -d "pcw.dtsi" -p root -h $drv_handle]
                 gen_pss_ref_clk_freq $drv_handle $node $ip_name
         } elseif {[string match -nocase $ip_name "psv_psm"]} {
-                set node [pcwdt insert root end "&psv_psm_0"]
+                set node [create_node -n "&psv_psm_0" -d "pcw.dtsi" -p root -h $drv_handle]
         } elseif {[string match -nocase $ip_name "psx_pmc"]} {
-                set node [pcwdt insert root end "&psx_pmc_0"]
+                set node [create_node -n "&psx_pmc_0" -d "pcw.dtsi" -p root -h $drv_handle]
                 gen_pss_ref_clk_freq $drv_handle $node $ip_name
         } elseif {[string match -nocase $ip_name "psx_psm"]} {
-                set node [pcwdt insert root end "&psx_psm_0"]
+                set node [create_node -n "&psx_psm_0" -d "pcw.dtsi" -p root -h $drv_handle]
+
         } else {
                 error "Driver pmups is not valid for given handle $drv_handle"
         }

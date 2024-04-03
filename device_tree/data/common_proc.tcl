@@ -2040,45 +2040,7 @@ proc add_cross_property args {
 				} elseif {[string match -nocase $ipname "psx_rcpu_gic"]} {
 					set node [create_node -n "&gic_r52" -d "pcw.dtsi" -p root]
 				} elseif {[lsearch $valid_proclist $ipname] >= 0} {
-					switch $ipname {
-						"psv_cortexa72" {
-							set index [string index $src_handle end]
-							set node [create_node -n "&psv_cortexa72_${index}" -d "pcw.dtsi" -p root]
-						} "psv_cortexr5" {
-							set index [string index $src_handle end]
-							set node [create_node -n "&psv_cortexr5_${index}" -d "pcw.dtsi" -p root]
-						} "psv_pmc" {
-							set node [create_node -n "&psv_pmc_0" -d "pcw.dtsi" -p root]
-						} "psv_psm" {
-							set node [create_node -n "&psv_psm_0" -d "pcw.dtsi" -p root]
-						} "psx_pmc" {
-							set node [create_node -n "&psx_pmc_0" -d "pcw.dtsi" -p root]
-						} "psx_psm" {
-							set node [create_node -n "&psx_psm_0" -d "pcw.dtsi" -p root]
-						} "psu_cortexa53" {
-							set index [string index $src_handle end]
-							set node [create_node -n "&psu_cortexa53_${index}" -d "pcw.dtsi" -p root]
-						} "psu_cortexr5" {
-							set index [string index $src_handle end]
-							set node [create_node -n "&psu_cortexr5_${index}" -d "pcw.dtsi" -p root]
-						} "psu_pmu" {
-							set node [create_node -n "&psu_pmu_0" -d "pcw.dtsi" -p root]
-						} "microblaze" - "microblaze_riscv" {
-							set count [get_microblaze_nr $src_handle]
-							set bus_name [detect_bus_name $src_handle]
-							set rt_node [create_node -n "cpus_${ipname}" -l "cpus_${ipname}_${count}" -u $count -d "pl.dtsi" -p $bus_name]
-							set node [create_node -n "cpu" -l "$src_handle" -u $count -d "pl.dtsi" -p $rt_node]
-                                                } "ps7_cortexa9" {
-							set index [string index $src_handle end]
-							set node [create_node -n "&ps7_cortexa9_${index}" -d "pcw.dtsi" -p root]
-						} "psx_cortexa78" {
-							set index [string index $src_handle end]
-							set node [create_node -n "&psx_cortexa78_${index}" -d "pcw.dtsi" -p root]
-						} "psx_cortexr52" {
-							set index [string index $src_handle end]
-							set node [create_node -n "&psx_cortexr52_${index}" -d "pcw.dtsi" -p root]
-						}
-					}
+					set node [get_node $src_handle]
 				} else {
 					set node [get_node $dest_handle]
 				}
@@ -6286,56 +6248,15 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 		if {[string match -nocase $ip_type "tsn_endpoint_ethernet_mac"]} {
 			set rt_node [create_node -n tsn_endpoint_ip_0 -l tsn_endpoint_ip_0 -d $default_dts -p $bus_node] 
 		} else {
-			set valid_proclist "psv_cortexa72 psv_cortexr5 psu_cortexa53 psu_cortexr5 psu_pmu psv_pmc psv_psm ps7_cortexa9 psx_cortexa78 psx_cortexr52 psx_pmc psx_psm"
+			set valid_proclist "psv_cortexa72 psv_cortexr5 psu_cortexa53 psu_cortexr5 psu_pmu psv_pmc psv_psm ps7_cortexa9 psx_cortexa78 psx_cortexr52 psx_pmc psx_psm microblaze microblaze_riscv"
 			if {[lsearch $valid_proclist $ip_type] >= 0} {
-				switch $ip_type {
-					"psv_cortexa72" {
-						set index [string index $drv_handle end]
-						set rt_node [create_node -n "&psv_cortexa72_${index}" -d ${default_dts} -p root]
-					} "psv_cortexr5" {
-						set index [string index $drv_handle end]
-						set rt_node [create_node -n "&psv_cortexr5_${index}" -d ${default_dts} -p root]
-					} "psv_pmc" {
-						set rt_node [create_node -n "&psv_pmc_0" -d ${default_dts} -p root]
-					} "psv_psm" {
-						set rt_node [create_node -n "&psv_psm_0" -d "pcw.dtsi" -p root]
-					} "psu_cortexa53" {
-						set index [string index $src_handle end]
-						set node [create_node -n "&psu_cortexa53_${index}" -d "pcw.dtsi" -p root]
-					} "psu_cortexr5" {
-						set index [string index $src_handle end]
-						set node [create_node -n "&psu_cortexr5_${index}" -d "pcw.dtsi" -p root]
-					} "psu_pmu" {
-						set node [create_node -n "&psu_pmu_0" -d "pcw.dtsi" -p root]
-					} "ps7_cortexa9" {
-						set index [string index $drv_handle end]
-						set node [create_node -n "&ps7_cortexa9_${index}" -d "pcw.dtsi" -p root]
-					} "psx_cortexa78" {
-						set index [string index $drv_handle end]
-						set rt_node [create_node -n "&psx_cortexa78_${index}" -d ${default_dts} -p root]
-					} "psx_cortexr52" {
-						set index [string index $drv_handle end]
-						set rt_node [create_node -n "&psx_cortexr52_${index}" -d ${default_dts} -p root]
-					} "psx_psm" {
-						set rt_node [create_node -n "&psx_psm_0" -d ${default_dts} -p root]
-					} "psx_pmc" {
-						set rt_node [create_node -n "&psx_pmc_0" -d ${default_dts} -p root]
-					} 
-				}
+				set rt_node [get_node $drv_handle]
 			} else {
-				if {[string match -nocase $ip_type "microblaze"] || [string match -nocase $ip_type "microblaze_riscv"]} {
-					set proctype [get_hw_family]
-					set bus_name [detect_bus_name $drv_handle]
-					set count [get_microblaze_nr $drv_handle]
-					set rt_node [create_node -n "cpus_${ip_type}" -l "cpus_${ip_type}_${count}" -u $count -d ${default_dts} -p $bus_name]
-					set rt_node [create_node -n "cpu" -l "$drv_handle" -u $count -d "pl.dtsi" -p $rt_node]
-				} else {
-					if {[string match -nocase $dev_type "psv_fpd_smmutcu"]} {
-							set dev_type "psv_fpd_maincci"
-					}
-					set t [get_ip_property $drv_handle IP_NAME]
-					set rt_node [create_node -n ${dev_type} -l ${label} -u ${unit_addr} -d ${default_dts} -p $bus_node]
+				if {[string match -nocase $dev_type "psv_fpd_smmutcu"]} {
+						set dev_type "psv_fpd_maincci"
 				}
+				set t [get_ip_property $drv_handle IP_NAME]
+				set rt_node [create_node -n ${dev_type} -l ${label} -u ${unit_addr} -d ${default_dts} -p $bus_node]
 			}
 		}
 

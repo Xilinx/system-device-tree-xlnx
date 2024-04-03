@@ -20,7 +20,7 @@
         update_system_dts_include "versal-clk.dtsi"
         set bus_name "amba"
         set cpu_nr [string index [get_ip_property $drv_handle NAME] end]
-        set cpu_node [pcwdt insert root end "&psv_cortexa72_${cpu_nr}"]
+        set cpu_node [create_node -n "&psv_cortexa72_${cpu_nr}" -d "pcw.dtsi" -p root -h $drv_handle]
         set ip_name [get_ip_property $drv_handle IP_NAME]
         add_prop $cpu_node "xlnx,ip-name" $ip_name string "pcw.dtsi"
         add_prop $cpu_node "bus-handle" $bus_name reference "pcw.dtsi"

@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2021 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -15,13 +15,14 @@
 
     proc cpu_cortexr5_generate {drv_handle} {
         set ip_name [get_ip_property $drv_handle IP_NAME]
-        set cpu_nr [string index [get_ip_property $drv_handle NAME] end]
+        set fields [split [get_ip_property $drv_handle NAME] "_"]
+        set cpu_nr [lindex $fields end]
         if {[string match -nocase $ip_name "psu_cortexr5"]} {
-                set node [pcwdt insert root end "&psu_cortexr5_${cpu_nr}"]
+                set node [create_node -n "&psu_cortexr5_${cpu_nr}" -d "pcw.dtsi" -p root -h $drv_handle]
         } elseif {[string match -nocase $ip_name "psv_cortexr5"]} {
-                set node [pcwdt insert root end "&psv_cortexr5_${cpu_nr}"]
+                set node [create_node -n "&psv_cortexr5_${cpu_nr}" -d "pcw.dtsi" -p root -h $drv_handle]
         } elseif {[string match -nocase $ip_name "psx_cortexr52"]} {
-                set node [pcwdt insert root end "&psx_cortexr52_${cpu_nr}"]
+                set node [create_node -n "&psx_cortexr52_${cpu_nr}" -d "pcw.dtsi" -p root -h $drv_handle]
         } else {
                 error "Driver cpu_cortexr5 is not valid for given handle $drv_handle"
         }
