@@ -77,8 +77,8 @@
         add_prop "${node}" "xlnx,core-rows" $corerows noformating "pl.dtsi"
         append memrows "/bits/ 8 <$mem_rows_start $mem_rows_num>"
         add_prop "${node}" "xlnx,mem-rows" $memrows noformating "pl.dtsi"
-        set power_domain "&versal_firmware 0x18224072"
-        add_prop "${node}" "power-domains" $power_domain string "pl.dtsi"
+        set power_domain "versal_firmware 0x18224072"
+        add_prop "${node}" "power-domains" $power_domain reference "pl.dtsi"
         add_prop "${node}" "#address-cells" 2 hexlist "pl.dtsi"
         add_prop "${node}" "#size-cells" 2 hexlist "pl.dtsi"
         add_prop "${node}" "ranges" 0 boolean "pl.dtsi"
@@ -133,17 +133,17 @@
 
         if {$part_num == "xcvp2502"} {
                 #s100
-                set power_domain "&versal_firmware 0x18225072"
+                set power_domain "versal_firmware 0x18225072"
                 add_prop "${aperture_node}" "xlnx,device-name" "100" int "pl.dtsi"
                 set aperture_nodeid 0x18801000
         } elseif {$part_num == "xcvp2802"} {
                 #s200
-                set power_domain "&versal_firmware 0x18227072"
+                set power_domain "versal_firmware 0x18227072"
                 add_prop "${aperture_node}" "xlnx,device-name" "200" int "pl.dtsi"
                 set aperture_nodeid 0x18803000
         } elseif {$part_num_v70 == "xcv70"} {
                 #v70
-                set power_domain "&versal_firmware 0x18224072"
+                set power_domain "versal_firmware 0x18224072"
                 add_prop "${aperture_node}" "xlnx,device-name" "0" int "pl.dtsi"
                 set aperture_nodeid 0x18800000
         } else {
@@ -152,7 +152,7 @@
                 lappend intr_names "interrupt2"
                 lappend intr_names "interrupt3"
                 set intr_num "0x0 0x94 0x4>, <0x0 0x95 0x4>, <0x0 0x96 0x4"
-                set power_domain "&versal_firmware 0x18224072"
+                set power_domain "versal_firmware 0x18224072"
                 add_prop "${aperture_node}" "interrupt-names" $intr_names stringlist "pl.dtsi"
                 add_prop "${aperture_node}" "interrupts" $intr_num hexlist "pl.dtsi"
                 add_prop "${aperture_node}" "interrupt-parent" imux reference "pl.dtsi"
@@ -160,7 +160,7 @@
                 set aperture_nodeid 0x18800000
         }
 
-        add_prop "${aperture_node}" "power-domains" $power_domain string "pl.dtsi"
+        add_prop "${aperture_node}" "power-domains" $power_domain reference "pl.dtsi"
         add_prop "${aperture_node}" "#address-cells" "2" hexlist "pl.dtsi"
         add_prop "${aperture_node}" "#size-cells" "2" hexlist "pl.dtsi"
 
