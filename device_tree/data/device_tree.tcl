@@ -775,7 +775,9 @@ proc get_sem_property { prop } {
 		set pspmcCell [hsi::get_cells -hier -filter "IP_NAME==ps11"]
 	}
 	if {$pspmcCell ne ""} {
-		return [common::get_property $prop $pspmcCell]
+		set readconfig [common::get_property $prop $pspmcCell]
+		set readconfig [lindex $readconfig 0]
+		return $readconfig
 	} else {
 		set cipsCell [hsi::get_cells -hier -filter "IP_NAME==versal_cips"]
 		if {$cipsCell ne ""} {
