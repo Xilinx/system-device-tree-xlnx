@@ -5420,6 +5420,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""} {set_node_prop 1}} {
 			}
 		}
 	}
+	set mem_handle_base_high_list {}
 	foreach mem_handle ${ip_mem_handles} {
 		set proctype [get_hw_family]
 
@@ -5433,78 +5434,46 @@ proc gen_reg_property {drv_handle {skip_ps_check ""} {set_node_prop 1}} {
 			set high [string tolower [hsi get_property HIGH_VALUE $mem_handle]]
 			set size [format 0x%x [expr {${high} - ${base} + 1}]]
 
-			if {[string_is_empty $reg]} {
-				if {[string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype] || [string length [string trimleft $base "0x"]] > 8} {
-					# check if base address is 64bit and split it as MSB and LSB
-					if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
-						set temp $base
+
+			if {"$base $high" in $mem_handle_base_high_list} {
+				continue
+			} else {
+				lappend mem_handle_base_high_list "$base $high"
+			}
+
+			set new_reg ""
+			if {[string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype] || [string length [string trimleft $base "0x"]] > 8} {
+				# check if base address is 64bit and split it as MSB and LSB
+				if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
+					set temp $base
+					set temp [string trimleft [string trimleft $temp 0] x]
+					set len [string length $temp]
+					set rem [expr {${len} - 8}]
+					set high_base "0x[string range $temp $rem $len]"
+					set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
+					set low_base [format 0x%08x $low_base]
+					if {[regexp -nocase {0x([0-9a-f]{9})} "$size" match]} {
+						set temp $size
 						set temp [string trimleft [string trimleft $temp 0] x]
 						set len [string length $temp]
 						set rem [expr {${len} - 8}]
-						set high_base "0x[string range $temp $rem $len]"
-						set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
-						set low_base [format 0x%08x $low_base]
-						if {[regexp -nocase {0x([0-9a-f]{9})} "$size" match]} {
-							set temp $size
-							set temp [string trimleft [string trimleft $temp 0] x]
-							set len [string length $temp]
-							set rem [expr {${len} - 8}]
-							set high_size "0x[string range $temp $rem $len]"
-							set low_size  "0x[string range $temp 0 [expr {${rem} - 1}]]"
-							set low_size [format 0x%08x $low_size]
-							set reg "$low_base $high_base $low_size $high_size"
-						} else {
-							set reg "$low_base $high_base 0x0 $size"
-						}
+						set high_size "0x[string range $temp $rem $len]"
+						set low_size  "0x[string range $temp 0 [expr {${rem} - 1}]]"
+						set low_size [format 0x%08x $low_size]
+						set new_reg "$low_base $high_base $low_size $high_size"
 					} else {
-						set reg "0x0 $base 0x0 $size"
+						set new_reg "$low_base $high_base 0x0 $size"
 					}
 				} else {
-					set reg "$base $size"
+					set new_reg "0x0 $base 0x0 $size"
 				}
 			} else {
-				if {[string match -nocase $proctype "zynq"] || [regexp "microblaze" $proctype match]} {
-					set index [check_base $reg $base $size]
-					if {$index == "true" && $ip_name != "axi_fifo_mm_s"} {
-						continue
-					}
-				}
-				if {[string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype]} {
-					set index [check_64_base $reg $base $size]
-					if {$index == "true" && $ip_name != "axi_fifo_mm_s"} {
-						continue
-					}
-				}
-				# ensure no duplication
-				if {![regexp ".*${reg}.*" "$base $size" matched]} {
-					if {[string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype]} {
-						set base1 "0x0 $base"
-						set size1 "0x0 $size"
-						if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
-					                set temp $base
-					                set temp [string trimleft [string trimleft $temp 0] x]
-					                set len [string length $temp]
-					                set rem [expr {${len} - 8}]
-					                set high_base "0x[string range $temp $rem $len]"
-					                set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
-					                set low_base [format 0x%08x $low_base]
-							set base1 "$low_base $high_base"
-						}
-						if {[regexp -nocase {0x([0-9a-f]{9})} "$size" match]} {
-							set temp $size
-							set temp [string trimleft [string trimleft $temp 0] x]
-							set len [string length $temp]
-							set rem [expr {${len} - 8}]
-							set high_size "0x[string range $temp $rem $len]"
-							set low_size  "0x[string range $temp 0 [expr {${rem} - 1}]]"
-							set low_size [format 0x%08x $low_size]
-							set size1 "$low_size $high_size"
-						}
-						set reg "$reg $base1 $size1"
-					} else {
-						set reg "$reg $base $size"
-					}
-				}
+				set new_reg "$base $size"
+			}
+			if {[string_is_empty $reg]} {
+				set reg $new_reg
+			} else {
+				set reg "$reg $new_reg"
 			}
 	}
 	if {$set_node_prop} {
