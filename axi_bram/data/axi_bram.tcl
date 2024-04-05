@@ -21,6 +21,7 @@
         set dup_ilmb_dlmb_node 0
         set 64_bit 0
         global apu_proc_ip
+        global is_64_bit_mb
 
         # HSI reports ilmb_ram and dlmb_ram as two different IPs even though it points to the same BRAM_CNTRL. The
         # linker needs just one entry among these two and other is just a redundant data for us.
@@ -94,7 +95,8 @@
                         set size [format 0x%x [expr {${high} - ${base} + 1}]]
                         set proctype [get_hw_family]
                         if {[is_zynqmp_platform $proctype] || \
-                                [string match -nocase $proctype "versal"] || [string length [string trimleft $base "0x"]] > 8} {
+                                [string match -nocase $proctype "versal"] || [string length [string trimleft $base "0x"]] > 8 \
+                                || $is_64_bit_mb} {
                                 set 64_bit 1
                                 if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
                                         set temp $base

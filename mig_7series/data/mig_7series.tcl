@@ -15,6 +15,7 @@
 
 proc mig_7series_generate {drv_handle} {
         global apu_proc_ip
+        global is_64_bit_mb
         set apu_proc_found 0
         set 64_bit 0
         set baseaddr [get_baseaddr $drv_handle no_prefix]
@@ -54,7 +55,7 @@ proc mig_7series_generate {drv_handle} {
                                 set size [format 0x%x [expr {${high} - ${base}}]]
                         }
 
-                        if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"]  || [string length [string trimleft $base "0x"]] > 8} {
+                        if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"]  || [string length [string trimleft $base "0x"]] > 8 || $is_64_bit_mb} {
                                 set 64_bit 1
                                 if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
                                         set temp $base

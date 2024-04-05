@@ -5306,6 +5306,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 
 proc gen_reg_property {drv_handle {skip_ps_check ""} {set_node_prop 1}} {
 	global apu_proc_ip
+	global is_64_bit_mb
 	proc_called_by
         set unit_addr [get_baseaddr ${drv_handle} no_prefix]
 	if {$unit_addr == "" } {
@@ -5364,7 +5365,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""} {set_node_prop 1}} {
 			set size [format 0x%x [expr {${high} - ${base} + 1}]]
 		}
 		if {![string_is_empty $base]} {
-			if {[string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype] || [string length [string trimleft $base "0x"]] > 8} {
+			if {[string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype] || [string length [string trimleft $base "0x"]] > 8 || $is_64_bit_mb} {
 				# check if base address is 64bit and split it as MSB and LSB
 				if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 					set temp $base
@@ -5442,7 +5443,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""} {set_node_prop 1}} {
 			}
 
 			set new_reg ""
-			if {[string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype] || [string length [string trimleft $base "0x"]] > 8} {
+			if {[string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype] || [string length [string trimleft $base "0x"]] > 8 || $is_64_bit_mb} {
 				# check if base address is 64bit and split it as MSB and LSB
 				if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 					set temp $base

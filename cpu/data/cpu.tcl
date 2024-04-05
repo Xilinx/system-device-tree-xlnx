@@ -20,6 +20,7 @@
 
     proc cpu_generate {drv_handle} {
         global mb_dict_64_bit
+        global is_64_bit_mb
         set proctype [get_hw_family]
         set bus_name [add_or_get_bus_node $drv_handle "pl.dtsi"]
         set nr [get_microblaze_nr $drv_handle]
@@ -90,6 +91,7 @@
         if {![string_is_empty $addr_size]} {
                 set cell_size 1
                 if {[expr $addr_size] > 32} {
+                        set is_64_bit_mb 1
                         set cell_size 2
                 }
                 dict set mb_dict_64_bit $drv_handle $cell_size

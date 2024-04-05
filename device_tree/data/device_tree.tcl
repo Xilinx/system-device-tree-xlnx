@@ -1300,6 +1300,7 @@ proc generate_sdt args {
 	global rp_region_dict
 	global is_rm_design
 	global mb_dict_64_bit
+	global is_64_bit_mb
 	global baseaddr_dict
 	global highaddr_dict
 	global processor_ip_list
@@ -1384,6 +1385,7 @@ Generates system device tree based on args given in:
 
 	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
 	set processor_ip_list [list]
+	set is_64_bit_mb 0
 
 	# TODO: Consolidate this.
 	# This can't be merged to the loop running for each cpu.tcl.
