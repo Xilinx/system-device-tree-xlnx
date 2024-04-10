@@ -22,6 +22,7 @@
         set 64_bit 0
         global apu_proc_ip
         global is_64_bit_mb
+        set mapped 0
 
         # HSI reports ilmb_ram and dlmb_ram as two different IPs even though it points to the same BRAM_CNTRL. The
         # linker needs just one entry among these two and other is just a redundant data for us.
@@ -161,6 +162,7 @@
                 add_prop "${memory_node}" "device_type" $dev_type string "system-top.dts" 1
                 add_prop "${memory_node}" "xlnx,ip-name" [get_ip_property $drv_handle IP_NAME] string "system-top.dts"
                 add_prop "${memory_node}" "memory_type" "memory" string "system-top.dts"
+                set mapped 1
                 set have_ecc [hsi get_property CONFIG.C_ECC [hsi::get_cells -hier $drv_handle]]
                 set ctrl_base [hsi get_property CONFIG.C_S_AXI_CTRL_BASEADDR [hsi::get_cells -hier $drv_handle]]
                 if { $ctrl_base > 0 &&  $have_ecc == 1} {
@@ -241,8 +243,12 @@
         set ver [lindex $vlnv 3]
         set comp_prop "xlnx,${name}-${ver}"
         regsub -all {_} $comp_prop {-} comp_prop
+        if {$mapped == 1} {
+               add_prop ${memory_node} "compatible" $comp_prop string "system-top.dts"
+        } else {
+               dtg_warning "bram not mapped to any processor"
+        }
 
-        add_prop ${memory_node} "compatible" $comp_prop string "system-top.dts"
     }
 
 
