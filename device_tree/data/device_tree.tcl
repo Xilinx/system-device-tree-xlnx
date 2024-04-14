@@ -1462,6 +1462,18 @@ Generates system device tree based on args given in:
 			set skip1 1
 			lappend no_reg_drv_handle ${drv_handle}
 		}
+		# There can be ZynqMP designs where psu_sata is part of the hsi get_cells -hier output
+		# but not in the hsi get_mem_ranges output which means that it is not mapped to any proc.
+		# Status "okay" is being added to SATA nodes in such cases as well. It is leading to the
+		# deletion of this node in Linux DT as the node is not mapped in APU address-map and the
+		# status is "okay". This deletion leads to failure in applying static overlays that has
+		# sata in it. Therefore, avoid generating the reference node and the common properties
+		# for sata when it is not mapped to any proc. This will keep the sata node from zynqmp.dtsi
+		# as is in the "disabled" state.
+		if {[string match -nocase $ip_name "psu_sata"] &&
+		      [string_is_empty [hsi get_mem_ranges $drv_handle]]} {
+			set skip1 1
+		}
 		if { $skip1 == 0 } {
 			gen_peripheral_nodes $drv_handle "create_node_only"
 			gen_reg_property $drv_handle
