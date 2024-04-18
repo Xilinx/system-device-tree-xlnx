@@ -6361,6 +6361,7 @@ proc get_axi_datawidth {val} {
 }
 
 proc add_or_get_bus_node {ip_drv dts_file} {
+	global is_64_bit_mb
 	proc_called_by
 	set bus_name [detect_bus_name $ip_drv]
 	dtg_debug "bus_name: $bus_name"
@@ -6377,7 +6378,7 @@ proc add_or_get_bus_node {ip_drv dts_file} {
 		add_prop $fpga_node target "$targets" reference $dts 1
 		set child_name "__overlay__"
 		set bus_node [create_node -l "overlay2" -n $child_name -p $fpga_node -d $dts]
-		if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"]} {
+		if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"] || $is_64_bit_mb} {
 			add_prop "${bus_node}" "#address-cells" 2 int $dts 1
 			add_prop "${bus_node}" "#size-cells" 2 int $dts 1
 		} else {
@@ -6387,7 +6388,7 @@ proc add_or_get_bus_node {ip_drv dts_file} {
 	} else {
 		set bus_node $bus_name
 		if {[string match -nocase $bus_node "amba_pl: amba_pl"]} {
-			if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"]} {
+			if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"] || $is_64_bit_mb} {
 				set addr_cells 2
 				set size_cells 2
 			} else {

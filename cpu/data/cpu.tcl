@@ -22,6 +22,17 @@
         global mb_dict_64_bit
         global is_64_bit_mb
         set proctype [get_hw_family]
+        set addr_size [get_ip_property $drv_handle CONFIG.C_ADDR_SIZE]
+        if {![string_is_empty $addr_size]} {
+                set cell_size 1
+                if {[expr $addr_size] > 32} {
+                        set is_64_bit_mb 1
+                        set cell_size 2
+                }
+                dict set mb_dict_64_bit $drv_handle $cell_size
+        }
+        # is_64_bit_mb must be set before calling add_or_get_bus_node proc to set the
+        # correct address-cells and size-cells in amba_pl node
         set bus_name [add_or_get_bus_node $drv_handle "pl.dtsi"]
         set nr [get_microblaze_nr $drv_handle]
         set ip_name [get_ip_property $drv_handle IP_NAME]
@@ -86,16 +97,6 @@
         gen_mb_interrupt_property $drv_handle
         gen_drv_prop_from_ip $drv_handle
         generate_mb_ccf_node $drv_handle
-
-        set addr_size [get_ip_property $drv_handle CONFIG.C_ADDR_SIZE]
-        if {![string_is_empty $addr_size]} {
-                set cell_size 1
-                if {[expr $addr_size] > 32} {
-                        set is_64_bit_mb 1
-                        set cell_size 2
-                }
-                dict set mb_dict_64_bit $drv_handle $cell_size
-        }
     }
 
     proc cpu_check_64bit {base} {
