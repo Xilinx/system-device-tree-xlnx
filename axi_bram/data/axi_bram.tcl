@@ -57,7 +57,6 @@
 		return
         }
 
-        set memory_node [create_node -n "memory" -l "${drv_handle}_memory" -u $baseaddr -p root -d "system-top.dts"]
         set ip_mem_handles [hsi::get_mem_ranges $slave]
         set drv_ip [get_ip_property $drv_handle IP_NAME]
         set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
@@ -157,6 +156,7 @@
                                 }
                         }
                 }
+                set memory_node [create_node -n "memory" -l "${drv_handle}_memory" -u $baseaddr -p root -d "system-top.dts"]
                 add_prop "${memory_node}" "reg" $reg hexlist "system-top.dts" 1
                 set dev_type memory
                 add_prop "${memory_node}" "device_type" $dev_type string "system-top.dts" 1
