@@ -15,6 +15,7 @@
 
     proc ddrpsv_generate {drv_handle} {
         global is_versal_net_platform
+        set ip_name [get_ip_property $drv_handle IP_NAME]
         set a72 0
         set dts_file "system-top.dts"
 
@@ -33,7 +34,7 @@
 
         # Number of known DDR regions is set to 7 for versal, 11 for Versal Net
         # Check ddrpsv_number_of_memory_regions API for more details on the regions.
-        set num_of_known_regions [ddrpsv_number_of_memory_regions $is_versal_net_platform]
+        set num_of_known_regions [ddrpsv_number_of_memory_regions $ip_name]
 
         # List that contains base_address of each DDR region (C0_DDR_LOW(0-3), C0_DDR_CH(1-3))
         global base_addr_list
@@ -90,10 +91,11 @@
                        set a72 1
                 }
 
-                if { !$is_versal_net_platform } {
-                        set region_accessed [ddrpsv_addr_params $mapped_periph_list $interface_block_names $region_accessed]
+                if { $ip_name == "axi_noc2" } {
+                        set region_accessed [ddrpsv_addr_params_axi_noc2 $mapped_periph_list $interface_block_names $region_accessed]
                 } else {
-                        set region_accessed [ddrpsv_addr_params_versal_net $mapped_periph_list $interface_block_names $region_accessed]
+                        set region_accessed [ddrpsv_addr_params $mapped_periph_list $interface_block_names $region_accessed]
+
                 }
 
                 # Generate reg_property available for the processor, combining all the regions
@@ -372,7 +374,7 @@
         # If the DDR region is accessed for the first time OR
         # If the base address found is less than the address present in the list for this DDR region,
         # replace the address in the list with the new address found.
-        if { $is_ddr_region_accessed == 0 || [string compare $temp [lindex $base_addr_list $ddr_region_id]] < 0 } {
+        if { $is_ddr_region_accessed == 0 || ([scan $temp %x] < [scan [lindex $base_addr_list $ddr_region_id] %x])} {
                 lset base_addr_list $ddr_region_id $temp
         }
 
@@ -382,12 +384,12 @@
         # If the DDR region is accessed for the first time OR
         # If the high address found is greater than the address present in the list for this DDR region,
         # replace the address in the list with the new address found.
-        if { $is_ddr_region_accessed == 0 || [string compare $temp [lindex $high_addr_list $ddr_region_id]] > 0} {
+        if { $is_ddr_region_accessed == 0 || ([scan $temp %x] > [scan [lindex $high_addr_list $ddr_region_id] %x])} {
                 lset high_addr_list $ddr_region_id $temp
         }
     }
 
-    proc ddrpsv_number_of_memory_regions {is_versal_net_platform} {
+    proc ddrpsv_number_of_memory_regions {ip_name} {
         # HW designs can have multiple NOC IPs, and each of them can be connected to
         # same DDR segment with different address ranges, and through different
         # master interface channels.
@@ -425,7 +427,7 @@
         #  DDR_CH_3A         |        9          |
         #  DDR_CH_4          |        10         |
         #----------------------------------------
-        if { $is_versal_net_platform } {
+        if { $ip_name == "axi_noc2" } {
                 return 11
         } else {
                 return 7
@@ -482,7 +484,7 @@
         return $region_accessed
     }
 
-    proc ddrpsv_addr_params_versal_net {mapped_periph_list interface_block_names region_accessed} {
+    proc ddrpsv_addr_params_axi_noc2 {mapped_periph_list interface_block_names region_accessed} {
         # Loop variable to go over all the interface blocks
         set i 0
 
