@@ -555,11 +555,13 @@
     proc ddrpsv_check_tcm_overlapping {proc ddr_base_addr} {
         set proc_ip [get_ip_property $proc IP_NAME]
         if {[string match -nocase $proc_ip "psv_cortexr5"] || [string match -nocase $proc_ip "psx_cortexr52"]} {
-                set tcm_ip [hsi::get_cells -hier -filter {NAME=~"*tcm_ram_0" || NAME=~"*tcm_alias"}]
+                set tcm_ip [hsi::get_cells -hier -filter {NAME=~"*tcm_ram_global" || NAME=~"*tcm_alias"}]
                 if {[llength $tcm_ip] == 1} {
                         set tcm_high_addr [get_highaddr $tcm_ip]
-                        if {[string compare $tcm_high_addr $ddr_base_addr] > 0} {
-                                set ddr_base_addr [format 0x%x [expr {$tcm_high_addr + 1}]]
+                        set tcm_base_addr [get_baseaddr $tcm_ip]
+                        set tcm_size [format 0x%x [expr {${tcm_high_addr} - ${tcm_base_addr} + 1}]]
+                        if {[scan $tcm_size %x] > [scan $ddr_base_addr %x]} {
+                                set ddr_base_addr $tcm_size
                         }
                 }
         }
