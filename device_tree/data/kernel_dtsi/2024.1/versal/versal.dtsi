@@ -137,7 +137,7 @@
 	dcc: dcc {
 		compatible = "arm,dcc";
 		status = "disabled";
-		u-boot,dm-pre-reloc;
+		bootph-all;
 	};
 
 	fpga: fpga {
@@ -177,7 +177,7 @@
 		#size-cells = <2>;
 		ranges;
 		interrupt-parent = <&gic_a72>;
-		u-boot,dm-pre-reloc;
+		bootph-all;
 
 		gic_a72: interrupt-controller@f9000000 {
 			compatible = "arm,gic-v3";
@@ -208,7 +208,7 @@
 		#size-cells = <0x2>;
 		ranges;
 		interrupt-parent = <&gic_r5>;
-		u-boot,dm-pre-reloc;
+		bootph-all;
 
 		gic_r5: interrupt-controller@f9000000 {
 			compatible = "arm,pl390";
@@ -225,7 +225,7 @@
 		#size-cells = <2>;
 		ranges;
 		interrupt-parent = <&imux>;
-		u-boot,dm-pre-reloc;
+		bootph-all;
 
 		/* Proxy Interrupt Controller */
 		imux: interrupt-multiplex {
@@ -657,7 +657,7 @@
 			reg-io-width = <4>;
 			clock-names = "uartclk", "apb_pclk";
 			current-speed = <115200>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		};
 
 		serial1: serial@ff010000 {
@@ -669,7 +669,7 @@
 			reg-io-width = <4>;
 			clock-names = "uartclk", "apb_pclk";
 			current-speed = <115200>;
-			u-boot,dm-pre-reloc;
+			bootph-all;
 		};
 
 		smmu: smmu@fd800000 {

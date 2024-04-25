@@ -372,7 +372,7 @@
 	dcc: dcc {
 		compatible = "arm,dcc";
 		status = "disabled";
-		u-boot,dm-pre-reloc;
+		bootph-all;
 	};
 
 	firmware {
@@ -404,7 +404,7 @@
 		#size-cells = <2>;
 		ranges;
 		interrupt-parent = <&gic_a78>;
-		u-boot,dm-pre-reloc;
+		bootph-all;
 
 		gic_a78: interrupt-controller@e2000000 {
 			compatible = "arm,gic-v3";
@@ -433,7 +433,7 @@
 		#size-cells = <0x2>;
 		ranges;
 		interrupt-parent = <&gic_r52>;
-		u-boot,dm-pre-reloc;
+		bootph-all;
 
 		gic_r52: interrupt-controller@e2000000 {
 			compatible = "arm,gic-v3";
@@ -445,7 +445,7 @@
 
 	amba: axi {
 		compatible = "simple-bus";
-		u-boot,dm-pre-reloc;
+		bootph-all;
 		#address-cells = <2>;
 		#size-cells = <2>;
 		ranges;
@@ -1077,7 +1077,7 @@
 		};
 
 		serial0: serial@f1920000 {
-			u-boot,dm-pre-reloc;
+			bootph-all;
 			compatible = "arm,pl011", "arm,primecell";
 			status = "disabled";
 			reg = <0 0xf1920000 0 0x1000>;
@@ -1089,7 +1089,7 @@
 		};
 
 		serial1: serial@f1930000 {
-			u-boot,dm-pre-reloc;
+			bootph-all;
 			compatible = "arm,pl011", "arm,primecell";
 			status = "disabled";
 			reg = <0 0xf1930000 0 0x1000>;
