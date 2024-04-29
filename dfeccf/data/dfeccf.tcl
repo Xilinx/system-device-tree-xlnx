@@ -26,4 +26,10 @@ proc dfeccf_generate {drv_handle} {
 
 	set value [hsi get_property "CONFIG.C_SWITCHABLE" $drv_handle]
 	add_prop $node "xlnx,switchable" $value string $dts_file 1
+	if {[string compare -nocase "true" $value] == 0} {
+		set value 1
+	} else {
+		set value 0
+	}
+	add_prop $node "xlnx,switchable-int" $value hexint $dts_file
 }
