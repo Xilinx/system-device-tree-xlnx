@@ -1350,7 +1350,7 @@ proc write_dt args {
 		}
 	}
 	if {[string match -nocase $dt "pldt"] && $dt_overlay} {
-		puts $fd "\/dts-v1\/\n\/plugin\/;"
+		puts $fd "\/dts-v1\/;\n\/plugin\/;"
 	}
 	set dtcheck [string match -nocase $dt "pcwdt"]
 	if {$dtcheck != 1} {
