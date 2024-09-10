@@ -49,7 +49,7 @@
         add_prop $node "xlnx,kind-of-intr" $kind_of_intr hexint $dts_file 1
         if {$zocl} {
                 set num_intr_inputs "0x20"
-                set_drv_prop $drv_handle "xlnx,num-intr-inputs" $num_intr_inputs $node int
+                set_drv_prop $drv_handle "xlnx,num-intr-inputs" $num_intr_inputs int $node
         } else {
                 set_drv_conf_prop $drv_handle C_NUM_INTR_INPUTS "xlnx,num-intr-inputs" $node
         }
