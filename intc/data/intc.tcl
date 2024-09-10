@@ -27,6 +27,7 @@
         set zocl [get_user_config $common_file -dt_zocl]
         pldt append $node compatible "\ \, \"xlnx,xps-intc-1.00.a\""
         add_prop $node "#interrupt-cells" 2 int "pl.dtsi"
+        add_prop $node "#address-cells" 2 int "pl.dtsi"
         add_prop $node "interrupt-controller" boolean "pl.dtsi"
         set ip [hsi::get_cells -hier $drv_handle]
         set num_intr_inputs [get_ip_param_value $ip C_NUM_INTR_INPUTS]
@@ -49,7 +50,7 @@
         add_prop $node "xlnx,kind-of-intr" $kind_of_intr hexint $dts_file 1
         if {$zocl} {
                 set num_intr_inputs "0x20"
-                set_drv_prop $drv_handle "xlnx,num-intr-inputs" $num_intr_inputs $node int
+                set_drv_prop_if_empty $drv_handle "xlnx,num-intr-inputs" $num_intr_inputs $node int
         } else {
                 set_drv_conf_prop $drv_handle C_NUM_INTR_INPUTS "xlnx,num-intr-inputs" $node
         }
