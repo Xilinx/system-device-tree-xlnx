@@ -18,7 +18,7 @@
         if {$node == 0} {
                 return
         }
-        pldt append $node compatible "\ \, \"generic-uio\""
+        pldt append $node compatible "\ \, \"xlnx,xvc\""
     }
 
 
