@@ -697,7 +697,10 @@ proc gen_afi_node {} {
 		if {[is_zynqmp_platform $family]} {
 
 			set hw_name [::hsi::get_hw_files -filter "TYPE == bit"]
-			add_prop $amba_pl_node "firmware-name" "$hw_name.bin" string $dts 1
+			# Do not generate "firmware-name" if it is not included in XSA
+			if {[llength $hw_name]} {
+				add_prop $amba_pl_node "firmware-name" "$hw_name.bin" string $dts 1
+			}
 
 			set zynq_periph [hsi::get_cells -hier -filter {IP_NAME == zynq_ultra_ps_e}]
 			set pl_clk_buf_props "CONFIG.C_PL_CLK0_BUF CONFIG.C_PL_CLK1_BUF CONFIG.C_PL_CLK2_BUF CONFIG.C_PL_CLK3_BUF"
@@ -770,7 +773,10 @@ proc gen_afi_node {} {
 		}
 		if {[string match -nocase $family "zynq"]} {
 			set hw_name [::hsi::get_hw_files -filter "TYPE == bit"]
-			add_prop $amba_pl_node "firmware-name" "$hw_name.bin" string $dts 1
+			# Do not generate "firmware-name" if it is not included in XSA
+			if {[llength $hw_name]} {
+				add_prop $amba_pl_node "firmware-name" "$hw_name.bin" string $dts 1
+			}
 			set zynq_periph [hsi::get_cells -hier -filter {IP_NAME == processing_system7}]
 			set avail_param [common::list_property [hsi::get_cells -hier $zynq_periph]]
 			set pl_clk_buf_props "CONFIG.PCW_FPGA_FCLK0_ENABLE CONFIG.PCW_FPGA_FCLK1_ENABLE CONFIG.PCW_FPGA_FCLK2_ENABLE CONFIG.PCW_FPGA_FCLK3_ENABLE"
