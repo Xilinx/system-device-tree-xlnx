@@ -17,7 +17,7 @@ set is_versal_2ve_2vm_seio_platform 0
 
 proc part_specific_init_proclist {} {
 	global is_versal_2ve_2vm_seio_platform
-	if {[llength [hsi::get_cells -hier -filter {IP_NAME==seio}]]} {
+	if {[llength [hsi::get_cells -hier -filter {IP_NAME==seio || IP_NAME==svip}]]} {
 		set is_versal_2ve_2vm_seio_platform 1
 		variable ::sdtgen::namespacelist
 		dict set ::sdtgen::namespacelist "seio_spi" "spips"
