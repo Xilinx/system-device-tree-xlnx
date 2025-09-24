@@ -99,6 +99,7 @@ proc csitx2_add_hier_instances {drv_handle} {
 		if {![string_is_empty $ip_handle]} {
 			add_prop "$node" "${ip_prefix}-present" 1 int $dts_file
 			add_prop "$node" "${ip_prefix}-connected" $ip_handle reference $dts_file
+                        update_subcore_absolute_addr $drv_handle $ip_handle $dts_file
 		} else {
 			add_prop "$node" "${ip_prefix}-present" 0 int $dts_file
 		}
