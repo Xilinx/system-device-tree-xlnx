@@ -129,6 +129,11 @@ proc generate_pmc_dt {xsa dir} {
 			if {$ip_name in $ipi_ip_names} {
 				set ipi_master [get_ip_property $handle "CONFIG.C_CPU_NAME"]
 				if {$ipi_master != "PMC"} {
+					# Set the base address and high address for all the IPIs irrespective of
+					# CPU mapping. These IPIs can be destinations (child nodes) of PMC IPIs and
+					# these addresses are needed within ipipsu.tcl for get_baseaddr API.
+					get_domain_specific_baseaddr $handle
+					get_domain_specific_highaddr $handle
 					continue
 				}
 			}
