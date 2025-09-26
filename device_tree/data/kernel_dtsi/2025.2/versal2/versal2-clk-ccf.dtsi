@@ -710,7 +710,7 @@
 };
 
 &mmi_dc {
-	clocks = <&versal2_clk DC_PIXEL>;
+	clocks = <&versal2_clk MMIPLL>, <&versal2_clk DC_PIXEL>, <&versal2_clk AUX1_REF>;
 	resets = <&versal2_reset VERSAL_RST_DC>;
 };
 

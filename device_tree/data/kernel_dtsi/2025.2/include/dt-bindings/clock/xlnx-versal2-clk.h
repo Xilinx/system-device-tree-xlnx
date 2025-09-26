@@ -23,6 +23,7 @@
 #define TTC7		0xCF
 #define UFS_REF		0xC8
 #define MMI_DRD_REF_CLK	0xD0
+#define MMIPLL		0xD7
 #define GPU_PLL		0xD9
 #define DC_PIXEL	0xDA
 #define GPU_REF		0xDB

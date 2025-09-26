@@ -695,7 +695,7 @@
 			dmas = <&mmi_dcdma 0>, <&mmi_dcdma 1>, <&mmi_dcdma 2>,
 			       <&mmi_dcdma 3>, <&mmi_dcdma 4>, <&mmi_dcdma 5>,
 			       <&mmi_dcdma 6>, <&mmi_dcdma 7>;
-			clock-names = "ps_vid_clk";
+			clock-names = "mmi_pll", "ps_vid_clk", "stc_ref_clk";
 
 			ports {
 				#address-cells = <1>;
