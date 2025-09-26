@@ -134,6 +134,8 @@ global intr_type_dict
 global cur_hw_iss_data
 global cur_hw_is_smmu_en
 global monitor_ip_exclusion_list
+global node_name_dict
+
 
 set node_dict [dict create]
 set nodename_dict [dict create]
@@ -147,6 +149,7 @@ set intr_type_dict [dict create]
 set cur_hw_iss_data [dict create]
 set cur_hw_is_smmu_en ""
 set monitor_ip_exclusion_list {"axi_perf_mon" "exdes_rfadc_data_bram_capture"}
+set node_name_dict [dict create]
 
 package require Tcl 8.5.14
 package require yaml
@@ -336,7 +339,10 @@ proc get_proc_list_without_pmc {} {
 	}
 	return $req_proc_handle_list
 }
-
+#Fixme: For the remove_duplicate_addr API dup_periph_handle variable is now obsolete,
+#will be completely removed in next release
+global dup_periph_handle
+set dup_periph_handle [dict create]
 proc remove_duplicate_addr args {
 	set peri_list [lindex $args 0]
 	set non_val_list [lindex $args 1]
@@ -6316,6 +6322,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	# Check if the peripheral is in Secure or Non-secure zone
 	global node_dict
 	global cur_hw_design
+	global node_name_dict
 	proc_called_by
 	set status_enable_flow 0
 	set ip [hsi::get_cells -hier $drv_handle]
@@ -6582,8 +6589,20 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
                         set dev_type $ip
                     }
 				}
+				# Device tree node labels must be unique for each node_name.
+				# If the current node_name already exists in node_name_dict,
+				# update dev_type to the IP's NAME property to avoid duplication.
+				set node_str "${dev_type}@${unit_addr}"
+				if { [dict exists $node_name_dict $node_str] } {
+					set read_handle [dict get $node_name_dict $node_str]
+					if {$read_handle != $drv_handle} {
+						set dev_type [get_ip_property $drv_handle NAME]
+						set node_str "${dev_type}@${unit_addr}"
+					}
+				}
 				set t [get_ip_property $drv_handle IP_NAME]
 				set rt_node [create_node -n ${dev_type} -l ${label} -u ${unit_addr} -d ${default_dts} -p $bus_node]
+				dict set node_name_dict $node_str $drv_handle
 			}
 		}
 
