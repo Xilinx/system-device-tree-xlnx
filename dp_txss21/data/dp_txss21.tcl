@@ -75,7 +75,6 @@ proc dp_tx_21_add_hier_instances {drv_handle} {
 
 	set node [get_node $drv_handle]
 	set dts_file [set_drv_def_dts $drv_handle]
-	hsi::current_hw_instance $drv_handle
 
 	set ip_subcores [dict create]
 	dict set ip_subcores "v_dual_splitter" "dual-splitter"
@@ -84,7 +83,7 @@ proc dp_tx_21_add_hier_instances {drv_handle} {
 	dict set ip_subcores "hdcp22_tx_dp" "hdcp22"
 
 	foreach ip [dict keys $ip_subcores] {
-		set ip_handle [hsi::get_cells -filter "IP_NAME==$ip"]
+		set ip_handle [set_ip_handles_for_ss_subcores $ip $drv_handle]
 		set ip_prefix [dict get $ip_subcores $ip]
 		if {![string_is_empty $ip_handle]} {
 			add_prop "$node" "${ip_prefix}-present" 1 int $dts_file
@@ -94,7 +93,7 @@ proc dp_tx_21_add_hier_instances {drv_handle} {
 		}
 	}
 
-	set timers [hsi::get_cells -hier -filter {IP_NAME==axi_timer}]
+	set timers [set_ip_handles_for_ss_subcores axi_timer $drv_handle]
 	#hsi::get_cells -hier -filter {IP_NAME==axi_timer}
 	#processor_hier_0_axi_timer_0 dp_rx_hier_0_v_dp_rxss1_0_timer dp_tx_hier_0_v_dp_txss1_0_timer
 
@@ -111,7 +110,7 @@ proc dp_tx_21_add_hier_instances {drv_handle} {
 			}
 		}
 	}
-	set vtcs [hsi::get_cells -hier -filter {IP_NAME==v_tc}]
+	set vtcs [set_ip_handles_for_ss_subcores v_tc $drv_handle]
 	#hsi::get_cells -hier -filter {IP_NAME==axi_time_tcr}
 	#dp_tx_hier_0_v_dp_txss1_0_vtc1 dp_tx_hier_0_v_dp_txss1_0_vtc2 dp_tx_hier_0_v_dp_txss1_0_vtc3 dp_tx_hier_0_v_dp_txss1_0_vtc4
 
@@ -140,7 +139,5 @@ proc dp_tx_21_add_hier_instances {drv_handle} {
 			}
 		}
 	}
-
-	hsi::current_hw_instance
 
 }

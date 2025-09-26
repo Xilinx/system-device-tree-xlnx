@@ -267,8 +267,6 @@ proc gen_frmbuf_rd_node {ip drv_handle hdmi_port_node dts_file} {
 proc hdmi_txss_add_hier_instances {drv_handle} {
 	set node [get_node $drv_handle]
 	set dts_file [set_drv_def_dts $drv_handle]
-	hsi::current_hw_instance $drv_handle
-
 	#hsi::get_cells -hier -filter {IP_NAME==v_tc}
 	#hsi get_property IP_NAME [hsi::get_cells -hier v_hdmi_txss1_hdcp_1_4]
 	#
@@ -280,7 +278,7 @@ proc hdmi_txss_add_hier_instances {drv_handle} {
 	dict set ip_subcores "v_tc" "vtc"
 
 	foreach ip [dict keys $ip_subcores] {
-		set ip_handle [hsi::get_cells -filter "IP_NAME==$ip"]
+		set ip_handle [set_ip_handles_for_ss_subcores $ip $drv_handle]
 		set ip_prefix [dict get $ip_subcores $ip]
 		if {![string_is_empty $ip_handle]} {
 			add_prop "$node" "${ip_prefix}-present" 1 int $dts_file
@@ -290,7 +288,7 @@ proc hdmi_txss_add_hier_instances {drv_handle} {
 		}
 	}
 
-	set timers [hsi::get_cells -filter {IP_NAME==axi_timer}]
+	set timers [set_ip_handles_for_ss_subcores axi_timer $drv_handle]
 	#zynq_us_ss_0_sys_timer_0 zynq_us_ss_0_sys_timer_1 v_hdmi_rxss1_axi_timer v_hdmi_txss1_axi_timer v_hdmi_rxss1_hdcp22_rx_ss_hdcp22_timer v_hdmi_txss1_hdcp22_tx_ss_hdcp22_timer
 	if {[string_is_empty $timers]} {
 		add_prop "$node" "hdcptimer-present" 0 int $dts_file
@@ -304,8 +302,4 @@ proc hdmi_txss_add_hier_instances {drv_handle} {
 			}
 		}
 	}
-	hsi::current_hw_instance
-
-
-
 }

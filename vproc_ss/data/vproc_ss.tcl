@@ -558,8 +558,6 @@ proc vproc_ss_update_endpoints {drv_handle} {
 proc vproc_ss_add_hier_instances {drv_handle} {
 	set node [get_node $drv_handle]
 	set dts_file [set_drv_def_dts $drv_handle]
-	hsi::current_hw_instance $drv_handle
-
 
 	set family [get_hw_family]
 	if {$family in {"microblaze" "Zynq"}} {
@@ -579,7 +577,7 @@ proc vproc_ss_add_hier_instances {drv_handle} {
 	dict set ip_subcores "v_vscaler" "vscale"
 
 	foreach ip [dict keys $ip_subcores] {
-		set ip_handle [hsi::get_cells -filter "IP_NAME==$ip"]
+		set ip_handle [set_ip_handles_for_ss_subcores $ip $drv_handle]
 		set ip_prefix [dict get $ip_subcores $ip]
 		if {![string_is_empty $ip_handle]} {
 			add_prop "$node" "${ip_prefix}-present" 1 int $dts_file
@@ -597,13 +595,13 @@ proc vproc_ss_add_hier_instances {drv_handle} {
 		}
 	}
 
-	set gpios [hsi::get_cells -filter {IP_NAME==axi_gpio}]
+	set gpios [set_ip_handles_for_ss_subcores axi_gpio $drv_handle]
 	if {[string_is_empty $gpios]} {
 		add_prop "$node" "rstaxis-present" 0 int $dts_file
 		add_prop "$node" "rstaximm-present" 0 int $dts_file
 	} else {
 		foreach gpio $gpios {
-			set name [hsi get_property NAME [hsi::get_cells $gpio]]
+			set name [hsi get_property NAME [hsi::get_cells -hier $gpio]]
 			if {[regexp ".axis" $name match]} {
 				add_prop "$node" "rstaxis-present" 1 int $dts_file 1
 				add_prop "$node" "rstaxis-connected" $gpio reference $dts_file 1
@@ -624,9 +622,9 @@ proc vproc_ss_add_hier_instances {drv_handle} {
 		}
 	}
 
-	set vcrs [hsi::get_cells  -filter {IP_NAME==v_vcresampler}]
+	set vcrs [set_ip_handles_for_ss_subcores v_vcresampler $drv_handle]
 	foreach vcr $vcrs {
-		set name [hsi get_property NAME [hsi::get_cells $vcr]]
+		set name [hsi get_property NAME [hsi::get_cells -hier $vcr]]
 		if {[regexp "._o" $name match]} {
 			add_prop "$node" "vcrsmplrout-present" 1 int $dts_file
 			add_prop "$node" "vcrsmplrout-present" 1 int $dts_file
@@ -646,7 +644,6 @@ proc vproc_ss_add_hier_instances {drv_handle} {
 		set subcore_reg_val [gen_reg_property_format $subcore_abs_base $subcore_abs_high $bit_format]
 		add_prop $connected_node reg "$subcore_reg_val" hexlist $dts_file 1
 	}
-	hsi::current_hw_instance
 }
 
 proc vproc_ss_gen_gpio_reset {drv_handle node topology dts_file} {

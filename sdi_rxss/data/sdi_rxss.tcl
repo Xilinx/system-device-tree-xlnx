@@ -136,16 +136,14 @@ proc gen_frmbuf_node {ip drv_handle dts_file} {
 }
 
 proc sdi_rx_add_hier_instances {drv_handle} {
-
 	set node [get_node $drv_handle]
 	set dts_file [set_drv_def_dts $drv_handle]
-	hsi::current_hw_instance $drv_handle
 
 	set ip_subcores [dict create]
 	dict set ip_subcores "v_smpte_uhdsdi_rx" "sdirx"
 
 	foreach ip [dict keys $ip_subcores] {
-		set ip_handle [hsi::get_cells -filter "IP_NAME==$ip"]
+		set ip_handle [set_ip_handles_for_ss_subcores $ip $drv_handle]
 		set ip_prefix [dict get $ip_subcores $ip]
 		if {![string_is_empty $ip_handle]} {
 			add_prop "$node" "${ip_prefix}-present" 1 int $dts_file
@@ -155,6 +153,5 @@ proc sdi_rx_add_hier_instances {drv_handle} {
 			add_prop "$node" "${ip_prefix}-present" 0 int $dts_file
 		}
 	}
-	hsi::current_hw_instance
 
 }

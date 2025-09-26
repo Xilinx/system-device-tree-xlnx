@@ -265,7 +265,6 @@ proc dp_rx_add_hier_instances {drv_handle} {
 
 	set node [get_node $drv_handle]
 	set dts_file [set_drv_def_dts $drv_handle]
-	hsi::current_hw_instance $drv_handle
 
 	set ip_subcores [dict create]
 	dict set ip_subcores "axi_iic" "iic"
@@ -274,7 +273,7 @@ proc dp_rx_add_hier_instances {drv_handle} {
 	dict set ip_subcores "hdcp22_rx_dp" "hdcp22"
 
 	foreach ip [dict keys $ip_subcores] {
-		set ip_handle [hsi::get_cells -filter "IP_NAME==$ip"]
+		set ip_handle [set_ip_handles_for_ss_subcores $ip $drv_handle]
 		set ip_prefix [dict get $ip_subcores $ip]
 		if {![string_is_empty $ip_handle]} {
 			add_prop "$node" "${ip_prefix}-present" 1 int $dts_file
@@ -287,9 +286,9 @@ proc dp_rx_add_hier_instances {drv_handle} {
 	dict set ip_subcores "clk_wizard" "clkWiz"
 	dict set ip_subcores "clkx5_wiz" "clkWiz"
 
-	set clk_ip_handle [hsi::get_cells -filter "IP_NAME==clkx5_wiz"]
+	set clk_ip_handle [set_ip_handles_for_ss_subcores clkx5_wiz $drv_handle]
 	if {[string_is_empty $clk_ip_handle]} {
-		set clk_ip_handle [hsi::get_cells -filter "IP_NAME==clk_wizard"]
+		set clk_ip_handle [set_ip_handles_for_ss_subcores clk_wizard $drv_handle]
 	}
 	if {![string_is_empty $clk_ip_handle]} {
 		add_prop "$node" "clkWiz-present" 1 int $dts_file
@@ -298,7 +297,7 @@ proc dp_rx_add_hier_instances {drv_handle} {
 		add_prop "$node" "clkWiz-present" 0 int $dts_file
 	}
 
-	set timers [hsi::get_cells -hier -filter {IP_NAME==axi_timer}]
+	set timers [set_ip_handles_for_ss_subcores axi_timer $drv_handle]
 	#hsi::get_cells -hier -filter {IP_NAME==axi_timer}
 	#processor_hier_0_axi_timer_0 dp_rx_hier_0_v_dp_rxss1_0_timer dp_tx_hier_0_v_dp_txss1_0_timer
 
@@ -315,7 +314,6 @@ proc dp_rx_add_hier_instances {drv_handle} {
 			}
 		}
 	}
-	hsi::current_hw_instance
 
 }
 #generate fmc card node as this is required when display port exits

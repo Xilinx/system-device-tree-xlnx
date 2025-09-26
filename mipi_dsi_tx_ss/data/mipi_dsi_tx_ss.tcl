@@ -124,7 +124,6 @@ proc mipi_dsi_tx_ss_update_endpoints {drv_handle} {
         set node [get_node $drv_handle]
         set subsystem_base_addr [get_baseaddr $drv_handle]
         set dts_file [set_drv_def_dts $drv_handle]
-        hsi::current_hw_instance $drv_handle
 
         #Example :
         #hsi::get_cells -hier -filter {IP_NAME==mipi_dsi2_tx_ctrl}
@@ -136,7 +135,7 @@ proc mipi_dsi_tx_ss_update_endpoints {drv_handle} {
         dict set ip_subcores "mipi_dphy" "dphy"
 
         foreach ip [dict keys $ip_subcores] {
-            set ip_handle [hsi::get_cells -hier -filter "IP_NAME==$ip"]
+            set ip_handle [set_ip_handles_for_ss_subcores $ip $drv_handle]
             set ip_prefix [dict get $ip_subcores $ip]
             if {![string_is_empty $ip_handle]} {
                 add_prop "$node" "${ip_prefix}-present" 1 int $dts_file
@@ -146,7 +145,6 @@ proc mipi_dsi_tx_ss_update_endpoints {drv_handle} {
             }
         }
 
-        hsi::current_hw_instance
     }
 
     proc pixel_format {pxl_format} {

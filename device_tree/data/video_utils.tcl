@@ -976,3 +976,15 @@ proc update_subcore_absolute_addr {drv_handle ip_handle dtsi_file} {
 	set subcore_reg_val [gen_reg_property_format $subcore_abs_base $subcore_abs_high $bit_format]
 	add_prop $connected_node reg "$subcore_reg_val" hexlist $dtsi_file 1
 }
+
+proc set_ip_handles_for_ss_subcores {ip_name drv_handle} {
+	set all_hier_filter "IP_NAME==${ip_name} && NAME=~${drv_handle}_*"
+	set multi_level_hier_filter "IP_NAME==${ip_name} && HIER_NAME=~*${drv_handle}/*/*"
+	set all_hier_drv_handle [hsi get_cells -hier -filter $all_hier_filter]
+	set multi_level_hier_drv_handle [hsi get_cells -hier -filter $multi_level_hier_filter]
+	if {[string_is_empty $multi_level_hier_drv_handle]} {
+		return $all_hier_drv_handle
+	} else {
+		return [::struct::set difference $all_hier_drv_handle $multi_level_hier_drv_handle]
+	}
+}
