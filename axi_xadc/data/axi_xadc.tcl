@@ -21,7 +21,10 @@
         set node [get_node $drv_handle]
         set dts_file [set_drv_def_dts $drv_handle]
         gen_drv_prop_from_ip $drv_handle
-        gen_dev_ccf_binding $drv_handle "s_axi_aclk"
+        set proc_type [get_hw_family]
+        if {[regexp "microblaze" $proc_type match]} {
+            gen_dev_ccf_binding $drv_handle "s_axi_aclk"
+        }
 
         add_prop $node "xlnx,ip-type" 0 hexint $dts_file
         pldt append $node compatible "\ \, \"xlnx,axi-xadc-1.00.a\""
