@@ -375,6 +375,59 @@ proc set_sdt_default_repo {} {
 	return $env(CUSTOM_SDT_REPO)
 }
 
+proc get_user_config args {
+        set dict_devicetree  {}
+	set val [get_dt_param [lindex $args 1]]
+	if {[string match -nocase $val ""]} {
+	        set config_file [lindex $args 0]
+		set cfg [get_yaml_dict $config_file]
+	        set user [dict get $cfg dict_devicetree]
+		set mainline_kernel [dict get $user mainline_kernel]
+		set kernel_ver [dict get $user kernel_ver]
+		set dir [dict get $user output_dir]
+		set zocl [dict get $user zocl]
+		set param ""
+		switch -glob -- [lindex $args 1] {
+			-repo {
+				set param $path
+			} -master_dts {
+				set param $master_dts
+			} -config_dts {
+				set param $config_dts
+			} -board_dts {
+				set param ""
+			} -pl_only {
+				set param $pl_only
+			} -mainline_kernel {
+				set param $mainline_kernel
+			} -kernel_ver {
+				set param $kernel_ver
+			} -dir {
+				set param $dir
+			} -zocl {
+				set param $zocl
+			} default {
+				error "get_user_config bad option - [lindex $args 0]"
+			}
+		}
+	} else {
+		set param $val
+	}
+        return $param
+}
+
+proc get_yaml_dict { config_file } {
+        set data ""
+        if {[file exists $config_file]} {
+                set fd [open $config_file r]
+                set data [read $fd]
+                close $fd
+        } else {
+                error "YAML:: No such file $config_file"
+        }
+	return [yaml::yaml2dict $data]
+}
+
 proc set_dt_param args {
 	global env
 	if {[llength $args] == 0 || ![string match -* [lindex $args 0]]} {
@@ -409,6 +462,13 @@ proc set_dt_param args {
 					if {[string tolower [file extension $board_dts_file]] eq ".dtsi"} {
 						error "ERROR: board_dts expects file name without .dtsi extension. Please update"
 					}
+					set common_file "$env(CUSTOM_SDT_REPO)/device_tree/data/config.yaml"
+					set kernel_ver [get_user_config $common_file -kernel_ver]
+					set kernel_dtsi [file normalize "$env(CUSTOM_SDT_REPO)/device_tree/data/kernel_dtsi/$kernel_ver/BOARD"]
+					set target_board_file [file join $kernel_dtsi "${board_dts_file}.dtsi"]
+					if {![file exists $target_board_file]} {
+						error "Error: The board file '${board_dts_file}.dtsi' was not found in the repository. Please refer $kernel_dtsi for valid board names."
+					}
 					set env(sdt_board_dts) $board_dts_file
 				}
 				-domain {
@@ -420,9 +480,21 @@ proc set_dt_param args {
 				}
                                 -mainline_kernel {set env(kernel) [Pop args 1] }
                                 -kernel_ver {set env(kernel_ver) [Pop args 1]}
-                                -dir {set env(dir) [Pop args 1]}
+                                -dir {
+					set dir [Pop args 1]
+					if {[file exists $dir]} {
+						puts "INFO: $dir exists. Files will be overwritten"
+					}
+					set env(dir) $dir
+				}
                                 -repo {set env(CUSTOM_SDT_REPO) [Pop args 1]}
-                                -zocl {set env(zocl) [Pop args 1]}
+                                -zocl {
+					set zocl [Pop args 1]
+					if {!($zocl in {"enable" "disable"})} {
+						error "Invalid option: $zocl. Valid options: enable/disable. Default option: disable"
+					}
+					set env(zocl) $zocl
+				}
                                 -user_dts - \-include_dts {
 					# FIXME: Below line should not be needed. It is added to support
 					# -user_dts {a.dtsi b.dtsi} kind of input which Vitis uses. Otherwise
@@ -437,10 +509,33 @@ proc set_dt_param args {
 							break
 						}
 					}
+					foreach dts $env(user_dts) {
+						if {![file exists $dts]} {
+							error "$dts does not exist"
+						}
+					}
                                 }
-                                -debug {set env(debug) [Pop args 1]}
-                                -verbose {set env(verbose) [Pop args 1]}
-                                -trace {set env(trace) [Pop args 1]}
+                                -debug {
+					set debug [Pop args 1]
+					if {!($debug in {"enable" "disable"})} {
+						error "Invalid option: $debug. Valid options: enable/disable. Default option: disable"
+					}
+					set env(debug) $debug
+				}
+                                -verbose {
+					set verbose [Pop args 1]
+					if {!($verbose in {"enable" "disable"})} {
+						error "Invalid option: $verbose. Valid options: enable/disable. Default option: disable"
+					}
+					set env(verbose) $verbose
+				}
+                                -trace {
+					set trace [Pop args 1]
+					if {!($trace in {"enable" "disable"})} {
+						error "Invalid option: $trace. Valid options: enable/disable. Default option: disable"
+					}
+					set env(trace) $trace
+				}
                                 -help {return [print_usage]}
                                 -  {Pop args ; break}
                                 default {

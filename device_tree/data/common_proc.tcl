@@ -480,48 +480,6 @@ proc get_hw_family {} {
 	return $design_family
 }
 
-# set global dict_devicetree
-proc get_user_config args {
-	proc_called_by
-        set dict_devicetree  {}
-	set val [get_dt_param [lindex $args 1]]
-	if {[string match -nocase $val ""]} {
-	        set config_file [lindex $args 0]
-       		set cfg [get_yaml_dict $config_file]
-	        set user [dict get $cfg dict_devicetree]
-        	set mainline_kernel [dict get $user mainline_kernel]
-        	set kernel_ver [dict get $user kernel_ver]
-        	set dir [dict get $user output_dir]
-		set zocl [dict get $user zocl]
-        	set param ""
-        	switch -glob -- [lindex $args 1] {
-                	-repo {
-                        	set param $path
-                	} -master_dts {
-                        	set param $master_dts
-                	} -config_dts {
-                        	set param $config_dts
-                	} -board_dts {
-                        	set param ""
-                	} -pl_only {
-                        	set param $pl_only
-			} -mainline_kernel {
-				set param $mainline_kernel
-			} -kernel_ver {
-				set param $kernel_ver
-			} -dir {
-				set param $dir
-			} -zocl {
-				set param $zocl
-                	} default {
-                        	error "get_user_config bad option - [lindex $args 0]"
-                	}
-        	}
-	} else {
-		set param $val
-	}
-        return $param
-}
 
 proc get_node args {
 	global node_dict
@@ -647,20 +605,6 @@ proc get_driver_config args {
 	set param [get_driver_param $drv_handle $type]
 
 	return $param
-}
-
-# load yaml file into dict
-proc get_yaml_dict { config_file } {
-	proc_called_by
-        set data ""
-        if {[file exists $config_file]} {
-                set fd [open $config_file r]
-                set data [read $fd]
-                close $fd
-        } else {
-                error "YAML:: No such file $config_file"
-        }
-	return [yaml::yaml2dict $data]
 }
 
 proc write_value {type value} {
