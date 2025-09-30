@@ -241,10 +241,16 @@ proc gen_broad_endpoint_port16 {drv_handle value} {
         set val [dict get $port16_broad_end_mappings $drv_handle]
 }
 
-proc get_axis_switch_in_connect_ip {ip intfpins} {
+proc get_axis_switch_in_connect_ip {ip intfpins {hop_count 0}} {
        puts "get_axis_switch_in_connect_ip:$ip $intfpins"
        global connectip ""
        foreach intf $intfpins {
+               if {$hop_count >= 20} {
+                       puts "WARNING: Iteration limit of 20 reached. Breaking from loop."
+                       break
+               }
+               set hop_count [expr {$hop_count + 1}]
+
                set connectip [get_connected_stream_ip [hsi get_cells -hier $ip] $intf]
                puts "connectip:$connectip"
                foreach cip $connectip {
@@ -256,7 +262,7 @@ proc get_axis_switch_in_connect_ip {ip intfpins} {
 					break
 				} else {
 				set master_intf [::hsi::get_intf_pins -of_objects [hsi get_cells -hier $cip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
-				get_axis_switch_in_connect_ip $cip $master_intf
+				get_axis_switch_in_connect_ip $cip $master_intf $hop_count
 				}
                        }
                }
@@ -584,7 +590,7 @@ proc gen_broadcaster {ip dts_file} {
         }
     }
 
-    proc get_connect_ip {ip intfpins dts_file} {
+    proc get_connect_ip {ip intfpins dts_file {hop_count 0}} {
         dtg_verbose "get_con_ip:$ip pins:$intfpins"
         if {[llength $intfpins]== 0} {
             return
@@ -592,6 +598,11 @@ proc gen_broadcaster {ip dts_file} {
         if {[llength $ip]== 0} {
             return
         }
+	if {$hop_count > 20} {
+               return ""
+        }
+        set hop_count [expr {$hop_count + 1}]
+
         if {[string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $ip]] "axis_broadcaster"]} {
             gen_broadcaster $ip $dts_file
             return
@@ -625,14 +636,14 @@ proc gen_broadcaster {ip dts_file} {
                     break
                 } else {
                     set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $connectip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
-                    get_connect_ip $connectip $master_intf $dts_file
+                    get_connect_ip $connectip $master_intf $dts_file $hop_count
                 }
             }
         }
         return $connectip
     }
 
-    proc get_in_connect_ip {ip intfpins} {
+    proc get_in_connect_ip {ip intfpins {hop_count 0}} {
         dtg_verbose "get_in_con_ip:$ip pins:$intfpins"
         if {[llength $intfpins]== 0} {
             return
@@ -640,6 +651,10 @@ proc gen_broadcaster {ip dts_file} {
         if {[llength $ip]== 0} {
             return
         }
+	if {$hop_count > 20} {
+               return ""
+        }
+        set hop_count [expr {$hop_count + 1}]
         global connectip ""
         foreach intf $intfpins {
             set connectip [get_connected_stream_ip [hsi::get_cells -hier $ip] $intf]
@@ -671,7 +686,7 @@ proc gen_broadcaster {ip dts_file} {
                     if {[string match -nocase [hsi get_property IP_NAME $connectip] "axis_broadcaster"]} {
                         return $connectip
                     }
-                    get_in_connect_ip $connectip $master_intf
+                    get_in_connect_ip $connectip $master_intf $hop_count
                 }
             }
         }

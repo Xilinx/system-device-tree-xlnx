@@ -153,10 +153,15 @@ proc get_port_width { port_handle} {
 #
 # Remove the pin specified from the list of pins
 #
-proc remove_pin_from_list { pinList pin } {
+proc remove_pin_from_list { pinList pin {hop_count 0}} {
     lappend returnList
     
     foreach pinInList $pinList {
+	if {$hop_count >= 20} {
+                puts "WARNING: Iteration limit of 20 reached. Breaking from loop."
+                break
+        }
+        set hop_count [expr {$hop_count + 1}]
         # set pin_type [hsi get_property TYPE $pinInList]
         # if { $pin_type == "MONITOR"} {
             # continue
