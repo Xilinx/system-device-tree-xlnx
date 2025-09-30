@@ -247,6 +247,9 @@ proc get_axis_switch_in_connect_ip {ip intfpins} {
        foreach intf $intfpins {
                set connectip [get_connected_stream_ip [hsi get_cells -hier $ip] $intf]
                puts "connectip:$connectip"
+                if {[string match -nocase [hsi get_property IP_NAME $connectip] "microblaze"]} {
+                    continue
+                }
                foreach cip $connectip {
 			if {[llength $cip]} {
 				set ipname [hsi get_property IP_NAME $cip]
@@ -658,6 +661,9 @@ proc gen_broadcaster {ip dts_file} {
                     }
                     set connectip "$ip"
                 }
+            }
+            if {[string match -nocase [hsi get_property IP_NAME $connectip] "microblaze"]} {
+                continue
             }
             if {[llength $connectip]} {
                 set ip_mem_handles [hsi::get_mem_ranges $connectip]
