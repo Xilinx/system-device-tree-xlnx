@@ -769,15 +769,16 @@ proc visp_ss_gen_frmbuf_wr_node {outip drv_handle dts_file sub_node_label port_a
 
 		# Create two input ports for vcap
 		for {set i 0} {$i < 2} {incr i} {
-			set current_outip [lindex $all_outips $i]
+			set outip_index [expr {$i == 0 ? 1 : 0}]
+			set current_outip [lindex $all_outips $outip_index]
 			set reg_value [expr {$i == 0 ? 1 : 0}]
 			set vcap_port_node [create_node -n "port@$i" -l vcap_port${sub_node_label}_$i -p $vcap_ports_node -d $dts_file]
 			add_prop "$vcap_port_node" "reg" $reg_value int $dts_file
 			add_prop "$vcap_port_node" "direction" input string $dts_file
 			set vcap_in_node [create_node -n "endpoint" -l ${current_outip}${sub_node_label} -p $vcap_port_node -d $dts_file]
 			gen_endpoint $drv_handle "${current_outip}${sub_node_label}"
-			add_prop "$vcap_in_node" "remote-endpoint" visp_out[expr {$i+1}]$sub_node_label reference $dts_file
-			gen_remoteendpoint $drv_handle "visp_out[expr {$i+1}]$sub_node_label"
+			add_prop "$vcap_in_node" "remote-endpoint" visp_out[expr {$outip_index+1}]$sub_node_label reference $dts_file
+			gen_remoteendpoint $drv_handle "visp_out[expr {$outip_index+1}]$sub_node_label"
 		}
 	} elseif {$num_outips == 1} {
 		# Single outip case
