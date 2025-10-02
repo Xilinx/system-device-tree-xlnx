@@ -78,6 +78,7 @@ proc sdi_txss_update_endpoints {drv_handle} {
 	}
 	set inip ""
 	foreach inip $sditx_in_ip {
+		incr count
 		if {[llength $inip]} {
 			set master_intf [hsi get_intf_pins -of_objects [hsi get_cells -hier $inip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
 			set ip_mem_handles [hsi get_mem_ranges $inip]
@@ -91,12 +92,19 @@ proc sdi_txss_update_endpoints {drv_handle} {
 					continue
 				}
 				set inip [get_in_connect_ip $inip $master_intf]
+				if {[string match -nocase [hsi get_property IP_NAME $inip] "axis_broadcaster"]} {
+					set sditx_node [create_node -n "endpoint" -l $drv_handle$inip -p $sdi_port_node -d $dts_file]
+					gen_endpoint $drv_handle "sditx_out$drv_handle"
+					add_prop "$sditx_node" "remote-endpoint" axis_broad_out$count$inip reference $dts_file
+					gen_remoteendpoint $drv_handle "$inip$drv_handle"
+				}
 				if {[llength $inip] && [string match -nocase [hsi::get_property IP_NAME $inip] "v_frmbuf_rd"]} {
 					gen_frmbuf_rd_node $inip $drv_handle $sdi_port_node $dts_file
 				}
 			}
 		}
 	}
+
 	if {[llength $inip]} {
 		set sditx_in_end ""
 		set sditx_remo_in_end ""
