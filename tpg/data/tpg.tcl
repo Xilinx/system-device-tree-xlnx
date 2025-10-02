@@ -128,6 +128,12 @@
                             if {[string match -nocase [hsi get_property IP_NAME $connectip] "axi_dbg_hub"]} {
                                 continue
                             }
+                            if {[string match -nocase [hsi get_property IP_NAME $connectip] "axis_broadcaster"]} {
+                                set tpg_node [create_node -n "endpoint" -l tpg_out$drv_handle -p $port1_node -d $dts_file]
+                                gen_endpoint $drv_handle "tpg_out$drv_handle"
+                                add_prop "$tpg_node" "remote-endpoint" $connectip$drv_handle reference $dts_file
+                                gen_remoteendpoint $drv_handle "$connectip$drv_handle"
+                            }
                         }
                         if {[llength $connectip]} {
                             set ip_mem_handles [hsi::get_mem_ranges $connectip]
