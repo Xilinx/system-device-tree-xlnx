@@ -470,105 +470,82 @@ proc get_visp_remote_endpoint_suffix {connectip ip intf} {
 		return $remote_endpoint_ref
 }
 
-proc ignore_axis_ila {connectnxtip} {
-	foreach nxtip $connectnxtip {
-		set ignoreip [get_ip_property $nxtip IP_NAME]
-		if {$ignoreip != "axis_ila"} {
-			set connectnxtip $nxtip
-		} else {
-			set connectnxtip ""
-		}
-	}
-	return $connectnxtip
+proc check_next_mem_ip {ip} {
+    set ip_mem_handles [hsi::get_mem_ranges $ip]
+    if {[llength $ip_mem_handles]} {
+        return $ip
+    }
+
+    set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
+    set next_ip [get_connected_stream_ip [hsi::get_cells -hier $ip] $master_intf]
+    if {![llength $next_ip]} {
+        return
+    }
+
+    check_next_mem_ip $next_ip
 }
 
 proc gen_broadcaster {ip dts_file} {
-        global end_mappings
-        global remo_mappings
-        dtg_verbose "+++++++++gen_broadcaster:$ip"
-        set count 0
-        set inputip ""
-        set outip ""
-        set connectnextip ""
-        set compatible [get_comp_str $ip]
-        set intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
-        set inip [get_connected_stream_ip [hsi::get_cells -hier $ip] $intf]
-        set inip [get_in_connect_ip $ip $intf]
-	set default_dts [set_drv_def_dts $ip]
+    global end_mappings
+    global remo_mappings
+    dtg_verbose "+++++++++gen_broadcaster:$ip"
+    set count 0
+    set inputip ""
+    set outip ""
+    set compatible [get_comp_str $ip]
+
+    set intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
 	set bus_node [detect_bus_name $ip]
-        set broad_node [create_node -n "axis_broadcaster$ip" -l $ip -u 0 -p $bus_node -d $dts_file]
-        set ports_node [create_node -n "ports" -l axis_broadcaster_ports$ip -p $broad_node -d $dts_file]
-        add_prop "$ports_node" "#address-cells" 1 int $dts_file
-        add_prop "$ports_node" "#size-cells" 0 int $dts_file
-        add_prop "$broad_node" "compatible" "$compatible" string $dts_file
-        set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
-        set broad 16
-        foreach intf $master_intf {
-		set connectnextip [get_connected_stream_ip [hsi::get_cells -hier $ip] "M01_AXIS"]
-		if {[hsi get_property IP_NAME $connectnextip] in { "v_smpte_uhdsdi_tx_ss" }} {
-			# UHD SDI TX SS after broadcaster is legal only in baremetal use case.
-			# So break the loop here.
-			break
-		}
-		set connectnextip [get_connected_stream_ip [hsi::get_cells -hier $ip] $intf]
+    set broad_node [create_node -n "axis_broadcaster$ip" -l $ip -u 0 -p $bus_node -d $dts_file]
+    set ports_node [create_node -n "ports" -l axis_broadcaster_ports$ip -p $broad_node -d $dts_file]
+    add_prop "$ports_node" "#address-cells" 1 int $dts_file
+    add_prop "$ports_node" "#size-cells" 0 int $dts_file
+    add_prop "$broad_node" "compatible" "$compatible" string $dts_file
+    set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
 
-
-
-
-		if {[llength $connectnextip]} {
-			set connectnextip [ignore_axis_ila $connectnextip]
-			set ip_mem_handles [hsi::get_mem_ranges $connectnextip]
-			if {![llength $ip_mem_handles]} {
-				set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $connectnextip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
-				set connectnextip [get_connected_stream_ip [hsi::get_cells -hier $connectnextip] $master_intf]
-				if {[llength $connectnextip]} {
-					set connectnextip [ignore_axis_ila $connectnextip]
-					set ip_mem_handles [hsi::get_mem_ranges $connectnextip]
-					if {![llength $ip_mem_handles]} {
-						set master2_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $connectnextip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
-						set connectnextip [get_connected_stream_ip [hsi::get_cells -hier $connectnextip] $master2_intf]
-						if {[llength $connectnextip]} {
-							set connectnextip [ignore_axis_ila $connectnextip]
-							set ip_mem_handles [hsi::get_mem_ranges $connectnextip]
-							if {![llength $ip_mem_handles]} {
-								set master3_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $connectnextip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
-								set connectnextip [get_connected_stream_ip [hsi::get_cells -hier $connectnextip] $master3_intf]
-							}
-						}
-					}
-				}
-			}
-		}
+    foreach intf $master_intf {
+        set connectip [get_connected_stream_ip [hsi::get_cells -hier $ip] $intf]
+        foreach conip $connectip {
+            set next_valid_ip [check_next_mem_ip $conip]
+            if {[llength $next_valid_ip]} {
+                set valid_ip_name [get_ip_property $next_valid_ip IP_NAME]
                 incr count
-		set connectnextip_ip_name [get_ip_property $connectnextip IP_NAME]
-		set valid_mmip_list "v_tpg v_demosaic v_gamma_lut v_proc_ss v_frmbuf_wr v_mix v_multi_scaler v_scenechange v_hdmi_tx_ss v_hdmi_txss1 v_uhdsdi_audio v_smpte_uhdsdi_tx_ss audio_formatter visp_ss i2s_receiver i2s_transmitter mipi_dsi_tx_subsystem ISPPipeline_accel"
-		if {[lsearch  -nocase $valid_mmip_list $connectnextip_ip_name] >= 0} {
-			if {$connectnextip_ip_name == "visp_ss"} {
-				set remote_endpoint_ref [get_visp_remote_endpoint_suffix $connectnextip $ip $intf]
-			} else {
-				set remote_endpoint_ref $connectnextip
-			}
-			set port_node [create_node -n "port" -l axis_broad_port$count$ip -u $count -p $ports_node -d $dts_file]
-			add_prop "$port_node" "reg" $count int $dts_file
-			set axis_node [create_node -n "endpoint" -l axis_broad_out$count$ip -p $port_node -d $dts_file]
-			add_prop "$axis_node" "remote-endpoint" $remote_endpoint_ref$ip reference $dts_file
-			set addbroadip "1"
-			if {[hsi get_property IP_NAME $connectnextip] in { "v_scenechange" "v_frmbuf_wr" }} {
-				set addbroadip ""
-			}
-			if {[llength $addbroadip]} {
-				gen_broad_endpoint_port$count $ip "axis_broad_out$count$ip"
-				gen_broad_remoteendpoint_port$count $ip $remote_endpoint_ref$ip
-			}
-			append inputip " " $connectnextip
-			append outip " " $connectnextip$ip
-		} else {
-			puts "PG ... INFO: Custom IP has been detected : $connectnextip_ip_name - Skipping it"
-		}
-	}
-	if {[string match -nocase [hsi::get_property IP_NAME $connectnextip] "v_frmbuf_wr"]} {
-		gen_broad_frmbuf_wr_node $inputip $outip $ip $count $dts_file
-	}
+
+                set valid_mmip_list "v_tpg v_demosaic v_gamma_lut v_proc_ss v_frmbuf_wr v_mix v_multi_scaler v_scenechange v_hdmi_tx_ss v_hdmi_txss1 v_uhdsdi_audio v_smpte_uhdsdi_tx_ss audio_formatter visp_ss i2s_receiver i2s_transmitter mipi_dsi_tx_subsystem ISPPipeline_accel"
+                if {[lsearch  -nocase $valid_mmip_list $valid_ip_name] >= 0} {
+                    if {$valid_ip_name == "visp_ss"} {
+                        set remote_endpoint_ref [get_visp_remote_endpoint_suffix $next_valid_ip $ip $intf]
+                    } else {
+                        set remote_endpoint_ref $next_valid_ip
+                    }
+
+                    set port_node [create_node -n "port" -l axis_broad_port$count$ip -u $count -p $ports_node -d $dts_file]
+                    add_prop "$port_node" "reg" $count int $dts_file
+                    set axis_node [create_node -n "endpoint" -l axis_broad_out$count$ip -p $port_node -d $dts_file]
+                    add_prop "$axis_node" "remote-endpoint" $remote_endpoint_ref$ip reference $dts_file
+                    set addbroadip "1"
+                    if {[hsi get_property IP_NAME $next_valid_ip] in { "v_scenechange" "v_frmbuf_wr" }} {
+                        set addbroadip ""
+                    }
+                    if {[llength $addbroadip]} {
+                        gen_broad_endpoint_port$count $ip "axis_broad_out$count$ip"
+                        gen_broad_remoteendpoint_port$count $ip $remote_endpoint_ref$ip
+                    }
+                    append inputip " " $next_valid_ip
+                    append outip " " $next_valid_ip$ip
+                } else {
+                    puts "INFO: Custom IP has been detected : $valid_ip_name - Skipping it"
+                }
+            } else {
+                puts "INFO: No valid memory mapped IP found after broadcaster $ip"
+                continue
+            }
+
+            if {[string match -nocase [hsi get_property IP_NAME $next_valid_ip] "v_frmbuf_wr"]} {
+		        gen_broad_frmbuf_wr_node $inputip $outip $ip $count $dts_file
+	        }
+        }
+    }
 }
 
     proc gen_broad_frmbuf_wr_node {inputip outip drv_handle count dts_file} {
@@ -691,10 +668,14 @@ proc gen_broadcaster {ip dts_file} {
                         continue
                     }
                     set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $connectip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
+                    if {[string match -nocase [hsi get_property IP_NAME $connectip] "axis_broadcaster"]} {
+                        return $connectip
+                    }
                     get_in_connect_ip $connectip $master_intf
                 }
             }
         }
+
         return $connectip
     }
 
