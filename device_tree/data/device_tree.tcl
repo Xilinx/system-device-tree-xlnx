@@ -1174,6 +1174,9 @@ proc gen_board_info {} {
 		"xc2vp3602" {
 			set variant "Versal_2VP"
 		}
+		"xc2vp3202" {
+			set variant "Versal_2VP_P"
+		}
 	}
 
 	if {![string_is_empty $variant]} {
