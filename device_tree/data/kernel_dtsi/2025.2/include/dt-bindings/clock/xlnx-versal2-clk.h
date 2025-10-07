@@ -29,7 +29,9 @@
 #define GPU_REF		0xDB
 #define MMI_AUX0_REF	0xDC
 #define PS_AXI_DMA	0xDD
-#define AUX1_REF	0xDF
+#define MMI_AUX1_REF	0xDF
 #define MMI_GEM_HCLK	0xE0
+#define DC_REF		0xE2
+#define DC_27M		0xE3
 
 #endif
