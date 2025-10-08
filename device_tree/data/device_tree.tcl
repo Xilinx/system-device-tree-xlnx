@@ -462,6 +462,7 @@ proc set_dt_param args {
 					if {[string tolower [file extension $board_dts_file]] eq ".dtsi"} {
 						error "ERROR: board_dts expects file name without .dtsi extension. Please update"
 					}
+					set_sdt_default_repo
 					set common_file "$env(CUSTOM_SDT_REPO)/device_tree/data/config.yaml"
 					set kernel_ver [get_user_config $common_file -kernel_ver]
 					set kernel_dtsi [file normalize "$env(CUSTOM_SDT_REPO)/device_tree/data/kernel_dtsi/$kernel_ver/BOARD"]
