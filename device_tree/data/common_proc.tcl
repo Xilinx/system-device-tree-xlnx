@@ -5258,8 +5258,16 @@ proc gen_mb_interrupt_property {cpu_handle {intr_port_name ""}} {
 		set intf_pins [::hsi::get_intf_pins -of_objects $intc]
 		foreach intp $intf_pins {
 			set connectip [get_connected_stream_ip [hsi::get_cells -hier $intc] $intp]
-			if { [is_intr_cntrl $connectip] == 1 } {
-				set intc $connectip
+			# For TMR designs, there can be interrupts going to comparator IP blocks of TMR
+			# which are not really a source of INTERRUPTS for Software but are shown as INTERRUPT
+			# pins in the design. Loop over all the connected pins and break when a controller is
+			# found. Before encountering this design, connectip was always returning single
+			# instance for all the known designs.
+			foreach entry $connectip {
+				if { [is_intr_cntrl $entry] == 1 } {
+					set intc $entry
+					break
+				}
 			}
 		}
 	}
