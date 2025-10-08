@@ -128,6 +128,7 @@ proc mipi_dsi_tx_ss_update_endpoints {drv_handle} {
         set node [get_node $drv_handle]
         set subsystem_base_addr [get_baseaddr $drv_handle]
         set dts_file [set_drv_def_dts $drv_handle]
+        set dphy_en_reg_if [hsi get_property CONFIG.DPHY_EN_REG_IF [hsi::get_cells -hier $drv_handle]]
 
         #Example :
         #hsi::get_cells -hier -filter {IP_NAME==mipi_dsi2_tx_ctrl}
@@ -139,6 +140,12 @@ proc mipi_dsi_tx_ss_update_endpoints {drv_handle} {
         dict set ip_subcores "mipi_dphy" "dphy"
 
         foreach ip [dict keys $ip_subcores] {
+            if { $ip eq "mipi_dphy"} {
+                if {[string match -nocase "false" $dphy_en_reg_if]} {
+                    puts "INFO: skipping dphy instance creation as dphy_en_reg_if is false"
+                    continue
+                }
+            }
             set ip_handle [set_ip_handles_for_ss_subcores $ip $drv_handle]
             set ip_prefix [dict get $ip_subcores $ip]
             if {![string_is_empty $ip_handle]} {
