@@ -92,8 +92,10 @@ proc mipi_dsi_tx_ss_update_endpoints {drv_handle} {
                         continue
                     }
                     set inip [get_in_connect_ip $inip $master_intf]
-                    if {[string match -nocase [hsi get_property IP_NAME $inip] "v_frmbuf_rd"]} {
-                        gen_frmbuf_rd_node $inip $drv_handle $port_node $dts_file
+                    if {[llength $inip]} {
+                        if {[string match -nocase [hsi get_property IP_NAME $inip] "v_frmbuf_rd"]} {
+                            gen_frmbuf_rd_node $inip $drv_handle $port_node $dts_file
+                        }
                     }
                 }
             }
@@ -116,6 +118,8 @@ proc mipi_dsi_tx_ss_update_endpoints {drv_handle} {
             if {[llength $dsitx_in_end]} {
                 add_prop "$dsitx_node" "remote-endpoint" $dsitx_in_end reference $dts_file
             }
+        } else {
+            puts "No valid input source connected to $drv_handle ..check your design"
         }
 
     }
