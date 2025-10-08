@@ -381,26 +381,25 @@ proc set_memmap args {
 	set mem_ip [lindex $args 0]
 	set proc_ip [lindex $args 1]
 	set val [lindex $args 2]
-	if {[catch {dict for {memory procs} $memmap {}} msg]} {
-		dict set memmap $mem_ip $proc_ip $val
-	} else {
-		dict for {memory procs} $memmap {
-			if {[string match -nocase $memory $mem_ip]} {
-			        dict with procs {
-					if {[dict exists $memmap $memory $proc_ip]} {
-						if {[catch {set value [dict get $procs $proc_ip]} msg]} {
-							dict set memmap $mem_ip $proc_ip $val
-						} elseif { $value ne $val } {
-							dict set memmap $mem_ip $proc_ip "$value , $val"
-						}
-					} else {
-						dict set memmap $mem_ip $proc_ip $val
-					}
-        			}
-			} else {
-				dict set memmap $mem_ip $proc_ip $val
-			}
+
+	# Initialize memmap if it doesn't exist
+	if {[catch {dict size $memmap}]} {
+		set memmap [dict create]
+	}
+
+	# Check if this memory entry already exists
+	if {[dict exists $memmap $mem_ip $proc_ip]} {
+		set existing_val [dict get $memmap $mem_ip $proc_ip]
+		set list_existing_val [::textutil::split::splitx $existing_val " , "]
+
+		# Only append if the new value is different
+		if {!($val in $list_existing_val)} {
+			set combined_val "$existing_val , $val"
+			dict set memmap $mem_ip $proc_ip $combined_val
 		}
+	} else {
+		# New entry - just set it
+		dict set memmap $mem_ip $proc_ip $val
 	}
 }
 
