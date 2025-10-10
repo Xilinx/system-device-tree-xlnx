@@ -65,6 +65,7 @@
             axi_ethernet_generate_reg_property $node $ip_mem_handles $num
             set num_cores [hsi get_property CONFIG.NUM_OF_CORES [hsi::get_cells -hier $drv_handle]]
         }
+        lappend xxv_list "$node"
         set new_label ""
         set clk_label ""
         set connected_ip ""
@@ -80,6 +81,7 @@
                     append new_label $drv_handle "_" $core
                     append clk_label $drv_handle "_" $core
                     set eth_node [create_node -n "ethernet" -l "$new_label" -u $base_addr -d $dts_file -p $bus_node]
+                    lappend xxv_list "$eth_node"
                     add_prop $eth_node "status" "okay" string $dts_file
                     axi_ethernet_generate_reg_property $eth_node $ip_mem_handles $core
                 }
@@ -408,8 +410,8 @@
 		    add_prop $node "xlnx,channel-ids" $id intlist "pl.dtsi"
 		if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g"))
             && $core!= 0 && [llength $eth_node]} {
-			add_prop $eth_node "xlnx,num-queues" $numqueues stringlist $dts_file
-			add_prop $eth_node "xlnx,channel-ids" $id stringlist $dts_file
+			add_prop $eth_node "xlnx,num-queues" $numqueues noformating $dts_file
+			add_prop $eth_node "xlnx,channel-ids" $id intlist $dts_file
 		}
                 set ipnode [get_node $target_handle]
                 set values [pldt getall $ipnode]
@@ -671,22 +673,31 @@
                 axi_ethernet_gen_drv_prop_eth_ip $drv_handle $eth_node
         }
         gen_dev_ccf_binding $drv_handle "s_axi_aclk"
-        }
 
         set eoe_tcl_file "$path/axi_eoe/data/axi_eoe.tcl"
         if {[file exists $eoe_tcl_file]} {
             source $eoe_tcl_file
-            set eoe_ip [hsi::get_cells -hier -filter {IP_NAME == ethernet_offload}]
-            if {[llength $eoe_ip]} {
-                set mcdma_ip [hsi::get_cells -hier -filter {IP_NAME == axi_mcdma}]
-                set eth_dma [hsi get_property CONFIG.C_ETHERNET_DMA $mcdma_ip]
-                if {[string compare -nocase $eth_dma 1] == 0} {
-                    axi_eoe_generate $eoe_ip $node $dts_file
-                } else {
-                    error "ERROR: Ethernet Offload is not Supported"
-                }
+            set tx_pin "axis_tx_$core"
+            set fifo_periph [get_connected_stream_ip [hsi get_cells -hier $eth_ip] $tx_pin]
+            if {[llength $fifo_periph]} {
+                 if {[hsi get_property IP_NAME [hsi::get_cells -hier $fifo_periph]] == "axis_data_fifo"} {
+                       set eoe_ip [get_connected_stream_ip [hsi get_cells -hier $fifo_periph] "S_AXIS"]
+                       if {[hsi get_property IP_NAME [hsi::get_cells -hier $eoe_ip]] == "ethernet_offload"} {
+                             set mcdma_ip [get_connected_stream_ip [hsi get_cells -hier $eoe_ip] "s2mm_axis"]
+                             set eth_dma [hsi get_property CONFIG.C_ETHERNET_DMA $mcdma_ip]
+                             if {$eth_dma == 1} {
+                                 set target_node [expr {$core == 0 ? $node : [lindex $xxv_list $core]}]
+                                 if {[info exists target_node] && $target_node ne ""} {
+                                      axi_eoe_generate $eoe_ip $target_node $dts_file
+                                 } else {
+                                      error "ERROR: Ethernet Offload is not Supported"
+                                 }
+                             }
+                       }
+                 }
             }
         }
+      }
     }
 
     proc axi_ethernet_pcspma_phy_node {slave} {
