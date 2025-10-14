@@ -6118,6 +6118,19 @@ proc set_hier_info {drv_handle} {
 	}
 }
 
+# FIXME: Above proc seems to be not working. Replace that with new proc.
+# Keep the proc for this release to avoid unforeseen usages.
+proc set_updated_hier_info {hier_mapped_drv_list} {
+	foreach drv_handle $hier_mapped_drv_list {
+		set node [get_node $drv_handle]
+		if {$node == ""} {
+			continue
+		} else {
+			add_prop $node "xlnx,is-hierarchy" boolean [set_drv_def_dts $drv_handle]
+		}
+	}
+}
+
 proc gen_drv_prop_from_ip {drv_handle} {
 	# check if we should generating the ip properties or not
 	set ip_name [get_ip_property $drv_handle IP_NAME] 

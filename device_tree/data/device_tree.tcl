@@ -2098,6 +2098,7 @@ proc proc_mapping {} {
 	global 64_bit_processor_list
 	global pmc_ip_names
 	global plm_supported_ips
+	set hier_mapped_drv_list [list]
 	set proctype [get_hw_family]
 	set default_dts "system-top.dts"
 	set overall_periph_list [hsi::get_cells -hier]
@@ -2141,7 +2142,11 @@ proc proc_mapping {} {
 					CONFIG.C_S_AXI_CTRL_BASEADDR=~0x* || \
 					CONFIG.AXI_CTRL_BASEADDR=~0x*
 				)"
-			append periph_list " [hsi::get_cells -hier -filter $hier_mem_filter]"
+			set proc_specific_hier_mapped_drv_list [hsi::get_cells -hier -filter $hier_mem_filter]
+			if {![string_is_empty $proc_specific_hier_mapped_drv_list]} {
+				append periph_list " $proc_specific_hier_mapped_drv_list"
+				set hier_mapped_drv_list [::struct::set union $hier_mapped_drv_list $proc_specific_hier_mapped_drv_list]
+			}
 		}
 		foreach periph $periph_list {
 			# There can be a custom IP which is appearing in the output of get_mem_ranges
@@ -2350,6 +2355,8 @@ proc proc_mapping {} {
 		}
 	    #}]"
 		
+	}
+	if {[catch [set_updated_hier_info $hier_mapped_drv_list] msg]} {
 	}
 }
 
