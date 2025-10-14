@@ -113,6 +113,12 @@ proc generate_pmc_dt {xsa dir} {
 	# Get all the memory objects mapped to PMC
 	set pmc_mapped_handles [hsi get_mem_ranges -of_objects $pmc_proc_handle]
 
+	if {[string_is_empty $pmc_mapped_handles]} {
+		error "ERROR: There is no IP mapped to the PMC processor instance $pmc_proc_handle. \n\
+                   \[hsi get_mem_ranges -of_objects \[hsi get_cells -hier $pmc_proc_handle\]\] command returned no mapping.\
+                    Please check your design."
+	}
+
 	# If some driver tcl (e.g. trngpsx) needs to write user defined nodes, they will be using amba
 	# bus as parent node. That node needs to be created explicitly, in common flow it is part of APU TCLs
 	pcwdt insert root end "&amba"
