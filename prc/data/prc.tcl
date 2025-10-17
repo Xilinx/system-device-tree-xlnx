@@ -22,13 +22,13 @@
             set path $env(CUSTOM_SDT_REPO)
         set node [get_node $drv_handle] 
         set dts_file [set_drv_def_dts $drv_handle]
-            #set drvname [get_drivers $drv_handle] 
+        set drvname [get_drivers $drv_handle]
      
             #set api_file "$path/$drvname/data/api.tcl" 
             #if {[file exists $common_file]} { 
             #        source $api_file 
             #}
-            source [file join $path "api.tcl"]
+        rdi::source [file join $path "prc" "data" "api.tcl"]
 	pldt append $node compatible "\ \, \"xlnx,dfx-controller\""
 
         set ip [hsi::get_cells -hier $drv_handle]
@@ -74,7 +74,7 @@
                         append prcinfo " " $num_rms
                 }
         }
-        add_prop $node "num-rms" $prcinfo int $dts_file
+        add_prop $node "num-rms" $prcinfo intlist $dts_file
 
         set prcinfo ""
         for {set vs_id 0} {$vs_id < $num_vs} { incr vs_id} {
@@ -86,7 +86,7 @@
                         append prcinfo " " $num_rms_alloc
                 }
         }
-        add_prop $node "num-rms-alloc" $prcinfo int $dts_file
+        add_prop $node "num-rms-alloc" $prcinfo intlist $dts_file
         set prcinfo ""
         for {set vs_id 0} {$vs_id < $num_vs} { incr vs_id} {
                 set vs_name [prc_v1_2::priv::get_vs_name configuration $vs_id]
@@ -97,7 +97,7 @@
                         append prcinfo " " $num_trger_alloc
                 }
         }
-        add_prop $node "num-trigger-alloc" $prcinfo int $dts_file
+        add_prop $node "num-trigger-alloc" $prcinfo intlist $dts_file
         set prcinfo ""
         for {set vs_id 0} {$vs_id < $num_vs} { incr vs_id} {
                 set vs_name [prc_v1_2::priv::get_vs_name configuration $vs_id]
@@ -108,7 +108,7 @@
                         append prcinfo " " $strt_in_shtdwn
                 }
         }
-        add_prop $node "start-in-shutdown" $prcinfo int $dts_file
+        add_prop $node "start-in-shutdown" $prcinfo intlist $dts_file
         set prcinfo ""
         for {set vs_id 0} {$vs_id < $num_vs} { incr vs_id} {
                 set vs_name [prc_v1_2::priv::get_vs_name configuration $vs_id]
@@ -119,7 +119,7 @@
                         append prcinfo " " $shtdwn_on_err
                 }
         }
-        add_prop $node "shutdown-on-err" $prcinfo int $dts_file
+        add_prop $node "shutdown-on-err" $prcinfo intlist $dts_file
         set prcinfo ""
         for {set vs_id 0} {$vs_id < $num_vs} { incr vs_id} {
                 set vs_name [prc_v1_2::priv::get_vs_name configuration $vs_id]
@@ -130,7 +130,7 @@
                         append prcinfo " " $has_por_rm
                 }
         }
-        add_prop $node "has-por-rm" $prcinfo int $dts_file
+        add_prop $node "has-por-rm" $prcinfo intlist $dts_file
         set prcinfo ""
         for {set vs_id 0} {$vs_id < $num_vs} { incr vs_id} {
                 set vs_name [prc_v1_2::priv::get_vs_name configuration $vs_id]
@@ -142,7 +142,7 @@
                         append prcinfo " " $rm_id
                 }
         }
-        add_prop $node "por-rm" $prcinfo int $dts_file
+        add_prop $node "por-rm" $prcinfo intlist $dts_file
         set prcinfo ""
         for {set vs_id 0} {$vs_id < $num_vs} { incr vs_id} {
                 set vs_name [prc_v1_2::priv::get_vs_name configuration $vs_id]
@@ -153,7 +153,7 @@
                         append prcinfo " " $has_axs_status
                 }
         }
-        add_prop $node "has-axis-status" $prcinfo int $dts_file
+        add_prop $node "has-axis-status" $prcinfo intlist $dts_file
         set prcinfo ""
         for {set vs_id 0} {$vs_id < $num_vs} { incr vs_id} {
                 set vs_name [prc_v1_2::priv::get_vs_name configuration $vs_id]
@@ -164,7 +164,7 @@
                         append prcinfo " " $has_axs_control
                 }
         }
-        add_prop $node "has-axis-control" $prcinfo int $dts_file
+        add_prop $node "has-axis-control" $prcinfo intlist $dts_file
         set prcinfo ""
         for {set vs_id 0} {$vs_id < $num_vs} { incr vs_id} {
                 set vs_name [prc_v1_2::priv::get_vs_name configuration $vs_id]
@@ -175,7 +175,7 @@
                         append prcinfo " " $skp_rm_strtup_aft_rst
                 }
         }
-        add_prop $node "skip-rm-startup-after-reset" $prcinfo int $dts_file
+        add_prop $node "skip-rm-startup-after-reset" $prcinfo intlist $dts_file
         set prcinfo ""
         for {set vs_id 0} {$vs_id < $num_vs} { incr vs_id} {
                 set vs_name [prc_v1_2::priv::get_vs_name configuration $vs_id]
@@ -186,13 +186,13 @@
                         append prcinfo " " $num_hw_trgers
                 }
         }
-        add_prop $node "num-hw-triggers" $prcinfo int $dts_file
+        add_prop $node "num-hw-triggers" $prcinfo intlist $dts_file
         add_prop $node "vsm-msb" $C_VSM_SELECT_MSB int $dts_file
-        add_prop $node "vsm-lsb" $C_VSM_SELECT_MSB int $dts_file
-        add_prop $node "bank-msb"  $C_VSM_SELECT_MSB int $dts_file
-        add_prop $node "banl-lsb" $C_VSM_SELECT_MSB int $dts_file
-        add_prop $node "reg-select-msb" $C_VSM_SELECT_MSB int $dts_file
-        add_prop $node "reg-select-lsb" $C_VSM_SELECT_MSB int $dts_file
+        add_prop $node "vsm-lsb" $C_VSM_SELECT_LSB int $dts_file
+        add_prop $node "bank-msb"  $C_TABLE_SELECT_MSB int $dts_file
+        add_prop $node "bank-lsb" $C_TABLE_SELECT_LSB int $dts_file
+        add_prop $node "reg-select-msb" $C_REG_SELECT_MSB int $dts_file
+        add_prop $node "reg-select-lsb" $C_REG_SELECT_LSB int $dts_file
     }
 
 
