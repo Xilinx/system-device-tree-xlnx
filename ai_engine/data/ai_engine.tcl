@@ -28,7 +28,7 @@
 		set power_domain_family "versal_firmware"
 	}
 
-        #set default values for S80 device
+        #set default values
         set hw_gen "AIE"
         set aie_rows_start 1
         set aie_rows_num 8
