@@ -991,6 +991,7 @@
 			interrupt-parent = <&imux>;
 			interrupts = <0 164 4>, <0 164 4>, <0 164 4>, <0 164 4>;
 			clock-names = "pclk", "hclk", "tx_clk", "tsu_clk";
+			dma-coherent;
 		};
 
 		gpio0: gpio@f1a50000 {
