@@ -15,7 +15,11 @@
 
     proc cpu_cortexa72_generate {drv_handle} {
         global dtsi_fname
+        global is_versal_2vp_platform
         set dtsi_fname "versal/versal.dtsi"
+        if {$is_versal_2vp_platform} {
+                set dtsi_fname "versal/versal2vp.dtsi"
+        }
         update_system_dts_include [file tail ${dtsi_fname}]
         update_system_dts_include "versal-clk.dtsi"
         set bus_name "amba"

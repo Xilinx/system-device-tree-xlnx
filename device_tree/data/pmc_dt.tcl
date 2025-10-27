@@ -253,6 +253,7 @@ proc set_soc_dtsi {} {
         global design_family
 	global is_versal_net_platform
 	global is_versal_2ve_2vm_platform
+	global is_versal_2vp_platform
 	global platform_name ""
 	if {$design_family == "versal"} {
 		if { $is_versal_net_platform } {
@@ -269,6 +270,9 @@ proc set_soc_dtsi {} {
 		}
 
 		set dtsi_fname "${platform_name}/${platform_name}.dtsi"
+		if {$is_versal_2vp_platform} {
+			set dtsi_fname "${platform_name}/versal2vp.dtsi"
+		}
 		update_system_dts_include [file tail ${dtsi_fname}]
 	}
 	if {[string_is_empty $platform_name]} {

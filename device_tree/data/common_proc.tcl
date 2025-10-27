@@ -425,6 +425,7 @@ proc set_hw_family {proclist} {
 	global is_versal_net_platform
 	global is_versal_2ve_2vm_platform
 	global is_versal_2ve_2vm_small_platform
+	global is_versal_2vp_platform
 	global apu_proc_ip
 	set apu_proc_ip ""
 	set design_family ""
@@ -433,6 +434,8 @@ proc set_hw_family {proclist} {
 	set is_versal_net_platform 0
 	set is_versal_2ve_2vm_platform 0
 	set is_versal_2ve_2vm_small_platform 0
+	set is_versal_2vp_platform 0
+	set part_num [hsi get_property DEVICE [hsi::current_hw_design]]
 	foreach procperiph $proclist {
 		set proc_drv_handle [hsi::get_cells -hier $procperiph]
         	set ip_name [hsi get_property IP_NAME $proc_drv_handle]
@@ -453,6 +456,9 @@ proc set_hw_family {proclist} {
 				set design_family "versal"
 				set ps_design 1
 				set apu_proc_ip "psv_cortexa72"
+				if {$part_num in {"xc2vp3602" "xc2vp3202"}} {
+					set is_versal_2vp_platform 1
+				}
 			} "psu_cortexa53" {
 				set design_family "zynqmp"
 				set ps_design 1
@@ -3228,6 +3234,7 @@ proc add_driver_prop {drv_handle dt_node prop} {
 proc gen_ps_mapping {} {
 	global is_versal_net_platform
 	global is_versal_2ve_2vm_platform
+	global is_versal_2vp_platform
 	set family [get_hw_family]
 	set def_ps_mapping [dict create]
 	if {[string match -nocase $family "versal"]} {
@@ -3495,7 +3502,11 @@ proc gen_ps_mapping {} {
 			dict set def_ps_mapping ff0f0000 label "ttc1: timer"
 			dict set def_ps_mapping ff100000 label "ttc2: timer"
 			dict set def_ps_mapping ff110000 label "ttc3: timer"
-			dict set def_ps_mapping f0280000 label "iomodule0: iomodule"
+			if {$is_versal_2vp_platform} {
+				dict set def_ps_mapping f0300000 label "iomodule0: iomodule"
+			} else {
+				dict set def_ps_mapping f0280000 label "iomodule0: iomodule"
+			}
 			dict set def_ps_mapping ff9d0000 label "usb0: usb"
 			dict set def_ps_mapping fe200000 label "dwc3_0: dwc3"
 			dict set def_ps_mapping f0800000 label "coresight: coresight"
