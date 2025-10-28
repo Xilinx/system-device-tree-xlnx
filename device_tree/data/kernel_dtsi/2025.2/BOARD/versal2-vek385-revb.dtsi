@@ -25,10 +25,10 @@
 		ranges;
 
 		/* TF-A, TEE, RPUs */
-		res: memory@0 {
+		/*res: memory@0 {
 			no-map;
 			reg = <0 0 0 0x20000000>;
-		};
+		};*/
 	};
 
 	pwm-fan {
