@@ -1173,7 +1173,9 @@ proc gen_board_info {} {
 	}
 
 	switch $device {
-		"xc2vp3602" {
+		"xc2vp3602" -
+		"xc2vp3502" -
+		"xc2vp3402" {
 			set variant "Versal_2VP"
 		}
 		"xc2vp3202" {
