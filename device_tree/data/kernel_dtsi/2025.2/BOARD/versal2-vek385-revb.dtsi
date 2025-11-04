@@ -78,6 +78,10 @@
 	};
 };
 
+&ufshc { /* PMC_MIO24-25 */
+	dma-coherent;
+};
+
 &usb1 { /* PMC_MIO27-39 */
 	dma-coherent;
 };
