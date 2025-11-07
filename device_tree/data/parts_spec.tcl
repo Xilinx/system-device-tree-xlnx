@@ -29,6 +29,7 @@ proc part_specific_init_proclist {} {
 proc part_specific_ps_mapping {def_ps_mapping} {
 	global is_versal_2ve_2vm_seio_platform
 	if {$is_versal_2ve_2vm_seio_platform} {
+		dict unset def_ps_mapping ed000000
 		dict set def_ps_mapping ed010000 label spi0_seio
 		dict set def_ps_mapping ed020000 label spi1_seio
 		dict set def_ps_mapping ed030000 label spi2_seio
