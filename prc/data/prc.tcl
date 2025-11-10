@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2020-2021 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -193,6 +193,15 @@
         add_prop $node "bank-lsb" $C_TABLE_SELECT_LSB int $dts_file
         add_prop $node "reg-select-msb" $C_REG_SELECT_MSB int $dts_file
         add_prop $node "reg-select-lsb" $C_REG_SELECT_LSB int $dts_file
+        for {set vs_id 0} {$vs_id < $num_vs} { incr vs_id} {
+                set vs_name [prc_v1_2::priv::get_vs_name configuration $vs_id]
+                add_prop $node ${vs_name}_id $vs_id int $dts_file
+
+                for {set rm_id 0} {$rm_id < $num_rms} {incr rm_id} {
+                        set rm_name [prc_v1_2::priv::get_rm_name configuration $vs_name $rm_id]
+                        add_prop $node ${vs_name}_${rm_name}_id $rm_id int $dts_file
+                }
+        }
     }
 
 
