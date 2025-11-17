@@ -15,6 +15,7 @@ Required Arguments:
     -dir              Directory where the dt files will be generated
 
 Optional Arguments:
+    -list_boards      List all the board specific files in system device tree
     -board_dts        board specific file
     -user_dts         DTS file to be include into final device tree
     -debug            enable SDTGen debug (enable/disable, default: disable)
@@ -31,6 +32,7 @@ Optional Arguments:
 
 Examples:
     sdtgen -xsa system.xsa -dir sdt_outdir
+    sdtgen -list_boards "zcu102-*"
     sdtgen -xsa system.xsa -dir sdt_outdir -board_dts zcu102-rev1.0
     sdtgen -xsa system.xsa -dir sdt_outdir -domain pmc
     sdtgen -xsa system.xsa -dir sdt_outdir -board_dts zcu102-rev1.0 -user_dts ./user1.dtsi ./user2.dtsi -trace enable -debug enable

@@ -363,6 +363,7 @@ proc print_usage args {
             -debug            Enable DTG++ debug
             -trace            Enable DTG++ traces
             -zocl             Create zocl node in device tree. Possible options: enable/disable. Default option: disable
+            -list_boards      List all the board specific files available in SDT
 	}
         return $help_str
 }
@@ -427,6 +428,30 @@ proc get_yaml_dict { config_file } {
                 error "YAML:: No such file $config_file"
         }
 	return [yaml::yaml2dict $data]
+}
+
+proc list_board_files {{pattern ""}} {
+    global env
+    set path [set_sdt_default_repo]
+    set common_file "$path/device_tree/data/config.yaml"
+    set kernel_ver [get_user_config $common_file -kernel_ver]
+    set board_dir [file normalize "$path/device_tree/data/kernel_dtsi/${kernel_ver}/BOARD"]
+    if {![file isdirectory $board_dir]} {
+        error "Error: Cannot retrieve the board_dir. $board_dir does not exist."
+    }
+
+    set files [glob -nocomplain -types f -directory $board_dir -tails *]
+    if {$pattern eq ""} {
+        return [lsort -dictionary $files]
+    }
+
+    set results {}
+    foreach f [lsort -dictionary $files] {
+        if {[regexp -nocase -- $pattern $f]} {
+            lappend results $f
+        }
+    }
+    return $results
 }
 
 proc set_dt_param args {
@@ -531,6 +556,14 @@ proc set_dt_param args {
 					}
 					set env(verbose) $verbose
 				}
+				-list_boards {
+					set pattern [expr {[llength $args] > 1 ? [lindex $args 1] : ""}]
+					foreach board_file [list_board_files $pattern] {
+						puts $board_file
+					}
+					# Flag that we only want to list boards; generation should be skipped.
+					set env(list_boards_only) 1
+				}
                                 -trace {
 					set trace [Pop args 1]
 					if {!($trace in {"enable" "disable"})} {
@@ -588,12 +621,17 @@ proc get_dt_param args {
 		if {[catch {set val $env(user_dts)} msg ]} {}
 	} -include_dts {
 		if {[catch {set val $env(user_dts)} msg ]} {}
+	} -list_boards {
+               set pattern [expr {[llength $args] > 1 ? [lindex $args 1] : ""}]
+               foreach board_file [list_board_files $pattern] {
+                       puts $board_file
+               }
 	} -help {
 		set val [print_usage]
 	} default {
 		puts "unknown option $param"
 		set val [print_usage]
-	}
+		}
 	}
 	return $val
 }
@@ -1680,6 +1718,11 @@ Generates system device tree based on args given in:
         } 
 
 	global env
+	# If invoked only for listing boards, skip full generation (no XSA required).
+	# This allows command usage: sdtgen -list_boards "pattern" without -xsa.
+	if {[info exists env(list_boards_only)] && $env(list_boards_only)} {
+		return
+	}
 	set path [set_sdt_default_repo]
 	if {[catch {set path $env(CUSTOM_SDT_REPO)} msg]} {
 		set path "."

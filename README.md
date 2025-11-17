@@ -43,6 +43,10 @@ Takes the user inputs as command line arguments and generates the System Device 
   	specific DTSI file available at `<this
   	repo>/device_tree/data/kernel_dtsi/<release>/<board>` inside the
   	final SDT
+  * `-list_boards` : Lists all the static AMD&trade; development board
+	specific DTSI file available at `<this
+	repo>/device_tree/data/kernel_dtsi/<release>/<board>` inside the
+	final SDT
   * `-user_dts` : Includes a user defined custom `.dtsi` file inside the
   	final SDT 
 	* Can be used to workaround when SDTGen tool is generating
@@ -150,6 +154,7 @@ Note: sdtgen binary can be used in two ways as described below:
 #### Basic usage:
 ```bash
 sdtgen -xsa system.xsa -dir sdt_outdir
+sdtgen -list_boards
 sdtgen -xsa system.xsa -dir sdt_outdir -board_dts zcu102-rev1.0
 ```
 
@@ -273,6 +278,12 @@ sdtgen% set_dt_param -xsa system.xsa -dir sdt_outdir
 # into SDT output directory and add include statement in system-top.dts
 sdtgen% set_dt_param -board_dts zcu102-rev1.0
 
+# List board specific dtsi files from <SDT repo>/device_tree/data/kernel_dtsi/<release_version>/BOARD path
+# Below command lists all the board dtsi files in <SDT repo>/device_tree/data/kernel_dtsi/<release_version>/BOARD path that contain the given regex.
+sdtgen% set_dt_param -list_boards "zynqmp-zcu10*"
+zynqmp-zcu102-rev1.1.dtsi
+zynqmp-zcu106-rev1.0.dtsi
+
 # Include a user defined custom dtsi file inside the final SDT
 # Below command copies the custom.dtsi file into SDT output directory and add include statement in system-top.dts
 sdtgen% set_dt_param -user_dts <path>/custom.dtsi
@@ -304,6 +315,7 @@ sdtgen% set_dt_param -help
             -zocl             add zocl nodes for extended interrupts usecase
             -rm_xsa           pass partial hw design files for dfx use cases
             -domain           generate PMC domain specific device tree
+            -list_boards      List all the board specific files in system device tree
 
 # Combining everything in one command
 sdtgen% set_dt_param -xsa system.xsa -dir sdt_outdir -board_dts zcu102-rev1.0 -user_dts ./custom.dtsi -trace enable -debug enable -zocl enable -domain pmc
@@ -327,6 +339,7 @@ sdtgen% get_dt_param -help
             -zocl             add zocl nodes for extended interrupts usecase
             -rm_xsa           pass partial hw design files for dfx use cases
             -domain           generate PMC domain specific device tree
+            -list_boards      List all the board specific files in system device tree
 
 
 sdtgen% get_dt_param -board_dts
@@ -337,6 +350,10 @@ sdtgen% get_dt_param -xsa
 system.xsa
 sdtgen% get_dt_param -repo
 /home/abc/Xilinx/2025.2/Vitis/data/system-device-tree-xlnx
+sdtgen% get_dt_param -list_boards "zynqmp-zcu10*"
+zynqmp-zcu102-rev1.1.dtsi
+zynqmp-zcu106-rev1.0.dtsi
+
 ```
 ### generate_sdt
 Generates the system device tree with the set parameters. Usage:
