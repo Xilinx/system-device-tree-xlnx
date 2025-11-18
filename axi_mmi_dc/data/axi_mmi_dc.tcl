@@ -67,7 +67,9 @@
                 add_prop $node "xlnx,dc-stream0-pixel-mode" $stream0_pixel_mode string $dts_file
 
                 set stream0_sdp_en [hsi get_property CONFIG.C_DPDC_STREAM0_SDP_EN [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
-                add_prop $node "xlnx,dc-stream0-sdp-en" $stream0_sdp_en int $dts_file
+                if {$stream0_sdp_en == 1} {
+                        add_prop $node "xlnx,dc-stream0-sdp-en" boolean$dts_file
+                }
 
                 set stream1_mode [hsi get_property CONFIG.C_DPDC_STREAM1_MODE [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
                 if {$stream1_mode != "None"} {
@@ -78,7 +80,9 @@
                 add_prop $node "xlnx,dc-stream1-pixel-mode" $stream1_pixel_modde string $dts_file
 
                 set stream1_sdp_en [hsi get_property CONFIG.C_DPDC_STREAM1_SDP_EN [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
-                add_prop $node "xlnx,dc-stream1-sdp-en" $stream1_sdp_en int $dts_file
+                if {$stream1_sdp_en == 1} {
+                        add_prop $node "xlnx,dc-stream1-sdp-en" boolean $dts_file
+                }
 
                 set stream2_mode [hsi get_property CONFIG.C_DPDC_STREAM2_MODE [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
                 if {$stream2_mode != "None"} {
@@ -89,7 +93,9 @@
                 add_prop $node "xlnx,dc-stream2-pixel-mode" $stream2_pixel_mode string $dts_file
 
                 set stream2_sdp_en [hsi get_property CONFIG.C_DPDC_STREAM2_SDP_EN [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
-                add_prop $node "xlnx,dc-stream2-sdp-en" $stream2_sdp_en int $dts_file
+                if {$stream2_sdp_en == 1} {
+                        add_prop $node "xlnx,dc-stream2-sdp-en" boolean $dts_file
+                }
 
                 set stream3_mode [hsi get_property CONFIG.C_DPDC_STREAM3_MODE [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
                 if {$stream3_mode != "None"} {
@@ -100,7 +106,9 @@
                 add_prop $node "xlnx,dc-stream3-pixel-mode" $stream3_pixel_mode string $dts_file
 
                 set stream3_sdp_en [hsi get_property CONFIG.C_DPDC_STREAM3_SDP_EN [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
-                add_prop $node "xlnx,dc-stream3-sdp-en" $stream3_sdp_en int $dts_file
+                if {$stream3_sdp_en == 1} {
+                        add_prop $node "xlnx,dc-stream3-sdp-en" boolean $dts_file
+                }
         }
 
         # Set the status okay for mmi_dcdma using the mmi_dc drv_handle
