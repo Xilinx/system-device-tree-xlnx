@@ -43,10 +43,14 @@
                         }
 
                         set alpha_en [hsi get_property CONFIG.C_DC_LIVE_VIDEO_ALPHA_EN [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
-                        add_prop $node "xlnx,dc-live-video-alpha-en" $alpha_en int $dts_file
+                        if {$alpha_en == 1} {
+                                add_prop $node "xlnx,dc-live-video-alpha-en" boolean $dts_file
+                        }
 
                         set video_sdp_en [hsi get_property CONFIG.C_DC_LIVE_VIDEO_SDP_EN [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
-                        add_prop $node "xlnx,dc-live-video-sdp-en" $video_sdp_en int $dts_file
+                        if {$video_sdp_en == 1} {
+                                add_prop $node "xlnx,dc-live-video-sdp-en" boolean $dts_file
+                        }
                 }
         }
 
