@@ -22,23 +22,33 @@
 
         set operating_mode [hsi get_property CONFIG.C_DPDC_OPERATING_MODE [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
         add_prop $node "xlnx,dc-operating-mode" $operating_mode string $dts_file
+
         set pres_mode [hsi get_property CONFIG.C_DPDC_PRESENTATION_MODE [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
         add_prop $node "xlnx,dc-presentation-mode" $pres_mode string $dts_file
 
-        set video_sel [hsi get_property CONFIG.C_DC_LIVE_VIDEO_SELECT [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
-        add_prop $node "xlnx,dc-live-video-select" $video_sel string $dts_file
+        if {$operating_mode == "DC_Functional"} {
+                if {$pres_mode == "Live" || $pres_mode == "Mixed"} {
 
-        set video1_mode [hsi get_property CONFIG.C_DC_LIVE_VIDEO01_MODE [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
-        add_prop $node "xlnx,dc-live-video01-mode" $video1_mode string $dts_file
+                        set video_sel [hsi get_property CONFIG.C_DC_LIVE_VIDEO_SELECT [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
+                        add_prop $node "xlnx,dc-live-video-select" $video_sel string $dts_file
 
-        set video2_mode [hsi get_property CONFIG.C_DC_LIVE_VIDEO02_MODE [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
-        add_prop $node "xlnx,dc-live-video02-mode" $video2_mode string $dts_file
+                        set video1_mode [hsi get_property CONFIG.C_DC_LIVE_VIDEO01_MODE [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
+                        if {$video1_mode != "None"} {
+                            add_prop $node "xlnx,dc-live-video01-mode" $video1_mode string $dts_file
+                        }
 
-        set alpha_en [hsi get_property CONFIG.C_DC_LIVE_VIDEO_ALPHA_EN [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
-        add_prop $node "xlnx,dc-live-video-alpha-en" $alpha_en int $dts_file
+                        set video2_mode [hsi get_property CONFIG.C_DC_LIVE_VIDEO02_MODE [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
+                        if {$video2_mode != "None"} {
+                            add_prop $node "xlnx,dc-live-video02-mode" $video2_mode string $dts_file
+                        }
 
-        set video_sdp_en [hsi get_property CONFIG.C_DC_LIVE_VIDEO_SDP_EN [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
-        add_prop $node "xlnx,dc-live-video-sdp-en" $video_sdp_en int $dts_file
+                        set alpha_en [hsi get_property CONFIG.C_DC_LIVE_VIDEO_ALPHA_EN [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
+                        add_prop $node "xlnx,dc-live-video-alpha-en" $alpha_en int $dts_file
+
+                        set video_sdp_en [hsi get_property CONFIG.C_DC_LIVE_VIDEO_SDP_EN [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
+                        add_prop $node "xlnx,dc-live-video-sdp-en" $video_sdp_en int $dts_file
+                }
+        }
 
         set streams [hsi get_property CONFIG.C_DPDC_STREAMS [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
         add_prop $node "xlnx,dc-streams" $streams int $dts_file
