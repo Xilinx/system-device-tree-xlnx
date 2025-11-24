@@ -28,13 +28,6 @@ proc mipi_csi2_rx_ss_generate {drv_handle} {
                 add_prop "${node}" "xlnx,dpy-en-reg-if" 0 int $dts_file 1
 	}
 
-	set cmn_inc_iic [hsi get_property CONFIG.CMN_INC_IIC [hsi::get_cells -hier $drv_handle]]
-        if  {[string match -nocase "true" $cmn_inc_iic]} {
-                add_prop "${node}" "xlnx,cmn-inc-iic" 1 int $dts_file 1
-        } elseif {[string match -nocase "false" $cmn_inc_iic]} {
-                add_prop "${node}" "xlnx,cmn-inc-iic" 0 int $dts_file 1
-	}
-
 	set csi_en_crc [hsi get_property CONFIG.C_CSI_EN_CRC [hsi::get_cells -hier $drv_handle]]
         if  {[string match -nocase "true" $csi_en_crc]} {
                 add_prop "${node}" "xlnx,csi-en-crc" 1 int $dts_file 1
