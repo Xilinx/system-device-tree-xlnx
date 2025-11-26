@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -26,6 +26,9 @@
         }
         set ip [hsi::get_cells -hier $drv_handle]
         axi_clk_wiz_gen_speedgrade $drv_handle
+        set primfreq [hsi get_property CONFIG.PRIM_IN_FREQ $ip]
+        set primfreq_hz [scan [expr {$primfreq * 1000000}] %d]
+        add_prop $node "xlnx,prim-in-freq" $primfreq_hz int "pl.dtsi" 1
         set j 0
         set output_names ""
         for {set i 1} {$i < 8} {incr i} {
