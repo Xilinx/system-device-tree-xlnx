@@ -740,7 +740,10 @@ proc write_value {type value} {
 				set tmp [expr [scan [lindex [split $value "."] 1] %d] + 1]
 				if {$tmp == 1} {
 					set tmp [lindex [split $value "."] 0]
-                        		set val "<[format %d $tmp]>"
+					if {$val < 0} {
+						set val "<[format 0x%.8x [expr {$value & 0xFFFFFFFF}]]>"
+					} else {
+						set val "<[format %d $tmp]>"}
 				} else {
 					set val [append val "<"]
 					set tmp [scan [expr $value * 1000000] "%d"]
