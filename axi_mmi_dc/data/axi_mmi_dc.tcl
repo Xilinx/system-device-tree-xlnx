@@ -74,7 +74,7 @@
 
                 set stream0_sdp_en [hsi get_property CONFIG.C_DPDC_STREAM0_SDP_EN [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
                 if {$stream0_sdp_en == 1} {
-                        add_prop $node "xlnx,dc-stream0-sdp-en" boolean$dts_file
+                        add_prop $node "xlnx,dc-stream0-sdp-en" boolean $dts_file
                 }
 
                 set stream1_mode [hsi get_property CONFIG.C_DPDC_STREAM1_MODE [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
