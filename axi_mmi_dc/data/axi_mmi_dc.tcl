@@ -83,7 +83,6 @@
                 }
 
                 set stream1_pixel_mode [hsi get_property CONFIG.C_DPDC_STREAM1_PIXEL_MODE [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
-                add_prop $node "xlnx,dc-stream1-pixel-mode" $stream1_pixel_mode string $dts_file
                 if {$stream1_pixel_mode == "Quad"} {
                         add_prop $node "xlnx,dc-stream1-pixel-mode" 4 int $dts_file
                 } elseif {$stream1_pixel_mode == "Dual"} {
@@ -103,7 +102,6 @@
                 }
 
                 set stream2_pixel_mode [hsi get_property CONFIG.C_DPDC_STREAM2_PIXEL_MODE [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
-                add_prop $node "xlnx,dc-stream2-pixel-mode" $stream2_pixel_mode string $dts_file
                 if {$stream2_pixel_mode == "Quad"} {
                         add_prop $node "xlnx,dc-stream2-pixel-mode" 4 int $dts_file
                 } elseif {$stream2_pixel_mode == "Dual"} {
@@ -123,7 +121,6 @@
                 }
 
                 set stream3_pixel_mode [hsi get_property CONFIG.C_DPDC_STREAM3_PIXEL_MODE [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
-                add_prop $node "xlnx,dc-stream3-pixel-mode" $stream3_pixel_mode string $dts_file
                 if {$stream3_pixel_mode == "Quad"} {
                         add_prop $node "xlnx,dc-stream3-pixel-mode" 4 int $dts_file
                 } elseif {$stream3_pixel_mode == "Dual"} {
