@@ -4699,11 +4699,20 @@ proc gen_clk_property {drv_handle} {
 						set bus_clk_list [lappend bus_clk_list $clk_freq]
 					}
 					set bus_clk_cnt [lsearch -exact $bus_clk_list $clk_freq]
-					set misc_clk_node [create_node -n "misc_clk_${bus_clk_cnt}" -l "misc_clk_${bus_clk_cnt}" \
-					-d ${dts_file} -p ${bus_node}]
+					if {[llength $rp_info] != 0} {
+						set misc_clk_node [create_node -n "${partial_fileName}misc_clk_${bus_clk_cnt}" -l "misc_clk_${bus_clk_cnt}" \
+						-d ${dts_file} -p ${bus_node}]
+					} else {
+						set misc_clk_node [create_node -n "misc_clk_${bus_clk_cnt}" -l "misc_clk_${bus_clk_cnt}" \
+						-d ${dts_file} -p ${bus_node}]
+					}
 
 					set clk_refs [lappend clk_refs misc_clk_${bus_clk_cnt}]
-					set updat [lappend updat misc_clk_${bus_clk_cnt}]
+					if {[llength $rp_info] != 0} {
+						set updat [lappend updat ${partial_fileName}misc_clk_${bus_clk_cnt}]
+					} else {
+						set updat [lappend updat misc_clk_${bus_clk_cnt}]
+					}
 					if {[string match -nocase $proctype "zynqmp"]} {
 						set in_pin [lindex [hsi::get_pins -of_objects $periph -filter {NAME =~ "*clk_in*"}] 0]
 						set src [get_source_pins $in_pin]
