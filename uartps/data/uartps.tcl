@@ -3,7 +3,7 @@
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # Michal SIMEK <monstr@monstr.eu>
 #
@@ -60,6 +60,7 @@
          add_prop $node "cts-override" boolean $dts_file
         }
         set_drv_conf_prop $drv_handle C_UART_CLK_FREQ_HZ xlnx,clock-freq $node int
+        add_prop $node "device_type" "serial" string $dts_file
     }
 
 

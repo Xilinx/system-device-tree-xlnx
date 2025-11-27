@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -24,6 +24,7 @@
         }
 
 	add_prop $node "gpio-controller" boolean "pl.dtsi"
+	add_prop $node "device_type" "gpio" string "pl.dtsi"
 	add_prop $node "#gpio-cells" 2 int "pl.dtsi"
         pldt append $node compatible "\ \, \"xlnx,xps-gpio-1.00.a\""
         set intr_present [hsi get_property CONFIG.C_INTERRUPT_PRESENT [hsi::get_cells -hier $drv_handle]]

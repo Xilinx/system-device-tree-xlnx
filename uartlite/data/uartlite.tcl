@@ -3,7 +3,7 @@
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # Michal SIMEK <monstr@monstr.eu>
 #
@@ -39,6 +39,8 @@
                 set baud "$config_baud"
         }
         set chosen_node [create_node -n "chosen" -d "system-top.dts" -p root]
+        add_prop $node "port-number" 0 int $dts_file
+        add_prop $node "device_type" "serial" string $dts_file
         set bootargs "earlycon"
         set proctype [get_hw_family]
         if {[is_zynqmp_platform $proctype] || \

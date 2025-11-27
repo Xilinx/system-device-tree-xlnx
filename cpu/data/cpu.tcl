@@ -45,6 +45,9 @@
         set node [create_node -n "cpu" -l "$drv_handle" -u $nr -d "pl.dtsi" -p $node]
         add_prop $node device_type "cpu" string "pl.dtsi"
         set comp_prop [gen_compatible_string $drv_handle]
+        if {$ip_name eq "microblaze_riscv"} {
+                set comp_prop [concat {amd,mbv32 riscv} $comp_prop]
+        }
         add_prop $node compatible "$comp_prop xlnx,${ip_name}" stringlist "pl.dtsi"
         add_prop $node "xlnx,ip-name" $ip_name string "pl.dtsi"
         set model "$ip_name,[get_ip_version $drv_handle]"

@@ -6817,11 +6817,15 @@ proc generate_mb_ccf_node {drv_handle} {
 	proc_called_by
 	set family [get_hw_family]
 	set cpu_clk_freq [get_clock_frequency $drv_handle "CLK"]
+	set cpu_node [get_node $drv_handle]
+	set clk_index [lsearch [hsi::get_cells -hier -filter {IP_NAME==microblaze || IP_NAME==microblaze_riscv}] $drv_handle]
+	set clk_ref "clk_cpu_${clk_index}"
 	# issue:
 	# - hardcoded reg number cpu clock node
 	# - assume clk_cpu for mb cpu
 	# - only applies to master mb cpu
-	gen_mb_ccf_subnode $drv_handle cpu $cpu_clk_freq [lsearch [hsi::get_cells -hier -filter {IP_NAME==microblaze || IP_NAME==microblaze_riscv}] $drv_handle]
+	gen_mb_ccf_subnode $drv_handle cpu $cpu_clk_freq $clk_index
+	add_prop $cpu_node "clocks" $clk_ref referencelist "pl.dtsi"
 }
 
 proc gen_dev_ccf_binding args {

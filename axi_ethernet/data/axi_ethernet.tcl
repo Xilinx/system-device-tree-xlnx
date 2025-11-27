@@ -249,6 +249,7 @@
         add_prop $node "xlnx,rxmem" $rxmem hexint "pl.dtsi" 1
         add_prop $node "xlnx,speed-1-2p5" "1000" int "pl.dtsi" 1
         add_prop $node "max-speed" "1000" int "pl.dtsi" 1
+        add_prop $node "device_type" "network" string "pl.dtsi"
         }
 
         set is_nobuf 0

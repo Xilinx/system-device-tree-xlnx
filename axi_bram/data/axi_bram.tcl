@@ -135,7 +135,15 @@ proc axi_bram_generate {drv_handle} {
 		add_prop "${memory_node}" "device_type" "memory" string "system-top.dts" 1
 		add_prop "${memory_node}" "xlnx,ip-name" $drv_ip string "system-top.dts"
 		add_prop "${memory_node}" "memory_type" "memory" string "system-top.dts"
-		add_prop ${memory_node} "compatible" [gen_compatible_string $drv_handle] string "system-top.dts"
+		add_prop ${memory_node} "compatible" "[gen_compatible_string $drv_handle] mmio-sram" stringlist "system-top.dts"
+		add_prop "${memory_node}" "ranges" "0 $reg" hexlist "system-top.dts" 1
+		if {$bit_format == 32} {
+			add_prop "${memory_node}" "#address-cells" 1 int "system-top.dts" 1
+			add_prop "${memory_node}" "#size-cells" 1 int "system-top.dts" 1
+		} else {
+			add_prop "${memory_node}" "#address-cells" 2 int "system-top.dts" 1
+			add_prop "${memory_node}" "#size-cells" 2 int "system-top.dts" 1
+		}
 	}
 }
 

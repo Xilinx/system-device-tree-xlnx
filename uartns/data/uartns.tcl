@@ -3,7 +3,7 @@
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # Michal SIMEK <monstr@monstr.eu>
 #
@@ -27,6 +27,7 @@
 
         set freq [get_clk_pin_freq $ip "$clock_port"]
         add_prop $node "xlnx,clock-freq" $freq int $dts_file
+        add_prop $node "device_type" "serial" string $dts_file
 
         set proctype [get_hw_family]
         if {[regexp "microblaze" $proctype match]} {
