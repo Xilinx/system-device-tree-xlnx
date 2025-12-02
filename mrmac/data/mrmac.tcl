@@ -200,7 +200,7 @@
                                    }
 
 				   if {$lanes <= 2} {
-					 if {$is_board_project == 1} {
+					 if {($is_board_project == 1) && ($mode eq "old")} {
 				             set axi_reset_interface "M0${lanes}_AXI"
 				         } else {
 				             set axi_reset_interface "M00_AXI"
