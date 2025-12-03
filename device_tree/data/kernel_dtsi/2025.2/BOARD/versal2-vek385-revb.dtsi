@@ -139,6 +139,7 @@
 			};
 			eeprom: eeprom@54 { /* u35 - also at address 0x5C */
 				compatible = "atmel,24c128";
+				label = "eeprom_vek385b";
 				bootph-all;
 				reg = <0x54>;
 				/* wp via SC */

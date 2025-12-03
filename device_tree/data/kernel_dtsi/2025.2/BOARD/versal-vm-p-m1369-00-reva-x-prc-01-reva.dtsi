@@ -97,6 +97,7 @@
 	clock-frequency = <400000>;
 	eeprom_versal: eeprom@51 { /* U116 */
 		compatible = "st,24c128", "atmel,24c128";
+		label = "eeprom_l20";
 		reg = <0x51>;
 	};
 

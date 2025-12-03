@@ -117,6 +117,7 @@
 			 */
 			eeprom: eeprom@54 { /* u23 */
 				compatible = "atmel,24c08";
+				label = "eeprom_zcu104a";
 				reg = <0x54>;
 				#address-cells = <1>;
 				#size-cells = <1>;

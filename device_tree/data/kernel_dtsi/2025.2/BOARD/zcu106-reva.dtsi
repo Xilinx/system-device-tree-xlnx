@@ -475,6 +475,7 @@
 			 */
 			eeprom: eeprom@54 { /* u23 */
 				compatible = "atmel,24c08";
+				label = "eeprom_zcu106a";
 				reg = <0x54>;
 			};
 		};

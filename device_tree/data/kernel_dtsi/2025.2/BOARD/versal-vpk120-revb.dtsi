@@ -82,6 +82,7 @@
 	/* Use for storing information about board */
 	eeprom: eeprom@54 { /* u34 - m24128 16kB */
 		compatible = "st,24c128", "atmel,24c128";
+		label = "eeprom_vpk120b";
 		reg = <0x54>; /* & 0x5c */
 		bootph-all;
 	};

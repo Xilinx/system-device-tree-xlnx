@@ -362,6 +362,7 @@
 			 */
 			eeprom: eeprom@54 { /* u88 */
 				compatible = "atmel,24c08";
+				label = "eeprom_zcu111a";
 				reg = <0x54>;
 			};
 		};
