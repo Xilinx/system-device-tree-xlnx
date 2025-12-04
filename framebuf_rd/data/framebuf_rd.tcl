@@ -136,40 +136,40 @@
 	}
         if {$tile_mode} {
 		if {$has_y8 == 1} {
-			append vid_formats " " "y8_32t y8_64t"
+			append vid_formats " " "T5M8 T6M8"
 		}
 		if {$has_y10} {
-			append vid_formats " " "y10_32t y10_64t"
+			append vid_formats " " "T5MA T6MA"
 		}
 		if {$has_y12} {
-			append vid_formats " " "y12_32t y12_64t"
+			append vid_formats " " "T5MC T6MC"
 		}
 		if {$has_y_uv8_420} {
-			append vid_formats " " "nv12_32t nv12_64t"
+			append vid_formats " " "T508 T608"
 		}
 		if {$has_y_uv8} {
-			append vid_formats " " "nv16_32t nv16_64t"
+			append vid_formats " " "T528 T628"
 		}
 		if {$has_y_u_v8} {
-			append vid_formats " " "y_u_v8_32t y_u_v8_64t"
+			append vid_formats " " "T548 T648"
 		}
 		if {$has_y_u_v10} {
-			append vid_formats " " "y_u_v10_32t y_u_v10_64t"
+			append vid_formats " " "T54A T64A"
 		}
 		if {$has_y_uv10} {
-			append vid_formats " " "y_uv10_32t y_uv10_64t"
+			append vid_formats " " "T52A T62A"
 		}
 		if {$has_y_uv10_420} {
-			append vid_formats " " "y_uv10_420_32t y_uv10_420_64t"
+			append vid_formats " " "T50A T60A"
 		}
 		if {$has_y_uv12} {
-			append vid_formats " " "y_uv12_32t y_uv12_64t"
+			append vid_formats " " "T52C T62C"
 		}
 		if {$has_y_uv12_420} {
-			append vid_formats " " "y_uv12_420_32t y_uv12_420_64t"
+			append vid_formats " " "T50C T60C"
 		}
 		if {$has_y_u_v12} {
-			append vid_formats " " "y_u_v12_32t y_u_v12_64t"
+			append vid_formats " " "T54C T64C"
 		}
 		if {![string match $vid_formats ""]} {
 			add_prop "${node}" "xlnx,vid-formats" $vid_formats stringlist $dts_file
