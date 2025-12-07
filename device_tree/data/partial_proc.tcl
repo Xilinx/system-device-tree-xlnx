@@ -436,4 +436,12 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 	if {[file exists $filepath]} {
 		file delete -force $filepath
 	}
+	# For ZynqMP, delete the <design>.bit file from top directory
+	if {[is_zynqmp_platform $proctype]} {
+		set non_partial_firmware [regsub {_partial} $firmware_name {}]
+		set non_partial_filepath "$dir/$non_partial_firmware"
+		if {[file exists $non_partial_filepath]} {
+			file delete -force $non_partial_filepath
+		}
+	}
 }
