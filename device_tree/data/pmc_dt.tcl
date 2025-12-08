@@ -169,6 +169,10 @@ proc generate_pmc_dt {xsa dir} {
 		}
 	}
 
+	if {[llength $valid_plm_specific_handle] == 0} {
+                error "ERROR: The PS IPs necessary for PLM are missing. Available mapped objects are $pmc_mapped_handles. Please check the design."
+        }
+
 	# Add the pmc handle to run the microblaze tcl that generates properties for PMC microblaze.
 	# IP NAME in the node is of significance to validate the proc entries during the build flow.
 	lappend valid_plm_specific_handle $pmc_proc_handle
