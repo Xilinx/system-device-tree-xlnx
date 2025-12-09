@@ -211,6 +211,15 @@ proc mipi_csi2_rx_ss_generate {drv_handle} {
 	}
 	csirx2_add_hier_instances $drv_handle
 	mipi_csi2_rx_ss_gen_gpio_reset $drv_handle $node $dts_file
+
+	# Disable reset only for versal Prime Series Gen2 & versal AI Edge Series Gen2
+	global design_family is_versal_2ve_2vm_platform is_versal_2vp_platform
+
+	if {[string match -nocase $design_family "versal"]} {
+		if {$is_versal_2vp_platform || $is_versal_2ve_2vm_platform} {
+			add_prop "${node}" "xlnx,rst-disable" 1 boolean $dts_file 1
+		}
+	}
 }
 
 proc csirx2_add_hier_instances {drv_handle} {
