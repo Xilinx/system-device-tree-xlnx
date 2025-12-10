@@ -23,6 +23,10 @@
                 return
         }
 
+        set ip [hsi::get_cells -hier $drv_handle]
+        set dts_file [set_drv_def_dts $drv_handle]
+        set clk_freq [get_ip_param_value $ip CONFIG.C_S_AXI_ACLK_FREQ_HZ]
+        add_prop $node "xlnx,s-axi-aclk-freq-hz" $clk_freq hexint $dts_file
         pldt append $node compatible "\ \, \"xlnx,xps-iic-2.00.a\""
         set proctype [get_hw_family]
         if {[regexp "microblaze" $proctype match]} {
