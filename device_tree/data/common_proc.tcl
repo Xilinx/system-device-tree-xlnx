@@ -6866,7 +6866,7 @@ proc gen_dev_ccf_binding args {
 				gen_mb_ccf_subnode $drv_handle bus_${bus_clk_cnt} $clk_freq [expr ${bus_clk_cnt} + 1]
 				set clk_refs [lappend clk_refs clk_bus_${bus_clk_cnt}]
 				set clk_names [lappend clk_names "$p"]
-				set clk_freqs [lappend clk_freqs "$clk_freq"]
+				set clk_freqs [lappend clk_freqs [expr int($clk_freq)]]
 			}
 		}
 		set node [get_node $drv_handle]
