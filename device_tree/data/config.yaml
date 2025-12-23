@@ -14,7 +14,7 @@
 #
 ---
 dict_devicetree:
-    kernel_ver: 2025.2
+    kernel_ver: 2026.1
     mainline_kernel: none
     board_dts: versal-vck190-reva
     output_dir: output_dts

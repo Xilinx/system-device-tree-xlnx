@@ -1,0 +1,137 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * dts file for Xilinx Versal VRK160 revA
+ *
+ * (C) Copyright 2025, Advanced Micro Devices, Inc
+ *
+ * Michal Simek <michal.simek@amd.com>
+ */
+
+#include "include/dt-bindings/net/ti-dp83867.h"
+#include "include/dt-bindings/gpio/gpio.h"
+
+/ {
+	compatible = "xlnx,versal-vrk160-revA", "xlnx,versal-vrk160",
+		     "xlnx,versal";
+	model = "Xilinx Versal VRK160 Eval board revA";
+
+	aliases {
+		serial0 = &serial0;
+		serial2 = &dcc;
+		i2c0 = &i2c0;
+		i2c1 = &i2c1;
+		mmc0 = &sdhci1;
+		spi0 = &ospi;
+		usb0 = &usb0;
+		rtc0 = &rtc;
+		nvmem0 = &eeprom;
+	};
+
+	pwm_fan: pwm-fan {
+		compatible = "pwm-fan";
+		pwms = <&ttc0 2 40000 1>; /* not sure about polarity here */
+	};
+};
+
+/* SD_BUSPWR - PMC MIO51 */
+/* SYSTEM_PD - PMC MIO50 */
+/* PL_PD - PMC MIO49 */
+/* AIE_PD - PMC MIO48 */
+/* FPD_PD - PMC MIO11 */
+/* I2C SYSMON - LPD MIO18 - 20 */
+
+&ospi { /* PMC MIO0-10, 12, u82 MT35XU02G */
+	bus-num = <2>;
+	num-cs = <1>;
+	#stream-id-cells = <1>;
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	flash@0 {
+		compatible = "jedec,spi-nor";
+		reg = <0>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+		cdns,read-delay = <0>;
+		cdns,tshsl-ns = <0>;
+		cdns,tsd2d-ns = <0>;
+		cdns,tchsh-ns = <1>;
+		cdns,tslch-ns = <1>;
+		spi-tx-bus-width = <8>;
+		spi-rx-bus-width = <8>;
+		spi-max-frequency = <20000000>;
+		no-wp;
+		reset-gpios = <&gpio1 12 GPIO_ACTIVE_LOW>;
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "spi0-flash0";
+				reg = <0 0x10000000>;
+			};
+		};
+	};
+};
+
+
+&dwc3_0 { /* USB 2.0 host */
+	dr_mode = "host";
+	maximum-speed = "high-speed";
+	snps,dis_u2_susphy_quirk;
+	snps,dis_u3_susphy_quirk;
+	snps,usb3_lpm_capable;
+};
+
+&sdhci1 { /* PMC_MIO26-36/51 */
+	xlnx,mio-bank = <1>;
+	no-1-8-v;
+};
+
+&i2c1 { /* PMC_MIO44/45 */
+	bootph-all;
+
+	i2carb: i2c-arbitrator@72 { /* u18 */
+		compatible = "nxp,pca9541";
+		reg = <0x72>;
+
+		i2carb1: i2c-arb {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			/* Use for storing information about board */
+			eeprom: eeprom@54 { /* u21 - m24128 16kB */
+				compatible = "st,24c128", "atmel,24c128";
+				label = "eeprom_vrk160a";
+				reg = <0x54>; /* & 0x5c */
+			};
+		};
+	};
+};
+
+
+&ttc0 { /* LPD_MIO23 FAN_PWM */
+        #pwm-cells = <3>;
+};
+
+&gem0 { /* PMC_MIO_48, LPD_MIO0-11/24/25 */
+	phy-handle = <&phy0>;
+	phy-mode = "rgmii-id";
+	mdio: mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		phy0: ethernet-phy@1 { /* u201 */
+			#phy-cells = <1>;
+			compatible = "ethernet-phy-id2000.a231";
+			reg = <1>;
+			ti,rx-internal-delay = <DP83867_RGMIIDCTL_3_00_NS>;
+			ti,tx-internal-delay = <DP83867_RGMIIDCTL_2_75_NS>;
+			ti,fifo-depth = <1>;
+			ti,dp83867-rxctrl-strap-quirk;
+			reset-assert-us = <100>;
+			reset-deassert-us = <280>;
+			reset-gpios = <&gpio0 12 GPIO_ACTIVE_LOW>;
+		};
+	};
+};

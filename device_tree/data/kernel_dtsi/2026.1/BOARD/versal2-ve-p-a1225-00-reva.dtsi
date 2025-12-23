@@ -1,0 +1,50 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * dts file for AMD VE-P-A1225-00 revA (xa2ve3288 silicon)
+ *
+ * Copyright (C) 2025, Advanced Micro Devices, Inc.
+ *
+ * Michal Simek <michal.simek@amd.com>
+ */
+
+#include "include/dt-bindings/gpio/gpio.h"
+#include "include/dt-bindings/net/ti-dp83867.h"
+
+/ {
+	compatible = "amd,versal2-xa2ve3288", "amd,versal2";
+	model = "AMD Versal VE-P-A1225-00 revA";
+
+	chosen {
+		bootargs = "earlycon=pl011,mmio32,0xf1920000 console=ttyAMA0,115200";
+		stdout-path = "serial0:115200n8";
+	};
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		/* TF-A, TEE, RPUs */
+		res: memory@0 {
+			no-map;
+			reg = <0 0 0 0x20000000>;
+		};
+	};
+};
+
+&ref_clk {
+	clock-frequency = <40000000>;
+};
+
+&pcie_seio {
+	pcie@0,0 {
+		device_type = "pci";
+		reg = <0x0 0x0 0x0 0x0 0x0>;
+		reset-gpios = <&gpio_seio 24 GPIO_ACTIVE_LOW>;
+		#address-cells = <3>;
+		#size-cells = <2>;
+		ranges;
+	};
+};
+
+/* PCIe0 x1 PCIe PERST SEIO_MIO_24, 100MHz ref clk */

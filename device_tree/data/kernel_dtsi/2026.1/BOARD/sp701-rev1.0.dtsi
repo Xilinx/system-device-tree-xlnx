@@ -1,0 +1,79 @@
+/ {
+       chosen {
+               bootargs = "console=ttyUL0,115200 earlycon root=/dev/ram0 rw";
+        };
+
+};
+
+&axi_ethernet_0 {
+	phy-handle = <&phy0>;
+	/delete-node/ mdio;
+	axi_ethernet_mdio: mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		phy0: phy@1 {
+			device_type = "ethernet-phy";
+			reg = <1>;
+			ti,rx-internal-delay = <0x3>;
+			ti,tx-internal-delay = <0x3>;
+			ti,fifo-depth = <0x1>;
+		};
+	};
+};
+
+&axi_iic_0 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	i2c-mux@75 {
+		compatible = "nxp,pca9548";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x75>;
+		i2c@0 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0>;
+			eeprom@50 {
+				compatible = "atmel,24c08";
+				reg = <0x50>;
+			};
+		};
+	};
+};
+
+
+&axi_quad_spi_0 {
+       #address-cells = <1>;
+       #size-cells = <0>;
+
+       flash@0 {
+               compatible = "n25q512a\0jedec,spi-nor";
+               reg = <0>;
+               #address-cells = <1>;
+               #size-cells = <1>;
+               spi-tx-bus-width = <0x04>;
+               spi-rx-bus-width = <0x04>;
+               spi-max-frequency = <0x2faf080>;
+               phandle = <0x0e>;
+
+               partition@0 {
+                       label = "spi0-fpga";
+                       reg = <0x00 0xa00000>;
+               };
+
+               partition@1 {
+                       label = "spi0-boot";
+                       reg = <0xa00000 0x180000>;
+               };
+
+               partition@2 {
+                       label = "spi0-bootenv";
+                       reg = <0xb80000 0x480000>;
+               };
+
+               partition@3 {
+                       label = "spi0-kernel";
+                       reg = <0x1000000 0xe00000>;
+               };
+       };
+};
