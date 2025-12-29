@@ -965,7 +965,7 @@ proc update_axis_switch_endpoints {inip port_node drv_handle} {
 # and updating the reg property in device tree nodes
 proc update_subcore_absolute_addr {drv_handle ip_handle dtsi_file} {
 	set family [get_hw_family]
-	if {$family in {"microblaze" "Zynq"}} {
+	if {$family in {"microblaze" "zynq"}} {
 		set bit_format 32
 	} else {
 		set bit_format 64

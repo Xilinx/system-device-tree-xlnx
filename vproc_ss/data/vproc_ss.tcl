@@ -559,13 +559,6 @@ proc vproc_ss_add_hier_instances {drv_handle} {
 	set node [get_node $drv_handle]
 	set dts_file [set_drv_def_dts $drv_handle]
 
-	set family [get_hw_family]
-	if {$family in {"microblaze" "Zynq"}} {
-		set bit_format 32
-	} else {
-		set bit_format 64
-	}
-
 	set ip_subcores [dict create]
 	dict set ip_subcores "axi_vdma" "vdma"
 	dict set ip_subcores "axis_switch" "router"
@@ -582,14 +575,7 @@ proc vproc_ss_add_hier_instances {drv_handle} {
 		if {![string_is_empty $ip_handle]} {
 			add_prop "$node" "${ip_prefix}-present" 1 int $dts_file
 			add_prop "$node" "${ip_prefix}-connected" $ip_handle reference $dts_file
-			set connected_node [get_node $ip_handle]
-			set subsys_base [get_baseaddr $drv_handle]
-			set subcore_base [get_baseaddr $ip_handle]
-			set subcore_abs_base [format 0x%lx [expr $subsys_base+$subcore_base]]
-			set subcore_base_high [get_highaddr $ip_handle]
-			set subcore_abs_high [format 0x%lx [expr $subsys_base+$subcore_base_high]]
-			set subcore_reg_val [gen_reg_property_format $subcore_abs_base $subcore_abs_high $bit_format]
-			add_prop $connected_node reg "$subcore_reg_val" hexlist $dts_file 1
+			update_subcore_absolute_addr $drv_handle $ip_handle $dts_file
 		} else {
 			add_prop "$node" "${ip_prefix}-present" 0 int $dts_file
 		}
@@ -611,14 +597,7 @@ proc vproc_ss_add_hier_instances {drv_handle} {
 				add_prop "$node" "rstaximm-present" 1 int $dts_file 1
 				add_prop "$node" "rstaximm-connected" $gpio reference $dts_file 1
 			}
-			set connected_node [get_node $gpio]
-			set subsys_base [get_baseaddr $drv_handle]
-			set subcore_base [get_baseaddr $gpio]
-			set subcore_abs_base [format 0x%lx [expr $subsys_base+$subcore_base]]
-			set subcore_base_high [get_highaddr $gpio]
-			set subcore_abs_high [format 0x%lx [expr $subsys_base+$subcore_base_high]]
-			set subcore_reg_val [gen_reg_property_format $subcore_abs_base $subcore_abs_high $bit_format]
-			add_prop $connected_node reg "$subcore_reg_val" hexlist $dts_file 1
+			update_subcore_absolute_addr $drv_handle $gpio $dts_file
 		}
 	}
 
@@ -635,14 +614,7 @@ proc vproc_ss_add_hier_instances {drv_handle} {
 			add_prop "$node" "vcrsmplrin-present" 1 int $dts_file
 			add_prop "$node" "vcrsmplrin-connected" $vcr reference $dts_file
 		}
-		set connected_node [get_node $vcr]
-		set subsys_base [get_baseaddr $drv_handle]
-		set subcore_base [get_baseaddr $vcr]
-		set subcore_abs_base [format 0x%lx [expr $subsys_base+$subcore_base]]
-		set subcore_base_high [get_highaddr $vcr]
-		set subcore_abs_high [format 0x%lx [expr $subsys_base+$subcore_base_high]]
-		set subcore_reg_val [gen_reg_property_format $subcore_abs_base $subcore_abs_high $bit_format]
-		add_prop $connected_node reg "$subcore_reg_val" hexlist $dts_file 1
+		update_subcore_absolute_addr $drv_handle $vcr $dts_file
 	}
 }
 
