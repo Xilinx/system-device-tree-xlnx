@@ -325,12 +325,19 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 	file copy -force $static_xsa $dir
 	set static_xsa_name [file tail $static_xsa]
 	set static_xsa_path "$dir/$static_xsa_name"
-	file copy -force $rm_xsa $dir
-	set rm_xsa_name [file tail $rm_xsa]
-	set rm_xsa_path "$dir/$rm_xsa_name"
-	set rm_ws [file rootname $rm_xsa_name]
 
-	hsi::open_hw_design $rm_xsa_path -outdir $dir/$rm_ws
+	# Create a new directory within SDT directory for each rm
+	set rm_xsa_name [file tail $rm_xsa]
+	set rm_ws [file rootname $rm_xsa_name]
+	set rm_ws_abs_path "$dir/$rm_ws"
+
+	if [catch { set retstr [file mkdir $rm_ws_abs_path] } errmsg] {
+		error "cannot create directory $rm_ws_abs_path"
+	}
+	file copy -force $rm_xsa $rm_ws_abs_path
+	set rm_xsa_path "$rm_ws_abs_path/$rm_xsa_name"
+
+	hsi::open_hw_design $rm_xsa_path -outdir $rm_ws_abs_path
 	set rp_cell [hsi::get_property RP_INST_NAME [hsi::current_hw_design]]
 	set proctype [get_hw_family]
 	if {[is_zynqmp_platform $proctype]} {
@@ -431,17 +438,5 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 	hsi::close_hw_design [hsi::current_hw_design]
 	delete_tree pldt root
 	move_match_node_to_top pldt root "misc_clk_*"
-	write_rm_dt pldt root "$dir/$rm_ws/$partial_file"
-	set filepath "$dir/$firmware_name"
-	if {[file exists $filepath]} {
-		file delete -force $filepath
-	}
-	# For ZynqMP, delete the <design>.bit file from top directory
-	if {[is_zynqmp_platform $proctype]} {
-		set non_partial_firmware [regsub {_partial} $firmware_name {}]
-		set non_partial_filepath "$dir/$non_partial_firmware"
-		if {[file exists $non_partial_filepath]} {
-			file delete -force $non_partial_filepath
-		}
-	}
+	write_rm_dt pldt root "$rm_ws_abs_path/$partial_file"
 }
