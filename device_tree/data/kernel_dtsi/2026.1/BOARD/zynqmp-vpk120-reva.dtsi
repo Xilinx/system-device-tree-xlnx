@@ -2,8 +2,8 @@
 /*
  * dts file for Xilinx ZynqMP VPK120 RevA System Controller
  *
- * (C) Copyright 2021-2022 Xilinx, Inc.
- * (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+ * (C) Copyright 2021 - 2022, Xilinx, Inc.
+ * (C) Copyright 2022 - 2026, Advanced Micro Devices, Inc.
  *
  * Michal Simek <michal.simek@amd.com>
  */
@@ -506,7 +506,6 @@
 };
 
 &psgtr {
-	status = "okay";
 	/* sgmii, usb3 */
 	clocks = <&si5332_1>, <&si5332_2>;
 	clock-names = "ref0", "ref1";
@@ -519,9 +518,7 @@
 	maximum-speed = "super-speed";
 };
 
-
 &pinctrl0 {
-	status = "okay";
 	pinctrl_i2c0_default: i2c0-default {
 		mux {
 			groups = "i2c0_8_grp";
