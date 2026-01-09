@@ -1023,7 +1023,7 @@
 			xlnx,dma-type = <2>;
 		};
 
-		pmc_trng: pmc_trng@f1230000 {
+		trng: rng@f1230000 {
 			compatible = "xlnx,psv-pmc-trng-1.0";
 			status = "disabled";
 			reg = <0x0 0xf1230000 0x0 0x10000>;

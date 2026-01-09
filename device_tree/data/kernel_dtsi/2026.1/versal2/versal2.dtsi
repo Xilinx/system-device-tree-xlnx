@@ -1216,7 +1216,7 @@
 			interrupt-parent = <&imux>;
 		};
 
-		pmc_trng: pmc_trng@f1230000 {
+		trng: rng@f1230000 {
 			compatible = "xlnx,pmc-trng-11.0";
 			status = "disabled";
 			reg = <0x0 0xf1230000 0x0 0x10000>;
@@ -1419,8 +1419,8 @@
 			interrupts = <0 234 4>;
 			reg = <0 0xf10b0000 0 0x100>;
 			freq-table-hz = <0 0>;
-			clock-names = "core_clk";
-			reset-names = "ufshc-rst", "ufsphy-rst";
+			clock-names = "core";
+			reset-names = "host", "phy";
 		};
 
 		usb0: usb@f1ee0000 {

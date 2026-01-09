@@ -3372,7 +3372,7 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping eb040000 label lpd_wwdt4
 				dict set def_ps_mapping f03f0000 label pmc_wwdt
 				dict set def_ps_mapping f0800000 label coresight
-				dict set def_ps_mapping f1230000 label pmc_trng
+				dict set def_ps_mapping f1230000 label trng
 				dict set def_ps_mapping f12d0000 label pmc_cfi_cframe_0
 				dict set def_ps_mapping f12b0000 label pmc_cfu_apb_0
 				dict set def_ps_mapping f0310000 label pmc_ppu1_mdm_0
@@ -3449,7 +3449,7 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping ea430000 label lpd_wwdt1
 				dict set def_ps_mapping f03f0000 label pmc_wwdt
 				dict set def_ps_mapping f0800000 label coresight
-				dict set def_ps_mapping f1230000 label pmc_trng
+				dict set def_ps_mapping f1230000 label trng
 				dict set def_ps_mapping f12d0000 label pmc_cfi_cframe_0
 				dict set def_ps_mapping f12b0000 label pmc_cfu_apb_0
 				dict set def_ps_mapping f0310000 label pmc_ppu1_mdm_0
@@ -3535,7 +3535,7 @@ proc gen_ps_mapping {} {
 			dict set def_ps_mapping ffe90000 label psv_r5_1_atcm_global
 			dict set def_ps_mapping ffeb0000 label psv_r5_1_btcm_global
 			dict set def_ps_mapping fd000000 label cci
-			dict set def_ps_mapping f1230000 label pmc_trng
+			dict set def_ps_mapping f1230000 label trng
 			dict set def_ps_mapping f12d0000 label pmc_cfi_cframe_0
 			dict set def_ps_mapping f12b0000 label pmc_cfu_apb_0
 			dict set def_ps_mapping f0310000 label pmc_ppu1_mdm_0
