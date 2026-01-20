@@ -13,7 +13,6 @@
 #include "include/dt-bindings/phy/phy.h"
 #include "include/dt-bindings/pinctrl/pinctrl-zynqmp.h"
 
-
 &{/} {
 	compatible = "xlnx,zynqmp-sk-kr260-revB",
 		     "xlnx,zynqmp-sk-kr260", "xlnx,zynqmp";
@@ -97,7 +96,6 @@
 	slg7xl45106: gpio@11 { /* u19 - reset logic */
 		compatible = "dlg,slg7xl45106";
 		reg = <0x11>;
-		label = "resetchip";
 		gpio-controller;
 		#gpio-cells = <2>;
 		gpio-line-names = "USB0_PHY_RESET_B", "USB1_PHY_RESET_B",
