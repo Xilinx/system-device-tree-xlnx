@@ -329,6 +329,8 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "axis_switch" "axis_switch"
 	dict set ::sdtgen::namespacelist "axis_broadcaster" "axis_broadcaster"
 	dict set ::sdtgen::namespacelist "ISPPipeline_accel" "isppipeline"
+	dict set ::sdtgen::namespacelist "preprocess_accel" "preprocess"
+	dict set ::sdtgen::namespacelist "frmbuf_accel" "ai_layout_formatter_wr"
 	dict set ::sdtgen::namespacelist "hdmi_acr_ctrl" "hdmi_ctrl"
 	dict set ::sdtgen::namespacelist "dfx_axi_shutdown_manager" "dfx_axi_shutdown_manager"
 	dict set ::sdtgen::namespacelist "mmi_dc" "axi_mmi_dc"

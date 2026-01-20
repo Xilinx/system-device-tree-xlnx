@@ -119,7 +119,7 @@
                         } else {
                             continue
                         }
-                        if {[string match -nocase [hsi get_property IP_NAME $out_ip] "v_frmbuf_wr"] || [string match -nocase [hsi get_property IP_NAME $out_ip] "axi_vdma"]} {
+                        if {[string match -nocase [hsi get_property IP_NAME $out_ip] "v_frmbuf_wr"] || [string match -nocase [hsi get_property IP_NAME $out_ip] "frmbuf_accel"] || [string match -nocase [hsi get_property IP_NAME $out_ip] "axi_vdma"]} {
                             tpg_gen_frmbuf_node $out_ip $drv_handle $dts_file
                         }
                     } else {
@@ -142,7 +142,7 @@
                                 gen_endpoint $drv_handle "tpg_out$drv_handle"
                                 add_prop "$tpg_node" "remote-endpoint" $connectip$drv_handle reference $dts_file
                                 gen_remoteendpoint $drv_handle "$connectip$drv_handle"
-                                if {[string match -nocase [hsi get_property IP_NAME $connectip] "v_frmbuf_wr"] || [string match -nocase [hsi get_property IP_NAME $connectip] "axi_vdma"]} {
+                                if {[string match -nocase [hsi get_property IP_NAME $connectip] "v_frmbuf_wr"] || [string match -nocase [hsi get_property IP_NAME $out_ip] "frmbuf_accel"] || [string match -nocase [hsi get_property IP_NAME $connectip] "axi_vdma"]} {
                                     tpg_gen_frmbuf_node $connectip $drv_handle $dts_file
                                 }
                             }
