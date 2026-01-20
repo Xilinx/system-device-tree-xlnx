@@ -1441,10 +1441,10 @@ proc gen_opp_freq {} {
 				}
 				set cpu_opp_table [create_node -n "&cpu_opp_table" -d $default_dts -p root]
 				# Remove default opps
-				add_prop "$cpu_opp_table" "/delete-node/ opp00" "" boolean $default_dts
-				add_prop "$cpu_opp_table" "/delete-node/ opp01" "" boolean $default_dts
-				add_prop "$cpu_opp_table" "/delete-node/ opp02" "" boolean $default_dts
-				add_prop "$cpu_opp_table" "/delete-node/ opp03" "" boolean $default_dts
+				add_prop "$cpu_opp_table" "/delete-node/ opp-1200000000" "" boolean $default_dts
+				add_prop "$cpu_opp_table" "/delete-node/ opp-600000000" "" boolean $default_dts
+				add_prop "$cpu_opp_table" "/delete-node/ opp-400000000" "" boolean $default_dts
+				add_prop "$cpu_opp_table" "/delete-node/ opp-300000000" "" boolean $default_dts
 			}
 		}
 		if { $proc_ps in { "versal_cips" "ps_wizard" }} {
