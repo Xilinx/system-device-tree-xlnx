@@ -1344,25 +1344,55 @@ proc create_busmap args {
 	return $values
 }
 
+proc write_dt_node {fd dt node indent} {
+	set proplist [$dt getall $node]
+	if {![string match -nocase $proplist ""]} {
+		# Iterate properties as pairs (prop, value)
+		set lenact [llength $proplist]
+		for {set pr 0} {$pr < $lenact} {incr pr 2} {
+			set prop [lindex $proplist $pr]
+			if {[string match -nocase $prop ""] || [string match -nocase $prop "data"]} {
+				continue
+			}
+
+			set val [$dt get $node $prop]
+			set val_trim [string trim $val]
+
+			# Multi-token values: keep angle-bracket compact form when already wrapped
+			if {[llength $val] > 1} {
+				set rendered [expr {[regexp -all {^\<} $val_trim] && [regexp -all {\>$} $val_trim] ? $val_trim : $val}]
+				puts $fd "${indent}\t$prop = $rendered;"
+				continue
+			}
+
+			# Empty single-token value: boolean or comment property handling
+			if {[string match -nocase $val ""]} {
+				if {[regexp -all {^\/\*} $prop] || [string match {*;} $prop]} {
+					puts $fd "${indent}\t$prop"
+				} else {
+					puts $fd "${indent}\t$prop;"
+				}
+				continue
+			}
+
+			# Regular single-token assignment
+			puts $fd "${indent}\t$prop = $val;"
+		}
+	}
+
+	set children [$dt children $node]
+	foreach child $children {
+		puts $fd "${indent}\t$child {"
+		write_dt_node $fd $dt $child "${indent}\t"
+		puts $fd "${indent}\t};"
+	}
+}
+
 proc write_dt args {
 	set dt [lindex $args 0]
-	set bool_col 0
-	if {[string match -nocase $dt "psdt"]} {
-		set bool_col 1
-	}
-	set valid 0
-	if {[string match -nocase $dt "pldt"]} {
-		set valid 1
-	}
 	set rootn [lindex $args 1]
 	set file [lindex $args 2]
-	set mainroot [$dt children $rootn]
-	if {[catch {set rt [exec touch $file]} msg]} {
-#		error "file creation error"
-	}
 	global env
-	set path $env(CUSTOM_SDT_REPO)
-	set common_file "$path/device_tree/data/config.yaml"
 	# Windows treats an empty env variable as not defined
 	if {[catch {set board_dtsi_file $env(sdt_board_dts)} msg]} {
 		set board_dtsi_file ""
@@ -1383,280 +1413,7 @@ proc write_dt args {
 	if {$dtcheck != 1} {
 		puts $fd "/ \{"
 	}
-	set proplist [$dt getall $rootn]
-
-	if {[string match -nocase $proplist ""]} {
-	} else {
-
-		set lenact [llength $proplist]
-		set len [expr $lenact / 2]
-		for {set pr 0} {$pr <= $lenact} {} {
-			set prop [lindex $proplist $pr]
-			if {[string match -nocase $prop ""] || [string match -nocase $prop "data"]} {
-			} else {
-				set val [$dt get $rootn $prop]
-				set val_temp [string trimright $val " "]
-				set val_temp [string trimleft $val_temp " "]
-				if {[llength $val] > 1} {
-					puts $fd "\t$prop = $val;"
-				} else {
-					if {[string match -nocase $val ""]} {
-						if {$bool_col} {
-							puts $fd "\t$prop"
-						} else {
-							puts $fd "\t$prop"
-						}
-					} else {
-						puts $fd "\t$prop = $val;"
-					}
-				}
-			}
-			set pr [expr $pr + 2]
-		}
-	}
-	foreach children $mainroot {
-		puts $fd "\t$children {"
-		set childs [$dt children $children]
-		set proplist [$dt getall $children]
-		if {[string match -nocase $valid "1"]} {
-		}
-		if {[string match -nocase $proplist ""]} {
-		} else {
-			set lenact [llength $proplist]
-			set len [expr $lenact / 2]
-			for {set pr 0} {$pr <= $lenact} {} {
-				set prop [lindex $proplist $pr]
-				if {[string match -nocase $prop ""] || [string match -nocase $prop "data"]} {
-				} else {
-					set val [$dt get $children $prop]
-					set val_temp [string trimright $val " "]
-					set val_temp [string trimleft $val_temp " "]
-					if {[llength $val] > 1} {
-
-						if {[regexp -all {^[\<]} $val_temp matched] && [regexp -all {[\>]$} $val_temp matched]} {
-							puts $fd "\t\t$prop = $val_temp;"
-
-						} else {	
-							set first_str "\"[lindex $val 0]\""
-							set first_str "\"[lindex $val 0]\""
-							set first_str ""
-							set first true
-       		         				foreach element $val {
-       	        	 					if {$first != true} {
-                						} 
-								set first false
-							}
-							puts $fd "\t\t$prop = $val;"
-						} 
-					} else {
-						if {[string match -nocase $val ""]} {
-							if {$bool_col} {
-								puts $fd "\t\t$prop"
-							} else {
-								puts $fd "\t\t$prop;"
-							}
-						} else {
-							puts $fd "\t\t$prop = $val;"
-						}
-					}
-				}
-				set pr [expr $pr + 2]
-			}
-		}
-		foreach child $childs {
-			puts $fd "\t\t$child {"
-			set nestchilds [$dt children $child]
-			set proplist [$dt getall $child]
-			if {[string match -nocase $proplist ""]} {
-			} else {
-				set lenact [llength $proplist]
-				set len [expr $lenact / 2]
-				for {set pr 0} {$pr <= $lenact} {} {
-					if {[string match -nocase $child "can0: can@ff060000"]} {
-					}
-					set prop [lindex $proplist $pr]
-					if {[string match -nocase $prop ""] || [string match -nocase $prop "data"]} {
-					} else {
-						set val [$dt get $child $prop]
-						set val_temp [string trimright $val " "]
-						set val_temp [string trimleft $val_temp " "]
-						if {[llength $val] > 1} {
-							if {[regexp -all {^[\<]} $val_temp matched] && [regexp -all {[\>]$} $val_temp matched]} {
-								puts $fd "\t\t\t$prop = $val_temp;"
-							} else {
-								set first_str "\"[lindex $val 0]\""
-								set first_str "\"[lindex $val 0]\""
-								set first_str ""
-								set first true
-       				         			foreach element $val {
-       			        	 				if {$first != true} {
-       			         					} 
-									set first false
-								}
-								puts $fd "\t\t\t$prop = $val;"
-							} 
-						} else {
-							if {[string match -nocase $val ""]} {
-								if {$bool_col} {
-									puts $fd "\t\t\t$prop"
-								} else {
-									puts $fd "\t\t\t$prop;"
-								}
-							} else {
-								puts $fd "\t\t\t$prop = $val;"
-							}
-						} 
-					}
-					set pr [expr $pr + 2]
-				}
-			}
-			
-			foreach child $nestchilds {
-				puts $fd "\t\t\t$child {"
-				set innerchilds [$dt children $child]
-				set proplist [$dt getall $child]
-				if {[string match -nocase $proplist ""]} {
-				} else {
-					set lenact [llength $proplist]
-					set len [expr $lenact / 2]
-					for {set pr 0} {$pr <= $lenact} {} {
-						set prop [lindex $proplist $pr]
-						if {[string match -nocase $prop ""] || [string match -nocase $prop "data"]} {
-						} else {
-							set val [$dt get $child $prop]
-							set val_temp [string trimright $val " "]
-							set val_temp [string trimleft $val_temp " "]
-							if {[llength $val] > 1} {
-								if {[regexp -all {^[\<]} $val_temp matched] && [regexp -all {[\>]$} $val_temp matched]} {
-									puts $fd "\t\t\t\t$prop = $val_temp;"
-								} else {
-									set first_str "\"[lindex $val 0]\""
-									set first_str "\"[lindex $val 0]\""
-									set first_str ""
-									set first true
-                							foreach element $val {
-                      			 		 			if {$first != true} {
-                								} 
-										set first false
-									}
-									puts $fd "\t\t\t\t$prop = $val;"
-								}
-							} else {
-								if {[string match -nocase $val ""]} {
-									if {$bool_col} {
-										puts $fd "\t\t\t\t$prop"
-									} else {
-										puts $fd "\t\t\t\t$prop;"
-									}
-								} else {
-									puts $fd "\t\t\t\t$prop = $val;"
-								}
-							}
-						}
-						set pr [expr $pr + 2]
-					}
-				}
-				foreach child $innerchilds {
-					puts $fd "\t\t\t\t$child {"
-					set nextinner [$dt children $child]
-					set proplist [$dt getall $child]
-					if {[string match -nocase $proplist ""]} {
-					} else {
-						set lenact [llength $proplist]
-						set len [expr $lenact / 2]
-						for {set pr 0} {$pr <= $lenact} {} {
-							set prop [lindex $proplist $pr]
-							if {[string match -nocase $prop ""] || [string match -nocase $prop "data"]} {
-							} else {
-								set val [$dt get $child $prop]
-								set val_temp [string trimright $val " "]
-								set val_temp [string trimleft $val_temp " "]
-								if {[llength $val] > 1} {
-									if {[regexp -all {^[\<]} $val_temp matched] && [regexp -all {[\>]$} $val_temp matched]} {
-										puts $fd "\t\t\t\t\t$prop = $val_temp;"
-									} else {
-										set first_str "\"[lindex $val 0]\""
-										set first_str "\"[lindex $val 0]\""
-										set first_str ""
-										set first true
-		        							foreach element $val {
-		              			 		 			if {$first != true} {
-		        								} 
-											set first false
-										}
-										puts $fd "\t\t\t\t\t$prop = $val;"
-									}
-								} else {
-									if {[string match -nocase $val ""]} {
-										if {$bool_col} {
-											puts $fd "\t\t\t\t\t$prop"
-										} else {
-											puts $fd "\t\t\t\t\t$prop;"
-										}
-									} else {
-										puts $fd "\t\t\t\t\t$prop = $val;"
-									}
-								}
-							}
-							set pr [expr $pr + 2]
-						}
-					}
-					foreach child $nextinner {
-						puts $fd "\t\t\t\t\t$child {"
-						set proplist [$dt getall $child]
-						if {[string match -nocase $proplist ""]} {
-						} else {
-							set lenact [llength $proplist]
-							set len [expr $lenact / 2]
-							for {set pr 0} {$pr <= $lenact} {} {
-								set prop [lindex $proplist $pr]
-								if {[string match -nocase $prop ""] || [string match -nocase $prop "data"]} {
-								} else {
-									set val [$dt get $child $prop]
-									set val_temp [string trimright $val " "]
-									set val_temp [string trimleft $val_temp " "]
-									if {[llength $val] > 1} {
-										if {[regexp -all {^[\<]} $val_temp matched] && [regexp -all {[\>]$} $val_temp matched]} {
-											puts $fd "\t\t\t\t\t\t$prop = $val_temp;"
-										} else {
-											set first_str "\"[lindex $val 0]\""
-											set first_str "\"[lindex $val 0]\""
-											set first_str ""
-											set first true
-											foreach element $val {
-				      			 		 			if {$first != true} {
-												} 
-												set first false
-											}
-											puts $fd "\t\t\t\t\t\t$prop = $first_str;"
-										}
-									} else {
-										if {[string match -nocase $val ""]} {
-											if {$bool_col} {
-												puts $fd "\t\t\t\t\t\t$prop"
-											} else {
-												puts $fd "\t\t\t\t\t\t$prop;"
-											}
-										} else {
-											puts $fd "\t\t\t\t\t\t$prop = $val;"
-										}
-									}
-								}
-								set pr [expr $pr + 2]
-							}
-					}
-					puts $fd "\t\t\t\t\t};"
-				}
-					puts $fd "\t\t\t\t};"
-				}
-				puts $fd "\t\t\t};"
-			}
-			
-			puts $fd "\t\t};"
-		}
-		puts $fd "\t};"
-
-	}
+	write_dt_node $fd $dt $rootn ""
 	if {$dtcheck != 1} {
 		puts $fd "\};"
 	}
