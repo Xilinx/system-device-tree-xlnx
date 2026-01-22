@@ -81,40 +81,10 @@ proc mutex_generate {drv_handle} {
 				set intf [hsi get_property BASE_NAME $mutex_inst]
 
 				if {[string match "*S${i}*" $intf] && [string match "*S${i}*" $label_name]} {
-					configure_memmap "${label_name}" $proc $reg $bit_format $baseaddr $size
+					map_node_to_processor "${label_name}" $proc $reg $bit_format $baseaddr $size
 					break
 				}
 			}
 		}
-	}
-}
-
-proc configure_memmap {node_label proc reg bit_format baseaddr size} {
-	set proc_ip_name [get_ip_property $proc IP_NAME]
-	set memmap_key ""
-	switch $proc_ip_name {
-		"microblaze" - "microblaze_riscv" - "psu_cortexr5" - "psv_cortexr5" - "psx_cortexr52" - "cortexr52" {
-			set memmap_key $proc
-		}
-		"psv_cortexa72" - "psx_cortexa78" - "cortexa78" {
-			set memmap_key "a53"
-		}
-		"psv_psm" - "psx_psm" - "psm" {
-			set memmap_key "psm"
-		}
-		"psu_pmu" {
-			set memmap_key "pmu"
-		}
-		"asu" {
-			set memmap_key "asu"
-		}
-	}
-	if {![string_is_empty $memmap_key]} {
-		if {$proc_ip_name in {"microblaze" "microblaze_riscv"}} {
-			if {$bit_format == 32} {
-				set reg "0x0 $baseaddr 0x0 $size"
-			}
-		}
-		set_memmap "${node_label}" $memmap_key $reg
 	}
 }
