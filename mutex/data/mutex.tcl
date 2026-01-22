@@ -72,15 +72,18 @@ proc mutex_generate {drv_handle} {
 				set interface_inst ""
 			}
 
-			set mutex_inst [lindex $interface_inst 0]
-			if {[llength $mutex_inst] != 0} {
-				set intf [hsi get_property BASE_NAME $mutex_inst]
-			} else {
-				continue
-			}
+			# Iterate through all mutex interfaces accessible by this processor
+			foreach mutex_inst $interface_inst {
+				if {[llength $mutex_inst] == 0} {
+					continue
+				}
 
-			if {[string match "*S${i}*" $intf] && [string match "*S${i}*" $label_name]} {
-				configure_memmap "${label_name}" $proc $reg $bit_format $baseaddr $size
+				set intf [hsi get_property BASE_NAME $mutex_inst]
+
+				if {[string match "*S${i}*" $intf] && [string match "*S${i}*" $label_name]} {
+					configure_memmap "${label_name}" $proc $reg $bit_format $baseaddr $size
+					break
+				}
 			}
 		}
 	}
