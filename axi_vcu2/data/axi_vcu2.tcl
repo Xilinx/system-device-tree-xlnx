@@ -30,22 +30,31 @@
                 set baseaddr [hsi get_property BASE_VALUE $ip_mem_bank]
             }
         }
-        set intr_val [pldt get $node interrupts]
-        set intr_val [string trimright $intr_val ">"]
-        set intr_val [string trimleft $intr_val "<"]
-        set intr_names [pldt get $node interrupt-names]
-        set intr_names [string map {"," "" "\"" ""} $intr_names]
-        set intr_mapping {}
-        for {set i 0} {$i < [llength $intr_names]} {incr i} {
-           # Extract the next three values (base address, IRQ number, flags)
-           set value [lrange $intr_val [expr $i * 3] [expr $i * 3 + 2]]
-           # Map the name to its value
-           dict set intr_mapping [lindex $intr_names $i] $value
+        set nsu_path [hsi get_property CONFIG.NSU_PATH_ONLY [hsi::get_cells -hier $drv_handle]]
+        # If it's empty, fall back to NSU_ONLY
+            if { $nsu_path eq "" } {
+                set nsu_path [hsi get_property CONFIG.NSU_ONLY [hsi::get_cells -hier $drv_handle]]
+            }
+	    if {[string match -nocase $nsu_path "TRUE"]} {
+		    puts "VCU2 is using NSU path, so skipping interrupts"
+	    } else {
+            set intr_val [pldt get $node interrupts]
+            set intr_val [string trimright $intr_val ">"]
+            set intr_val [string trimleft $intr_val "<"]
+            set intr_names [pldt get $node interrupt-names]
+            set intr_names [string map {"," "" "\"" ""} $intr_names]
+            set intr_mapping {}
+            for {set i 0} {$i < [llength $intr_names]} {incr i} {
+                # Extract the next three values (base address, IRQ number, flags)
+                set value [lrange $intr_val [expr $i * 3] [expr $i * 3 + 2]]
+                # Map the name to its value
+                dict set intr_mapping [lindex $intr_names $i] $value
+            }
+            set intr_parent [pldt get $node interrupt-parent]
+            set intr_parent [string trimright $intr_parent ">"]
+            set intr_parent [string trimleft $intr_parent "<"]
+            set intr_parent [string trimleft $intr_parent "&"]
         }
-        set intr_parent [pldt get $node interrupt-parent]
-        set intr_parent [string trimright $intr_parent ">"]
-        set intr_parent [string trimleft $intr_parent "<"]
-        set intr_parent [string trimleft $intr_parent "&"]
 
         # Generate child node encoder
         set encoder_enable [hsi get_property CONFIG.C0_ENABLE_ENCODER [hsi::get_cells -hier $drv_handle]]
@@ -65,12 +74,14 @@
                 set encoder_reg "0x0 0x$encoder_baseaddr 0x0 0x80000 0x0 0x8000000 0x0 0x8000000"
             }
             add_prop "${encoder_node}" "reg" $encoder_reg hexlist $dts_file
-            dict for {key value} $intr_mapping {
-               if {[string match "*enc*" $key]} {
-                  add_prop "${encoder_node}" "interrupts" "$value" hexlist $dts_file
-               }
+	        if {[string match -nocase $nsu_path "FALSE"]} {
+                dict for {key value} $intr_mapping {
+                    if {[string match "*enc*" $key]} {
+                        add_prop "${encoder_node}" "interrupts" "$value" hexlist $dts_file
+                    }
+                }
+                add_prop "${encoder_node}" "interrupt-parent" $intr_parent reference  $dts_file
             }
-            add_prop "${encoder_node}" "interrupt-parent" $intr_parent reference  $dts_file
             add_prop "${encoder_node}" "reg-names" "regs apb" stringlist $dts_file
             add_prop "${encoder_node}" "clock-names" "mcu" stringlist $dts_file
             add_prop "${encoder_node}" "al,devicename" "al_e2xx" string $dts_file
@@ -94,13 +105,14 @@
                 set decoder_reg "0x0 0x$decoder_baseaddr 0x0 0x80000 0x0 0x00000000 0x0 0x08000000"
             }
             add_prop "${decoder_node}" "reg" $decoder_reg hexlist $dts_file
-            set decoder_intr "0x00 0x63 0x04"
-            dict for {key value} $intr_mapping {
-               if {[string match "*dec*" $key]} {
-                  add_prop "${decoder_node}" "interrupts" "$value" hexlist $dts_file
-               }
+	        if {[string match -nocase $nsu_path "FALSE"]} {
+                dict for {key value} $intr_mapping {
+                    if {[string match "*dec*" $key]} {
+                        add_prop "${decoder_node}" "interrupts" "$value" hexlist $dts_file
+                    }
+                }
+                add_prop "${decoder_node}" "interrupt-parent" $intr_parent reference  $dts_file
             }
-            add_prop "${decoder_node}" "interrupt-parent" $intr_parent reference  $dts_file
             add_prop "${decoder_node}" "reg-names" "regs apb" stringlist $dts_file
             add_prop "${decoder_node}" "clock-names" "mcu" stringlist $dts_file
             add_prop "${decoder_node}" "al,devicename" "al_d3xx" string $dts_file
