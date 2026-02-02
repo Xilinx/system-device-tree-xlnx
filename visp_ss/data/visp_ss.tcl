@@ -154,9 +154,9 @@ proc visp_ss_generate {drv_handle} {
 			}
 		}
 	}
+
+	rpu_info_mbox_create  $drv_handle $default_dts $bus_name
 	set reg_mapping {}
-	set rpu_ids {}
-	set rpu_info_list {}
 	for {set tile 0} {$tile < 3} {incr tile} {
 		set tile_enabled [get_ip_property $drv_handle "CONFIG.C_TILE${tile}_ENABLE"]
 		if {!$tile_enabled} {
@@ -197,8 +197,6 @@ proc visp_ss_generate {drv_handle} {
 			set mem_inputs [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_MEM_INPUTS]
 			set net_fps [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_NETFPS]
 			set rpu [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_RPU]
-			lappend rpu_ids $rpu
-			lappend rpu_info_list [list $rpu $io_type]
 			add_prop "$sub_node" "xlnx,name" "$sub_node_label" string $default_dts
 			set ip_name [pldt get $node xlnx,ip-name]
 			set ip_name [string trim $ip_name "\""]
@@ -268,7 +266,7 @@ proc visp_ss_generate {drv_handle} {
 	#generate_reserved_memory $rpu_ids $default_dts $bus_name
 	#generate_remoteproc_node $rpu_ids $default_dts $bus_name
 	#generate_tcm_nodes $rpu_ids $default_dts $bus_name
-	generate_mbox_nodes $rpu_info_list $default_dts $bus_name
+	#generate_mbox_nodes $rpu_info_list $default_dts $bus_name
 	#generate_ipi_mailbox_nodes $rpu_ids $default_dts $bus_name
 
 	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
@@ -1071,6 +1069,8 @@ proc generate_tcm_nodes {rpu_ids default_dts bus_name} {
 	}
 }
 
+
+
 proc generate_mbox_nodes {rpu_info_list default_dts bus_name} {
     # Map to collect compatible strings per rpu_id
     array set compat_map {}
@@ -1092,7 +1092,7 @@ proc generate_mbox_nodes {rpu_info_list default_dts bus_name} {
         } elseif {$io_type == 1 || $io_type == 2} {
             set compat_str "xlnx,mbox"
         } else {
-            puts "Warning: Invalid io_type '$io_type' for RPU $rpu_id. Skipping mbox node creation."
+            puts "Warning: Invalid io_type '$io_type' for RPU $rpu_id. Stale mbox will be created."
             continue
         }
 
@@ -1107,7 +1107,7 @@ proc generate_mbox_nodes {rpu_info_list default_dts bus_name} {
     }
 
     # Create one mbox node per rpu_id
-    foreach rpu_id [array names compat_map] {
+    foreach rpu_id [lsort -integer [array names compat_map]] {
         set mbox_label "visp_mbox_rpu_${rpu_id}"
         set mbox_name "visp_mbox_rpu_${rpu_id}"
         set compat_list $compat_map($rpu_id)
@@ -1124,62 +1124,34 @@ proc generate_mbox_nodes {rpu_info_list default_dts bus_name} {
         if {[info exists rpu_to_child($rpu_id)]} {
             set child_label $rpu_to_child($rpu_id)
             #add_prop "$mbox_node" "mboxes" "<&${child_label} 0>, <&${child_label} 1>" noformating $default_dts
-			if {$rpu_id == 6} {
-				set ipi_cell [hsi get_cells -hier ps_wizard_0_ps11_0_ipi_3_nobuf]
-				if {[llength $ipi_cell] > 0} {
-					set cpu_name [hsi get_property CONFIG.C_CPU_NAME $ipi_cell]
-					if {$cpu_name eq "R52_6"} {
-						add_prop "$mbox_node" "mboxes" "<&ipi_5_to_ipi_3_nobuf 0x0>, <&ipi_5_to_ipi_3_nobuf 0x1>" noformating $default_dts
-					} else {
-						puts "Warning: IPI for RPU6 found but CPU name mismatch (got $cpu_name). IPI not enabled in your design."
-					}
+
+			set ipi_list [hsi get_cells -hier -filter { IP_NAME == "ipi"}]
+			set dest_cpu_name [format "R52_%d" $rpu_id]
+			set dest_ipi [find_ipi_for_cpu $ipi_list $dest_cpu_name]
+
+			if {![string length $dest_ipi]} {
+				puts "Warning: No destination IPI found for RPU$rpu_id (CPU=$dest_cpu_name). Skipping mboxes property."
+			} else {
+
+
+				if { $rpu_id == 6 || $rpu_id == 7} {
+					set src_ipi [extract_ipi_number [hsi get_property NAME [hsi get_cells -hier *_ipi_5]]]
+
+				} elseif {$rpu_id == 8 || $rpu_id == 9} {
+					set src_ipi [extract_ipi_number [hsi get_property NAME [hsi get_cells -hier *_ipi_6]]]
+
 				} else {
-					puts "Warning: IPI for RPU6 not enabled in your design."
+					puts "warning Invalid rpu id found for APU interrupt Mapping."
+				}
+
+				if {![string length $src_ipi]} {
+					puts "Warning: Could not resolve both TX/RX IPI sources for RPU$rpu_id. Skipping mboxes property."
+				} else {
+					set child_label_dest [build_ipi_child_label  $dest_ipi]
+					set child_label "$src_ipi$child_label_dest"
+					add_prop "$mbox_node" "mboxes" "<&$child_label 0x0>, <&$child_label 0x1>" noformating $default_dts
 				}
 			}
-
-			if {$rpu_id == 7} {
-				set ipi_cell [hsi get_cells -hier ps_wizard_0_ps11_0_ipi_4_nobuf]
-				if {[llength $ipi_cell] > 0} {
-					set cpu_name [hsi get_property CONFIG.C_CPU_NAME $ipi_cell]
-					if {$cpu_name eq "R52_7"} {
-						add_prop "$mbox_node" "mboxes" "<&ipi_5_to_ipi_4_nobuf 0x0>, <&ipi_5_to_ipi_4_nobuf 0x1>" noformating $default_dts
-					} else {
-						puts "Warning: IPI for RPU7 found but CPU name mismatch (got $cpu_name). IPI not enabled in your design."
-					}
-				} else {
-					puts "Warning: IPI for RPU7 not enabled in your design."
-				}
-			}
-
-			if {$rpu_id == 8} {
-				set ipi_cell [hsi get_cells -hier ps_wizard_0_ps11_0_ipi_5_nobuf]
-				if {[llength $ipi_cell] > 0} {
-					set cpu_name [hsi get_property CONFIG.C_CPU_NAME $ipi_cell]
-					if {$cpu_name eq "R52_8"} {
-						add_prop "$mbox_node" "mboxes" "<&ipi_6_to_ipi_5_nobuf 0x0>, <&ipi_6_to_ipi_5_nobuf 0x1>" noformating $default_dts
-					} else {
-						puts "Warning: IPI for RPU8 found but CPU name mismatch (got $cpu_name). IPI not enabled in your design."
-					}
-				} else {
-					puts "Warning: IPI for RPU8 not enabled in your design."
-				}
-			}
-
-			if {$rpu_id == 9} {
-				set ipi_cell [hsi get_cells -hier ps_wizard_0_ps11_0_ipi_6_nobuf]
-				if {[llength $ipi_cell] > 0} {
-					set cpu_name [hsi get_property CONFIG.C_CPU_NAME $ipi_cell]
-					if {$cpu_name eq "R52_9"} {
-						add_prop "$mbox_node" "mboxes" "<&ipi_6_to_ipi_6_nobuf 0x0>, <&ipi_6_to_ipi_6_nobuf 0x1>" noformating $default_dts
-					} else {
-						puts "Warning: IPI for RPU9 found but CPU name mismatch (got $cpu_name). IPI not enabled in your design."
-					}
-				} else {
-					puts "Warning: IPI for RPU9 not enabled in your design."
-				}
-			}
-
         } else {
             puts "Warning: No child label mapping found for rpu_id=$rpu_id. Skipping mboxes property."
         }
@@ -1210,4 +1182,58 @@ proc generate_ipi_mailbox_nodes {rpu_ids default_dts bus_name} {
             add_prop $mailbox_node "reg-names" "ctrl" string $default_dts
         }
     }
+}
+
+proc _visp_extract_ipi_label {ipi_cell} {
+    set nm [hsi get_property NAME [hsi get_cells -hier $ipi_cell]]
+	extract_ipi_number ipi_cell
+    # Fallback: try to slice from the last occurrence of "ipi_"
+    set idx [string last "ipi_" $nm]
+    if {$idx >= 0} {
+        return [string range $nm $idx end]
+    }
+    return $nm
+}
+
+proc build_ipi_child_label { dest_ipi} {
+    #set src_name  [_visp_extract_ipi_label $src_ipi]
+    set dest_name [_visp_extract_ipi_label $dest_ipi]
+    return "_to_${dest_name}"
+}
+
+proc find_ipi_for_cpu {ipi_list target_cpu} {
+    foreach ipi $ipi_list {
+        set cpu_name [hsi get_property CONFIG.C_CPU_NAME [hsi get_cells -hier $ipi]]
+        if {$cpu_name eq $target_cpu} {
+            return $ipi
+        }
+    }
+    return ""
+}
+
+proc extract_ipi_number {ipi_name} {
+	if {[regexp {ipi_(\w+)$} $ipi_name -> ipi_suffix]} {
+		return "ipi_$ipi_suffix"
+	}
+}
+
+#Function to move  MBOX entry above vissp
+proc rpu_info_mbox_create { drv_handle default_dts bus_name} {
+
+       set rpu_ids {}
+       set rpu_info_list {}
+
+       for {set tile 0} {$tile < 3} {incr tile} {
+               set tile_enabled [get_ip_property $drv_handle "CONFIG.C_TILE${tile}_ENABLE"]
+               if {!$tile_enabled} {
+                       continue
+               }
+               for {set isp 0} {$isp < 2} {incr isp} {
+                       set io_type [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_IO_TYPE]
+                       set rpu [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_RPU]
+                       lappend rpu_ids $rpu
+                       lappend rpu_info_list [list $rpu $io_type]
+               }
+       }
+       generate_mbox_nodes $rpu_info_list $default_dts $bus_name
 }
