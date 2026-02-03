@@ -3,7 +3,7 @@
  * dts file for Xilinx Versal2 with PM
  *
  * Copyright (C) 2022, Xilinx, Inc.
- * Copyright (C) 2022 - 2025, Advanced Micro Devices, Inc.
+ * Copyright (C) 2022 - 2026, Advanced Micro Devices, Inc.
  *
  * Michal Simek <michal.simek@amd.com>
  */
@@ -19,6 +19,14 @@
 		#clock-cells = <0>;
 		clock-frequency = <33333333>;
 		clock-output-names = "ref_clk";
+	};
+
+	rtc_clk: rtc-clk {
+		bootph-all;
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <32768>;
+		clock-output-names = "rtc_clk";
 	};
 
 	can0_clk: can0-clk {
@@ -574,6 +582,8 @@
 };
 
 &rtc {
+	clocks = <&rtc_clk>;
+	clock-names = "rtc";
 	power-domains = <&versal2_firmware PM_DEV_RTC>;
 };
 

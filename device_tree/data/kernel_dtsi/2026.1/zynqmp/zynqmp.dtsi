@@ -3,7 +3,7 @@
  * dts file for Xilinx ZynqMP
  *
  * (C) Copyright 2014-2022 Xilinx, Inc.
- * (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+ * (C) Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
  *
  * Michal Simek <michal.simek@amd.com>
  *
@@ -1208,7 +1208,6 @@
 			interrupts = <GIC_SPI 26 IRQ_TYPE_LEVEL_HIGH>,
 						 <GIC_SPI 27 IRQ_TYPE_LEVEL_HIGH>;
 			interrupt-names = "alarm", "sec";
-			calibration = <0x7FFF>;
 		};
 
 		sata: ahci@fd0c0000 {

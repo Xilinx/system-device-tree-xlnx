@@ -2,7 +2,7 @@
 /*
  * dts file for AMD Versal Gen 2
  *
- * Copyright (C) 2025, Advanced Micro Devices, Inc.
+ * Copyright (C) 2025-2026, Advanced Micro Devices, Inc.
  *
  * Michal Simek <michal.simek@amd.com>
  */
@@ -1256,7 +1256,6 @@
 			interrupt-parent = <&imux>;
 			interrupts = <0 200 4>, <0 201 4>;
 			interrupt-names = "alarm", "sec";
-			calibration = <0x7FFF>;
 		};
 
 		sdhci0: mmc@f1040000 {
