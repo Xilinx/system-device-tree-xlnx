@@ -89,7 +89,7 @@
 
         set name [hsi get_property NAME [hsi get_current_part $drv_handle]]
         set part_num [string range $name 0 7]
-        set part_num_v70 [string range $name 0 4]
+        set part_num_vc2802 [string range $name 0 4]
 
         if {$part_num == "xcvp2502"} {
                 #s100
@@ -97,7 +97,7 @@
         } elseif {$part_num == "xcvp2802"} {
                 #s200
                 set power_domain "${power_domain_family} 0x18803000"
-        } elseif {$part_num_v70 == "xcv70"} {
+        } elseif {$part_num_vc2802 == "xcvc2802"} {
                 #v70
                 set power_domain "${power_domain_family} 0x18800000"
         } else {
@@ -160,7 +160,7 @@
 
         set name [hsi get_property NAME [hsi get_current_part $drv_handle]]
         set part_num [string range $name 0 7]
-        set part_num_v70 [string range $name 0 4]
+        set part_num_vc2802 [string range $name 0 4]
 
         if {$part_num == "xcvp2502"} {
                 #s100
@@ -172,7 +172,7 @@
                 set power_domain "${power_domain_family} 0x18803000"
                 add_prop "${aperture_node}" "xlnx,device-name" "200" int "pl.dtsi"
                 set aperture_nodeid 0x18803000
-        } elseif {$part_num_v70 == "xcv70"} {
+        } elseif {$part_num_vc2802 == "xcvc2802"} {
                 #v70
                 set power_domain "${power_domain_family} 0x18800000"
                 add_prop "${aperture_node}" "xlnx,device-name" "0" int "pl.dtsi"
