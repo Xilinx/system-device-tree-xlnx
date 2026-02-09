@@ -29,7 +29,7 @@ proc sdi_rxss_generate {drv_handle} {
 	set dbpc [hsi get_property CONFIG.C_DYNAMIC_BPP_CHANGE [hsi get_cells -hier $drv_handle]]
 	set dbpc [expr {$dbpc == "true" ? 1 : 0}]
 	if {$dbpc == 1} {
-		add_prop "${node}" "xlnx,dyn-bpc" $dbpc int $dts_file 1
+		add_prop $node "xlnx,dyn-bpc" "true" boolean $dts_file
 	}
 	set sdiline_rate [hsi get_property CONFIG.C_LINE_RATE [hsi get_cells -hier $drv_handle]]
 	switch $sdiline_rate {
