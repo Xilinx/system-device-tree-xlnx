@@ -27,6 +27,12 @@ proc sdi_txss_generate {drv_handle} {
         set compatible [get_comp_str $drv_handle]
         pldt append $node compatible "\ \, \"xlnx,sdi-tx\""
 
+        set dbpc [hsi get_property CONFIG.C_DYNAMIC_BPP_CHANGE [hsi get_cells -hier $drv_handle]]
+        set dbpc [expr {$dbpc == "true" ? 1 : 0}]
+        if {$dbpc == 1} {
+                add_prop $node "xlnx,dyn-bpc" "true" boolean $dts_file
+        }
+
 	set sdiline_rate [hsi get_property CONFIG.C_LINE_RATE [hsi get_cells -hier $drv_handle]]
 	switch $sdiline_rate {
 		"3G_SDI" {
