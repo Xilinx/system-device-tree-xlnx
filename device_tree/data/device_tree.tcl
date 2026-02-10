@@ -1149,6 +1149,7 @@ proc gen_board_info {} {
 	global is_versal_net_platform
 	global is_versal_2ve_2vm_platform
 	global is_versal_2ve_2vm_small_platform
+	global is_64_bit_mb
 	set path $env(CUSTOM_SDT_REPO)
 	set default_dts "system-top.dts"
 	set common_file "$path/device_tree/data/config.yaml"
@@ -1158,6 +1159,12 @@ proc gen_board_info {} {
 	set device [hsi get_property DEVICE [hsi::current_hw_design]]
 	set ddr5_handle [hsi::get_cells -hier -filter {IP_NAME==noc_mc_ddr5}]
 	add_prop "root" "device_id" "${device}" string $default_dts
+
+	set boardname [get_board_name]
+	if { [string length $boardname] != 0 } {
+		set fields [split $boardname ":"]
+		lassign $fields prefix board suffix
+	}
 
 	set family [get_hw_family]
 	switch $family {
@@ -1177,11 +1184,16 @@ proc gen_board_info {} {
 			set family "Zynq"
 		}
 		"microblaze" {
+			if {$is_64_bit_mb} {
+				set bits "64bit"
+			} else {
+				set bits "32bit"}
+			set mb_board [string toupper $board]
 			set family "microblaze"
-			add_prop "root" "model" "Microblaze" string $default_dts
+			add_prop "root" "model" "${mb_board} AMD Microblaze ${bits}" string $default_dts
 			set mb_riscv_proc [hsi::get_cells -hier -filter {IP_NAME==microblaze_riscv}]
 			if {[llength $mb_riscv_proc]} {
-				add_prop "root" "model" "Microblaze RISCV" string $default_dts 1
+				add_prop "root" "model" "${mb_board} AMD Microblaze RISCV ${bits}" string $default_dts 1
 				set family "microblaze_riscv"
 			}
 		}
@@ -1245,16 +1257,17 @@ proc gen_board_info {} {
 	if {$sem_npi_scan != 0} {
 		add_prop "root" "semnpi-scan" $sem_npi_scan int $default_dts
 	}
-	set boardname [get_board_name]
-	if { [string length $boardname] != 0 } {
-		set fields [split $boardname ":"]
-		lassign $fields prefix board suffix
-		if { [string length $board] != 0 } {
-			if {$dtsi_file eq ""} {
-				add_prop "root" "compatible" "xlnx,${board}" string $default_dts
+
+	if { [string length $board] != 0 } {
+		set mbv_comp {"qemu,mbv" "amd,mbv"}
+		if {$dtsi_file eq "" || ($family in {"microblaze" "microblaze_riscv"})} {
+			if {$family eq "microblaze_riscv"} {
+				add_prop "root" "compatible" "xlnx,${board}-riscv ${mbv_comp}" stringlist $default_dts
+			} else {
+			add_prop "root" "compatible" "xlnx,${board}-microblaze" stringlist $default_dts
 			}
-			add_prop "root" "board" "${board}" string $default_dts
 		}
+		add_prop "root" "board" "${board}" string $default_dts
 	}
 	if {[file exists $dtsi_file]} {
 		set dir $dir_path

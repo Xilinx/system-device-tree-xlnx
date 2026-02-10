@@ -46,7 +46,10 @@
         add_prop $node device_type "cpu" string "pl.dtsi"
         set comp_prop [gen_compatible_string $drv_handle]
         if {$ip_name eq "microblaze_riscv"} {
-                set comp_prop [concat $comp_prop {amd,mbv32 riscv}]
+		if {$is_64_bit_mb} {
+			set comp_prop [concat $comp_prop {amd,mbv64 riscv}]
+		} else {
+			set comp_prop [concat $comp_prop {amd,mbv32 riscv}] }
         }
         add_prop $node compatible "$comp_prop xlnx,${ip_name}" stringlist "pl.dtsi"
         add_prop $node "xlnx,ip-name" $ip_name string "pl.dtsi"
