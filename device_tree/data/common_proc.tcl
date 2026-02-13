@@ -50,9 +50,13 @@ dict with driver_param alias {
 	lappend items ps7_ethernet ethernet
 	lappend items psu_ethernet ethernet
 	lappend items psv_ethernet ethernet
+	lappend items psx_ethernet ethernet
+	lappend items ethernet ethernet
 	lappend items ps7_i2c i2c
 	lappend items psu_i2c i2c
 	lappend items psv_i2c i2c
+	lappend items psx_i2c i2c
+	lappend items i2c i2c
 	lappend items psu_ospi spi
 	lappend items psv_pmc_ospi spi
 	lappend items psx_pmc_ospi spi
@@ -1562,6 +1566,8 @@ proc get_drivers args {
 	dict set driverlist ps7_i2c driver iicps
 	dict set driverlist psu_i2c driver iicps
 	dict set driverlist psv_i2c driver iicps
+	dict set driverlist psx_i2c driver iicps
+	dict set driverlist i2c driver iicps
 	dict set driverlist psx_i3c driver i3cpsx
 	dict set driverlist i3c driver i3cpsx
 	dict set driverlist axi_intc driver intc
@@ -1625,6 +1631,9 @@ proc get_drivers args {
 	dict set driverlist pmc_qspi driver qspips
 	dict set driverlist psu_qspi driver qspips
 	dict set driverlist ps7_qspi driver qspips
+	dict set driverlist psv_pmc_ospi driver ospips
+	dict set driverlist psx_pmc_ospi driver ospips
+	dict set driverlist pmc_ospi driver ospips
 	dict set driverlist psv_spi driver spips
 	dict set driverlist sync_ip driver sync_ip
 	dict set driverlist axi_timer driver tmrctr

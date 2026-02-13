@@ -2837,6 +2837,21 @@ proc update_alias {} {
 	set default_dts "system-top.dts"
 	set all_drivers [get_drivers 1]
 
+	set ps_drivers ""
+	set pl_drivers ""
+	foreach drv_handle $all_drivers {
+		if {$drv_handle == "generic"} {
+			continue
+		}
+		if {[is_pl_ip $drv_handle]} {
+			lappend pl_drivers $drv_handle
+		} else {
+			lappend ps_drivers $drv_handle
+		}
+	}
+
+	set all_drivers [concat $ps_drivers $pl_drivers]
+
 	# Search for ps_qspi, if it is there then interchange this with first driver
 	# because to have correct internal u-boot commands qspi has to be listed in aliases as the first for spi0
 	set proctype [get_hw_family]
