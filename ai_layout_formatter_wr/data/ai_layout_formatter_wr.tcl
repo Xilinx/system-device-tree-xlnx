@@ -40,14 +40,15 @@
 				if {$nhwc == 1} {
 					append vid_formats " " "rgba8888"
 				}
-				if {!$nchw} {
+				if {$nchw} {
 					append vid_formats " " "rgba8888m"
+					append vid_formats " " "RGB_24M_4_3"
 				}
-				if {!$hcwnc4} {
+				if {$hcwnc4} {
 					append vid_formats " " "HCWNC4_8_4_4"
 					append vid_formats " " "HCWNC4_8_4_3"
 				}
-				if {!$hcwnc8} {
+				if {$hcwnc8} {
 					append vid_formats " " "HCWNC8_8_4_4"
 					append vid_formats " " "HCWNC8_8_4_3"
 				}
@@ -57,14 +58,15 @@
 				if {$nhwc == 1} {
 					append vid_formats " " "rgba_bf16161616"
 				}
-				if {!$nchw} {
+				if {$nchw} {
 					append vid_formats " " "rgba_bf16161616m"
+					append vid_formats " " "RGB_BF48M_4_3"
 				}
-				if {!$hcwnc4} {
+				if {$hcwnc4} {
 					append vid_formats " " "HCWNC4_BF16_4_4"
 					append vid_formats " " "HCWNC4_BF16_4_3"
 				}
-				if {!$hcwnc8} {
+				if {$hcwnc8} {
 					append vid_formats " " "HCWNC8_BF16_4_4"
 					append vid_formats " " "HCWNC8_BF16_4_3"
 				}
@@ -74,14 +76,15 @@
 				if {$nhwc == 1} {
 					append vid_formats " " "rgba_fp16161616"
 				}
-				if {!$nchw} {
+				if {$nchw} {
 					append vid_formats " " "rgba_fp16161616m"
+					append vid_formats " " "RGB_FP48M_4_3"
 				}
-				if {!$hcwnc4} {
+				if {$hcwnc4} {
 					append vid_formats " " "HCWNC4_FP16_4_4"
 					append vid_formats " " "HCWNC4_FP16_4_3"
 				}
-				if {!$hcwnc8} {
+				if {$hcwnc8} {
 					append vid_formats " " "HCWNC8_FP16_4_4"
 					append vid_formats " " "HCWNC8_FP16_4_3"
 				}
@@ -90,14 +93,15 @@
 				if {$nhwc == 1} {
 					append vid_formats " " "rgba32323232"
 				}
-				if {!$nchw} {
+				if {$nchw} {
 					append vid_formats " " "rgba32323232m"
+					append vid_formats " " "RGB_323232M_4_3"
 				}
-				if {!$hcwnc4} {
+				if {$hcwnc4} {
 					append vid_formats " " "HCWNC4_32_4_4"
 					append vid_formats " " "HCWNC4_32_4_3"
 				}
-				if {!$hcwnc8} {
+				if {$hcwnc8} {
 					append vid_formats " " "HCWNC8_32_4_4"
 					append vid_formats " " "HCWNC8_32_4_3"
 				}
@@ -110,13 +114,13 @@
 					append vid_formats " " "rgb888"
 					append vid_formats " " "bgr888"
 				}
-				if {!$nchw} {
+				if {$nchw} {
 					append vid_formats " " "rgb888m"
 				}
-				if {!$hcwnc4} {
+				if {$hcwnc4} {
 					append vid_formats " " "HCWNC4_8_3_3"
 				}
-				if {!$hcwnc8} {
+				if {$hcwnc8} {
 					append vid_formats " " "HCWNC8_8_3_3"
 				}
 			}
@@ -125,13 +129,13 @@
 				if {$nhwc == 1} {
 					append vid_formats " " "rgb_bf16"
 				}
-				if {!$nchw} {
+				if {$nchw} {
 					append vid_formats " " "rgb_bf16m"
 				}
-				if {!$hcwnc4} {
+				if {$hcwnc4} {
 					append vid_formats " " "HCWNC4_BF16_3_3"
 				}
-				if {!$hcwnc8} {
+				if {$hcwnc8} {
 					append vid_formats " " "HCWNC8_BF16_3_3"
 				}
 			}
@@ -139,13 +143,13 @@
 				if {$nhwc == 1} {
 					append vid_formats " " "rgb_fp16"
 				}
-				if {!$nchw} {
+				if {$nchw} {
 					append vid_formats " " "rgb_fp16m"
 				}
-				if {!$hcwnc4} {
+				if {$hcwnc4} {
 					append vid_formats " " "HCWNC4_FP16_3_3"
 				}
-				if {!$hcwnc8} {
+				if {$hcwnc8} {
 					append vid_formats " " "HCWNC8_FP16_3_3"
 				}
 			}
@@ -153,13 +157,13 @@
 				if {$nhwc == 1} {
 					append vid_formats " " "rgb323232"
 				}
-				if {!$nchw} {
+				if {$nchw} {
 					append vid_formats " " "rgb323232m"
 				}
-				if {!$hcwnc4} {
+				if {$hcwnc4} {
 					append vid_formats " " "HCWNC4_32_3_3"
 				}
-				if {!$hcwnc8} {
+				if {$hcwnc8} {
 					append vid_formats " " "HCWNC8_32_3_3"
 				}
 			}
