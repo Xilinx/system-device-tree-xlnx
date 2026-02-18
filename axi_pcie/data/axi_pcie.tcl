@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -202,8 +202,13 @@
                 set intc_cnt [get_count "${ip_type}_intc_cnt"]
                 set intc_label "${ip_type}_intc_${intc_cnt}"
                 set pcie_child_intc_node [create_node -l $intc_label -n interrupt-controller -p $node -d "pl.dtsi"]
-                set int_map "0 0 0 1 &${intc_label} 1>, <0 0 0 2 &${intc_label} 2>, <0 0 0 3 &${intc_label} 3>,\
-                      <0 0 0 4 &${intc_label} 4"
+                if {[string match -nocase [get_ip_property $drv_handle IP_NAME] "xdma"]} {
+                        set int_map "0 0 0 1 &${intc_label} 0>, <0 0 0 2 &${intc_label} 1>, <0 0 0 3 &${intc_label} 2>,\
+                              <0 0 0 4 &${intc_label} 3"
+                } else {
+                        set int_map "0 0 0 1 &${intc_label} 1>, <0 0 0 2 &${intc_label} 2>, <0 0 0 3 &${intc_label} 3>,\
+                              <0 0 0 4 &${intc_label} 4"
+                }
                 incr intc_cnt
                 set_drv_prop $drv_handle interrupt-map $int_map $node hexlist
 
