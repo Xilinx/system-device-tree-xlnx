@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2022, Xilinx Inc.
- * Copyright (C) 2022 - 2025, Advanced Micro Devices, Inc.
+ * Copyright (C) 2022 - 2026, Advanced Micro Devices, Inc.
  */
 
 #ifndef _DT_BINDINGS_CLK_VERSAL2_H
@@ -33,5 +33,12 @@
 #define MMI_GEM_HCLK	0xE0
 #define DC_REF		0xE2
 #define DC_27M		0xE3
+#define EIO_UART0_REF	0xE6
+#define EIO_UART1_REF	0xE7
+#define EIO_UART2_REF	0xE8
+#define EIO_SPI0_REF	0xE9
+#define EIO_SPI1_REF	0xEA
+#define EIO_SPI2_REF	0xEB
+#define EIO_SPI3_REF	0xEC
 
 #endif

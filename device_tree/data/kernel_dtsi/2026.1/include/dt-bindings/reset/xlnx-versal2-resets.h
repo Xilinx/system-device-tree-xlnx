@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2022, Xilinx, Inc.
- * Copyright (C) 2022 - 2025, Advanced Micro Devices, Inc.
+ * Copyright (C) 2022 - 2026, Advanced Micro Devices, Inc.
  */
 
 #ifndef _DT_BINDINGS_VERSAL2_RESETS_H
@@ -21,5 +21,13 @@
 #define VERSAL_RST_MMI_GEM		(0xC104120U)
 #define VERSAL_RST_MMI_GEM_CFG		(0xC104121U)
 #define VERSAL_RST_MMI_GEM_TSU		(0xC104122U)
+#define VERSAL_RST_EIO_UART_0		(0xC104125U)
+#define VERSAL_RST_EIO_UART_1		(0xC104126U)
+#define VERSAL_RST_EIO_UART_2		(0xC104127U)
+#define VERSAL_RST_EIO_SPI_0		(0xC104128U)
+#define VERSAL_RST_EIO_SPI_1		(0xC104129U)
+#define VERSAL_RST_EIO_SPI_2		(0xC10412AU)
+#define VERSAL_RST_EIO_SPI_3		(0xC10412BU)
+#define VERSAL_RST_GPIO_EIO		(0xC10412CU)
 
 #endif

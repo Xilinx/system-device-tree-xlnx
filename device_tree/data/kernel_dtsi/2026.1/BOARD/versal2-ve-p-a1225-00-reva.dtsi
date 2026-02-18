@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * dts file for AMD VE-P-A1225-00 revA (xa2ve3288 silicon)
+ * dts file for AMD VE-P-A1225-00 revA
  *
- * Copyright (C) 2025, Advanced Micro Devices, Inc.
+ * Copyright (C) 2025 - 2026, Advanced Micro Devices, Inc.
  *
  * Michal Simek <michal.simek@amd.com>
  */
@@ -11,12 +11,22 @@
 #include "include/dt-bindings/net/ti-dp83867.h"
 
 / {
-	compatible = "amd,versal2-xa2ve3288", "amd,versal2";
+	compatible = "amd,versal2-ve-p-a1225", "amd,versal2";
 	model = "AMD Versal VE-P-A1225-00 revA";
 
 	chosen {
 		bootargs = "earlycon=pl011,mmio32,0xf1920000 console=ttyAMA0,115200";
 		stdout-path = "serial0:115200n8";
+	};
+
+	aliases {
+		serial2 = &serial0_eio;
+		serial3 = &serial1_eio;
+		serial4 = &serial2_eio;
+		spi4 = &spi0_eio;
+		spi5 = &spi1_eio;
+		spi6 = &spi2_eio;
+		spi7 = &spi3_eio;
 	};
 
 	reserved-memory {
@@ -30,21 +40,153 @@
 			reg = <0 0 0 0x20000000>;
 		};
 	};
+
+	clk100: clk100 { /* model for EIO clock */
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <100000000>;
+	};
+
+	clk200: clk200 { /* model for EIO clock */
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <200000000>;
+	};
 };
 
 &ref_clk {
 	clock-frequency = <40000000>;
 };
 
-&pcie_seio {
+/* EIO block - 0xed000000 */
+&amba {
+	gpio_eio: gpio@ed080000 { /* FIXME 174 gpios */
+		compatible = "xlnx,eio-gpio-1.0";
+		status = "disabled";
+		reg = <0 0xed080000 0 0x1000>;
+		interrupts = <0 180 4>;
+		#gpio-cells = <2>;
+		gpio-controller;
+		#interrupt-cells = <2>;
+		interrupt-controller;
+		power-domains = <&versal2_firmware PM_DEV_GPIO_EIO>;
+	};
+
+	serial0_eio: serial@ed050000 {
+		bootph-all;
+		compatible = "arm,pl011", "arm,primecell";
+		status = "disabled";
+		reg = <0 0xed050000 0 0x10000>;
+		interrupts = <0 185 4>;
+		reg-io-width = <4>;
+		clock-names = "uartclk", "apb_pclk";
+		clocks = <&versal2_clk EIO_UART0_REF>, <&clk100>;
+		power-domains = <&versal2_firmware PM_DEV_EIO_UART_0>;
+	};
+
+	serial1_eio: serial@ed060000 {
+		bootph-all;
+		compatible = "arm,pl011", "arm,primecell";
+		status = "disabled";
+		reg = <0 0xed060000 0 0x10000>;
+		interrupts = <0 186 4>;
+		reg-io-width = <4>;
+		clock-names = "uartclk", "apb_pclk";
+		clocks = <&versal2_clk EIO_UART1_REF>, <&clk100>;
+		power-domains = <&versal2_firmware PM_DEV_EIO_UART_1>;
+	};
+
+	serial2_eio: serial@ed070000 {
+		bootph-all;
+		compatible = "arm,pl011", "arm,primecell";
+		status = "disabled";
+		reg = <0 0xed070000 0 0x10000>;
+		interrupts = <0 187 4>;
+		reg-io-width = <4>;
+		clock-names = "uartclk", "apb_pclk";
+		clocks = <&versal2_clk EIO_UART2_REF>, <&clk100>;
+		power-domains = <&versal2_firmware PM_DEV_EIO_UART_2>;
+	};
+
+	spi0_eio: spi@ed010000 {
+		compatible = "cdns,spi-r1p6";
+		status = "disabled";
+		interrupts = <0 181 4>;
+		reg = <0 0xed010000 0 0x10000>;
+		clock-names = "ref_clk", "pclk";
+		clocks = <&versal2_clk EIO_SPI0_REF>, <&clk200>;
+		power-domains = <&versal2_firmware PM_DEV_EIO_SPI_0>;
+	};
+
+	spi1_eio: spi@ed020000 {
+		compatible = "cdns,spi-r1p6";
+		status = "disabled";
+		interrupts = <0 182 4>;
+		reg = <0 0xed020000 0 0x10000>;
+		clock-names = "ref_clk", "pclk";
+		clocks = <&versal2_clk EIO_SPI1_REF>, <&clk200>;
+		power-domains = <&versal2_firmware PM_DEV_EIO_SPI_1>;
+	};
+
+	spi2_eio: spi@ed030000 {
+		compatible = "cdns,spi-r1p6";
+		status = "disabled";
+		interrupts = <0 183 4>;
+		reg = <0 0xed030000 0 0x10000>;
+		clock-names = "ref_clk", "pclk";
+		clocks = <&versal2_clk EIO_SPI2_REF>, <&clk200>;
+		power-domains = <&versal2_firmware PM_DEV_EIO_SPI_2>;
+	};
+
+	spi3_eio: spi@ed040000 {
+		compatible = "cdns,spi-r1p6";
+		status = "disabled";
+		interrupts = <0 184 4>;
+		reg = <0 0xed040000 0 0x10000>;
+		clock-names = "ref_clk", "pclk";
+		clocks = <&versal2_clk EIO_SPI3_REF>, <&clk200>;
+		power-domains = <&versal2_firmware PM_DEV_EIO_SPI_3>;
+	};
+
+	pcie_eio: pcie@ed0c0000 {
+		compatible = "amd,versal2-mdb-host";
+		status = "disabled";
+		reg = <0x0 0xed0c0000 0x0 0x2000>,
+		      <0x1000 0x100000 0x0 0xff00000>,
+		      <0x1000 0x0 0x0 0x100000>,
+		      <0x0 0xed160000 0x0 0x2000>;
+		reg-names = "slcr", "config", "dbi", "atu";
+		ranges = <0x2000000 0x00 0xa0000000 0x00 0xa0000000 0x00 0x8000000>,
+			 <0x43000000 0x1100 0x00 0x1100 0x00 0x100 0x00>;
+		interrupts = <0 165 4>;
+		interrupt-map-mask = <0 0 0 7>;
+		interrupt-map = <0 0 0 1 &eio_intc_0 0>,
+				<0 0 0 2 &eio_intc_0 1>,
+				<0 0 0 3 &eio_intc_0 2>,
+				<0 0 0 4 &eio_intc_0 3>;
+		msi-map = <0x0 &its 0x00 0x10000>;
+		/* iommu-map = <0x100 &smmu 0x100 0x1>; */
+		#address-cells = <3>;
+		#size-cells = <2>;
+		#interrupt-cells = <1>;
+		device_type = "pci";
+		eio_intc_0: interrupt-controller {
+			#address-cells = <0>;
+			#interrupt-cells = <1>;
+			interrupt-controller;
+		};
+	};
+};
+
+&pcie_eio {
 	pcie@0,0 {
 		device_type = "pci";
 		reg = <0x0 0x0 0x0 0x0 0x0>;
-		reset-gpios = <&gpio_seio 24 GPIO_ACTIVE_LOW>;
+		reset-gpios = <&gpio_eio 24 GPIO_ACTIVE_LOW>;
 		#address-cells = <3>;
 		#size-cells = <2>;
 		ranges;
 	};
 };
 
-/* PCIe0 x1 PCIe PERST SEIO_MIO_24, 100MHz ref clk */
+/* PCIe0 x1 PCIe PERST EIO_MIO_24, 100MHz ref clk */

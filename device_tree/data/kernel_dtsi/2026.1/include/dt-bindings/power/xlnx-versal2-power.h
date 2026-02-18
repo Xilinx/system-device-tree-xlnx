@@ -70,5 +70,13 @@
 #define PM_DEV_TCM_E_1A				(0x1831810FU)
 #define PM_DEV_TCM_E_1B				(0x18318110U)
 #define PM_DEV_TCM_E_1C				(0x18318111U)
+#define PM_DEV_EIO_UART_0			(0x1822413DU)
+#define PM_DEV_EIO_UART_1			(0x1822413EU)
+#define PM_DEV_EIO_UART_2			(0x1822413FU)
+#define PM_DEV_EIO_SPI_0			(0x18224140U)
+#define PM_DEV_EIO_SPI_1			(0x18224141U)
+#define PM_DEV_EIO_SPI_2			(0x18224142U)
+#define PM_DEV_EIO_SPI_3			(0x18224143U)
+#define PM_DEV_GPIO_EIO			        (0x18224144U)
 
 #endif
