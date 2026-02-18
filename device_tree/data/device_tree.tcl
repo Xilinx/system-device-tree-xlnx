@@ -1740,7 +1740,7 @@ Generates system device tree based on args given in:
 	source [file join $path "device_tree" "data" "xillib_internal.tcl"]
 	source [file join $path "device_tree" "data" "xillib_sw.tcl"]
 	source [file join $path "device_tree" "data" "partial_proc.tcl"]
-	source [file join $path "device_tree" "data" "parts_spec.tcl"]
+	rdi::source [file join $path "device_tree" "data" "parts_spec.tcl"]
 	source [file join $path "device_tree" "data" "pmc_dt.tcl"]
 
 	set common_file "$path/device_tree/data/config.yaml"
