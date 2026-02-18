@@ -199,6 +199,8 @@
                         add_prop "$frmbuf_crtc" "remote-endpoint" "mixer_out$inip" reference $dts_file
                 } elseif {[string match -nocase [hsi get_property IP_NAME $inip] "ISPPipeline_accel"] } {
                         framebuf_wr_gen_frmbuf_node $inip $drv_handle $dts_file
+                } elseif {[string match -nocase [hsi get_property IP_NAME $inip] "preprocess_accel"] } {
+                        framebuf_wr_gen_frmbuf_node $inip $drv_handle $dts_file
                 }
         }
 
