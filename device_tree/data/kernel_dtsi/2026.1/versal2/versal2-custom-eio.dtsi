@@ -1,23 +1,23 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * dts file for AMD xa2ve3288 silicon
+ * dts file for AMD custom EIO platform
  *
- * Copyright (C) 2025, Advanced Micro Devices, Inc.
+ * Copyright (C) 2025 - 2026, Advanced Micro Devices, Inc.
  *
  * Michal Simek <michal.simek@amd.com>
  */
 
 / {
-    compatible = "amd,versal2-xa2ve3288";
-    model = "AMD Versal xa2ve3288";
+    compatible = "amd,versal2-custom-eio";
+    model = "AMD Versal Custom EIO";
 
-    clk100: clk100 { /* model for SEIO clock */
+    clk100: clk100 { /* model for EIO clock */
         compatible = "fixed-clock";
         #clock-cells = <0>;
         clock-frequency = <100000000>;
     };
 
-    clk200: clk200 { /* model for SEIO clock */
+    clk200: clk200 { /* model for EIO clock */
         compatible = "fixed-clock";
         #clock-cells = <0>;
         clock-frequency = <200000000>;
@@ -25,11 +25,11 @@
 
 };
 
-/* SEIO block - 0xed000000 */
+/* EIO block - 0xed000000 */
 &amba {
 
-    gpio_seio: gpio@ed080000 {
-        compatible = "xlnx,seio-gpio-1.0";
+    gpio_eio: gpio@ed080000 {
+        compatible = "xlnx,eio-gpio-1.0";
         status = "disabled";
         reg = <0 0xed080000 0 0x1000>;
         interrupt-parent = <&imux>;
@@ -40,7 +40,7 @@
         interrupt-controller;
     };
 
-    serial0_seio: serial@ed050000 {
+    serial0_eio: serial@ed050000 {
         bootph-all;
         compatible = "arm,pl011", "arm,primecell";
         status = "disabled";
@@ -52,7 +52,7 @@
         clocks = <&clk100>, <&clk100>;
     };
 
-    serial1_seio: serial@ed060000 {
+    serial1_eio: serial@ed060000 {
         bootph-all;
         compatible = "arm,pl011", "arm,primecell";
         status = "disabled";
@@ -64,7 +64,7 @@
         clocks = <&clk100>, <&clk100>;
     };
 
-    serial2_seio: serial@ed070000 {
+    serial2_eio: serial@ed070000 {
         bootph-all;
         compatible = "arm,pl011", "arm,primecell";
         status = "disabled";
@@ -76,7 +76,7 @@
         clocks = <&clk100>, <&clk100>;
     };
 
-    spi0_seio: spi@ed010000 {
+    spi0_eio: spi@ed010000 {
         compatible = "cdns,spi-r1p6";
         status = "disabled";
         interrupt-parent = <&imux>;
@@ -86,7 +86,7 @@
         clocks = <&clk200>, <&clk200>;
     };
 
-    spi1_seio: spi@ed020000 {
+    spi1_eio: spi@ed020000 {
         compatible = "cdns,spi-r1p6";
         status = "disabled";
         interrupt-parent = <&imux>;
@@ -96,7 +96,7 @@
         clocks = <&clk200>, <&clk200>;
     };
 
-    spi2_seio: spi@ed030000 {
+    spi2_eio: spi@ed030000 {
         compatible = "cdns,spi-r1p6";
         status = "disabled";
         interrupt-parent = <&imux>;
@@ -106,7 +106,7 @@
         clocks = <&clk200>, <&clk200>;
     };
 
-    spi3_seio: spi@ed040000 {
+    spi3_eio: spi@ed040000 {
         compatible = "cdns,spi-r1p6";
         status = "disabled";
         interrupt-parent = <&imux>;
@@ -116,7 +116,7 @@
         clocks = <&clk200>, <&clk200>;
     };
 
-    pcie_seio: pcie@ed0c0000 {
+    pcie_eio: pcie@ed0c0000 {
         compatible = "amd,versal2-mdb-host";
         status = "disabled";
         reg = <0x0 0xed0c0000 0x0 0x2000>,
@@ -129,10 +129,10 @@
         interrupts = <0 165 4>;
         interrupt-parent = <&imux>;
         interrupt-map-mask = <0 0 0 7>;
-        interrupt-map = <0 0 0 1 &seio_intc_0 0>,
-                <0 0 0 2 &seio_intc_0 1>,
-                <0 0 0 3 &seio_intc_0 2>,
-                <0 0 0 4 &seio_intc_0 3>;
+        interrupt-map = <0 0 0 1 &eio_intc_0 0>,
+                <0 0 0 2 &eio_intc_0 1>,
+                <0 0 0 3 &eio_intc_0 2>,
+                <0 0 0 4 &eio_intc_0 3>;
         msi-map = <0x0 &its 0x00 0x10000>;
 	/* iommu-map = <0x100 &smmu 0x100 0x1>; */
         xlnx,num-of-bars = <0x2>;
@@ -143,7 +143,7 @@
         #size-cells = <2>;
         #interrupt-cells = <1>;
         device_type = "pci";
-        seio_intc_0: interrupt-controller {
+        eio_intc_0: interrupt-controller {
             #address-cells = <0>;
             #interrupt-cells = <1>;
             interrupt-controller;
