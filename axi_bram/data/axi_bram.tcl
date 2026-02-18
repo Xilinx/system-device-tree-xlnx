@@ -135,7 +135,11 @@ proc axi_bram_generate {drv_handle} {
 		add_prop "${memory_node}" "device_type" "memory" string "system-top.dts" 1
 		add_prop "${memory_node}" "xlnx,ip-name" $drv_ip string "system-top.dts"
 		add_prop "${memory_node}" "memory_type" "memory" string "system-top.dts"
-		add_prop ${memory_node} "compatible" [gen_compatible_string $drv_handle] string "system-top.dts"
+		set compat_string [gen_compatible_string $drv_handle]
+		if {[string match -nocase $drv_ip "lmb_bram_if_cntlr"]} {
+			lappend compat_string "mmio-sram"
+		}
+		add_prop ${memory_node} "compatible" $compat_string stringlist "system-top.dts"
 	}
 }
 
