@@ -2,12 +2,13 @@
 /*
  * dts file for Xilinx ZynqMP SC k24 RevA
  *
- * (C) Copyright 2025, Advanced Micro Devices, Inc.
+ * (C) Copyright 2025 - 2026, Advanced Micro Devices, Inc.
  *
  * Michal Simek <michal.simek@amd.com>
  */
 
 #include "include/dt-bindings/net/ti-dp83867.h"
+#include "include/dt-bindings/phy/phy.h"
 #include "zynqmp-sm-k24-reva.dtsi"
 
 /delete-node/ &eeprom_cc;
@@ -19,6 +20,12 @@
 
 	aliases {
 		nvmem1 = &eeprom_cc;
+	};
+
+	sysctrl_gtr_clk2: sysctrl-gtr-clk2 {
+		clock-frequency = <26000000>;
+		#clock-cells = <0>;
+		compatible = "fixed-clock";
 	};
 };
 
@@ -130,8 +137,15 @@
 		/* 170 - 173 */ "", "", "", "";
 };
 
+&psgtr {
+	clocks = <&sysctrl_gtr_clk2>;
+	clock-names = "ref2";
+};
+
 &usb0 { /* mio52 - mio63 */
         reset-gpios = <&gpio 76 GPIO_ACTIVE_LOW>;
+	phy-names = "usb3-phy";
+	phys = <&psgtr 2 PHY_TYPE_USB3 0 2>;
 };
 
 &dwc3_0 {
