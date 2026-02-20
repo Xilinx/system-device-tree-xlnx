@@ -29,6 +29,15 @@
         add_prop "$node" "xlnx,dma-addr-width" $dma_addr_width int $dts_file
         set max_data_width [hsi get_property CONFIG.MAX_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
         add_prop "${node}" "xlnx,bpc" $max_data_width int $dts_file
+        set tile_mode [hsi get_property CONFIG.IS_TILE_FORMAT [hsi::get_cells -hier $drv_handle]]
+        if {[string match -nocase $tile_mode "1"]} {
+                add_prop "${node}" "xlnx,tile-formats" $tile_mode boolean $dts_file 1
+        } else {
+                pldt unset $node "xlnx,tile-formats"
+        }
+        if {$tile_mode == ""} {
+                set tile_mode 0
+        }
         set logo_layer [hsi get_property CONFIG.LOGO_LAYER [hsi::get_cells -hier $drv_handle]]
         if {[string match -nocase $logo_layer "true"]} {
                 add_prop "$node" "xlnx,logo-layer" boolean $dts_file
@@ -168,7 +177,11 @@
                                         add_prop "$mixer_node1" "xlnx,layer-scale" "" boolean $dts_file
                                 }
                                 set layer1_video_format [hsi get_property CONFIG.LAYER1_VIDEO_FORMAT [hsi::get_cells -hier $drv_handle]]
-                                        mixer_gen_video_format $layer1_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                                        if {$tile_mode} {
+                                                mixer_gen_tile_vid_formats $layer1_video_format $mixer_node1 $dts_file
+                                        } else {
+                                                mixer_gen_video_format $layer1_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                                        }
                         }
                         "2" {
                                 set mixer_node1 [create_node -n "layer_$layer" -l xx_mix_overlay_$layer$drv_handle -p $node -d $dts_file]
@@ -203,7 +216,11 @@
                                         add_prop "$mixer_node1" "xlnx,layer-scale" "" boolean $dts_file
                                 }
                                 set layer2_video_format [hsi get_property CONFIG.LAYER2_VIDEO_FORMAT [hsi::get_cells -hier $drv_handle]]
-                                        mixer_gen_video_format $layer2_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                                        if {$tile_mode} {
+                                                mixer_gen_tile_vid_formats $layer2_video_format $mixer_node1 $dts_file
+                                        } else {
+                                                mixer_gen_video_format $layer2_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                                        }
                         }
                          "3" {
                                 set mixer_node1 [create_node -n "layer_$layer" -l xx_mix_overlay_$layer$drv_handle -p $node -d $dts_file]
@@ -238,7 +255,11 @@
                                     add_prop "$mixer_node1" "xlnx,layer-scale" "" boolean $dts_file
                             }
                             set layer3_video_format [hsi get_property CONFIG.LAYER3_VIDEO_FORMAT [hsi::get_cells -hier $drv_handle]]
-                            mixer_gen_video_format $layer3_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            if {$tile_mode} {
+                                    mixer_gen_tile_vid_formats $layer3_video_format $mixer_node1 $dts_file
+                            } else {
+                                    mixer_gen_video_format $layer3_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            }
                     }
                  "4" {
                         set mixer_node1 [create_node -n "layer_$layer" -l xx_mix_overlay_$layer$drv_handle -p $node -d $dts_file]
@@ -273,7 +294,11 @@
                                     add_prop "$mixer_node1" "xlnx,layer-scale" "" boolean $dts_file
                             }
                             set layer4_video_format [hsi get_property CONFIG.LAYER4_VIDEO_FORMAT [hsi::get_cells -hier $drv_handle]]
-                            mixer_gen_video_format $layer4_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            if {$tile_mode} {
+                                    mixer_gen_tile_vid_formats $layer4_video_format $mixer_node1 $dts_file
+                            } else {
+                                    mixer_gen_video_format $layer4_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            }
                     }
                  "5" {
                         set mixer_node1 [create_node -n "layer_$layer" -l xx_mix_overlay_$layer$drv_handle -p $node -d $dts_file]
@@ -293,7 +318,11 @@
                                                     add_prop $mixer_node1 "dma-names" "dma0" string $dts_file
                                                     add_prop "$mixer_node1" "xlnx,layer-streaming" "" boolean $dts_file
                                                     set layer0_video_format [hsi get_property CONFIG.VIDEO_FORMAT [hsi::get_cells -hier $drv_handle]]
-                                                    mixer_gen_video_format $layer0_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                                                    if {$tile_mode} {
+                                                            mixer_gen_tile_vid_formats $layer0_video_format $mixer_node1 $dts_file
+                                                    } else {
+                                                            mixer_gen_video_format $layer0_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                                                    }
                                             } else {
                                                     set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $connected_ip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
                                                     set inip [get_in_connect_ip $connected_ip $master_intf]
@@ -310,7 +339,11 @@
                                     add_prop "$mixer_node1" "xlnx,layer-scale" "" boolean $dts_file
                             }
                             set layer5_video_format [hsi get_property CONFIG.LAYER5_VIDEO_FORMAT [hsi::get_cells -hier $drv_handle]]
-                            mixer_gen_video_format $layer5_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            if {$tile_mode} {
+                                    mixer_gen_tile_vid_formats $layer5_video_format $mixer_node1 $dts_file
+                            } else {
+                                    mixer_gen_video_format $layer5_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            }
                     }
                 "6" {
                         set mixer_node1 [create_node -n "layer_$layer" -l xx_mix_overlay_$layer$drv_handle -p $node -d $dts_file]
@@ -330,7 +363,11 @@
                                                     add_prop $mixer_node1 "dma-names" "dma0" string $dts_file
                                                     add_prop "$mixer_node1" "xlnx,layer-streaming" "" boolean $dts_file
                                                     set layer0_video_format [hsi get_property CONFIG.VIDEO_FORMAT [hsi::get_cells -hier $drv_handle]]
-                                                    mixer_gen_video_format $layer0_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                                                    if {$tile_mode} {
+                                                            mixer_gen_tile_vid_formats $layer0_video_format $mixer_node1 $dts_file
+                                                    } else {
+                                                            mixer_gen_video_format $layer0_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                                                    }
                                             } else {
                                                     set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $connected_ip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
                                                     set inip [get_in_connect_ip $connected_ip $master_intf]
@@ -347,7 +384,11 @@
                                     add_prop "$mixer_node1" "xlnx,layer-scale" "" boolean $dts_file
                             }
                             set layer6_video_format [hsi get_property CONFIG.LAYER6_VIDEO_FORMAT [hsi::get_cells -hier $drv_handle]]
-                            mixer_gen_video_format $layer6_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            if {$tile_mode} {
+                                    mixer_gen_tile_vid_formats $layer6_video_format $mixer_node1 $dts_file
+                            } else {
+                                    mixer_gen_video_format $layer6_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            }
                     }
                  "7" {
                             set mixer_node1 [create_node -n "layer_$layer" -l xx_mix_overlay_$layer$drv_handle -p $node -d $dts_file]
@@ -375,7 +416,11 @@
                                     add_prop "$mixer_node1" "xlnx,layer-scale" "" boolean $dts_file
                             }
                             set layer7_video_format [hsi get_property CONFIG.LAYER7_VIDEO_FORMAT [hsi::get_cells -hier $drv_handle]]
-                            mixer_gen_video_format $layer7_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            if {$tile_mode} {
+                                    mixer_gen_tile_vid_formats $layer7_video_format $mixer_node1 $dts_file
+                            } else {
+                                    mixer_gen_video_format $layer7_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            }
                     }
                 "8" {
                             set mixer_node1 [create_node -n "layer_$layer" -l xx_mix_overlay_$layer$drv_handle -p $node -d $dts_file]
@@ -403,7 +448,11 @@
                                     add_prop "$mixer_node1" "xlnx,layer-scale" "" boolean $dts_file
                             }
                             set layer8_video_format [hsi get_property CONFIG.LAYER8_VIDEO_FORMAT [hsi::get_cells -hier $drv_handle]]
-                            mixer_gen_video_format $layer8_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            if {$tile_mode} {
+                                    mixer_gen_tile_vid_formats $layer8_video_format $mixer_node1 $dts_file
+                            } else {
+                                    mixer_gen_video_format $layer8_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            }
                     }
                  "9" {
                             set mixer_node1 [create_node -n "layer_$layer" -l xx_mix_overlay_$layer$drv_handle -p $node -d $dts_file]
@@ -431,7 +480,11 @@
                                     add_prop "$mixer_node1" "xlnx,layer-scale" "" boolean $dts_file
                             }
                             set layer9_video_format [hsi get_property CONFIG.LAYER9_VIDEO_FORMAT [hsi::get_cells -hier $drv_handle]]
-                            mixer_gen_video_format $layer9_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            if {$tile_mode} {
+                                    mixer_gen_tile_vid_formats $layer9_video_format $mixer_node1 $dts_file
+                            } else {
+                                    mixer_gen_video_format $layer9_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            }
                     }
                  "10" {
                             set mixer_node1 [create_node -n "layer_$layer" -l xx_mix_overlay_$layer$drv_handle -p $node -d $dts_file]
@@ -459,7 +512,11 @@
                                     add_prop "$mixer_node1" "xlnx,layer-scale" "" boolean $dts_file
                             }
                             set layer10_video_format [hsi get_property CONFIG.LAYER10_VIDEO_FORMAT [hsi::get_cells -hier $drv_handle]]
-                            mixer_gen_video_format $layer10_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            if {$tile_mode} {
+                                    mixer_gen_tile_vid_formats $layer10_video_format $mixer_node1 $dts_file
+                            } else {
+                                    mixer_gen_video_format $layer10_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            }
                     }
                 "11" {
                             set mixer_node1 [create_node -n "layer_$layer" -l xx_mix_overlay_$layer$drv_handle -p $node -d $dts_file]
@@ -487,7 +544,11 @@
                                     add_prop "$mixer_node1" "xlnx,layer-scale" "" boolean $dts_file
                             }
                             set layer11_video_format [hsi get_property CONFIG.LAYER11_VIDEO_FORMAT [hsi::get_cells -hier $drv_handle]]
-                            mixer_gen_video_format $layer11_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            if {$tile_mode} {
+                                    mixer_gen_tile_vid_formats $layer11_video_format $mixer_node1 $dts_file
+                            } else {
+                                    mixer_gen_video_format $layer11_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            }
                     }
                  "12" {
                             set mixer_node1 [create_node -n "layer_$layer" -l xx_mix_overlay_$layer$drv_handle -p $node -d $dts_file]
@@ -515,7 +576,11 @@
                                     add_prop "$mixer_node1" "xlnx,layer-scale" "" boolean $dts_file
                             }
                             set layer12_video_format [hsi get_property CONFIG.LAYER12_VIDEO_FORMAT [hsi::get_cells -hier $drv_handle]]
-                            mixer_gen_video_format $layer12_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            if {$tile_mode} {
+                                    mixer_gen_tile_vid_formats $layer12_video_format $mixer_node1 $dts_file
+                            } else {
+                                    mixer_gen_video_format $layer12_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            }
                     }
                  "13" {
                             set mixer_node1 [create_node -n "layer_$layer" -l xx_mix_overlay_$layer$drv_handle -p $node -d $dts_file]
@@ -543,7 +608,11 @@
                                     add_prop "$mixer_node1" "xlnx,layer-scale" "" boolean $dts_file
                             }
                             set layer13_video_format [hsi get_property CONFIG.LAYER13_VIDEO_FORMAT [hsi::get_cells -hier $drv_handle]]
-                            mixer_gen_video_format $layer13_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            if {$tile_mode} {
+                                    mixer_gen_tile_vid_formats $layer13_video_format $mixer_node1 $dts_file
+                            } else {
+                                    mixer_gen_video_format $layer13_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            }
                     }
                 "14" {
                             set mixer_node1 [create_node -n "layer_$layer" -l xx_mix_overlay_$layer$drv_handle -p $node -d $dts_file]
@@ -571,7 +640,11 @@
                                     add_prop "$mixer_node1" "xlnx,layer-scale" "" boolean $dts_file
                             }
                             set layer14_video_format [hsi get_property CONFIG.LAYER14_VIDEO_FORMAT [hsi::get_cells -hier $drv_handle]]
-                            mixer_gen_video_format $layer14_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            if {$tile_mode} {
+                                    mixer_gen_tile_vid_formats $layer14_video_format $mixer_node1 $dts_file
+                            } else {
+                                    mixer_gen_video_format $layer14_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            }
                     }
                 "15" {
                             set mixer_node1 [create_node -n "layer_$layer" -l xx_mix_overlay_$layer$drv_handle -p $node -d $dts_file]
@@ -598,7 +671,11 @@
                                     add_prop "$mixer_node1" "xlnx,layer-scale" "" boolean $dts_file
                             }
                             set layer15_video_format [hsi get_property CONFIG.LAYER15_VIDEO_FORMAT [hsi::get_cells -hier $drv_handle]]
-                            mixer_gen_video_format $layer15_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            if {$tile_mode} {
+                                    mixer_gen_tile_vid_formats $layer15_video_format $mixer_node1 $dts_file
+                            } else {
+                                    mixer_gen_video_format $layer15_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            }
                     }
                 "16" {
                             set mixer_node1 [create_node -n "layer_$layer" -l xx_mix_overlay_$layer$drv_handle -p $node -d $dts_file]
@@ -626,7 +703,11 @@
                                     add_prop "$mixer_node1" "xlnx,layer-scale" "" boolean $dts_file
                             }
                             set layer16_video_format [hsi get_property CONFIG.LAYER16_VIDEO_FORMAT [hsi::get_cells -hier $drv_handle]]
-                            mixer_gen_video_format $layer16_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            if {$tile_mode} {
+                                    mixer_gen_tile_vid_formats $layer16_video_format $mixer_node1 $dts_file
+                            } else {
+                                    mixer_gen_video_format $layer16_video_format $mixer_node1 $drv_handle $max_data_width $dts_file
+                            }
                     }
                     default {
                     }
@@ -640,6 +721,54 @@
         set logo_height [hsi get_property CONFIG.MAX_LOGO_ROWS [hsi::get_cells -hier $drv_handle]]
         add_prop "$mixer_node1" "xlnx,logo-height" $logo_height int $dts_file
 	mixer_gen_gpio_reset $drv_handle $node $dts_file
+    }
+
+    proc mixer_gen_tile_vid_formats {num node dts_file} {
+            set vid_formats ""
+            switch $num {
+                    "24" {
+                            set vid_formats "T5M8, T6M8"
+                    }
+                    "25" {
+                            set vid_formats "T5MA, T6MA"
+                    }
+                    "34" {
+                            set vid_formats "T5MC, T6MC"
+                    }
+                    "18" {
+                            set vid_formats "T528, T628"
+                    }
+                    "22" {
+                            set vid_formats "T52A, T62A"
+                    }
+                    "32" {
+                            set vid_formats "T52C, T62C"
+                    }
+                    "19" {
+                            set vid_formats "T508, T608"
+                    }
+                    "23" {
+                            set vid_formats "T50A, T60A"
+                    }
+                    "33" {
+                            set vid_formats "T50C, T60C"
+                    }
+                    "42" {
+                            set vid_formats "T548, T648"
+                    }
+                    "43" {
+                            set vid_formats "T54A, T64A"
+                    }
+                    "44" {
+                            set vid_formats "T54C, T64C"
+                    }
+                    default {
+                            dtg_warning "Tile format mapping not supported for format id:$num"
+                    }
+            }
+            if {![string match -nocase $vid_formats ""]} {
+                    add_prop "$node" "xlnx,vformat" [list $vid_formats] stringlist $dts_file
+            }
     }
 
     proc mixer_gen_video_format {num node drv_handle max_data_width dts_file} {
@@ -792,4 +921,3 @@
             }
         }
     }
-
