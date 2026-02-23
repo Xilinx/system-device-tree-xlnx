@@ -66,6 +66,28 @@
 			reg = <0>;
 			cpu-idle-states = <&CPU_RETENTION_0>;
 			operating-points-v2 = <&cpu_opp_table>;
+			d-cache-size = <0x10000>; /* 64kB */
+			d-cache-line-size = <64>;
+			/* 4 ways set associativity */
+			/* cache_size / (line_size / associativity) */
+			d-cache-sets = <256>;
+			i-cache-size = <0x10000>; /* 64kB */
+			i-cache-line-size = <64>;
+			/* 4 ways set associativity */
+			/* cache_size / (line_size / associativity) */
+			i-cache-sets = <256>;
+			next-level-cache = <&l2_00>;
+			l2_00: l2-cache {
+				compatible = "cache";
+				cache-level = <2>;
+				cache-size = <0x80000>; /* 512kB */
+				cache-line-size = <64>;
+				/* 8 ways set associativity */
+				/* cache_size / (line_size/associativity) */
+				cache-sets = <1024>;
+				cache-unified;
+				next-level-cache = <&l3_0>;
+			};
 		};
 		cortexa78_1: cpu@100 {
 			compatible = "arm,cortex-a78";
@@ -74,6 +96,28 @@
 			reg = <0x100>;
 			cpu-idle-states = <&CPU_RETENTION_0>;
 			operating-points-v2 = <&cpu_opp_table>;
+			d-cache-size = <0x10000>; /* 64kB */
+			d-cache-line-size = <64>;
+			/* 4 ways set associativity */
+			/* cache_size / (line_size / associativity) */
+			d-cache-sets = <256>;
+			i-cache-size = <0x10000>; /* 64kB */
+			i-cache-line-size = <64>;
+			/* 4 ways set associativity */
+			/* cache_size / (line_size / associativity) */
+			i-cache-sets = <256>;
+			next-level-cache = <&l2_00>;
+			l2_01: l2-cache {
+				compatible = "cache";
+				cache-level = <2>;
+				cache-size = <0x80000>; /* 512kB */
+				cache-line-size = <64>;
+				/* 8 ways set associativity */
+				/* cache_size / (line_size/associativity) */
+				cache-sets = <1024>;
+				cache-unified;
+				next-level-cache = <&l3_0>;
+			};
 		};
 		cortexa78_2: cpu@10000 {
 			compatible = "arm,cortex-a78";
@@ -82,6 +126,28 @@
 			reg = <0x10000>;
 			cpu-idle-states = <&CPU_RETENTION_0>;
 			operating-points-v2 = <&cpu_opp_table>;
+			d-cache-size = <0x10000>; /* 64kB */
+			d-cache-line-size = <64>;
+			/* 4 ways set associativity */
+			/* cache_size / (line_size / associativity) */
+			d-cache-sets = <256>;
+			i-cache-size = <0x10000>; /* 64kB */
+			i-cache-line-size = <64>;
+			/* 4 ways set associativity */
+			/* cache_size / (line_size / associativity) */
+			i-cache-sets = <256>;
+			next-level-cache = <&l2_10>;
+			l2_10: l2-cache {
+				compatible = "cache";
+				cache-level = <2>;
+				cache-size = <0x80000>; /* 512kB */
+				cache-line-size = <64>;
+				/* 8 ways set associativity */
+				/* cache_size / (line_size/associativity) */
+				cache-sets = <1024>;
+				cache-unified;
+				next-level-cache = <&l3_1>;
+			};
 		};
 		cortexa78_3: cpu@10100 {
 			compatible = "arm,cortex-a78";
@@ -90,6 +156,28 @@
 			reg = <0x10100>;
 			cpu-idle-states = <&CPU_RETENTION_0>;
 			operating-points-v2 = <&cpu_opp_table>;
+			d-cache-size = <0x10000>; /* 64kB */
+			d-cache-line-size = <64>;
+			/* 4 ways set associativity */
+			/* cache_size / (line_size / associativity) */
+			d-cache-sets = <256>;
+			i-cache-size = <0x10000>; /* 64kB */
+			i-cache-line-size = <64>;
+			/* 4 ways set associativity */
+			/* cache_size / (line_size / associativity) */
+			i-cache-sets = <256>;
+			next-level-cache = <&l2_10>;
+			l2_11: l2-cache {
+				compatible = "cache";
+				cache-level = <2>;
+				cache-size = <0x80000>; /* 512kB */
+				cache-line-size = <64>;
+				/* 8 ways set associativity */
+				/* cache_size / (line_size/associativity) */
+				cache-sets = <1024>;
+				cache-unified;
+				next-level-cache = <&l3_1>;
+			};
 		};
 		cortexa78_4: cpu@20000 {
 			compatible = "arm,cortex-a78";
@@ -98,6 +186,28 @@
 			reg = <0x20000>;
 			cpu-idle-states = <&CPU_RETENTION_0>;
 			operating-points-v2 = <&cpu_opp_table>;
+			d-cache-size = <0x10000>; /* 64kB */
+			d-cache-line-size = <64>;
+			/* 4 ways set associativity */
+			/* cache_size / (line_size / associativity) */
+			d-cache-sets = <256>;
+			i-cache-size = <0x10000>; /* 64kB */
+			i-cache-line-size = <64>;
+			/* 4 ways set associativity */
+			/* cache_size / (line_size / associativity) */
+			i-cache-sets = <256>;
+			next-level-cache = <&l2_20>;
+			l2_20: l2-cache {
+				compatible = "cache";
+				cache-level = <2>;
+				cache-size = <0x80000>; /* 512kB */
+				cache-line-size = <64>;
+				/* 8 ways set associativity */
+				/* cache_size / (line_size/associativity) */
+				cache-sets = <1024>;
+				cache-unified;
+				next-level-cache = <&l3_2>;
+			};
 		};
 		cortexa78_5: cpu@20100 {
 			compatible = "arm,cortex-a78";
@@ -106,6 +216,28 @@
 			reg = <0x20100>;
 			cpu-idle-states = <&CPU_RETENTION_0>;
 			operating-points-v2 = <&cpu_opp_table>;
+			d-cache-size = <0x10000>; /* 64kB */
+			d-cache-line-size = <64>;
+			/* 4 ways set associativity */
+			/* cache_size / (line_size / associativity) */
+			d-cache-sets = <256>;
+			i-cache-size = <0x10000>; /* 64kB */
+			i-cache-line-size = <64>;
+			/* 4 ways set associativity */
+			/* cache_size / (line_size / associativity) */
+			i-cache-sets = <256>;
+			next-level-cache = <&l2_20>;
+			l2_21: l2-cache {
+				compatible = "cache";
+				cache-level = <2>;
+				cache-size = <0x80000>; /* 512kB */
+				cache-line-size = <64>;
+				/* 8 ways set associativity */
+				/* cache_size / (line_size/associativity) */
+				cache-sets = <1024>;
+				cache-unified;
+				next-level-cache = <&l3_2>;
+			};
 		};
 		cortexa78_6: cpu@30000 {
 			compatible = "arm,cortex-a78";
@@ -114,6 +246,28 @@
 			reg = <0x30000>;
 			cpu-idle-states = <&CPU_RETENTION_0>;
 			operating-points-v2 = <&cpu_opp_table>;
+			d-cache-size = <0x10000>; /* 64kB */
+			d-cache-line-size = <64>;
+			/* 4 ways set associativity */
+			/* cache_size / (line_size / associativity) */
+			d-cache-sets = <256>;
+			i-cache-size = <0x10000>; /* 64kB */
+			i-cache-line-size = <64>;
+			/* 4 ways set associativity */
+			/* cache_size / (line_size / associativity) */
+			i-cache-sets = <256>;
+			next-level-cache = <&l2_30>;
+			l2_30: l2-cache {
+				compatible = "cache";
+				cache-level = <2>;
+				cache-size = <0x80000>; /* 512kB */
+				cache-line-size = <64>;
+				/* 8 ways set associativity */
+				/* cache_size / (line_size/associativity) */
+				cache-sets = <1024>;
+				cache-unified;
+				next-level-cache = <&l3_3>;
+			};
 		};
 		cortexa78_7: cpu@30100 {
 			compatible = "arm,cortex-a78";
@@ -122,6 +276,83 @@
 			reg = <0x30100>;
 			cpu-idle-states = <&CPU_RETENTION_0>;
 			operating-points-v2 = <&cpu_opp_table>;
+			d-cache-size = <0x10000>; /* 64kB */
+			d-cache-line-size = <64>;
+			/* 4 ways set associativity */
+			/* cache_size / (line_size / associativity) */
+			d-cache-sets = <256>;
+			i-cache-size = <0x10000>; /* 64kB */
+			i-cache-line-size = <64>;
+			/* 4 ways set associativity */
+			/* cache_size / (line_size / associativity) */
+			i-cache-sets = <256>;
+			next-level-cache = <&l2_30>;
+			l2_31: l2-cache {
+				compatible = "cache";
+				cache-level = <2>;
+				cache-size = <0x80000>; /* 512kB */
+				cache-line-size = <64>;
+				/* 8 ways set associativity */
+				/* cache_size / (line_size/associativity) */
+				cache-sets = <1024>;
+				cache-unified;
+				next-level-cache = <&l3_3>;
+			};
+		};
+
+		l3_0: l3-0-cache { /* cluster private */
+			compatible = "cache";
+			cache-level = <3>;
+			cache-size = <0x100000>; /* 1MB */
+			cache-line-size = <64>;
+			/* 16 ways set associativity */
+			/* cache_size / (line_size/associativity) */
+			cache-sets = <1024>;
+			cache-unified;
+			next-level-cache = <&llc>;
+		};
+
+		l3_1: l3-1-cache { /* cluster private */
+			compatible = "cache";
+			cache-level = <3>;
+			cache-size = <0x100000>; /* 1MB */
+			cache-line-size = <64>;
+			/* 16 ways set associativity */
+			/* cache_size / (line_size/associativity) */
+			cache-sets = <1024>;
+			cache-unified;
+			next-level-cache = <&llc>;
+		};
+
+		l3_2: l3-2-cache { /* cluster private */
+			compatible = "cache";
+			cache-level = <3>;
+			cache-size = <0x100000>; /* 1MB */
+			cache-line-size = <64>;
+			/* 16 ways set associativity */
+			/* cache_size / (line_size/associativity) */
+			cache-sets = <1024>;
+			cache-unified;
+			next-level-cache = <&llc>;
+		};
+
+		l3_3: l3-3-cache { /* cluster private */
+			compatible = "cache";
+			cache-level = <3>;
+			cache-size = <0x100000>; /* 1MB */
+			cache-line-size = <64>;
+			/* 16 ways set associativity */
+			/* cache_size / (line_size/associativity) */
+			cache-sets = <1024>;
+			cache-unified;
+			next-level-cache = <&llc>;
+		};
+
+		llc: l4-cache { /* LLC inside CMN */
+			compatible = "cache";
+			cache-level = <4>;
+			cache-size = <0x400000>; /* 4MB */
+			cache-unified;
 		};
 		idle-states {
 			entry-method = "psci";
