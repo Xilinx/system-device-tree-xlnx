@@ -176,32 +176,15 @@
 
 		set riscv_isa_entry ${isa_base}[join $ext ""]
 
-		if {($use_icache > 0) || ($use_dcache > 0)} {
-			lappend ext "zicbom"
-			append riscv_isa_entry "_zicbom"
-		}
-
 		set ext [concat $ext {zicsr zifencei}]
-		append riscv_isa_entry "_zicsr_zifencei"
-
-		if {$use_bitman_a > 0 && $use_bitman_b > 0 && $use_bitman_s > 0} {
-			lappend ext "b"
-		}
-
-		foreach entry {
-			{use_bitman_a zba}
-			{use_bitman_b zbb}
-			{use_bitman_s zbs}
-		} {
-			lassign $entry prop token
-			if {[set $prop] > 0} {
-				lappend ext $token
-				append riscv_isa_entry "_${token}"
-			}
-		}
 
 		set conditional_exts {
+			{$use_icache > 0 || $use_dcache > 0} zicbom
+			{$use_bitman_a > 0 && $use_bitman_b > 0 && $use_bitman_s > 0} b
+			{$use_bitman_a > 0} zba
+			{$use_bitman_b > 0} zbb
 			{$use_bitman_c > 0} zbc
+			{$use_bitman_s > 0} zbs
 			{$use_mmu > 3 && $use_sstc > 0} sstc
 			{$use_mmu > 3 && $pmp_entries > 0 && $pmp_enhancements > 0} smepmp
 			{$trap_enhancement == 2 || $trap_enhancement == 3} smrnmi
