@@ -33,6 +33,13 @@
 		compatible = "pwm-fan";
 		pwms = <&ttc0 2 40000 0>;
 	};
+
+	usb_hub_delay: enable-delay {
+		compatible = "gpio-delay";
+		#gpio-cells = <3>;
+		gpio-controller;
+		gpios = <&max7321_u263 6 GPIO_ACTIVE_LOW>;
+	};
 };
 
 &ttc0 {
@@ -334,7 +341,7 @@
 		compatible = "usb424,2744";
 		reg = <1>;
 		i2c-bus = <&hub>;
-		reset-gpios = <&max7321_u263 6 GPIO_ACTIVE_LOW>;
+		reset-gpios = <&usb_hub_delay 0 10000 10000>;
 	};
 	/* Also 2244 for sd card */
 };

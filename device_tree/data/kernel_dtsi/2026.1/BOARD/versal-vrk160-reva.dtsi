@@ -31,6 +31,13 @@
 		compatible = "pwm-fan";
 		pwms = <&ttc0 2 40000 1>; /* not sure about polarity here */
 	};
+
+	usb_hub_delay: enable-delay {
+		compatible = "gpio-delay";
+		#gpio-cells = <3>;
+		gpio-controller;
+		gpios = <&gpio0 16 GPIO_ACTIVE_LOW>;
+	};
 };
 
 /* SD_BUSPWR - PMC MIO51 */
@@ -88,7 +95,7 @@
 	hub_2_0: hub@1 {
 		compatible = "usb424,2744";
 		reg = <1>;
-		reset-gpios = <&gpio0 16 GPIO_ACTIVE_LOW>;
+		reset-gpios = <&usb_hub_delay 0 10000 10000>;
 	};
 };
 
