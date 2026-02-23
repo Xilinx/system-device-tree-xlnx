@@ -117,6 +117,107 @@
 	gen_drv_prop_from_ip $drv_handle
 	generate_mb_ccf_node $drv_handle
 
+	if {$ip_name eq "microblaze_riscv"} {
+		set riscv_props {
+			CONFIG.C_DATA_SIZE
+			CONFIG.C_ADDR_SIZE
+			CONFIG.C_USE_MULDIV
+			CONFIG.C_USE_ATOMIC
+			CONFIG.C_USE_FPU
+			CONFIG.C_USE_COMPRESSION
+			CONFIG.C_USE_ICACHE
+			CONFIG.C_USE_DCACHE
+			CONFIG.C_USE_BITMAN_A
+			CONFIG.C_USE_BITMAN_B
+			CONFIG.C_USE_BITMAN_C
+			CONFIG.C_USE_BITMAN_S
+			CONFIG.C_TRAP_ENHANCEMENT
+			CONFIG.C_USE_COUNTERS
+			CONFIG.C_USE_MMU
+			CONFIG.C_USE_SSTC
+			CONFIG.C_PMP_ENTRIES
+			CONFIG.C_PMP_ENHANCEMENTS
+			CONFIG.C_DEBUG_EVENT_COUNTERS
+			CONFIG.C_DEBUG_LATENCY_COUNTERS
+		}
+		foreach prop $riscv_props {
+			set var_name [string tolower [string map {"CONFIG.C_" ""} $prop]]
+			set $var_name [get_ip_property $drv_handle $prop]
+		}
+
+		set isa_base ""
+		if {![string_is_empty $data_size]} {
+			if {$is_64_bit_mb} {
+				set isa_base "rv64"
+			} else {
+				set isa_base "rv32"
+			}
+			add_prop $node "riscv,isa-base" "${isa_base}i" string "pl.dtsi"
+		}
+
+		if {$use_mmu == 3 && ![string_is_empty $addr_size]} {
+			add_prop $node "mmu-type" "riscv,sv${addr_size}" string "pl.dtsi"
+		}
+
+		set ext {"i"}
+		if {$use_muldiv > 0} { lappend ext "m" }
+		if {$use_atomic > 0} { lappend ext "a" }
+
+		if {$use_fpu >= 1} {
+			lappend ext "f"
+			if {$is_64_bit_mb} {
+				lappend ext "d"
+			}
+		}
+
+		if {$use_compression > 0} { lappend ext "c" }
+
+		set riscv_isa_entry ${isa_base}[join $ext ""]
+
+		if {($use_icache > 0) || ($use_dcache > 0)} {
+			lappend ext "zicbom"
+			append riscv_isa_entry "_zicbom"
+		}
+
+		set ext [concat $ext {zicsr zifencei}]
+		append riscv_isa_entry "_zicsr_zifencei"
+
+		if {$use_bitman_a > 0 && $use_bitman_b > 0 && $use_bitman_s > 0} {
+			lappend ext "b"
+		}
+
+		foreach entry {
+			{use_bitman_a zba}
+			{use_bitman_b zbb}
+			{use_bitman_s zbs}
+		} {
+			lassign $entry prop token
+			if {[set $prop] > 0} {
+				lappend ext $token
+				append riscv_isa_entry "_${token}"
+			}
+		}
+
+		set conditional_exts {
+			{$use_bitman_c > 0} zbc
+			{$use_mmu > 3 && $use_sstc > 0} sstc
+			{$use_mmu > 3 && $pmp_entries > 0 && $pmp_enhancements > 0} smepmp
+			{$trap_enhancement == 2 || $trap_enhancement == 3} smrnmi
+			{$trap_enhancement == 1 || $trap_enhancement == 3} smdbltrp
+			{$use_counters > 0} zicntr
+			{$debug_event_counters > 0 || $debug_latency_counters > 0} zihpm
+		}
+		foreach {condition token} $conditional_exts {
+			if {[expr $condition]} {
+				lappend ext $token
+			}
+		}
+
+		add_prop $node "riscv,isa" "${riscv_isa_entry}" string "pl.dtsi"
+
+		add_prop $node "riscv,isa-extensions" $ext stringlist "pl.dtsi"
+	}
+
 	# Speical handling for xlnx,memory-ip-list
 	set valid_mem_list [hsi::get_mem_ranges -of_objects [hsi::get_cells -hier $drv_handle] -filter {IS_INSTRUCTION == true && IS_DATA == true && MEM_TYPE == "MEMORY"}]
 	if {$valid_mem_list != ""} {
