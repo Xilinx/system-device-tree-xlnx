@@ -37,12 +37,12 @@
         # correct address-cells and size-cells in amba_pl node
         set nr [get_microblaze_nr $drv_handle]
         set ip_name [get_ip_property $drv_handle IP_NAME]
-        set node [create_node -n "cpus_${ip_name}" -l "cpus_${ip_name}_${nr}" -u $nr -d "pl.dtsi" -p root]
-        add_prop $node "compatible" "cpus,cluster" string "pl.dtsi"
-        add_prop $node "#cpu-mask-cells" 1 int "pl.dtsi"
-        add_prop $node #address-cells 1 int "pl.dtsi"
-        add_prop $node #size-cells 0 int "pl.dtsi"
-        set node [create_node -n "cpu" -l "$drv_handle" -u $nr -d "pl.dtsi" -p $node]
+        set cpu_node [create_node -n "cpus_${ip_name}" -l "cpus_${ip_name}_${nr}" -u $nr -d "pl.dtsi" -p root]
+        add_prop $cpu_node "compatible" "cpus,cluster" string "pl.dtsi"
+        add_prop $cpu_node "#cpu-mask-cells" 1 int "pl.dtsi"
+        add_prop $cpu_node "#address-cells" 1 int "pl.dtsi"
+        add_prop $cpu_node "#size-cells" 0 int "pl.dtsi"
+        set node [create_node -n "cpu" -l "$drv_handle" -u $nr -d "pl.dtsi" -p $cpu_node]
         add_prop $node device_type "cpu" string "pl.dtsi"
         set comp_prop [gen_compatible_string $drv_handle]
         if {$ip_name eq "microblaze_riscv"} {
@@ -73,7 +73,7 @@
                 add_prop $node "timebase-frequency" $clk int "pl.dtsi"
         }
 
-        set icache_size [get_ip_param_value $drv_handle "C_CACHE_BYTE_SIZE"]
+        set icache_size [get_ip_param_value $drv_handle "C_ICACHE_BYTE_SIZE"]
         set isize  [cpu_check_64bit $icache_size]
         set icache_base [get_ip_param_value $drv_handle "C_ICACHE_BASEADDR"]
         set ibase  [cpu_check_64bit $icache_base]
@@ -118,6 +118,8 @@
 	generate_mb_ccf_node $drv_handle
 
 	if {$ip_name eq "microblaze_riscv"} {
+		add_prop $cpu_node "bootph-all" "" boolean "pl.dtsi"
+		add_prop $node "bootph-all" "" boolean "pl.dtsi"
 		set riscv_props {
 			CONFIG.C_DATA_SIZE
 			CONFIG.C_ADDR_SIZE
@@ -216,6 +218,10 @@
 		add_prop $node "riscv,isa" "${riscv_isa_entry}" string "pl.dtsi"
 
 		add_prop $node "riscv,isa-extensions" $ext stringlist "pl.dtsi"
+		set cpu_intc [create_node -n "interrupt-controller" -l "cpu${nr}_intc" -d "pl.dtsi" -p $node]
+		add_prop $cpu_intc "compatible" "riscv,cpu-intc" string "pl.dtsi"
+		add_prop $cpu_intc "interrupt-controller" "" boolean "pl.dtsi"
+		add_prop $cpu_intc "#interrupt-cells" 1 int "pl.dtsi"
 	}
 
 	# Speical handling for xlnx,memory-ip-list
