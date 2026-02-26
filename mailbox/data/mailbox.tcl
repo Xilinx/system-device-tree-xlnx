@@ -1,5 +1,5 @@
 #
-# (C) Copyright 2024 - 2025 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2024 - 2026 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -13,6 +13,16 @@
 #
 
 proc mailbox_generate {drv_handle} {
+	# Initialize global stream node counter
+	global stream_node_counter
+
+	if {![info exists stream_node_counter]} {
+		# Axi-stream doesnt have a dedicated register, hence populating reg with dummy values
+		# Initialize counter to 0xFFFFFFF0 as integer for decreasing order
+		# Counter decrements by 0x10 for each AXI-Stream node
+		set stream_node_counter 0xFFFFFFF0
+	}
+
 	set node [get_node $drv_handle]
 	if {$node == 0} {
 		return
@@ -124,6 +134,9 @@ proc mailbox_generate {drv_handle} {
 }
 
 proc create_mbox_nodes {drv_handle port_interface port_id intr_val intr_parent} {
+	# Access global stream node counter
+	global stream_node_counter
+
 	# Identify if the processor is 32-bit or 64-bit
 	set family [get_hw_family]
 	global is_64_bit_mb
@@ -139,7 +152,13 @@ proc create_mbox_nodes {drv_handle port_interface port_id intr_val intr_parent} 
 	set compatible [get_comp_str $drv_handle]
 	set label_name ${drv_handle}_S${port_id}
 	set dts_file pl.dtsi
-	set size 0x10000
+
+	# Set size based on interface type: AXI-Lite uses 0x10000, AXI-Stream uses 0x10
+	if {$port_interface == 2} {
+		set size 0x10000
+	} else {
+		set size 0x10
+	}
 
 	set mbox_delete_node    0
 	set mbox_baseaddr	0
@@ -187,11 +206,15 @@ proc create_mbox_nodes {drv_handle port_interface port_id intr_val intr_parent} 
 			# Create the node only once (for the first connected processor)
 			if {$node_created == 0} {
 				if {$mbox_baseaddr != 0} {
+					# AXI-Lite interface: use actual base address
 					set nodename_baseaddr [format %lx $mbox_baseaddr]
 				} else {
-					set mbox_baseaddr 0x0
-					set mbox_highaddr 0xFFFF
-					set nodename_baseaddr 0
+					# AXI-Stream interface: use decreasing counter as base address in reg format
+					# Format as hex string to ensure consistent hex representation
+					set mbox_baseaddr [format "0x%X" $stream_node_counter]
+					set mbox_highaddr [format "0x%X" [expr {$stream_node_counter + $size - 1}]]
+					set nodename_baseaddr [format "%x" $stream_node_counter]
+					set stream_node_counter [expr {$stream_node_counter - $size}]
 				}
 
 				set node [create_node -n $label_name -l $label_name -u $nodename_baseaddr -p $bus_name -d $dts_file]
