@@ -19,7 +19,7 @@
                 return
         }
         set dts_file [set_drv_def_dts $drv_handle]
-        pldt append $node compatible "\ \, \"xlnx,axi-frmbuf-rd-v2.2\""
+        pldt append $node compatible "\ \ , \"xlnx,v-frmbuf-rd-v3.0\"\ \ , \"xlnx,axi-frmbuf-rd-v2.2\""
         set ip [hsi::get_cells -hier $drv_handle]
         set_drv_conf_prop $drv_handle C_S_AXI_CTRL_ADDR_WIDTH xlnx,s-axi-ctrl-addr-width $node
         set_drv_conf_prop $drv_handle C_S_AXI_CTRL_DATA_WIDTH xlnx,s-axi-ctrl-data-width $node
