@@ -17,6 +17,7 @@
         global env
         global dtsi_fname
         set path $env(CUSTOM_SDT_REPO)
+        set family [get_hw_family]
 
         set node [get_node $drv_handle]
         if {$node == 0} {
@@ -61,6 +62,9 @@
                 add_prop $node "xlnx,Axi4-address" $value int "pl.dtsi"
         }
         set_drv_conf_prop $drv_handle "C_XIP_MODE" "xlnx,xip-mode" $node int
+	if {$family in {"microblaze" "microblaze_riscv"}} {
+		add_prop $node "bootph-all" "" boolean "pl.dtsi"
+	}
     }
 
 

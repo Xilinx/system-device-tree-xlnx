@@ -43,6 +43,9 @@
         add_prop $node "device_type" "serial" string $dts_file
         set bootargs "earlycon"
         set proctype [get_hw_family]
+        if {$proctype in {"microblaze" "microblaze_riscv"}} {
+                add_prop $node "bootph-all" "" boolean "pl.dtsi"
+        }
         if {[is_zynqmp_platform $proctype] || \
                 [string match -nocase $proctype "versal"]} {
                         if {[is_zynqmp_platform $proctype]} {
