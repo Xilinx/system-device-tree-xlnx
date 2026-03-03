@@ -1093,10 +1093,8 @@ proc generate_mbox_nodes {rpu_info_list default_dts bus_name} {
         lassign $rpu_info rpu_id io_type
 
         # Determine compatible string based on io_type
-        if {$io_type == 3} {
-            set compat_str "xlnx,mimo-mbox"
-        } elseif {$io_type == 1 || $io_type == 2} {
-            set compat_str "xlnx,mbox"
+        if { $io_type == 1 || $io_type == 2 || $io_type == 3} {
+            set compat_str "xlnx,isp-mbox"
         } else {
             puts "Warning: Invalid io_type '$io_type' for RPU $rpu_id. Stale mbox will be created."
             continue
