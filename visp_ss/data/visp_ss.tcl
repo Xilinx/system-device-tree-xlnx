@@ -207,6 +207,12 @@ proc visp_ss_generate {drv_handle} {
 			add_prop "$sub_node" "xlnx,netfps" $net_fps int $default_dts
 			add_prop "$sub_node" "xlnx,rpu" $rpu int $default_dts
 			add_prop "$sub_node" "isp_id" $isp_id int $default_dts
+			set llpath_tile_num [expr {int([get_ip_property $drv_handle CONFIG.C_LLPATH${isp}_TILE])}]
+			if { $llpath_tile_num < 3 && $llpath_tile_num >=0 && $llpath_tile_num == ${tile} } {
+				add_prop "$sub_node" "xlnx,llpath${isp}-tile${llpath_tile_num}-enabled" "" noformating $default_dts
+				add_prop "$sub_node" "xlnx,llpath${isp}-oba" [get_ip_property $drv_handle CONFIG.C_LLPATH${isp}_OBA] int $default_dts
+				add_prop "$sub_node" "xlnx,llpath${isp}-iba" [get_ip_property $drv_handle CONFIG.C_LLPATH${isp}_IBA] int $default_dts
+            }
 			switch $rpu {
 				6 {
 					set rprocn "D_0_$rpu"
