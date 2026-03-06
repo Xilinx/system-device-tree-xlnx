@@ -1,0 +1,182 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * dts file for Xilinx ZynqMP VP-P-C3340-00
+ *
+ * Copyright (C) 2026, Advanced Micro Devices, Inc.
+ *
+ * Michal Simek <michal.simek@amd.com>
+ */
+
+#include "include/dt-bindings/gpio/gpio.h"
+#include "include/dt-bindings/pinctrl/pinctrl-zynqmp.h"
+
+&{/} {
+	compatible = "xlnx,zynqmp-scm-vp-p-c3340-revA",
+		     "xlnx,zynqmp-scm-vp-p-c3340", "xlnx,zynqmp";
+	model = "ZynqMP SCM VP-P-C3340-00 revA";
+
+	sys_clk_0 {
+		compatible = "xlnx,fclk";
+		clocks = <&hsdp_refclk>;
+	};
+
+	sys_clk_1 {
+		compatible = "xlnx,fclk";
+		clocks = <&lp5_osc1_clk>;
+	};
+
+	sys_clk_2 {
+		compatible = "xlnx,fclk";
+		clocks = <&lp5_osc2_clk>;
+	};
+
+	pcie_xin: clock {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <25000000>;
+	};
+};
+
+&pinctrl0 {
+	pinctrl_i2c0_default: i2c0-default {
+		conf {
+			groups = "i2c0_16_grp";
+			bias-pull-up;
+			slew-rate = <SLEW_RATE_SLOW>;
+			power-source = <IO_STANDARD_LVCMOS18>;
+		};
+
+		mux {
+			groups = "i2c0_16_grp";
+			function = "i2c0";
+		};
+	};
+
+	pinctrl_i2c0_gpio: i2c0-gpio-grp {
+		conf {
+			groups = "gpio0_66_grp", "gpio0_67_grp";
+			slew-rate = <SLEW_RATE_SLOW>;
+			power-source = <IO_STANDARD_LVCMOS18>;
+		};
+
+		mux {
+			groups = "gpio0_66_grp", "gpio0_67_grp";
+			function = "gpio0";
+		};
+	};
+};
+
+&i2c0 { /* MIO 66/67 - scm_i2c u61/j84 OE */
+	#address-cells = <1>;
+	#size-cells = <0>;
+	clock-frequency = <400000>;
+	pinctrl-names = "default", "gpio";
+	pinctrl-0 = <&pinctrl_i2c0_default>;
+	pinctrl-1 = <&pinctrl_i2c0_gpio>;
+	scl-gpios = <&gpio 66 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+	sda-gpios = <&gpio 67 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+
+	/*
+	 * No need to describe them because all of them are driven from user space
+	 * SCM_I2C (J84 enable bus)
+	 * Bus via LTC4316 u62 ina226_pmbus_scl_trnsl
+	 * ina226 0x59 u112 shunt-resistor = <1000>; R781, 0.92V
+	 * ina226 0x5B u116 shunt-resistor = <1000>; R821, 1.2V
+	 * ina226 0x5A u114 shunt-resistor = <20000>; R801, 1.5V
+	 * ina226 0x5C u118 shunt-resistor = <2000>; R841, 1.00V
+	 * ina226 0x5D u121 shunt-resistor = <2000>; R876, 1.2V
+	 * ina226 0x43 u124 shunt-resistor = <1000>; R903, 0.8V
+	 * ina226 0x4D u128 shunt-resistor = <1000>; R945, 0.92V
+	 *
+	 * Bus via I2C_PMC - enabling via J81 ina226_pmbus_scl
+	 * ina226 0x4a u84 shunt-resistor = <2000>; R435, 1.8V
+	 * ina226 0x4b u86 shunt-resistor = <2000>; R455, 1.8V
+	 * ina226 0x42 u88 shunt-resistor = <2000>; R475, 1.8V
+	 * ina226 0x40 u90 shunt-resistor = <2000>; R495, 0.8V
+	 * ina226 0x4c u106 shunt-resistor = <20000>; R721, 1.5V
+	 * ina226 0x44 u102 shunt-resistor = <2000>; R681, 1.8V
+	 * ina226 0x47 u104 shunt-resistor = <2000>; R701, 0.8V
+	 * ina226 0x45 u108 shunt-resistor = <2000>; R741, 0.8V
+	 * ina226 0x41 u110 shunt-resistor = <2000>; R761, 0.8V
+	 * ina226 0x49 u122 shunt-resistor = <2000>; R883, 1.5V
+	 * ina226 0x4e u126 shunt-resistor = <20000>; R925, 0.8V
+	 * ina226 0x4f u130 shunt-resistor = <20000>; R965, 1.5V
+	 *
+	 * Bus via I2C_PMC - enabling via J82 ext_pmbus_scl
+	 * tps546b24a 0x1a u85
+	 * tps546b24b 0x1b u87
+	 * tps546b24b 0x1c u89
+	 * tps546b24b 0x16 u107
+	 * tps546b24b 0x2a u103
+	 * tps546b24b 0x20 u105
+	 * tps546b24b 0x1e u109
+	 * tps546b24b 0x1d u111
+	 * tps546b24b 0x2b u113
+	 * tps546b24b 0x11 u117
+	 * tps546b24b 0x1f u115
+	 * tps546b24b 0x2c u131
+	 *
+	 * Bus via I2C_PMC - enabling via J83 pmbus_scl
+	 * tps546b24b 0x23 u91
+	 * tps546b24b 0x13 u119
+	 * tps546b24b 0x2d u120
+	 * tps546b24b 0x29 u123
+	 * tps546b24d 0x22 u125
+	 * tps546b24b 0x19 u127
+	 * tps546b24d 0x21 u129
+	 * tps53681 0x60 u132
+	 * tps546b24b 0x15 u642
+	 * tps546b24b 0x27 u140
+	 * tps546b24b 0x26 u141
+	 * tps546b24b 0x14 u142
+	 * tps546b24b 0x12 u143
+	 */
+};
+
+&i2c1 { /* scm_eeprom_i2c */
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	/* via j85 u63 i2c_main_scl */
+
+	/* j88/u68 - OE i2c_main_1_scl */
+	hsdp_refclk: clock-controller@66 { /* u45 */
+		compatible = "renesas,proxo-xp";
+		reg = <0x66>;
+		#clock-cells = <0>;
+		clock-output-names = "hsdp_refclk";
+	};
+
+	/* j90/u70 - OE i2c_main_2_scl */
+	lp5_osc1_clk: clock-controller@57 { /* u2 */
+		compatible = "renesas,proxo-xp";
+		reg = <0x57>;
+		#clock-cells = <0>;
+		clock-output-names = "lp5_osc1_clk";
+	};
+
+	/* j92/u72 - OE i2c_main_3_scl */
+	lp5_osc2_clk: clock-controller@56 { /* u48 */
+		compatible = "renesas,proxo-xp";
+		reg = <0x56>;
+		#clock-cells = <0>;
+		clock-output-names = "lp5_osc2_clk";
+	};
+
+	/* m24c128 u67 0x54 board eeprom in SCM */
+
+	/* j86 - OE ucd_pmbus_scl */
+	ucd90320: power-sequencer@73 { /* u93 */
+		compatible = "ti,ucd90320";
+		reg = <0x73>;
+	};
+
+	pcie_clk: clock-generator@39 { /* u51 */
+		compatible = "renesas,rc21008b";
+		clock-output-names = "rc21008b-pcie";
+		reg = <0x39>;
+		#clock-cells = <1>;
+		clocks = <&pcie_xin>; /* internal oscilator */
+		clock-names = "xin";
+	};
+};
