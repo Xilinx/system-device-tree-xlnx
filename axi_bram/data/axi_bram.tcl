@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2021 Xilinx, Inc.
-# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -22,7 +22,7 @@ proc axi_bram_generate {drv_handle} {
 	global apu_proc_ip
 	global is_64_bit_mb
 	set family [get_hw_family]
-	if {$family in {"microblaze" "Zynq"} && !$is_64_bit_mb} {
+	if {$family in {"microblaze" "microblaze_riscv" "zynq"} && !$is_64_bit_mb} {
 		set bit_format 32
 	} else {
 		set bit_format 64

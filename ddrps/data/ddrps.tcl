@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -24,6 +24,7 @@
         set platform [get_hw_family]
         set 32_bit_format 0
         global apu_proc_ip
+        global is_64_bit_mb
 
         foreach procc $proclist {
 		set proc_ip_name [hsi get_property IP_NAME $procc]
@@ -79,7 +80,7 @@
 	set overall_addr_list [lsort -real -index 0 $overall_addr_list]
 	set ddr_baseaddr [lindex [lindex $overall_addr_list 0] 0]
 	regsub -all {^0x} $ddr_baseaddr {} ddr_baseaddr
-	if {[string equal -nocase $platform "zynq"]} {
+	if {$platform in {"microblaze" "microblaze_riscv" "zynq"} && !$is_64_bit_mb} {
 		set 32_bit_format 1
 	}
 	return [ddrps_get_union_reg_prop $overall_addr_list $name $32_bit_format]
