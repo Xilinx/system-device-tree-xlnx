@@ -790,7 +790,17 @@
          }
 
          if {[string match -nocase [hsi get_property IP_NAME $sink_periph] "axis_register_slice"]} {
-                set sink_periph [get_connected_stream_ip [hsi::get_cells -hier $sink_periph] "M_AXIS"]
+                set regslice_ip [hsi::get_cells -hier $sink_periph]
+                # Try interface-level connection first
+                set next_ip [get_connected_stream_ip $regslice_ip "M_AXIS"]
+                if {![llength $next_ip]} {
+                        # Fallback to pin-level tracing if interface-level query fails
+                        set next_pin [get_sink_pins [hsi::get_pins -of_objects $regslice_ip "m_axis_tdata"]]
+                        if {[llength $next_pin]} {
+                                set next_ip [hsi::get_cells -of_objects $next_pin]
+                        }
+                }
+                set sink_periph $next_ip
          }
 
          if {[string match -nocase [hsi get_property IP_NAME $sink_periph] "axis_data_fifo"]} {
