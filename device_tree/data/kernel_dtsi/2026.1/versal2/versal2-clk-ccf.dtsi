@@ -220,7 +220,7 @@
 	clocks = <&versal2_clk ACPU_3>;
 };
 
-&cortexa78_6 {
+&cortexa78_7 {
 	clocks = <&versal2_clk ACPU_3>;
 };
 
