@@ -61,9 +61,7 @@ proc mipi_csi2_rx_ss_generate {drv_handle} {
 
 	set csi_en_activelanes [hsi get_property CONFIG.C_CSI_EN_ACTIVELANES [hsi::get_cells -hier $drv_handle]]
 	if {[string match -nocase "true" $csi_en_activelanes]} {
-		add_prop "${node}" "xlnx,en-active-lanes" 1 boolean $dts_file 1
-	} else {
-		add_prop "${node}" "xlnx,en-active-lanes" 0 boolean $dts_file 1
+		add_prop "${node}" "xlnx,csi-en-activelanes" 1 boolean $dts_file 1
 	}
 
 	set dphy_lanes [hsi get_property CONFIG.C_DPHY_LANES [hsi::get_cells -hier $drv_handle]]
