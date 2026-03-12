@@ -804,7 +804,7 @@
                             append vid_formats " " "XB24"
                     }
                     "11" {
-                            append vid_formats " " "XV24"
+                            append vid_formats " " "XVUY"
                     }
                     "12" {
                             append vid_formats " " "YUYV"
