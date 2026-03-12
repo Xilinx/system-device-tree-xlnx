@@ -744,8 +744,11 @@ proc write_value {type value} {
 				set tmp [expr [scan [lindex [split $value "."] 1] %d] + 1]
 				if {$tmp == 1} {
 					set tmp [lindex [split $value "."] 0]
-					if {$val < 0} {
-						set val "<[format 0x%.8x [expr {$value & 0xFFFFFFFF}]]>"
+					if {$value < 0} {
+						# Convert the negative single precision floating value to hex in big-endian
+						# format complying to IEEE 754 standard
+						binary scan [binary format R $value] H* converted_hex
+						set val "<[format "0x%0*s" 8 $converted_hex]>"
 					} else {
 						set val "<[format %d $tmp]>"}
 				} else {
