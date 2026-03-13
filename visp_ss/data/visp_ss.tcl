@@ -165,7 +165,7 @@ proc visp_ss_generate {drv_handle} {
 		for {set isp 0} {$isp < 2} {incr isp} {
 			set isp_id [expr {$tile * 2 + $isp}]
 			set sub_node_label "visp_ss_${tile}${isp_id}"
-			set baseaddr [get_baseaddr [hsi get_cells -hier $drv_handle] no_prefix]
+			set baseaddr [get_visp_baseaddr $drv_handle]
 			set sub_region_size 0x800  ;#2KB
 			set sub_baseaddr [format %08x [expr 0x$baseaddr + $isp_id * $sub_region_size]]
 			set sub_baseaddr1 [expr 0x$baseaddr + $isp_id * $sub_region_size]
@@ -1240,4 +1240,61 @@ proc rpu_info_mbox_create { drv_handle default_dts bus_name} {
                }
        }
        generate_mbox_nodes $rpu_info_list $default_dts $bus_name
+}
+
+proc get_visp_baseaddr {drv_handle} {
+    set cell_name [common::get_property NAME [hsi::get_cells -hier $drv_handle]]
+    set apu_addrs {}
+    set rpu_addrs {}
+
+    # Collect APU addresses
+    set apu [lindex [hsi::get_cells -hier -filter {IP_NAME == "cortexa78"}] 0]
+    if {$apu ne ""} {
+        foreach mr [hsi::get_mem_ranges -of_objects [hsi::get_cells -hier $apu]] {
+            set inst [common::get_property INSTANCE $mr]
+            if {$inst eq $cell_name} {
+                lappend apu_addrs [common::get_property BASE_VALUE $mr]
+            }
+        }
+    }
+
+    # Collect RPU addresses
+    set rpu [lindex [hsi::get_cells -hier -filter {IP_NAME == "cortexr52"}] 0]
+    if {$rpu ne ""} {
+        foreach mr [hsi::get_mem_ranges -of_objects [hsi::get_cells -hier $rpu]] {
+            set inst [common::get_property INSTANCE $mr]
+            if {$inst eq $cell_name} {
+                lappend rpu_addrs [common::get_property BASE_VALUE $mr]
+            }
+        }
+    }
+
+    # Remove duplicates within each list
+    set apu_addrs [lsort -unique $apu_addrs]
+    set rpu_addrs [lsort -unique $rpu_addrs]
+
+    #puts "DEBUG get_visp_baseaddr: cell=$cell_name"
+    #puts "  APU addresses ([llength $apu_addrs]): $apu_addrs"
+    #puts "  RPU addresses ([llength $rpu_addrs]): $rpu_addrs"
+
+    # Find unique address (present in one but not both)
+    foreach addr $apu_addrs {
+        if {[lsearch -exact $rpu_addrs $addr] == -1} {
+            #puts "  -> Unique APU addr (not in RPU): $addr"
+            return [string trimleft $addr "0x"]
+        }
+    }
+    foreach addr $rpu_addrs {
+        if {[lsearch -exact $apu_addrs $addr] == -1} {
+            #puts "  -> Unique RPU addr (not in APU): $addr"
+            return [string trimleft $addr "0x"]
+        }
+    }
+
+    # Fallback: if all addresses are common, return first APU address
+    #puts "  -> No unique addr found, fallback to first APU addr: [lindex $apu_addrs 0]"
+    if {[llength $apu_addrs] > 0} {
+        return [string trimleft [lindex $apu_addrs 0] "0x"]
+    }
+    return ""
 }
