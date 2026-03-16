@@ -746,6 +746,7 @@ proc visp_ss_gen_frmbuf_wr_node {outip drv_handle dts_file sub_node_label port_a
 	set bus_node [detect_bus_name $drv_handle]
 	set vcap [create_node -n "vcap_$sub_node_label" -l vcap_$sub_node_label -p $bus_node -d $dts_file]
 	add_prop $vcap "compatible" "xlnx,video" string $dts_file
+	add_prop $vcap "xlnx,atomic_streamon" 1 int $dts_file
 	# Build DMA list for multiple frame buffer writers
 	set dma_list ""
 	# Get all connected frame buffer writers for this ISP
