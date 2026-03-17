@@ -1125,7 +1125,7 @@ proc generate_mbox_nodes {rpu_info_list default_dts bus_name} {
         add_prop "$mbox_node" "mbox-names" [list "tx" "rx"] stringlist $default_dts
         add_prop "$mbox_node" "status" "okay" string $default_dts
 
-        # Add mboxes and rproc properties referencing the correct child node
+        # Add mboxes property referencing the correct child node
         if {[info exists rpu_to_child($rpu_id)]} {
             set child_label $rpu_to_child($rpu_id)
             #add_prop "$mbox_node" "mboxes" "<&${child_label} 0>, <&${child_label} 1>" noformating $default_dts
@@ -1135,9 +1135,9 @@ proc generate_mbox_nodes {rpu_info_list default_dts bus_name} {
 			set dest_ipi [find_ipi_for_cpu $ipi_list $dest_cpu_name]
 
 			if {![string length $dest_ipi]} {
-				puts "Warning: No destination IPI found for RPU$rpu_id (CPU=$dest_cpu_name). Skipping mboxes and rproc properties."
+				puts "Warning: No destination IPI found for RPU$rpu_id (CPU=$dest_cpu_name). Skipping mboxes property."
 			} else {
-				add_prop "$mbox_node" "rproc" "<&r52_${rpu_id}>" noformating $default_dts
+
 
 				if { $rpu_id == 6 || $rpu_id == 7} {
 					set src_ipi [extract_ipi_number [hsi get_property NAME [hsi get_cells -hier *_ipi_5]]]
