@@ -173,10 +173,10 @@
                 if {$num == 1} {
                         lappend mac0intr $intr1
                 }
-                if {$num == 2} {
+                if {$num == 2 && ![string match -nocase $intr1 "interrupt_ptp_timer_2"]} {
                         lappend mac1intr $intr1
                 }
-                if {[string match -nocase $intr1 "interrupt_ptp_timer"]} {
+                if {[string match -nocase $intr1 "interrupt_ptp_timer"] || [string match -nocase $intr1 "interrupt_ptp_timer_2"]} {
                         lappend mac0intr $intr1
                 }
                 if {[string match -nocase $intr1 "tsn_ep_scheduler_irq"]} {
