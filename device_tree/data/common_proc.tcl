@@ -3,7 +3,7 @@
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # Michal SIMEK <monstr@monstr.eu>
 #
@@ -6504,6 +6504,9 @@ proc add_or_get_bus_node {ip_drv dts_file} {
 			add_prop $bus_node #address-cells $addr_cells int $dts_file
 			add_prop $bus_node #size-cells $size_cells int $dts_file
 			add_prop $bus_node compatible "simple-bus" string $dts_file
+			if {$proctype in {"microblaze" "microblaze_riscv"}} {
+				add_prop $bus_node "bootph-all" "" boolean $dts_file
+			}
 			add_prop $bus_node ranges boolean $dts_file
 		}
 	}
