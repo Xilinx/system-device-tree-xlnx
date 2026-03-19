@@ -14,10 +14,10 @@
 #define		PD_OCM_1	12
 #define		PD_OCM_2	13
 #define		PD_OCM_3	14
-#define		PD_TCM_0_A	15
-#define		PD_TCM_0_B	16
-#define		PD_TCM_1_A	17
-#define		PD_TCM_1_B	18
+#define		PD_R5_0_ATCM    15
+#define		PD_R5_0_BTCM	16
+#define		PD_R5_1_ATCM	17
+#define		PD_R5_1_BTCM	18
 #define		PD_USB_0	22
 #define		PD_USB_1	23
 #define		PD_TTC_0	24
