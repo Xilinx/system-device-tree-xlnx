@@ -154,36 +154,9 @@ proc get_util_reduced_logic_interrupt_sources { url_ip_obj } {
 }
 
 proc get_intc_cascade_id_offset { intc } {
-#proc get_intc_cascade_id_offset { intc } 
-    set cascade_offset 0
-    set cascade 0
-    set intc_type [::hsi get_property IP_NAME $intc]
-    set intc_name [::hsi get_property NAME $intc]
-    set other_intc_periphs [hsi::get_cells -hier -filter "NAME!=$intc_name&&IP_NAME==$intc_type"] 
-    foreach other_intc_periph $other_intc_periphs {
-        set intc_src_ports [get_interrupt_sources $other_intc_periph]
-        set total_intr_count 0
-        foreach src_port $intc_src_ports {
-            set periph [hsi::get_cells -of_objects $src_port]
-            set intr_width [get_port_width $src_port]
-            if { [llength $periph] } {
-                if {[hsi get_property IS_PL $periph] == 0} {
-                    continue
-                }
-                set periph_name [::hsi get_property NAME $periph]
-                if { [string match -nocase "$periph_name" "$intc_name"] } {
-                    set cascade 1
-                }
-            }
-            set total_intr_count [expr $total_intr_count + $intr_width]
-        }
-        if { $cascade } {
-            set cascade_offset [expr $total_intr_count + [get_intc_cascade_id_offset $other_intc_periph] ]
-            #set cascade_offset [expr $total_intr_count + [get_intc_cascade_id_offset $other_intc_periph] ]
-            break;
-        }
-    }
-    return $cascade_offset
+    # Alias to common_proc.tcl::get_intc_cascade_offset
+    # Maintains compatibility for xillib_sw.tcl caller
+    return [get_intc_cascade_offset $intc]
 }
 
 #############################################################################

@@ -4908,8 +4908,20 @@ proc get_intr_type {intc_name ip_name port_name} {
 	set intr_pin [hsi::get_pins -of_objects $ip $port_name]
 	set sensitivity ""
 	if {[llength $intr_pin] >= 1} {
-		# TODO: check with HSM dev and see if this is a bug
-		set sensitivity [hsi get_property SENSITIVITY $intr_pin]
+		# For axi_intc cascade mode, check sink pin sensitivity (irq output has none)
+		set pin_dir [hsi get_property DIRECTION $intr_pin]
+		if {[string match -nocase $pin_dir "O"] && [string match -nocase [hsi get_property IP_NAME $ip] "axi_intc"]} {
+			set sink_pins [get_sink_pins $intr_pin]
+			if {[llength $sink_pins] > 0} {
+				set sink_pin [lindex $sink_pins 0]
+				set sensitivity [hsi get_property SENSITIVITY $sink_pin]
+				if {[string_is_empty $sensitivity]} {
+					set sensitivity "LEVEL_HIGH"
+				}
+			}
+		} else {
+			set sensitivity [hsi get_property SENSITIVITY $intr_pin]
+		}
 	}
 	set intc_type [hsi get_property IP_NAME $intc ]
 	set valid_intc_list "ps7_scugic psu_acpu_gic psv_acpu_gic psx_acpu_gic acpu_gic"
@@ -5087,6 +5099,124 @@ proc gen_mb_interrupt_property {cpu_handle {intr_port_name ""}} {
 	}
 }
 
+# Get cascade offset for an interrupt controller
+# Per PG099: First cascade = 32, second cascade = 64, third = 96
+proc get_intc_cascade_offset {intc_handle} {
+    set ip [hsi::get_cells -hier $intc_handle]
+    if {[llength $ip] == 0} {
+        return 0
+    }
+
+    set cascade_mode 0
+    set cascade_master 0
+
+    if {[catch {set cascade_mode [hsi get_property CONFIG.C_EN_CASCADE_MODE $ip]}]} {
+        set cascade_mode 0
+    }
+    if {[catch {set cascade_master [hsi get_property CONFIG.C_CASCADE_MASTER $ip]}]} {
+        set cascade_master 0
+    }
+
+    if {$cascade_mode == "" || $cascade_mode == -1} {
+        set cascade_mode 0
+    }
+    if {$cascade_master == "" || $cascade_master == -1} {
+        set cascade_master 0
+    }
+
+    if {$cascade_master == 1} {
+        return 0
+    }
+
+    set irq_pin [hsi::get_pins -of_objects $ip -filter {NAME==irq && DIRECTION==O}]
+    if {[llength $irq_pin] == 0} {
+        return 0
+    }
+
+    set sink_pins [get_sink_pins $irq_pin]
+    if {[llength $sink_pins] == 0} {
+        return 0
+    }
+
+    foreach sink_pin $sink_pins {
+        set sink_periph [hsi::get_cells -of_objects $sink_pin]
+
+        if {[llength $sink_periph] == 0} {
+            continue
+        }
+
+        set sink_ip_name [hsi get_property IP_NAME $sink_periph]
+
+        # Handle xlconcat/ilconcat intermediate connection (INTC.irq → xlconcat/ilconcat → parent_INTC.intr)
+        if {$sink_ip_name in {"xlconcat" "ilconcat"}} {
+            set concat_out_pin [hsi::get_pins -of_objects $sink_periph -filter {NAME==dout && DIRECTION==O}]
+            if {[llength $concat_out_pin] > 0} {
+                set concat_sinks [get_sink_pins $concat_out_pin]
+                foreach concat_sink $concat_sinks {
+                    set concat_target [hsi::get_cells -of_objects $concat_sink]
+                    if {[llength $concat_target] > 0} {
+                        set target_ip_name [hsi get_property IP_NAME $concat_target]
+
+                        if {$target_ip_name == "axi_intc"} {
+                            set parent_offset [get_intc_cascade_offset $concat_target]
+                            set cascade_increment 32
+                            return [expr {$parent_offset + $cascade_increment}]
+                        }
+                    }
+                }
+            }
+        }
+
+        # Direct connection to parent axi_intc
+        if {$sink_ip_name == "axi_intc"} {
+            set parent_offset [get_intc_cascade_offset $sink_periph]
+            set cascade_increment 32
+            return [expr {$parent_offset + $cascade_increment}]
+        }
+    }
+
+    return 0
+}
+
+# Helper function to extract cascade interrupt number from pin connections
+proc get_cascade_interrupt_number {sink_pn peri periph} {
+    # Extract number from pin name (e.g., intr[5] -> 5)
+    set sink_pin_name [hsi get_property NAME $sink_pn]
+    set number [regexp -all -inline -- {[0-9]+} $sink_pin_name]
+    if {[llength $number] == 0} {
+        # No number in pin name (e.g., "irq_in") - this is a dedicated cascade input
+        # Need to find the actual intr[] pin that connects to the irq output
+        set nets [hsi::get_nets -of_objects $sink_pn]
+        foreach net $nets {
+            set net_pins [hsi::get_pins -of_objects $net]
+            foreach np $net_pins {
+                set np_cell [hsi::get_cells -of_objects $np]
+                if {[string match $np_cell $peri]} {
+                    # This is a pin on the parent controller
+                    set np_name [hsi get_property NAME $np]
+                    # Extract number from intr[X]
+                    set num [regexp -all -inline -- {[0-9]+} $np_name]
+                    if {[llength $num] > 0} {
+                        set number $num
+                        break
+                    }
+                }
+            }
+            if {[llength $number] > 0} {
+                break
+            }
+        }
+        # If still no number found, use the cascade interrupt ID (offset - 1)
+        if {[llength $number] == 0} {
+            set cascade_offset [get_intc_cascade_offset $periph]
+            if {$cascade_offset > 0} {
+                set number [expr {$cascade_offset - 1}]
+            }
+        }
+    }
+    return $number
+}
+
 proc get_interrupt_parent {  periph_name intr_pin_name } {
     lappend intr_cntrl
     if { [llength $intr_pin_name] == 0 } {
@@ -5153,8 +5283,8 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
         set intr_par ""
 	if {[string_is_empty $intr_port_name]} {
 		if {[string match -nocase [get_ip_property $drv_handle IP_NAME] "axi_intc"]} {
-			set val [hsi::get_pins -of_objects $slave -filter {TYPE==INTERRUPT}]
-			set intr_port_name [hsi::get_pins -of_objects $slave -filter {TYPE==INTERRUPT&&DIRECTION==O}]
+			# For axi_intc, find irq pin by name (TYPE=undef in cascade mode)
+			set intr_port_name [hsi::get_pins -of_objects $slave -filter {NAME==irq&&DIRECTION==O}]
 			set single [hsi get_property CONFIG.C_IRQ_CONNECTION [hsi::get_cells -hier $slave]]
 			if {$single == 0} {
 				dtg_warning "The axi_intc Interrupt Output connection is Bus. Change it to Single"
@@ -5183,12 +5313,6 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 			generate_gpio_intr_info $connected_intc $drv_handle $pin
 		} else {
 			set intc [get_interrupt_parent $drv_handle $pin]
-			if { [string match -nocase [get_ip_property $drv_handle IP_NAME] "axi_intc"] && [lsearch -nocase $valid_cascade_proc $proctype] >= 0 } {
-				set pins [hsi::get_pins -of_objects [::hsi::get_cells -hier -filter "NAME==$drv_handle"] -filter "NAME==irq"]
-				set intc [get_interrupt_parent $drv_handle $pins]
-			} else {
-				set intc [get_interrupt_parent $drv_handle $pin]
-			}
 			if {[string_is_empty $intc] == 1} {
 				dtg_warning "Interrupt pin \"$pin\" of IP block: \"$drv_handle\" is not connected\n\r"
 				continue
@@ -6119,7 +6243,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 			set value [split $tmp ": "]
 			set label [lindex $value 0]
 			set dev_type [lindex $value 2]
-		} 
+		}
 	}
 	if {[string match -nocase $proc_type "versal"] } {
 		set ip_type [hsi get_property IP_NAME $ip]
@@ -6743,10 +6867,10 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 			foreach intr_sink ${sinks} {
 				set sink_periph [hsi::get_cells -of_objects $intr_sink]
 				if { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "axi_intc"] } {
-					# this the case where interrupt port is connected to axi_intc.
-					lappend intr_cntrl [get_intr_cntrl_name $sink_periph "irq"]
+					# axi_intc cascade: sink is the interrupt controller
+					lappend intr_cntrl $sink_periph
 				} elseif { [llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"xlconcat" "ilconcat"}) } {
-					# this the case where interrupt port is connected to XLConcat IP.
+					# this the case where interrupt port is connected to XLConcat/ILConcat IP.
 					lappend intr_cntrl [get_intr_cntrl_name $sink_periph "dout"]
 				} elseif { [llength $sink_periph ] && [is_intr_cntrl $sink_periph] == 1 } {
 					lappend intr_cntrl $sink_periph
@@ -6811,7 +6935,7 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 				lappend intr_cntrl $sink_periph
 			}
 		} elseif { [llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"xlconcat" "ilconcat"}) } {
-			# this the case where interrupt port is connected to XLConcat IP.
+			# this the case where interrupt port is connected to XLConcat/ILConcat IP.
 			lappend intr_cntrl [get_intr_cntrl_name $sink_periph "dout"]
 		} elseif { [llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"xlslice" "ilslice"}) } {
 			lappend intr_cntrl [get_intr_cntrl_name $sink_periph "Dout"]
@@ -6940,7 +7064,7 @@ proc get_gpio_channel_nr { periph_name intr_pin_name } {
 		set intr_sink_pins [get_sink_pins $intr_pin]
 		set sink_periph [hsi::get_cells -of_objects $intr_sink_pins]
 		if { [llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"xlconcat" "ilconcat"}) } {
-			# this the case where interrupt port is connected to XLConcat IP.
+			# this the case where interrupt port is connected to XLConcat/ILConcat IP.
 			return [get_gpio_channel_nr $sink_periph "dout"]
 		}
 		if {[regexp "gpio[2]_*" $intr_sink_pins match]} {
@@ -7116,7 +7240,11 @@ proc get_psu_interrupt_id { ip_name port_name } {
 			set ip [hsi get_property IP_NAME $periph]
 			set cascade_master [hsi get_property CONFIG.C_CASCADE_MASTER [hsi::get_cells -hier $periph]]
 			set en_cascade_mode [hsi get_property CONFIG.C_EN_CASCADE_MODE [hsi::get_cells -hier $periph]]
-			set sink_pn [get_sink_pins $intr_pin]
+			set sink_pins_list [get_sink_pins $intr_pin]
+			if {[llength $sink_pins_list] == 0} {
+				return -1
+			}
+			set sink_pn [lindex $sink_pins_list 0]
 			set peri [hsi::get_cells -of_objects $sink_pn]
 			set periph_ip [hsi get_property IP_NAME [hsi::get_cells -hier $peri]]
 			if {$periph_ip in {"xlconcat" "ilconcat"}} {
@@ -7129,7 +7257,8 @@ proc get_psu_interrupt_id { ip_name port_name } {
 					set en_cascade_mode [hsi get_property CONFIG.C_EN_CASCADE_MODE [hsi::get_cells -hier $perih]]
 				}
 			}
-			set number [regexp -all -inline -- {[0-9]+} $sink_pn]
+			# For cascade pins connected to regular intr[] array, extract the index from pin name
+			set number [get_cascade_interrupt_number $sink_pn $peri $periph]
 			return $number
 		}
 	}
@@ -7157,6 +7286,11 @@ proc get_psu_interrupt_id { ip_name port_name } {
 					}
 					return $number
 				}
+			} elseif {[string match -nocase $periph_ip "axi_intc"]} {
+				# Direct connection to parent axi_intc (not via xlconcat)
+				# This is the cascade case - INTC to INTC connection
+				set number [get_cascade_interrupt_number $sink_pn $peri $periph]
+				return $number
 			}
 		}
 	}
@@ -7348,6 +7482,17 @@ proc get_psu_interrupt_id { ip_name port_name } {
 	            }
 	    }
 	}
+	}
+
+	# Apply cascade offset for axi_intc
+	if {[llength $intc_periph] > 0} {
+		set intc_ip_name [hsi get_property IP_NAME $intc_periph]
+		if {[string match -nocase $intc_ip_name "axi_intc"]} {
+			set cascade_offset [get_intc_cascade_offset $intc_periph]
+			if {$cascade_offset > 0} {
+				set ret [expr {$ret + $cascade_offset}]
+			}
+		}
 	}
 
 	set id $ret
