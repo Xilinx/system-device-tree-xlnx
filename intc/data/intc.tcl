@@ -46,6 +46,37 @@
         set kind_of_intr 0
         }
         add_prop $node "xlnx,kind-of-intr" $kind_of_intr hexint $dts_file 1
+
+        # Calculate and add intc-type property based on cascade mode
+        set cascade_mode [get_ip_param_value $ip C_EN_CASCADE_MODE]
+        set cascade_master [get_ip_param_value $ip C_CASCADE_MASTER]
+
+        # Set default values if parameters are empty
+        if {$cascade_mode == "" || $cascade_mode == -1} {
+            set cascade_mode 0
+        }
+        if {$cascade_master == "" || $cascade_master == -1} {
+            set cascade_master 0
+        }
+        # Determine intc type:
+        # 0 - Generic standalone (parent is not axi_intc)
+        # 1 - Cascade master (cascade enabled, master)
+        # 2 - Cascade intermediate (cascade enabled, not master)
+        # 3 - Cascade leaf (parent is axi_intc, cascade disabled)
+        if {$cascade_mode == 1 && $cascade_master == 1} {
+            set intc_type 1
+        } elseif {$cascade_mode == 1 && $cascade_master == 0} {
+            set intc_type 2
+        } else {
+            # cascade_mode == 0: Check if parent exists using existing cascade offset logic
+            if {[get_intc_cascade_offset $drv_handle] > 0} {
+                set intc_type 3
+            } else {
+                set intc_type 0
+            }
+        }
+
+        add_prop $node "xlnx,intc-type" $intc_type hexint $dts_file 1
         if {[string match -nocase $env(zocl) "enable"]} {
                 add_prop $node "xlnx,num-intr-inputs" 0x20 hexint "pl.dtsi" 1
         } else {
