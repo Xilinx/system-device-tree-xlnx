@@ -449,7 +449,7 @@
 			clock-names = "clk_main", "clk_apb";
 			/* dma-type is needed for csudma */
 			xlnx,dma-type = <1>;
-			/* iommus = <&smmu 0x210>; */
+			iommus = <&smmu 0x210>;
 			#dma-cells = <1>;
 			xlnx,bus-width = <64>;
 			/* dma-coherent; */
@@ -464,7 +464,7 @@
 			clock-names = "clk_main", "clk_apb";
 			/* dma-type is needed for csudma */
 			xlnx,dma-type = <1>;
-			/* iommus = <&smmu 0x212>; */
+			iommus = <&smmu 0x212>;
 			#dma-cells = <1>;
 			xlnx,bus-width = <64>;
 			/* dma-coherent; */
@@ -479,7 +479,7 @@
 			clock-names = "clk_main", "clk_apb";
 			/* dma-type is needed for csudma */
 			xlnx,dma-type = <1>;
-			/* iommus = <&smmu 0x214>; */
+			iommus = <&smmu 0x214>;
 			#dma-cells = <1>;
 			xlnx,bus-width = <64>;
 			/* dma-coherent; */
@@ -495,7 +495,7 @@
 			clock-names = "clk_main", "clk_apb";
 			/* dma-type is needed for csudma */
 			xlnx,dma-type = <1>;
-			/* iommus = <&smmu 0x216>; */
+			iommus = <&smmu 0x216>;
 			#dma-cells = <1>;
 			xlnx,bus-width = <64>;
 			/* dma-coherent; */
@@ -510,7 +510,7 @@
 			clock-names = "clk_main", "clk_apb";
 			/* dma-type is needed for csudma */
 			xlnx,dma-type = <1>;
-			/* iommus = <&smmu 0x218>; */
+			iommus = <&smmu 0x218>;
 			#dma-cells = <1>;
 			xlnx,bus-width = <64>;
 			/* dma-coherent; */
@@ -525,7 +525,7 @@
 			clock-names = "clk_main", "clk_apb";
 			/* dma-type is needed for csudma */
 			xlnx,dma-type = <1>;
-			/* iommus = <&smmu 0x21a>; */
+			iommus = <&smmu 0x21a>;
 			#dma-cells = <1>;
 			xlnx,bus-width = <64>;
 			/* dma-coherent; */
@@ -540,7 +540,7 @@
 			clock-names = "clk_main", "clk_apb";
 			/* dma-type is needed for csudma */
 			xlnx,dma-type = <1>;
-			/* iommus = <&smmu 0x21c>; */
+			iommus = <&smmu 0x21c>;
 			#dma-cells = <1>;
 			xlnx,bus-width = <64>;
 			/* dma-coherent; */
@@ -555,7 +555,7 @@
 			clock-names = "clk_main", "clk_apb";
 			/* dma-type is needed for csudma */
 			xlnx,dma-type = <1>;
-			/* iommus = <&smmu 0x21e>; */
+			iommus = <&smmu 0x21e>;
 			#dma-cells = <1>;
 			xlnx,bus-width = <64>;
 			/* dma-coherent; */
@@ -568,7 +568,7 @@
 			interrupts = <0 56 4>, <0 56 4>;
 			interrupt-parent = <&imux>;
 			clock-names = "pclk", "hclk", "tx_clk", "rx_clk", "tsu_clk";
-			/* iommus = <&smmu 0x234>; */
+			iommus = <&smmu 0x234>;
 			/* dma-coherent; */
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -581,7 +581,7 @@
 			interrupts = <0 58 4>, <0 58 4>;
 			interrupt-parent = <&imux>;
 			clock-names = "pclk", "hclk", "tx_clk", "rx_clk", "tsu_clk";
-			/* iommus = <&smmu 0x235>; */
+			iommus = <&smmu 0x235>;
 			/* dma-coherent; */
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -706,7 +706,7 @@
 			clock-names = "clk_xin", "clk_ahb", "gate";
 			#clock-cells = <1>;
 			clock-output-names = "clk_out_sd0", "clk_in_sd0";
-			/* iommus = <&smmu 0x242>; */
+			iommus = <&smmu 0x242>;
 			/* dma-coherent; */
 		};
 
@@ -719,7 +719,7 @@
 			clock-names = "clk_xin", "clk_ahb", "gate";
 			#clock-cells = <1>;
 			clock-output-names = "clk_out_sd1", "clk_in_sd1";
-			/* iommus = <&smmu 0x243>; */
+			iommus = <&smmu 0x243>;
 			/* dma-coherent; */
 		};
 
@@ -770,6 +770,7 @@
 			reg = <0 0xf1010000 0 0x10000 0 0xc0000000 0 0x20000000>;
 			interrupts = <0 124 4>;
 			interrupt-parent = <&imux>;
+			iommus = <&smmu 0x245>;
 			cdns,fifo-depth = <256>;
 			cdns,fifo-width = <4>;
 			cdns,is-dma = <1>;
@@ -785,7 +786,7 @@
 			interrupts = <0 125 4>;
 			interrupt-parent = <&imux>;
 			clock-names = "ref_clk", "pclk";
-			/* iommus = <&smmu 0x244>; */
+			iommus = <&smmu 0x244>;
 			/* dma-coherent; */
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -903,7 +904,7 @@
 				interrupt-names = "host", "peripheral", "otg", "wakeup";
 				interrupts = <0 0x16 4>, <0 0x16 4>, <0 0x1a 4>, <0x0 0x4a 0x4>;
 				interrupt-parent = <&imux>;
-				/* iommus = <&smmu 0x230>; */
+				iommus = <&smmu 0x230>;
 				snps,dis_u2_susphy_quirk;
 				snps,dis_u3_susphy_quirk;
 				snps,quirk-frame-length-adjustment = <0x20>;
