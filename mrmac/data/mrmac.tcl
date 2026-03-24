@@ -102,6 +102,31 @@
             }
         }
 
+  proc mrmac_aux_mux_gpio {mux_ip node port_num dts_file} {
+        set sink_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $mux_ip] "sel_10g_mode"]]
+        set mux_ip [::hsi::get_cells -of_objects $sink_pins]
+        if {[get_ip_property $mux_ip IP_NAME] in {"xlslice" "ilslice"}} {
+            set intf "Din"
+            set in_pin [::hsi::get_pins -of_objects $mux_ip -filter "NAME==$intf"]
+            set sink_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $mux_ip] $in_pin]]
+            set mux_cdc [::hsi::get_cells -of_objects $sink_pins]
+            set ip_name [get_ip_property $mux_cdc IP_NAME]
+            if {[string match -nocase [hsi get_property IP_NAME $mux_cdc] "axi_gpio"]} {
+                     add_prop "$node" "aux-mux-gpios" "$mux_cdc $port_num 0" reference $dts_file
+		     return
+            }
+            if {[string match -nocase [hsi get_property IP_NAME $mux_cdc] "xpm_cdc_gen"]} {
+                set intf "src_in"
+                set in_pin [::hsi::get_pins -of_objects $mux_cdc -filter "NAME==$intf"]
+                set sink_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $mux_cdc] $in_pin]]
+                set mux_gpio [::hsi::get_cells -of_objects $sink_pins]
+                set gpio_name [get_ip_property $mux_gpio IP_NAME]
+                if {[string match -nocase [hsi get_property IP_NAME $mux_gpio] "axi_gpio"]} {
+                     add_prop "$node" "aux-mux-gpios" "$mux_gpio $port_num 0" reference $dts_file
+                }
+            }
+        }
+  }
   proc mrmac_generate_gt_gpios {drv_handle node port_num mode lanes dts_file} {
 	set mrmac_ip [hsi::get_cells -hier $drv_handle]
         if {$mode eq "new"} {
@@ -351,7 +376,7 @@
                     set mux_ip ""
                     set fifo_ip ""
                     if {[llength $sink_periph]} {
-                            mrmac_connect_axistream $drv_handle $current_port_node $sink_periph $dts_file
+                            mrmac_connect_axistream $drv_handle $current_port_node $port_index $sink_periph $dts_file
                     }
             }
 
@@ -782,7 +807,7 @@
          mrmac_generate_intr_info  $drv_handle $node $fifo_ip
     }
 
-    proc mrmac_connect_axistream {drv_handle node sink_periph dts_file} {
+    proc mrmac_connect_axistream {drv_handle node port_num sink_periph dts_file} {
 
          if {[get_ip_property $sink_periph IP_NAME] in {"xlconcat" "ilconcat"}} {
                 set fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $sink_periph] "dout"]]
@@ -828,6 +853,7 @@
                  }
 
                  if {[string match -nocase [hsi get_property IP_NAME $fiforx_connect_ip] "mrmac_10g_mux"]} {
+                        mrmac_aux_mux_gpio $fiforx_connect_ip $node $port_num $dts_file
                         set data_fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $fiforx_connect_ip] "rx_m_axis_tdata"]]
                         set data_fifo_per [hsi::get_cells -of_objects $data_fifo_pin]
                         foreach data_fifo $data_fifo_per {
