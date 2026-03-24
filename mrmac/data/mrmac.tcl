@@ -299,6 +299,9 @@
                 set gt_lane $port_index
             }
 
+            add_prop $current_port_node "managed" "in-band-status" string $dts_file
+            add_prop $current_port_node "phy-mode" "internal" string $dts_file
+
             add_prop "$current_port_node" "compatible" "$compatible" stringlist $dts_file 1
             # Create nodes dynamically for PORT1, PORT2, PORT3
             set port_base [format 0x%llx [expr $base_addr + ($port_index * 0x1000)]]
