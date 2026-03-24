@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2013-2021 Xilinx, Inc.
-# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -39,36 +39,6 @@ proc get_connected_intf { periph_name intf_name} {
     set conn_busif_handle [get_intf_pin_oftype $connected_intf $intf_type 0]
     return $conn_busif_handle
 }
-# 
-# it will return the net name connected to ip pin
-#
-proc get_net_name {ip_inst ip_pin} {
-    set ret ""
-    if { [llength $ip_pin] != 0 } {
-    set port [hsi::get_pins -of_objects $ip_inst -filter "NAME==$ip_pin"]
-    if { [llength $port] != 0 } {
-        set pin [hsi::get_nets -of_objects $port ] 
-        set ret [hsi get_property NAME $pin]
-    }
-    }
-   return $ret
-}
-
-#
-# It will return the interface net name connected to IP interface.
-#
-proc get_intfnet_name {ip_inst ip_busif} {
-    set ret ""
-    if { [llength $ip_busif] != 0 } {
-    set bus_if [hsi::get_intf_pins -of_objects $ip_inst -filter "NAME==$ip_busif"]
-    if { [llength $bus_if] != 0 } {
-       set intf_net [hsi::get_intf_nets -of_objects $bus_if]
-       set ret [hsi get_property NAME $intf_net]
-    }
-    }
-    return $ret
-}
-
 
 # 
 # It will return all the peripheral objects which are connected to processor
@@ -997,20 +967,6 @@ proc get_p2p_name {periph arg} {
    
    return $p2p_name
 }
-
-#
-# it returns all the processor instance object in design
-#
-proc get_procs { } {
-   return [hsi::get_cells  -hier -filter { IP_TYPE==PROCESSOR}]
-}
-
-#
-# Get the interrupt ID of a peripheral interrupt port
-#
-proc get_port_intr_id { periph_name intr_port_name } {
-    return [get_interrupt_id $periph_name $intr_port_name]
-}
 #
 # It will check the is peripheral is interrupt controller or not
 #
@@ -1133,69 +1089,6 @@ proc get_board_name { } {
         set board_name "."
     }
     return $board_name
-}
-
-proc get_trimmed_param_name { param } {
-    set param_name $param
-    regsub -nocase ^CONFIG. $param_name "" param_name
-    regsub -nocase ^C_ $param_name "" param_name
-    return $param_name
-}
-#
-# It returns the ip subtype. First its check for special type of EDK_SPECIAL parameter
-#
-proc get_ip_sub_type { ip_inst_object} {
-    if { [string compare -nocase cell [hsi get_property CLASS $ip_inst_object]] != 0 } {
-        error "get_mem_type API expect only mem_range type object whereas $class type object is passed"
-    }
-
-    set ip_type [hsi get_property CONFIG.EDK_SPECIAL $ip_inst_object]
-    if { [llength $ip_type] != 0 } {
-        return $ip_type
-    }
-
-    set ip_name [hsi get_property IP_NAME $ip_inst_object]
-    if { [string compare -nocase "$ip_name"  "lmb_bram_if_cntlr"] == 0
-        || [string compare -nocase "$ip_name" "isbram_if_cntlr"] == 0
-        || [string compare -nocase "$ip_name" "axi_bram_ctrl"] == 0
-        || [string compare -nocase "$ip_name" "dsbram_if_cntlr"] == 0
-        || [string compare -nocase "$ip_name" "ps7_ram"] == 0 } {
-            set ip_type "BRAM_CTRL"
-    } elseif { [string match -nocase *ddr* "$ip_name" ] == 1 } {
-         set ip_type "DDR_CTRL"
-     } elseif { [string compare -nocase "$ip_name" "mpmc"] == 0 } {
-         set ip_type "DRAM_CTRL"
-     } elseif { [string compare -nocase "$ip_name" "axi_emc"] == 0 } {
-         set ip_type "SRAM_FLASH_CTRL"
-     } elseif { [string compare -nocase "$ip_name" "psu_ocm_ram_0"] == 0 
-                || [string compare -nocase "$ip_name" "psu_ocm_ram_1"] == 0
-                || [string compare -nocase "$ip_name" "psv_ocm_ram_0"] == 0 } {
-         set ip_type "OCM_CTRL"
-     } else {
-         set ip_type [hsi get_property IP_TYPE $ip_inst_object]
-     }
-     return $ip_type
-}
-
-proc generate_psinit { } {
-    set obj [hsi::get_cells -hier -filter {CONFIGURABLE == 1}]
-    if { [llength $obj] == 0 } {
-      set xmlpath [hsi get_property PATH [hsi::current_hw_design]]
-      if { $xmlpath != "" } {
-        set xmldir [file dirname $xmlpath]
-        set file "$xmldir[file separator]ps7_init.c"
-        if { [file exists $file] } {
-          file copy -force $file .
-        }
-        
-        set file "$xmldir[file separator]ps7_init.h"
-        if { [file exists $file] } {
-          file copy -force $file .
-        }
-      }
-    } else {
-      generate_target {psinit} $obj -dir .
-    }
 }
 
 

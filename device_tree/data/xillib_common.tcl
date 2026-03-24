@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2013-2021 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -148,21 +148,6 @@ proc convert_binary_to_hex {value} {
 #
 # Convert a binary number to a decimal value.  The binary string must be of the form 0b*.  
 #
-proc convert_binary_to_decimal { value } {
-    if {[string match 0B* $value] || [string match 0b* $value]} {
-        # Chop off the 0b
-        set tail [string range $value 2 [expr [string length $value]-1]]
-        # Pad to 32 bits, because binary scan ignores incomplete words
-        set list [split $tail ""]
-        for {} {[llength $list] < 32} {} {
-            set list [linsert $list 0 0]
-        }
-        set tail [join $list ""]
-        # Convert the remainder back to decimal
-        binary scan [binary format "B*" $tail] "I*" value
-    }
-    return $value
-}
 
 #
 # Convert a number to binary value. 
@@ -208,191 +193,6 @@ proc convert_num_to_binary {value length} {
 # return  0 if $base_addr = $high_addr
 # return -1 if $base_addr < $high_addr
 #
-proc compare_unsigned_addresses {base_addr base_param high_addr high_param} {
-
-    # convert to hexadecimal format
-   set base_addr [format_addr_string $base_addr $base_param]
-   set high_addr [format_addr_string $high_addr $high_param]
-
-   # convert to integer value
-   set int_base  [expr int($base_addr)]
-   set int_high  [expr int($high_addr)]
-
-   return [compare_unsigned_int_values $int_base $int_high]
-
-}
-
-#
-# return  1 if $int_base > $int_high
-# return  0 if $int_base = $int_high
-# return -1 if $int_base < $int_high
-#
-proc compare_unsigned_int_values {int_base int_high} {
-
-   if {$int_base == $int_high} {
-
-   return 0
-
-   }
-
-   if {($int_base >= 0 && $int_high >= 0) || ($int_base < 0 && $int_high < 0)} {
-
-   if {[expr $int_base > $int_high]} {
-
-       return 1
-
-   } else {
-
-       return -1
-
-       }
-
-   } elseif {$int_base >= 0 && $int_high < 0} {
-
-   return -1
-
-   } elseif {$int_base < 0 && $int_high >= 0} {
-
-   return 1
-
-   } 
-}
-
-
-#
-# Put the given hex number in the format specified
-# by 'bitwidth', padding or truncating bits as 
-# necessary in direction specified by 'direction'
-#
-proc format_to_hex {value bitwidth direction} {
-   set val ""
-   # remove _ from string
-   set value [string map {_ ""} $value]
-   #Strip 0x if given and check for valid hex number.
-   set vallen [string length $value]
-   if {[regexp -nocase {^0x[0-9a-f]+$} $value]} {
-       set val [string range $value 2 [expr {$vallen-1}] ]
-       set vallen [expr {$vallen-2}]
-   } elseif {[regexp -nocase {^[0-9a-f]+$} $value]} {
-       set val $value
-   } else {
-       error "xconvert_tohex expects a Hex number as a string argument. Invalid Hex number provided." "" "edk_error"
-       return
-   }
-       
-   set retval "0x"    
-   #format it to given bitwidth
-   if {[expr {$vallen < $bitwidth}]} {
-       set difflen [expr {$bitwidth - $vallen}]
-   if { [string compare -nocase $direction "left"] == 0 } {
-           while { $difflen != 0 } {
-               append retval 0
-               set difflen [expr {$difflen - 1}]
-       }
-       append retval $val
-       return $retval
-       } elseif { [string compare -nocase $direction "right"] == 0 } {
-       append retval $val
-           while { $difflen != 0 } {
-   	append retval 0
-               set difflen [expr $difflen - 1]
-       }
-       return $retval
-   } else {
-           error "Invalid value provided for direction. Allowed values are 'right' and 'left'." "" "edk_error"
-       return
-   }
-   } elseif {[expr {$vallen > $bitwidth}]} {
-       set difflen [expr {$vallen - $bitwidth}]
-       if { [string compare -nocase $direction "left"] == 0 } {
-           append retval [string range $val [expr {$difflen}] [expr {$vallen - 1}]]
-           return $retval
-   } elseif { [string compare -nocase $direction "right"] == 0 } {
-           append retval [string range $val 0 [expr {$bitwidth - 1}]]
-           return $retval
-   } else {
-           error "Invalid value provided for direction. Allowed values are 'right' and 'left'." "" "edk_error"
-           return
-   }
-   } else {
-           return $value;
-   }
-}
-
-
-#
-# Put the given bin number in the format specified
-# by 'bitwidth', padding or truncating bits as 
-# necessary in direction specified by 'direction'
-#
-proc format_to_bin {value bitwidth direction} {
-   set val ""
-   # remove _ from string
-   set value [string map {_ ""} $value]
-   #Strip 0b if given and check for valid hex number.
-   set vallen [string length $value]
-   if {[regexp -nocase {^0b[01]+$} $value]} {
-   
-       set val [string range $value 2 [expr {$vallen-1}] ]
-       set vallen [expr {$vallen-2}]
-  } elseif {[regexp -nocase {^[01]+$} $value]} {
-       set val $value
-   } else {
-       error "xconvert_tobin expects a binary number as a string argument. Invalid binary number provided." "" "edk_error"
-       return
-   }
-       
-   set retval "0b"    
-   #format it to given bitwidth
-   if {[expr {$vallen < $bitwidth}]} {
-       set difflen [expr {$bitwidth - $vallen}]
-   if { [string compare -nocase $direction "left"] == 0 } {
-           while { $difflen != 0 } {
-               append retval 0
-               set difflen [expr {$difflen - 1}]
-       }
-       append retval $val
-       return $retval
-       } elseif { [string compare -nocase $direction "right"] == 0 } {
-       append retval $val
-           while { $difflen != 0 } {
-   	append retval 0
-               set difflen [expr $difflen - 1]
-       }
-       return $retval
-   } else {
-           error "Invalid value provided for direction. Allowed values are 'right' and 'left'." "" "edk_error"
-       return
-   }
-   } elseif {[expr {$vallen > $bitwidth}]} {
-       set difflen [expr {$vallen - $bitwidth}]
-       if { [string compare -nocase $direction "left"] == 0 } {
-           append retval [string range $val [expr {$difflen}] [expr {$vallen - 1}]]
-           return $retval
-   } elseif { [string compare -nocase $direction "right"] == 0 } {
-           append retval [string range $val 0 [expr {$bitwidth - 1}]]
-           return $retval
-   } else {
-           error "Invalid value provided for direction. Allowed values are 'right' and 'left'." "" "edk_error"
-           return
-   }
-   } else {
-           return $value;
-   }
-}
-    
-#
-# Procedure to get the nameofexecutable. This is similar to 
-# Tcl's built-in info nameofexecutable, but it returns the 
-# exact name of executable instead of the entire path.
-#
-proc get_nameofexecutable { } {
-   set command [info nameofexecutable]
-   set pi_cmd [join [split $command "\\"] "/"]
-   set exec_cmd [lindex [split $pi_cmd "/"] end]
-   set final_exec [lindex [split $exec_cmd .] 0]
-   return $final_exec
-}
 
 #
 # Procedure to determine the host os platform
@@ -402,30 +202,6 @@ proc get_hostos_platform { } {
    global tcl_platform env tcl_library
    set plat_os $env(RDI_PLATFORM)
    return $plat_os
-}
-
-#
-# Procedure to determine the executable suffix
-# Possible Return values: 
-#          "exe"             on windows
-#          "" (empty-string) on linux
-#
-proc get_hostos_exec_suffix { } {
-   global tcl_platform env tcl_library
-
-   switch -glob $tcl_platform(os) {
-   "Windows*" {
-       set suffix "exe"
-   }
-   "Linux" {
-       set suffix ""
-   }
-   default {
-       error "Unsupport OS\n" "" "mdt_error"
-   }
-   }
-
-   return $suffix
 }
 
 #
@@ -496,38 +272,4 @@ proc find_file_in_xilinx_install { relative_filepath } {
    }
    } 
    return [find_file_in_dirs $dirlist $relative_filepath]
-}
-
-#
-# Procedure to dynamically load a DLL into Tcl interpreter
-# This procedure searches for DLLs in the
-# $MYXILINX, $XILINX_EDK, and $XILINX directories
-#
-proc load_xilinx_library { libname } {
-   global tcl_platform env tcl_library
-
-   set plat_os [get_hostos_platform]
-   set libfile [format "%s.%s" $libname [get_hostos_sharedlib_suffix]]
-
-   set lib_relative_path [format "lib/%s/%s/" $plat_os $libfile]
-   set lib_full_path [ find_file_in_xilinx_install $lib_relative_path ]
-   if { [string length $lib_full_path] == 0 } {
-       set lib_relative_path [format "bin/%s/%s/" $plat_os $libfile]
-       set lib_full_path [ find_file_in_xilinx_install $lib_relative_path ]
-       if { [string length $lib_full_path] == 0 } {
-           error "Library $lib_relative_path not found" "" "mdt_error"
-       }
-    }
-
-   if { [catch {load $lib_full_path} err_msg] } {
-       error " $err_msg\n" "" "mdt_error"
-   }
-}
-
-#
-# proc to convert / to _ in xparameter entries 
-#
-proc format_xparam_name {param_name} {
-  set xparam_name [string map { "/" "_" } $param_name]
-  return $xparam_name
 }

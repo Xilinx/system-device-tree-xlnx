@@ -638,101 +638,6 @@ proc get_dt_param args {
 	return $val
 }
 
-proc inc_os_prop {drv_handle os_conf_dev_var var_name conf_prop} {
-    set ip_check "False"
-    set os_ip [hsi get_property ${os_conf_dev_var} [get_os]]
-    if {![string match -nocase "" $os_ip]} {
-        set os_ip [hsi get_property ${os_conf_dev_var} [get_os]]
-        set ip_check "True"
-    }
-
-    set count [get_os_parameter_value $var_name]
-    if {[llength $count] == 0} {
-        if {[string match -nocase "True" $ip_check]} {
-            set count 1
-        } else {
-            set count 0
-        }
-    }
-
-    if {[string match -nocase "True" $ip_check]} {
-        set ip [hsi::get_cells -hier $drv_handle]
-        if {[string match -nocase $os_ip $ip]} {
-            set ip_type [hsi get_property IP_NAME $ip]
-            set_property ${conf_prop} 0 $drv_handle
-            return
-        }
-    }
-
-    set_property $conf_prop $count $drv_handle
-    incr count
-    set_os_parameter_value $var_name $count
-}
-
-proc gen_count_prop {drv_handle data_dict} {
-    dict for {dev_type dev_conf_mapping} [dict get $data_dict] {
-        set os_conf_dev_var [dict get $data_dict $dev_type "os_device"]
-        set valid_ip_list [dict get $data_dict $dev_type "ip"]
-        set drv_conf [dict get $data_dict $dev_type "drv_conf"]
-        set os_count_name [dict get $data_dict $dev_type "os_count_name"]
-
-        set slave [hsi::get_cells -hier $drv_handle]
-        set iptype [hsi get_property IP_NAME $slave]
-        if {[lsearch $valid_ip_list $iptype] < 0} {
-            continue
-        }
-
-        set irq_chk [dict get $data_dict $dev_type "irq_chk"]
-        if {![string match -nocase "false" $irq_chk]} {
-            set irq_id [get_interrupt_id $slave $irq_chk]
-            if {[llength $irq_id] < 0} {
-                dtg_warning "Fail to located interrupt pin - $irq_chk. The $drv_conf is not set for $dev_type"
-                continue
-            }
-        }
-
-        inc_os_prop $drv_handle $os_conf_dev_var $os_count_name $drv_conf
-    }
-}
-
-proc gen_dev_conf {} {
-    # data to populated certain configs for different devices
-    set data_dict {
-        uart {
-            os_device "CONFIG.console_device"
-            ip "axi_uartlite axi_uart16550 ps7_uart psu_uart psv_uart"
-            os_count_name "serial_count"
-            drv_conf "CONFIG.port-number"
-            irq_chk "false"
-        }
-        mdm_uart {
-            os_device "CONFIG.console_device"
-            ip "mdm"
-            os_count_name "serial_count"
-            drv_conf "CONFIG.port-number"
-            irq_chk "Interrupt"
-        }
-        syace {
-            os_device "sysace_device"
-            ip "axi_sysace"
-            os_count_name "sysace_count"
-            drv_conf "CONFIG.port-number"
-            irq_chk "false"
-        }
-        traffic_gen {
-            os_device "trafficgen_device"
-            ip "axi_traffic_gen"
-            os_count_name "trafficgen_count"
-            drv_conf "CONFIG.xlnx,device-id"
-            irq_chk "false"
-        }
-    }
-    # update CONFIG.<para> for each driver when match driver is found
-    foreach drv [get_drivers] {
-        gen_count_prop $drv $data_dict
-    }
-}
-
 proc gen_edac_node {} {
 	set dts_file "pcw.dtsi"
 	set pspmc [hsi get_cells -hier -filter {IP_NAME == "pspmc"}]
@@ -2383,16 +2288,6 @@ proc proc_mapping {} {
 	}
 	if {[catch [set_updated_hier_info $hier_mapped_drv_list] msg]} {
 	}
-}
-
-proc add_skeleton {} {
-	global env
-	set path $env(CUSTOM_SDT_REPO)
-
-	set common_file "$path/device_tree/data/config.yaml"
-
-	set default_dts "system-top.dts"
-	set chosen_node [create_node -n "chosen" -p root -d $default_dts]
 }
 
 proc update_chosen {} {
