@@ -4129,9 +4129,42 @@ proc get_intc_cascade_offset {intc_handle} {
 
 # Helper function to extract cascade interrupt number from pin connections
 proc get_cascade_interrupt_number {sink_pn peri periph} {
-    # Extract number from pin name (e.g., intr[5] -> 5)
+    # Extract number from pin name (e.g., intr[5] -> 5, In2 -> 2)
     set sink_pin_name [hsi get_property NAME $sink_pn]
-    set number [regexp -all -inline -- {[0-9]+} $sink_pin_name]
+    set pin_number [regexp -all -inline -- {[0-9]+} $sink_pin_name]
+
+    # Check if periph is axi_intc - use cascade offset, not xlconcat pin position
+    set periph_ip_name [hsi get_property IP_NAME $periph]
+	if {[string match -nocase $periph_ip_name "axi_intc"]} {
+        # For cascade INTCs, use cascade offset - 1, not xlconcat position
+        set cascade_offset [get_intc_cascade_offset $periph]
+        if {$cascade_offset > 0} {
+            return [expr {$cascade_offset - 1}]
+        }
+    }
+
+    # Check if peri is xlconcat/ilconcat - calculate offset for non-INTC peripherals
+    set peri_ip_name [hsi get_property IP_NAME $peri]
+    if {$peri_ip_name in {"xlconcat" "ilconcat"} && [llength $pin_number] > 0} {
+        # Calculate cumulative offset accounting for all pins including disconnected ones
+        set number 0
+        for {set i 0} {$i < $pin_number} {incr i} {
+            set pin_name "In$i"
+            set pin [hsi::get_pins -of_objects $peri -filter "NAME==$pin_name"]
+            if {[llength $pin] > 0} {
+                # Pin exists - add its width
+                set pin_wdth [hsi get_property LEFT $pin]
+                if {$pin_wdth == ""} {
+                    set pin_wdth 0
+                }
+                set number [expr {$number + $pin_wdth + 1}]
+            }
+            # If pin doesn't exist (disconnected), its width = 0, so don't add anything
+        }
+        return $number
+    }
+
+    set number $pin_number
     if {[llength $number] == 0} {
         # No number in pin name (e.g., "irq_in") - this is a dedicated cascade input
         # Need to find the actual intr[] pin that connects to the irq output
@@ -5894,7 +5927,7 @@ proc get_psu_interrupt_id { ip_name port_name } {
 	set intr_list_irq1 [list 104 105 106 107 108 109 110 111]
 	set sink_pins [get_sink_pins $intr_pin]
 	if { [llength $sink_pins] == 0 } {
-		return
+		return $ret
 	}
 	set proctype [get_hw_family]
 	if {[regexp "microblaze" $proctype match]} {
@@ -5936,13 +5969,15 @@ proc get_psu_interrupt_id { ip_name port_name } {
 				set dout "dout"
 				set intr_pin [hsi::get_pins -of_objects $peri -filter "NAME==$dout"]
 				set pins [get_sink_pins "$intr_pin"]
+				set orig_periph $periph
 				set periph [hsi::get_cells -of_objects $pins]
 				if {[string match -nocase "[hsi get_property IP_NAME $periph]" "axi_intc"]} {
 					set cascade_master [hsi get_property CONFIG.C_CASCADE_MASTER [hsi::get_cells -hier $periph]]
 					set en_cascade_mode [hsi get_property CONFIG.C_EN_CASCADE_MODE [hsi::get_cells -hier $periph]]
 				}
 				if {$en_cascade_mode == 1} {
-					set number [regexp -all -inline -- {[0-9]+} $sink_pn]
+					# Use get_cascade_interrupt_number to handle disconnected pins properly
+					set number [get_cascade_interrupt_number $sink_pn $peri $orig_periph]
 					if {$is_versal_2ve_2vm_platform && $sink_pin in $versal_2ve_2vm_irq_names_list} {
 						set number [lsearch $versal_2ve_2vm_irq_names_list $sink_pin]
 					}
@@ -5991,12 +6026,23 @@ proc get_psu_interrupt_id { ip_name port_name } {
 			set number 0
 			global intrpin_width
 			for { set i 0 } {$i <= $pin_number} {incr i} {
-				set pin_wdth [hsi get_property LEFT [ lindex [ hsi::get_pins -of_objects [hsi::get_cells -hier $sink_periph ] ] $i ] ]
-				if { $i == $pin_number } {
-					set intrpin_width [expr $pin_wdth + 1]
-				} else {
-					set number [expr $number + {$pin_wdth + 1}]
+				# Get pin by name (In0, In1, In2...) to handle disconnected pins correctly
+				set pin_name "In$i"
+				set pin [hsi::get_pins -of_objects [hsi::get_cells -hier $sink_periph] -filter "NAME==$pin_name"]
+				if {[llength $pin] > 0} {
+					set pin_wdth [hsi get_property LEFT $pin]
+					if {$pin_wdth == ""} {
+						set pin_wdth 0
+					}
+					if { $i == $pin_number } {
+						set intrpin_width [expr $pin_wdth + 1]
+					} else {
+						set number [expr $number + {$pin_wdth + 1}]
+					}
+				} elseif { $i == $pin_number } {
+					set intrpin_width 0
 				}
+				# Disconnected pins contribute width 0
 	               }
 	               dtg_debug "Full pin width for $sink_periph of $sink_pin:$number intrpin_width:$intrpin_width"
 			set dout "dout"
@@ -6135,6 +6181,11 @@ proc get_psu_interrupt_id { ip_name port_name } {
 	    set connected_ip [hsi get_property IP_NAME [hsi::get_cells -hier $sink_periph]]
 	    if {[string match -nocase $connected_ip "axi_intc"] } {
 	        set sink_pin [hsi::get_pins -of_objects $periph -filter {TYPE==INTERRUPT && DIRECTION==O}]
+	        # Apply xlconcat/ilconcat offset for axi_intc connections
+	        # When xlconcat is involved, use the xlconcat pin offset, not the INTC position
+	        if {$concat_block == 1 && [info exists number]} {
+			set ret $number
+	        }
 	    }
 	    if {[llength $sink_pin] == 1} {
 	        set port_width [get_port_width $sink_pin]
