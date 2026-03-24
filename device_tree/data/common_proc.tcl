@@ -4762,19 +4762,6 @@ proc ip2drv_prop {ip_name prop_name_list} {
 # processor and dont use the AXI Bus. "xlnx,is-hierarchy" is the property
 # which will differentiate such IP subcores from the generic peripherals.
 
-proc set_hier_info {drv_handle} {
-	set ip_type [get_ip_property $drv_handle IP_TYPE]
-	if {[string match -nocase $ip_type "PERIPHERAL"]} {
-		set mem_maps [hsi::get_mem_ranges [hsi get_cells -hier $drv_handle]]
-		if {[llength $mem_maps] == 0} {
-			set node [get_node $drv_handle]
-			add_prop $node "xlnx,is-hierarchy" boolean [set_drv_def_dts $drv_handle]
-		}
-	}
-}
-
-# FIXME: Above proc seems to be not working. Replace that with new proc.
-# Keep the proc for this release to avoid unforeseen usages.
 proc set_updated_hier_info {hier_mapped_drv_list} {
 	foreach drv_handle $hier_mapped_drv_list {
 		set node [get_node $drv_handle]
@@ -4791,7 +4778,6 @@ proc gen_drv_prop_from_ip {drv_handle} {
 	set ip_name [get_ip_property $drv_handle IP_NAME] 
 	set prop_name_list [default_parameters $drv_handle]
 	ip2drv_prop $drv_handle $prop_name_list
-	set_hier_info $drv_handle
 }
 
 proc remove_duplicates {ip_handle} {
