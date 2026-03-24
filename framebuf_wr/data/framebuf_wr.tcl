@@ -37,7 +37,11 @@
         set has_uyvy8 [hsi get_property CONFIG.HAS_UYVY8 [hsi::get_cells -hier $drv_handle]]
         set has_y8 [hsi get_property CONFIG.HAS_Y8 [hsi::get_cells -hier $drv_handle]]
         set has_y10 [hsi get_property CONFIG.HAS_Y10 [hsi::get_cells -hier $drv_handle]]
+		set has_y10_l16le [hsi get_property CONFIG.HAS_Y10_L16LE [hsi::get_cells -hier $drv_handle]]
+		set has_y10_m16le [hsi get_property CONFIG.HAS_Y10_M16LE [hsi::get_cells -hier $drv_handle]]
         set has_y12 [hsi get_property CONFIG.HAS_Y12 [hsi::get_cells -hier $drv_handle]]
+		set has_y12_l16le [hsi get_property CONFIG.HAS_Y12_L16LE [hsi::get_cells -hier $drv_handle]]
+		set has_y12_m16le [hsi get_property CONFIG.HAS_Y12_M16LE [hsi::get_cells -hier $drv_handle]]
         set has_yuv8 [hsi get_property CONFIG.HAS_YUV8 [hsi::get_cells -hier $drv_handle]]
         set has_yuvx8 [hsi get_property CONFIG.HAS_YUVX8 [hsi::get_cells -hier $drv_handle]]
         set has_yuvx10 [hsi get_property CONFIG.HAS_YUVX10 [hsi::get_cells -hier $drv_handle]]
@@ -45,12 +49,24 @@
         set has_y_uv8_420 [hsi get_property CONFIG.HAS_Y_UV8_420 [hsi::get_cells -hier $drv_handle]]
         set has_y_uv8 [hsi get_property CONFIG.HAS_Y_UV8 [hsi::get_cells -hier $drv_handle]]
         set has_y_uv10 [hsi get_property CONFIG.HAS_Y_UV10 [hsi::get_cells -hier $drv_handle]]
+		set has_y_uv10_l16le [hsi get_property CONFIG.HAS_Y_UV10_L16LE [hsi::get_cells -hier $drv_handle]]
+		set has_y_uv10_m16le [hsi get_property CONFIG.HAS_Y_UV10_M16LE [hsi::get_cells -hier $drv_handle]]
         set has_y_uv10_420 [hsi get_property CONFIG.HAS_Y_UV10_420 [hsi::get_cells -hier $drv_handle]]
+		set has_y_uv10_420_l16le [hsi get_property CONFIG.HAS_Y_UV10_420_L16LE [hsi::get_cells -hier $drv_handle]]
+		set has_y_uv10_420_m16le [hsi get_property CONFIG.HAS_Y_UV10_420_M16LE [hsi::get_cells -hier $drv_handle]]
         set has_y_u_v8 [hsi get_property CONFIG.HAS_Y_U_V8 [hsi::get_cells -hier $drv_handle]]
         set has_y_u_v10 [hsi get_property CONFIG.HAS_Y_U_V10 [hsi::get_cells -hier $drv_handle]]
+		set has_y_u_v10_l16le [hsi get_property CONFIG.HAS_Y_U_V10_L16LE [hsi::get_cells -hier $drv_handle]]
+		set has_y_u_v10_m16le [hsi get_property CONFIG.HAS_Y_U_V10_M16LE [hsi::get_cells -hier $drv_handle]]
         set has_y_u_v12 [hsi get_property CONFIG.HAS_Y_U_V12 [hsi::get_cells -hier $drv_handle]]
+		set has_y_u_v12_l16le [hsi get_property CONFIG.HAS_Y_U_V12_L16LE [hsi::get_cells -hier $drv_handle]]
+		set has_y_u_v12_m16le [hsi get_property CONFIG.HAS_Y_U_V12_M16LE [hsi::get_cells -hier $drv_handle]]
         set has_y_uv12 [hsi get_property CONFIG.HAS_Y_UV12 [hsi::get_cells -hier $drv_handle]]
+		set has_y_uv12_l16le [hsi get_property CONFIG.HAS_Y_UV12_L16LE [hsi::get_cells -hier $drv_handle]]
+		set has_y_uv12_m16le [hsi get_property CONFIG.HAS_Y_UV12_M16LE [hsi::get_cells -hier $drv_handle]]
         set has_y_uv12_420 [hsi get_property CONFIG.HAS_Y_UV12_420 [hsi::get_cells -hier $drv_handle]]
+		set has_y_uv12_420_l16le [hsi get_property CONFIG.HAS_Y_UV12_420_L16LE [hsi::get_cells -hier $drv_handle]]
+		set has_y_uv12_420_m16le [hsi get_property CONFIG.HAS_Y_UV12_420_M16LE [hsi::get_cells -hier $drv_handle]]
 	if {$tile_mode == ""} {
 		set tile_mode 0
 	}
@@ -83,6 +99,9 @@
 		if {$has_y12 == 1} {
 			append vid_formats " " "y12"
 		}
+		if {$has_y12_m16le == 1} {
+			append vid_formats " " "Y012"
+		}
 		if {$has_yuv8 == 1} {
 			append vid_formats " " "vuy888"
 		}
@@ -107,6 +126,9 @@
 		if {$has_y_uv10_420 == 1} {
 			append vid_formats " " "xv15"
 		}
+		if {$has_y_uv10_420_m16le == 1} {
+			append vid_formats " " "P010"
+		}
 		if {$has_y_u_v8 == 1} {
 			append vid_formats " " "y_u_v8"
 		}
@@ -121,6 +143,9 @@
 		}
 		if {$has_y_uv12_420 == 1} {
 			append vid_formats " " "x012m"
+		}
+		if {$has_y_uv12_420_m16le == 1} {
+			append vid_formats " " "P012"
 		}
 		if {![string match $vid_formats ""]} {
 			add_prop "${node}" "xlnx,vid-formats" $vid_formats stringlist $dts_file
