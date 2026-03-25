@@ -113,6 +113,7 @@
 		status = "disabled";
 		interrupts = <0 181 4>;
 		reg = <0 0xed010000 0 0x10000>;
+		fifo-depth = <1024>;
 		clock-names = "ref_clk", "pclk";
 		clocks = <&versal2_clk EIO_SPI0_REF>, <&clk200>;
 		power-domains = <&versal2_firmware PM_DEV_EIO_SPI_0>;
@@ -123,6 +124,7 @@
 		status = "disabled";
 		interrupts = <0 182 4>;
 		reg = <0 0xed020000 0 0x10000>;
+		fifo-depth = <1024>;
 		clock-names = "ref_clk", "pclk";
 		clocks = <&versal2_clk EIO_SPI1_REF>, <&clk200>;
 		power-domains = <&versal2_firmware PM_DEV_EIO_SPI_1>;
@@ -133,6 +135,7 @@
 		status = "disabled";
 		interrupts = <0 183 4>;
 		reg = <0 0xed030000 0 0x10000>;
+		fifo-depth = <1024>;
 		clock-names = "ref_clk", "pclk";
 		clocks = <&versal2_clk EIO_SPI2_REF>, <&clk200>;
 		power-domains = <&versal2_firmware PM_DEV_EIO_SPI_2>;
@@ -143,6 +146,7 @@
 		status = "disabled";
 		interrupts = <0 184 4>;
 		reg = <0 0xed040000 0 0x10000>;
+		fifo-depth = <1024>;
 		clock-names = "ref_clk", "pclk";
 		clocks = <&versal2_clk EIO_SPI3_REF>, <&clk200>;
 		power-domains = <&versal2_firmware PM_DEV_EIO_SPI_3>;
