@@ -1,0 +1,190 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * dts file for SC on VPK360 revA (k24)
+ *
+ * (C) Copyright 2026, Advanced Micro Devices, Inc.
+ *
+ * Michal Simek <michal.simek@amd.com>
+ */
+
+&{/} {
+	compatible = "xlnx,zynqmp-sc-vpk360-revA",
+		     "xlnx,zynqmp-sc-vpk360", "xlnx,zynqmp";
+	model = "ZynqMP SC VPK360 revA";
+};
+
+&i2c0 { /* fmc_mux_i2c0 */
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	i2c_fmc: i2c-mux@73 { /* u676 */
+		compatible = "nxp,pca9543";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x73>;
+
+		fmc_lpc_i2c: i2c@0 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0>;
+		};
+
+		fmc_hpc_i2c: i2c@1 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <1>;
+		};
+	};
+};
+
+&i2c1 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	tcal6408_imon: gpio@21 { /* u671 */
+		compatible = "ti,tcal6408";
+		reg = <0x21>;
+		gpio-controller; /* IRQ not connected */
+		#gpio-cells = <2>;
+		gpio-line-names = "pmbus_reg_alert", "imon_pmc_alert",
+				  "imon_lpd_alert", "imon_spd_alert",
+				  "imon_fpd_alert", "imon_pl_alert",
+				  "imon_lp5_alert", "8a34001_exp_rst_b";
+	};
+
+	i2c_mux: i2c-mux@71 { /* u685 */
+		compatible = "nxp,pca9848";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x71>;
+
+		pmbus_i2c: i2c@0 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0>;
+			/* 0x40 mpq72963 - u499 */
+			/* 0x3b mpq2285 - u653 */
+			/* 0x41 mpq72963 - u516 */
+			/* 0x1c mpq2283 - u655 */
+			/* 0x1 mpq2285 - u527 */
+			/* 0x2b mpq2283 - u529 */
+			/* 0x1f mpq2283 - u531 */
+			/* 0x22 mpq2285 - u533 */
+			/* 0x32 mpq2283 - u535 */
+			/* 0x39 mpq2283 - u537 */
+			/* 0x2d mpq2283 - u539 */
+			/* 0x34 mpq2285 - u541 */
+			/* 0x2a mpq2283 - u543 */
+			/* 0x17 mpq2283 - u545 */
+			/* 0x38 mpq2283 - u657 */
+			/* 0x2e mpq2287 - u547 */
+			/* 0x4 mpq2283 - u549 */
+		};
+		imon_pmc_i2c: i2c@1 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <1>;
+			/* 0x45 ina700 - u544 */
+			/* 0x47 ina700 - u546 */
+			/* 0x44 ina700 - u658 */
+		};
+		imon_lpd_i2c: i2c@2 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <2>;
+			/* 0x44 ina700 - u538 */
+			/* 0x45 ina700 - u540 */
+		};
+		imon_spd_i2c: i2c@3 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <3>;
+			/* 0x43 ina745 - u522 */
+			/* 0x45 ina700 - u530 */
+			/* 0x47 ina700 - u532 */
+			/* 0x44 ina700 - u534 */
+		};
+		imon_fpd_i2c: i2c@4 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <4>;
+			/* 0x45 ina700 - u654 */
+			/* 0x42 ina745 - u518 */
+			/* 0x43 ina745 - u524 */
+			/* 0x47 ina700 - u656 */
+			/* 0x44 ina700 - u536 */
+		};
+		imon_pl_i2c: i2c@5 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <5>;
+			/* 0x48 ina745 - u501 */
+			/* 0x49 ina745 - u503 */
+			/* 0x4a ina745 - u505 */
+			/* 0x4b ina745 - u507 */
+			/* 0x4c ina745 - u509 */
+			/* 0x4d ina745 - u511 */
+			/* 0x42 ina745 - u513 */
+			/* 0x43 ina745 - u515 */
+			/* 0x44 ina700 - u528 */
+			/* 0x45 ina700 - u542 */
+		};
+		imon_lp5_i2c: i2c@6 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <6>;
+			/* 0x44 ina700 - u548 */
+			/* 0x45 ina700 - u550 */
+		};
+		pwr_seq_i2c: i2c@7 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <7>;
+			/* 0x60 ucd9081 - u565 */
+			/* 0x61 ucd9081 - u568 */
+			/* 0x62 ucd9081 - u660 */
+			/* 0x64 ucd9081 - u571 */
+		};
+	};
+
+	i2c-mux@73 { /* u626 */
+		compatible = "nxp,pca9543";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x73>;
+
+		rc31312_i2c: i2c@0 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0>;
+			/* rc31312 - u637 */
+			/* rc19004a - u640 */
+		};
+
+		i2c_hub: i2c@1 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <1>;
+			hub: usb-hub@2d { /* u471 */
+				compatible = "microchip,usb5744";
+				reg = <0x2d>;
+			};
+		};
+	};
+
+	i2carb: i2c-arbitrator@72 { /* u704 */
+		compatible = "nxp,pca9541";
+		reg = <0x72>;
+
+		i2carb1: i2c-arb {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			/* Use for storing information about board */
+			eeprom: eeprom@54 { /* u669 - m24128 16kB */
+				compatible = "st,24c128", "atmel,24c128";
+				reg = <0x54>; /* & 0x5c */
+			};
+		};
+	};
+};

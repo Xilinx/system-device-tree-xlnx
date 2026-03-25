@@ -1,0 +1,186 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * dts file for Xilinx Versal VPK360 revA
+ *
+ * (C) Copyright 2026, Advanced Micro Devices, Inc.
+ *
+ * Michal Simek <michal.simek@amd.com>
+ */
+
+#include "include/dt-bindings/net/ti-dp83867.h"
+#include "include/dt-bindings/gpio/gpio.h"
+
+/ {
+	model = "Xilinx Versal vpk360 Eval board revA";
+	compatible = "xlnx,versal-vpk360-revA", "xlnx,versal-vpk360",
+		     "xlnx,versal";
+
+	chosen {
+		bootargs = "console=ttyAMA0 earlycon=pl011,mmio32,0xFF000000,115200n8";
+		stdout-path = "serial0:115200";
+	};
+
+	aliases {
+		mmc0 = &sdhci1;
+		usb0 = &usb0;
+		rtc0 = &rtc;
+		nvmem0 = &eeprom;
+	};
+};
+
+&ospi { /* PMC MIO0-10, 12, u470 MT35XU02G */
+	bus-num = <2>;
+	num-cs = <1>;
+	#stream-id-cells = <1>;
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	spi_flash: flash@0 {
+		compatible = "jedec,spi-nor";
+		reg = <0>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+		cdns,read-delay = <0>;
+		cdns,tshsl-ns = <0>;
+		cdns,tsd2d-ns = <0>;
+		cdns,tchsh-ns = <1>;
+		cdns,tslch-ns = <1>;
+		spi-tx-bus-width = <8>;
+		spi-rx-bus-width = <8>;
+		spi-max-frequency = <20000000>;
+		no-wp;
+		reset-gpios = <&gpio1 12 GPIO_ACTIVE_LOW>;
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "spi0-flash0";
+				reg = <0 0x10000000>;
+			};
+		};
+	};
+};
+
+&dwc3_0 { /* USB 2.0 host */
+	dr_mode = "host";
+	maximum-speed = "high-speed";
+	snps,dis_u2_susphy_quirk;
+	snps,dis_u3_susphy_quirk;
+	snps,usb3_lpm_capable;
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	/* 2.0 hub on port 1 */
+	hub_2_0: hub@1 { /* u471 */
+		compatible = "usb424,2744";
+		reg = <1>;
+		i2c-bus = <&hub>;
+		reset-gpios = <&gpio0 20 GPIO_ACTIVE_LOW>; /* LPD_MIO20 */
+	};
+	/* port 0 to U647 - USB MUX - host/peripherals FIXME - control from SC */
+	/* port 1 to connector */
+};
+
+&sdhci1 { /* PMC_MIO26, 28-34/51 */
+	xlnx,mio-bank = <1>;
+	no-1-8-v;
+};
+
+/* SYSCTRL - PMC_MIO37 */
+#if 0
+&i2cX { /* PMC_MIO38/39 - PCIe */
+};
+#endif
+
+/* PCIE GPIO PMC_MIO40/41 */
+
+&i2c2 { /* PMC_MIO44/45 - PCIe RP */
+
+	tcal6408_pcie: gpio@20 { /* u622 */
+		compatible = "ti,tcal6408";
+		reg = <0x20>;
+		gpio-controller; /* IRQ not connected */
+		#gpio-cells = <2>;
+		gpio-line-names = "pcie_rp_clkreq", "pcie_rp_wake",
+				  "pcie_rp_pwrbrk", "pcie_rp_prsnt2",
+				  "pcie_ep_clkreq", "pcie_ep_wake",
+				  "pcie_ep_pwrbrk", "";
+	};
+
+	/* u671 tcal6408@21 */
+	/* u685 pca9848@71 */
+
+	i2c-mux@73 { /* u626 */
+		compatible = "nxp,pca9543";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x73>;
+
+		rc31312_i2c: i2c@0 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0>;
+			/* rc31312 - u637 */
+			/* rc19004a - u640 */
+		};
+
+		i2c_hub: i2c@1 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <1>;
+			hub: usb-hub@2d { /* u471 */
+				compatible = "microchip,usb5744";
+				reg = <0x2d>;
+			};
+		};
+	};
+
+	i2carb: i2c-arbitrator@72 { /* u704 */
+		compatible = "nxp,pca9541";
+		reg = <0x72>;
+
+		i2carb1: i2c-arb {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			/* Use for storing information about board */
+			eeprom: eeprom@54 { /* u669 - m24128 16kB */
+				compatible = "st,24c128", "atmel,24c128";
+				reg = <0x54>; /* & 0x5c */
+			};
+		};
+	};
+};
+
+/* PB_SW - PMC_MIO50 */
+
+&gem0 { /* LPD_MIO0-12, 24/25 */
+	phy-handle = <&phy0>;
+	phy-mode = "rgmii-id";
+
+	mdio: mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		phy0: ethernet-phy@1 { /* u481 - DP83867 */
+			#phy-cells = <1>;
+			reg = <1>;
+			compatible = "ethernet-phy-id2000.a231";
+			ti,rx-internal-delay = <DP83867_RGMIIDCTL_2_25_NS>;
+			ti,tx-internal-delay = <DP83867_RGMIIDCTL_2_75_NS>;
+			ti,fifo-depth = <DP83867_PHYCR_FIFO_DEPTH_4_B_NIB>;
+			ti,dp83867-rxctrl-strap-quirk;
+			reset-assert-us = <100>;
+			reset-deassert-us = <280>;
+			reset-gpios = <&gpio0 12 GPIO_ACTIVE_LOW>;
+		};
+	};
+};
+
+/* LPD_MIO15 - SC SMON ALERT */
+
+/* LPD_MIO18/19 - PCIE_EP_PERST */
+/* LPD_MIO21 - pca9641 init - u625 */
+/* LPD_MIO22/23 - FAN_PWM */
