@@ -32,6 +32,13 @@ proc sdi_txss_generate {drv_handle} {
         if {$dbpc == 1} {
                 add_prop $node "xlnx,dyn-bpc" "true" boolean $dts_file
         }
+	# Read BPC, default to 10 if missing/empty
+	set bpp_str [hsi get_property CONFIG.C_BPP [hsi get_cells -hier $drv_handle]]
+	set bpp [expr {$bpp_str eq "" ? 10 : int($bpp_str)}]
+	# Accept only 10/12; fallback to 10 otherwise
+	if {[lsearch -exact {10 12} $bpp] < 0} { set bpp 10 }
+
+	add_prop $node "xlnx,bpc" $bpp int $dts_file
 
 	set sdiline_rate [hsi get_property CONFIG.C_LINE_RATE [hsi get_cells -hier $drv_handle]]
 	switch $sdiline_rate {
