@@ -81,6 +81,7 @@
         status = "disabled";
         interrupt-parent = <&imux>;
         interrupts = <0 181 4>;
+        fifo-depth = <1024>;
         reg = <0 0xed010000 0 0x1000>;
         clock-names = "ref_clk", "pclk";
         clocks = <&clk200>, <&clk200>;
@@ -91,6 +92,7 @@
         status = "disabled";
         interrupt-parent = <&imux>;
         interrupts = <0 182 4>;
+        fifo-depth = <1024>;
         reg = <0 0xed020000 0 0x1000>;
         clock-names = "ref_clk", "pclk";
         clocks = <&clk200>, <&clk200>;
@@ -101,6 +103,7 @@
         status = "disabled";
         interrupt-parent = <&imux>;
         interrupts = <0 183 4>;
+        fifo-depth = <1024>;
         reg = <0 0xed030000 0 0x1000>;
         clock-names = "ref_clk", "pclk";
         clocks = <&clk200>, <&clk200>;
@@ -111,6 +114,7 @@
         status = "disabled";
         interrupt-parent = <&imux>;
         interrupts = <0 184 4>;
+        fifo-depth = <1024>;
         reg = <0 0xed040000 0 0x1000>;
         clock-names = "ref_clk", "pclk";
         clocks = <&clk200>, <&clk200>;
