@@ -279,9 +279,6 @@ proc vproc_ss_update_endpoints {drv_handle} {
 							set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $broad_ip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
 							set intlen [llength $master_intf]
 							set sca_in_end ""
-							set sca_in1_end ""
-							set sca_in2_end ""
-							set sca_in3_end ""
 							set sca_remo_in_end ""
 							set sca_remo_in1_end ""
 							set sca_remo_in2_end ""
@@ -312,7 +309,7 @@ proc vproc_ss_update_endpoints {drv_handle} {
 									if {[info exists broad_port1_remo_mappings] && [dict exists $broad_port1_remo_mappings $broad_ip]} {
 										set sca_remo_in_end [dict get $broad_port1_remo_mappings $broad_ip]
 									}
-								if {[info exists port2_broad_end_mappings] && [dict exists $port2_broad_end_mappings $broad_ip]} {
+									if {[info exists port1_broad_end_mappings] && [dict exists $port2_broad_end_mappings $broad_ip]} {
 										set sca_in1_end [dict get $port2_broad_end_mappings $broad_ip]
 									}
 									if {[info exists broad_port2_remo_mappings] && [dict exists $broad_port2_remo_mappings $broad_ip]} {
@@ -423,7 +420,7 @@ proc vproc_ss_update_endpoints {drv_handle} {
 				if {[llength $ip_mem_handles]} {
 					set base [string tolower [hsi get_property BASE_VALUE $ip_mem_handles]]
 				} else {
-				set inip [get_in_connect_ip $inip $master_intf]
+					set inip [get_in_connect_ip $inip $master_intf]
 					if {[llength $inip]} {
 						if {[string match -nocase [hsi get_property IP_NAME $inip] "axi_vdma"]} {
 							gen_frmbuf_rd_node $inip $drv_handle $port_node $dts_file
