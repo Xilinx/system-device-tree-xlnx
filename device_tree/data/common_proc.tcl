@@ -1767,11 +1767,7 @@ proc dtg_debug msg {
 
 proc dtg_verbose msg {
        global env
-       if {[info exists env(verbose)]} {
-               set verbose $env(verbose)
-       } else {
-               set verbose "disable"
-       }
+       set verbose $env(verbose)
        if {[string match -nocase $verbose "enable"]} {
                puts "VERBOSE: $msg"
        }
@@ -1779,11 +1775,7 @@ proc dtg_verbose msg {
 
 proc dtg_warning msg {
 	global env
-	if {[info exists env(debug)]} {
-		set debug $env(debug)
-	} else {
-		set debug "disable"
-	}
+	set debug $env(debug)
 	if {[string match -nocase $debug "enable"]} {
 		puts "WARNING: $msg"
 	}
@@ -1791,11 +1783,7 @@ proc dtg_warning msg {
 
 proc proc_called_by {} {
 	global env
-	if {[info exists env(trace)]} {
-		set trace $env(trace)
-	} else {
-		set trace "disable"
-	}
+	set trace $env(trace)
 	if {[string match -nocase $trace "enable"]} {
 		puts "# [lindex [info level -1] 0] #>> called by [lindex [info level -2] 0]"
 	} else {
