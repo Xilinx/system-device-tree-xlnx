@@ -322,12 +322,6 @@ proc demosaic_update_endpoints {drv_handle} {
 			}
 		}
 	}
-		set demo_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video"]
-		if {[string match -nocase [hsi get_property IP_NAME $demo_inip] "axis_subset_converter"]} {
-			set subset_sink_node [create_node -n "endpoint" -l $drv_handle$demo_inip -p $port_node -d $dts_file]
-			add_prop "$subset_sink_node" "remote-endpoint" $demo_inip$drv_handle reference $dts_file
-			break
-		}
 
 		set inip ""
 		if {[llength $demo_inip]} {
@@ -343,15 +337,13 @@ proc demosaic_update_endpoints {drv_handle} {
 							set inip [get_in_connect_ip $inip $master_intf]
 					}
 					if {[llength $inip]} {
-						# Get the cell name from the IP object for dictionary lookup
-						set inip_name [hsi get_property NAME $inip]
 						set demo_in_end ""
 						set demo_remo_in_end ""
-						if {[info exists end_mappings] && [dict exists $end_mappings $inip_name]} {
-							set demo_in_end [dict get $end_mappings $inip_name]
+						if {[info exists end_mappings] && [dict exists $end_mappings $inip]} {
+							set demo_in_end [dict get $end_mappings $inip]
 							}
-						if {[info exists remo_mappings] && [dict exists $remo_mappings $inip_name]} {
-							set demo_remo_in_end [dict get $remo_mappings $inip_name]
+						if {[info exists remo_mappings] && [dict exists $remo_mappings $inip]} {
+							set demo_remo_in_end [dict get $remo_mappings $inip]
 							}
 						if {[llength $demo_remo_in_end]} {
 							set demosaic_node [create_node -n "endpoint" -l $demo_remo_in_end -p $port_node -d $dts_file]
