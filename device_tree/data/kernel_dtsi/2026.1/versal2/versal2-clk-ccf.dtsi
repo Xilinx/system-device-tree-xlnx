@@ -533,41 +533,49 @@
 &adma0 {
 	clocks = <&versal2_clk ADMA>, <&versal2_clk LPD_LSBUS>;
 	power-domains = <&versal2_firmware PM_DEV_ADMA_0>;
+	resets = <&versal2_reset VERSAL_RST_ADMA_0>;
 };
 
 &adma1 {
 	clocks = <&versal2_clk ADMA>, <&versal2_clk LPD_LSBUS>;
 	power-domains = <&versal2_firmware PM_DEV_ADMA_1>;
+	resets = <&versal2_reset VERSAL_RST_ADMA_1>;
 };
 
 &adma2 {
 	clocks = <&versal2_clk ADMA>, <&versal2_clk LPD_LSBUS>;
 	power-domains = <&versal2_firmware PM_DEV_ADMA_2>;
+	resets = <&versal2_reset VERSAL_RST_ADMA_2>;
 };
 
 &adma3 {
 	clocks = <&versal2_clk ADMA>, <&versal2_clk LPD_LSBUS>;
 	power-domains = <&versal2_firmware PM_DEV_ADMA_3>;
+	resets = <&versal2_reset VERSAL_RST_ADMA_3>;
 };
 
 &adma4 {
 	clocks = <&versal2_clk ADMA>, <&versal2_clk LPD_LSBUS>;
 	power-domains = <&versal2_firmware PM_DEV_ADMA_4>;
+	resets = <&versal2_reset VERSAL_RST_ADMA_4>;
 };
 
 &adma5 {
 	clocks = <&versal2_clk ADMA>, <&versal2_clk LPD_LSBUS>;
 	power-domains = <&versal2_firmware PM_DEV_ADMA_5>;
+	resets = <&versal2_reset VERSAL_RST_ADMA_5>;
 };
 
 &adma6 {
 	clocks = <&versal2_clk ADMA>, <&versal2_clk LPD_LSBUS>;
 	power-domains = <&versal2_firmware PM_DEV_ADMA_6>;
+	resets = <&versal2_reset VERSAL_RST_ADMA_6>;
 };
 
 &adma7 {
 	clocks = <&versal2_clk ADMA>, <&versal2_clk LPD_LSBUS>;
 	power-domains = <&versal2_firmware PM_DEV_ADMA_7>;
+	resets = <&versal2_reset VERSAL_RST_ADMA_7>;
 };
 
 &qspi {
