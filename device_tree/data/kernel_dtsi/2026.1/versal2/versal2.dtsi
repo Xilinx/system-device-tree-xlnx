@@ -1062,7 +1062,6 @@
 			reg = <0 0xebd00000 0 0x1000>;
 			interrupt-parent = <&imux>;
 			interrupts = <0 72 4>;
-			iommus = <&smmu 0x210>;
 			clock-names = "clk_main", "clk_apb";
 			#dma-cells = <1>;
 			xlnx,bus-width = <64>;
@@ -1074,7 +1073,6 @@
 			reg = <0 0xebd10000 0 0x1000>;
 			interrupt-parent = <&imux>;
 			interrupts = <0 73 4>;
-			iommus = <&smmu 0x212>;
 			clock-names = "clk_main", "clk_apb";
 			#dma-cells = <1>;
 			xlnx,bus-width = <64>;
@@ -1086,7 +1084,6 @@
 			reg = <0 0xebd20000 0 0x1000>;
 			interrupt-parent = <&imux>;
 			interrupts = <0 74 4>;
-			iommus = <&smmu 0x214>;
 			clock-names = "clk_main", "clk_apb";
 			#dma-cells = <1>;
 			xlnx,bus-width = <64>;
@@ -1098,7 +1095,6 @@
 			reg = <0 0xebd30000 0 0x1000>;
 			interrupt-parent = <&imux>;
 			interrupts = <0 75 4>;
-			iommus = <&smmu 0x216>;
 			clock-names = "clk_main", "clk_apb";
 			#dma-cells = <1>;
 			xlnx,bus-width = <64>;
@@ -1110,7 +1106,6 @@
 			reg = <0 0xebd40000 0 0x1000>;
 			interrupt-parent = <&imux>;
 			interrupts = <0 76 4>;
-			iommus = <&smmu 0x218>;
 			clock-names = "clk_main", "clk_apb";
 			#dma-cells = <1>;
 			xlnx,bus-width = <64>;
@@ -1122,7 +1117,6 @@
 			reg = <0 0xebd50000 0 0x1000>;
 			interrupt-parent = <&imux>;
 			interrupts = <0 77 4>;
-			iommus = <&smmu 0x21a>;
 			clock-names = "clk_main", "clk_apb";
 			#dma-cells = <1>;
 			xlnx,bus-width = <64>;
@@ -1134,7 +1128,6 @@
 			reg = <0 0xebd60000 0 0x1000>;
 			interrupt-parent = <&imux>;
 			interrupts = <0 78 4>;
-			iommus = <&smmu 0x21c>;
 			clock-names = "clk_main", "clk_apb";
 			#dma-cells = <1>;
 			xlnx,bus-width = <64>;
@@ -1146,7 +1139,6 @@
 			reg = <0 0xebd70000 0 0x1000>;
 			interrupt-parent = <&imux>;
 			interrupts = <0 79 4>;
-			iommus = <&smmu 0x21e>;
 			clock-names = "clk_main", "clk_apb";
 			#dma-cells = <1>;
 			xlnx,bus-width = <64>;
@@ -1261,7 +1253,6 @@
 			reg = <0 0xf1a60000 0 0x1000>;
 			interrupt-parent = <&imux>;
 			interrupts = <0 39 4>, <0 39 4>;
-			iommus = <&smmu 0x234>;
 			clock-names = "pclk", "hclk", "tx_clk", "rx_clk",
 				      "tsu_clk";
 		};
@@ -1271,7 +1262,6 @@
 			status = "disabled";
 			reg = <0 0xf1a70000 0 0x1000>;
 			interrupt-parent = <&imux>;
-			iommus = <&smmu 0x235>;
 			interrupts = <0 41 4>, <0 41 4>;
 			clock-names = "pclk", "hclk", "tx_clk", "rx_clk",
 				      "tsu_clk";
@@ -1282,7 +1272,6 @@
 			status = "disabled";
 			reg = <0 0xed920000 0 0x1000>;
 			interrupt-parent = <&imux>;
-			iommus = <&smmu 0x25e>;
 			interrupts = <0 164 4>, <0 164 4>, <0 164 4>, <0 164 4>;
 			clock-names = "pclk", "hclk", "tx_clk", "tsu_clk";
 			dma-coherent;
@@ -1493,7 +1482,6 @@
 			      <0 0xc0000000 0 0x20000000>;
 			interrupt-parent = <&imux>;
 			interrupts = <0 216 4>;
-			iommus = <&smmu 0x245>;
 			cdns,fifo-depth = <256>;
 			cdns,fifo-width = <4>;
 			cdns,is-dma = <1>; /* u-boot specific */
@@ -1540,7 +1528,6 @@
 			status = "disabled";
 			reg = <0 0xf1030000 0 0x1000>;
 			interrupt-parent = <&imux>;
-			iommus = <&smmu 0x244>;
 			interrupts = <0 217 4>;
 			clock-names = "ref_clk", "pclk";
 		};
@@ -1712,7 +1699,6 @@
 			status = "disabled";
 			interrupt-parent = <&imux>;
 			interrupts = <0 234 4>;
-			iommus = <&smmu 0x246>;
 			reg = <0 0xf10b0000 0 0x100>;
 			freq-table-hz = <0 0>;
 			clock-names = "core";
@@ -1736,7 +1722,6 @@
 				interrupt-names = "host", "peripheral", "otg", "wakeup";
 				interrupts = <0 29 4>, <0 29 4>, <0 33 4>, <0 98 4>;
 				interrupt-parent = <&imux>;
-				iommus = <&smmu 0x230>;
 				snps,dis_u2_susphy_quirk;
 				snps,dis_u3_susphy_quirk;
 				snps,quirk-frame-length-adjustment = <0x20>;
@@ -1761,7 +1746,6 @@
 				reg = <0x0 0xf1c00000 0x0 0x10000>;
 				interrupt-names = "host", "peripheral", "otg", "wakeup";
 				interrupts = <0 34 4>, <0 34 4>, <0 38 4>, <0 99 4>;
-				iommus = <&smmu 0x231>;
 				interrupt-parent = <&imux>;
 				snps,dis_u2_susphy_quirk;
 				snps,dis_u3_susphy_quirk;
@@ -1787,7 +1771,6 @@
 				interrupt-names = "host", "peripheral";
 				interrupts = <0 191 4>, <0 191 4>;
 				interrupt-parent = <&imux>;
-				iommus = <&smmu 0x20e>;
 				snps,dis_u2_susphy_quirk;
 				snps,dis_u3_susphy_quirk;
 				snps,quirk-frame-length-adjustment = <0x20>;
