@@ -84,6 +84,8 @@ proc isppipeline_generate {drv_handle} {
 	add_prop "$isppipeline_ports_node" "#size-cells" 0 int $dts_file
 	# find input ip which is connected to s_axis_video
 	set inip [get_connected_stream_ip [hsi get_cells -hier $drv_handle] "s_axis_video"]
+	set direct_inip $inip
+
 	if {[llength $inip]} {
 		if {[string match -nocase [hsi get_property IP_NAME $inip] "axis_subset_converter"]} {
 			set inip [get_connected_stream_ip [hsi get_cells -hier $inip] "S_AXIS"]
@@ -94,8 +96,8 @@ proc isppipeline_generate {drv_handle} {
 		# generating port0 node for ispipeline ip
 		set port0_node [create_node -n "port" -l isppipeline_port0$drv_handle -u 0 -p $isppipeline_ports_node -d $dts_file]
 		add_prop "$port0_node" "reg" 0 int $dts_file
-		set isppipeline_port_node_endpoint [create_node -n "endpoint" -l $drv_handle$inip -p $port0_node -d $dts_file]
-		add_prop "$isppipeline_port_node_endpoint" "remote-endpoint" isppipeline_in$drv_handle reference $dts_file
+		set isppipeline_port_node_endpoint [create_node -n "endpoint" -l isppipeline_in$drv_handle -p $port0_node -d $dts_file]
+		add_prop "$isppipeline_port_node_endpoint" "remote-endpoint" $direct_inip$drv_handle reference $dts_file
 	}
 	# find scanoutip which is connected to m_axis_video
 	set scanoutip [get_connected_stream_ip [hsi get_cells -hier $drv_handle] "m_axis_video"]
