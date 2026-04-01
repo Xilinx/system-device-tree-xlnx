@@ -249,11 +249,14 @@ proc vproc_ss_update_endpoints {drv_handle} {
 		add_prop "$port_node" "reg" 0 int $dts_file
 		add_prop "$port_node" "xlnx,video-format" 3 int $dts_file
 		add_prop "$port_node" "xlnx,video-width" $max_data_width int $dts_file
+		# CR-1214806: Guard to prevent duplicate endpoint nodes under port@0
+		set port0_ep_created 0
 		set scaninip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis"]
 		if {[llength $scaninip] && \
 		    [string match -nocase [hsi::get_property IP_NAME $scaninip] "axis_switch"]} {
 			set axis_node [create_node -n "endpoint" -l $drv_handle$scaninip -p $port_node -d $dts_file]
 			add_prop "$axis_node" "remote-endpoint" axis_switch_out1$scaninip reference $dts_file
+			set port0_ep_created 1
 		}
 		# Get next IN IP if axis_slice connected
 		if {[llength "$scaninip"] && \
@@ -272,6 +275,8 @@ proc vproc_ss_update_endpoints {drv_handle} {
 					# Add endpoints if IN IP is axis_switch and non memory mapped
 					if {[string match -nocase [hsi get_property IP_NAME $inip] "axis_switch"]} {
 						update_axis_switch_endpoints $inip $port_node $drv_handle
+						# CR-1214806: Mark endpoint created to prevent duplicate
+						set port0_ep_created 1
 					}
 					set broad_ip [get_broad_in_ip $inip]
 					if {[llength $broad_ip]} {
@@ -279,6 +284,9 @@ proc vproc_ss_update_endpoints {drv_handle} {
 							set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $broad_ip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
 							set intlen [llength $master_intf]
 							set sca_in_end ""
+							set sca_in1_end ""
+							set sca_in2_end ""
+							set sca_in3_end ""
 							set sca_remo_in_end ""
 							set sca_remo_in1_end ""
 							set sca_remo_in2_end ""
@@ -309,7 +317,7 @@ proc vproc_ss_update_endpoints {drv_handle} {
 									if {[info exists broad_port1_remo_mappings] && [dict exists $broad_port1_remo_mappings $broad_ip]} {
 										set sca_remo_in_end [dict get $broad_port1_remo_mappings $broad_ip]
 									}
-									if {[info exists port1_broad_end_mappings] && [dict exists $port2_broad_end_mappings $broad_ip]} {
+								if {[info exists port2_broad_end_mappings] && [dict exists $port2_broad_end_mappings $broad_ip]} {
 										set sca_in1_end [dict get $port2_broad_end_mappings $broad_ip]
 									}
 									if {[info exists broad_port2_remo_mappings] && [dict exists $broad_port2_remo_mappings $broad_ip]} {
@@ -427,7 +435,9 @@ proc vproc_ss_update_endpoints {drv_handle} {
 						}
 					}
 				}
-				if {[llength $inip]} {
+				# CR-1214806: Skip end_mappings endpoint if one was already created
+				# by update_axis_switch_endpoints to avoid duplicate nodes under port@0
+				if {[llength $inip] && !$port0_ep_created} {
 					set sca_in_end ""
 					set sca_remo_in_end ""
 					if {[info exists end_mappings] && [dict exists $end_mappings $inip]} {
@@ -438,6 +448,7 @@ proc vproc_ss_update_endpoints {drv_handle} {
 					}
 					if {[llength $sca_remo_in_end]} {
 						set scainnode [create_node -n "endpoint" -l $sca_remo_in_end -p $port_node -d $dts_file]
+						set port0_ep_created 1
 					}
 					if {[llength $sca_in_end]} {
 					add_prop "$scainnode" "remote-endpoint" $sca_in_end reference $dts_file
