@@ -603,6 +603,9 @@ proc gen_broadcaster {ip dts_file} {
         if {[llength $ip]== 0} {
             return
         }
+    if {[string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $ip]] "axis_subset_converter"] && $hop_count > 0} {
+        return $ip
+    }
 	if {$hop_count > 20} {
                return ""
         }
@@ -624,6 +627,9 @@ proc gen_broadcaster {ip dts_file} {
                     gen_axis_switch $connectip
                     break
                 }
+                if {[string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $connectip]] "axis_subset_converter"]} {
+                    break
+                }
             }
             set len [llength $connectip]
             if {$len > 1} {
@@ -640,6 +646,9 @@ proc gen_broadcaster {ip dts_file} {
                 if {[llength $ip_mem_handles]} {
                     break
                 } else {
+                    if {[string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $connectip]] "axis_subset_converter"]} {
+                        break
+                    }
                     set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $connectip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
                     get_connect_ip $connectip $master_intf $dts_file $hop_count
                 }
@@ -783,37 +792,49 @@ proc gen_axis_switch {ip} {
 			} else {
 				set remote_endpoint_ref $connectip
 			}
+			set endpoint_label ""
+			set remote_endpoint_value ""
+			set remote_mapping_value ""
+			if {$connectnextip_ip_name == "ISPPipeline_accel"} {
+				set endpoint_label "$ip$connectip"
+				set remote_endpoint_value "isppipeline_in$connectip"
+				set remote_mapping_value $remote_endpoint_value
+			} else {
+				set endpoint_label "axis_switch_out${count}$ip"
+				set remote_endpoint_value "$remote_endpoint_ref$ip"
+				set remote_mapping_value $remote_endpoint_value
+			}
 			if {$count == 1} {
 				set port_node [create_node -n "port" -l axis_switch_port1$ip -u 1 -p $ports_node -d $dts]
 				add_prop "$port_node" "reg" 1 int $dts
-				set axis_node [create_node -n "endpoint" -l axis_switch_out1$ip -p $port_node -d $dts]
-				gen_axis_port1_endpoint $ip "axis_switch_out1$ip"
-				add_prop "$axis_node" "remote-endpoint" $remote_endpoint_ref$ip reference $dts
-				gen_axis_port1_remoteendpoint $ip $remote_endpoint_ref$ip
+				set axis_node [create_node -n "endpoint" -l $endpoint_label -p $port_node -d $dts]
+				gen_axis_port1_endpoint $ip $endpoint_label
+				add_prop "$axis_node" "remote-endpoint" $remote_endpoint_value reference $dts
+				gen_axis_port1_remoteendpoint $ip $remote_mapping_value
 			}
 			if {$count == 2} {
 				set port_node [create_node -n "port" -l axis_switch_port2$ip -u 2 -p $ports_node -d $dts]
 				add_prop "$port_node" "reg" 2 int $dts
-				set axis_node [create_node -n "endpoint" -l axis_switch_out2$ip -p $port_node -d $dts]
-				gen_axis_port2_endpoint $ip "axis_switch_out2$ip"
-				add_prop "$axis_node" "remote-endpoint" $remote_endpoint_ref$ip reference $dts
-				gen_axis_port2_remoteendpoint $ip $remote_endpoint_ref$ip
+				set axis_node [create_node -n "endpoint" -l $endpoint_label -p $port_node -d $dts]
+				gen_axis_port2_endpoint $ip $endpoint_label
+				add_prop "$axis_node" "remote-endpoint" $remote_endpoint_value reference $dts
+				gen_axis_port2_remoteendpoint $ip $remote_mapping_value
 			}
 			if {$count == 3} {
 				set port_node [create_node -n "port" -l axis_switch_port3$ip -u 3 -p $ports_node -d $dts]
 				add_prop "$port_node" "reg" 3 int $dts
-				set axis_node [create_node -n "endpoint" -l axis_switch_out3$ip -p $port_node -d $dts]
-				gen_axis_port3_endpoint $ip "axis_switch_out3$ip"
-				add_prop "$axis_node" "remote-endpoint" $remote_endpoint_ref$ip reference $dts
-				gen_axis_port3_remoteendpoint $ip $remote_endpoint_ref$ip
+				set axis_node [create_node -n "endpoint" -l $endpoint_label -p $port_node -d $dts]
+				gen_axis_port3_endpoint $ip $endpoint_label
+				add_prop "$axis_node" "remote-endpoint" $remote_endpoint_value reference $dts
+				gen_axis_port3_remoteendpoint $ip $remote_mapping_value
 			}
 			if {$count == 4} {
 				set port_node [create_node -n "port" -l axis_switch_port4$ip -u 4 -p $ports_node -d $dts]
 				add_prop "$port_node" "reg" 4 int $dts
-				set axis_node [create_node -n "endpoint" -l axis_switch_out4$ip -p $port_node -d $dts]
-				gen_axis_port4_endpoint $ip "axis_switch_out4$ip"
-				add_prop "$axis_node" "remote-endpoint" $remote_endpoint_ref$ip reference $dts
-				gen_axis_port4_remoteendpoint $ip $remote_endpoint_ref$ip
+				set axis_node [create_node -n "endpoint" -l $endpoint_label -p $port_node -d $dts]
+				gen_axis_port4_endpoint $ip $endpoint_label
+				add_prop "$axis_node" "remote-endpoint" $remote_endpoint_value reference $dts
+				gen_axis_port4_remoteendpoint $ip $remote_mapping_value
 			}
 		}
 	}

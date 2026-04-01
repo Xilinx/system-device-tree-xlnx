@@ -328,6 +328,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "asu" "asu"
 	dict set ::sdtgen::namespacelist "axis_switch" "axis_switch"
 	dict set ::sdtgen::namespacelist "axis_broadcaster" "axis_broadcaster"
+	dict set ::sdtgen::namespacelist "axis_subset_converter" "axis_subset_converter"
 	dict set ::sdtgen::namespacelist "ISPPipeline_accel" "isppipeline"
 	dict set ::sdtgen::namespacelist "preprocess_accel" "preprocess"
 	dict set ::sdtgen::namespacelist "frmbuf_accel" "ai_layout_formatter_wr"
@@ -1832,7 +1833,7 @@ Generates system device tree based on args given in:
 		if { [dict exists $dup_periph_handle $drv_handle] } {
 			set skip2 1
 		}
-		if { $skip2 == 0 || $ip_name in {"axis_switch" "axis_broadcaster"}} {
+		if { $skip2 == 0 || $ip_name in {"axis_switch" "axis_broadcaster" "axis_subset_converter"}} {
 			if { [dict exists $::sdtgen::namespacelist $ip_name] } {
 				set drvname [dict get $::sdtgen::namespacelist $ip_name]
 				source [file join $path $drvname "data" "${drvname}.tcl"]
