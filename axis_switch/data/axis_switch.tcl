@@ -13,6 +13,10 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
+
+proc sdt_debug {msg} {
+        return
+}
 proc axis_switch_generate {drv_handle} {
 }
 
@@ -24,13 +28,15 @@ proc axis_switch_update_endpoints {drv_handle} {
         global axis_switch_in_remo_mappings
 
         set ip $drv_handle
+        set ip_name [hsi get_property IP_NAME [hsi get_cells -hier $drv_handle]]
+        sdt_debug "axis_switch: update start ip=$drv_handle ip_name=$ip_name"
         set bus_node [detect_bus_name $ip]
         set dts [set_drv_def_dts $ip]
         set switch_node [get_node $drv_handle]
         if {[string_is_empty $switch_node]} {
                 set switch_node [create_node -n "axis_switch_$ip" -l $ip -u 0 -p $bus_node -d $dts]
         }
-                if {[llength $ip]} {
+                if {![string match -nocase $ip_name "axis_switch"] && [llength $ip]} {
                         set ip_mem_handles [hsi get_mem_ranges $ip]
                         if {![llength $ip_mem_handles]} {
                                 set axis_ip [hsi get_property IP_NAME $ip]
@@ -91,6 +97,7 @@ proc axis_switch_update_endpoints {drv_handle} {
                                         if {[llength $inip]} {
                                                 set axis_switch_in_end ""
                                                 set axis_switch_remo_in_end ""
+                                                        set axis_switch_used_fallback 0
                                                 if {[info exists axis_switch_in_end_mappings] && [dict exists $axis_switch_in_end_mappings $inip]} {
                                                         set axis_switch_in_end [dict get $axis_switch_in_end_mappings $inip]
                                                         dtg_verbose "drv:$ip inend:$axis_switch_in_end"
@@ -99,10 +106,25 @@ proc axis_switch_update_endpoints {drv_handle} {
                                                         set axis_switch_remo_in_end [dict get $axis_switch_in_remo_mappings $inip]
                                                         dtg_verbose "drv:$ip inremoend:$axis_switch_remo_in_end"
                                                 }
+						if {[string match -nocase $inipname "mipi_csi2_rx_subsystem"]} {
+							if {![llength $axis_switch_in_end]} {
+                                                                if {[string match -nocase "hier_*" $inip]} {
+                                                                        set axis_switch_in_end "$inip$ip"
+                                                                } else {
+                                                                        set axis_switch_in_end "mipi_csirx_out$inip"
+                                                                }
+                                                                        set axis_switch_used_fallback 1
+							}
+							if {![llength $axis_switch_remo_in_end]} {
+								set axis_switch_remo_in_end "$ip$inip"
+                                                                        set axis_switch_used_fallback 1
+							}
+						}
+                                                sdt_debug "axis_switch: map in_end=$axis_switch_in_end remo_in_end=$axis_switch_remo_in_end"
                                                 if {[llength $axis_switch_remo_in_end]} {
                                                         set axisinnode [create_node -n "endpoint" -l $axis_switch_remo_in_end -p $port_node -d $dts]
                                                 }
-                                                if {[llength $axis_switch_in_end]} {
+                                                        if {[llength $axis_switch_in_end] && !$axis_switch_used_fallback} {
                                                         add_prop "$axisinnode" "remote-endpoint" $axis_switch_in_end reference $dts
                                                 }
                                         }
