@@ -90,13 +90,25 @@
 			}
 			set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $out_ip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
 			set ip_mem_handles [hsi::get_mem_ranges $out_ip]
-			if {[string match -nocase [hsi get_property IP_NAME $out_ip] "axis_switch"]} {
-			if {[llength $ip_mem_handles]} {
+			# CR-1214806: Resolve through axis_register_slice to find the actual downstream IP
+			set resolved_ip $out_ip
+			if {[string match -nocase [hsi get_property IP_NAME $resolved_ip] "axis_register_slice"]} {
+				set next_ip [get_connected_stream_ip [hsi::get_cells -hier $resolved_ip] "M_AXIS"]
+				if {[llength $next_ip]} {
+					set resolved_ip $next_ip
+				}
+			}
+			# CR-1214806: Handle axis_switch regardless of mem handles; populate both
+			# axis_switch and generic endpoint mappings, then continue to avoid
+			# fall-through to the general ip_mem_handles block
+			if {[string match -nocase [hsi get_property IP_NAME $resolved_ip] "axis_switch"]} {
 			        set tpg_node [create_node -n "endpoint" -l tpg_out$drv_handle -p $port1_node -d $dts_file]
 			        gen_axis_switch_in_endpoint $drv_handle "tpg_out$drv_handle"
-			        add_prop "$tpg_node" "remote-endpoint" $out_ip$drv_handle reference $dts_file
-			        gen_axis_switch_in_remo_endpoint $drv_handle "$out_ip$drv_handle"
-			}
+			        add_prop "$tpg_node" "remote-endpoint" $resolved_ip$drv_handle reference $dts_file
+			        gen_axis_switch_in_remo_endpoint $drv_handle "$resolved_ip$drv_handle"
+			        gen_endpoint $drv_handle "tpg_out$drv_handle"
+			        gen_remoteendpoint $drv_handle "$resolved_ip$drv_handle"
+			continue
 			}
 
 			if {[string match -nocase [hsi get_property IP_NAME $out_ip] "axis_broadcaster"]} {
@@ -129,6 +141,12 @@
                                 continue
                             }
                             if {[string match -nocase [hsi get_property IP_NAME $connectip] "axis_broadcaster"]} {
+                                set tpg_node [create_node -n "endpoint" -l tpg_out$drv_handle -p $port1_node -d $dts_file]
+                                gen_endpoint $drv_handle "tpg_out$drv_handle"
+                                add_prop "$tpg_node" "remote-endpoint" $connectip$drv_handle reference $dts_file
+                                gen_remoteendpoint $drv_handle "$connectip$drv_handle"
+                            }
+                            if {[string match -nocase [hsi get_property IP_NAME $connectip] "axis_subset_converter"]} {
                                 set tpg_node [create_node -n "endpoint" -l tpg_out$drv_handle -p $port1_node -d $dts_file]
                                 gen_endpoint $drv_handle "tpg_out$drv_handle"
                                 add_prop "$tpg_node" "remote-endpoint" $connectip$drv_handle reference $dts_file
