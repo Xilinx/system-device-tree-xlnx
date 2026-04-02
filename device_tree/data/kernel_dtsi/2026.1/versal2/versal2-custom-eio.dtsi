@@ -77,7 +77,7 @@
     };
 
     spi0_eio: spi@ed010000 {
-        compatible = "amd,eio-spi-r1p6";
+        compatible = "cdns,spi-r1p6";
         status = "disabled";
         interrupt-parent = <&imux>;
         interrupts = <0 181 4>;
@@ -88,7 +88,7 @@
     };
 
     spi1_eio: spi@ed020000 {
-        compatible = "amd,eio-spi-r1p6";
+        compatible = "cdns,spi-r1p6";
         status = "disabled";
         interrupt-parent = <&imux>;
         interrupts = <0 182 4>;
@@ -99,7 +99,7 @@
     };
 
     spi2_eio: spi@ed030000 {
-        compatible = "amd,eio-spi-r1p6";
+        compatible = "cdns,spi-r1p6";
         status = "disabled";
         interrupt-parent = <&imux>;
         interrupts = <0 183 4>;
@@ -110,7 +110,7 @@
     };
 
     spi3_eio: spi@ed040000 {
-        compatible = "amd,eio-spi-r1p6";
+        compatible = "cdns,spi-r1p6";
         status = "disabled";
         interrupt-parent = <&imux>;
         interrupts = <0 184 4>;
