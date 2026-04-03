@@ -738,4 +738,5 @@
 
 &gpu_mali {
 	clocks = <&versal2_clk PS_AXI_DMA>;
+	resets = <&versal2_reset VERSAL_RST_GPU>, <&versal2_reset VERSAL_RST_GPU_RECOV>;
 };

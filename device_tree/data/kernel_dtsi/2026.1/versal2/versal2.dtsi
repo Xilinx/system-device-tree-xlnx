@@ -903,6 +903,7 @@
 					interrupt-names = "JOB", "MMU", "GPU";
 					interrupts = <0 180 4>, <0 180 4>, <0 180 4>;
 					arbiter-if = <&gpu_aw_message_a_0>;
+					reset-names = "gpu", "gpu_recov";
 					system-coherency = <0x1f>;
 					physical-memory-group-manager = <&gpu_physical_memory_group_manager>;
 				};
