@@ -39,23 +39,37 @@ Takes the user inputs as command line arguments and generates the System Device 
   * `-xsa` : Sets the XSA path for which SDT has to be generated. 
   * `-dir` : Sets the output directory where the SDT is to be generated.
 * Optional arguments:
-  * `-board_dts` : Includes the static AMD&trade; development board
+  * `-board_dts` :
+	*	Includes the static AMD&trade; development board
   	specific DTSI file available at `<this
-  	repo>/device_tree/data/kernel_dtsi/<release>/<board>` inside the
-  	final SDT
-  * `-list_boards` : Lists all the static AMD&trade; development board
-	specific DTSI file available at `<this
-	repo>/device_tree/data/kernel_dtsi/<release>/<board>` inside the
-	final SDT
-  * `-user_dts` : Includes a user defined custom `.dtsi` file inside the
-  	final SDT 
+	repo>/device_tree/data/kernel_dtsi/<release>/BOARD` inside the
+	final SDT.
+	*	Takes the file name without the .dtsi extension as input.
+	*	e.g. `-board_dts zcu102-rev1.0` will include the `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD/zcu102-rev1.0.dtsi` file in the final SDT.
+	* Will be deprecated from 2026.2 and removed in future releases.
+	* Use `-user_dts` with board `.dtsi` files instead.
+  * `-list_boards` :
+	*	Lists all the static AMD&trade; development board
+		specific DTSI file available at `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD` path.
+	*	Takes an optional regex as input to filter the board files based on the file name.
+  * `-user_dts` :
+	*	Includes user defined custom `.dtsi`/`.dtso` files inside the final SDT.
+	* Supports one or more files.
+	* Each file can be provided as an absolute path,
+		relative path, or by file name if present in
+		`<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD`. The file will be
+		first searched with the absolute path, then with the relative path from
+		where SDTGen is being run, and then in the
+		`<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD` directory.
+	* This is the recommended replacement for `-board_dts`.
+	* Example: `-user_dts zcu102-rev1.0.dtsi ./test_dir/overlay.dtsi`.
 	* Can be used to workaround when SDTGen tool is generating
-  	incorrect data, can be used to override the existing data in the
-  	final SDT, or add a custom board `.dtsi` file.
+    incorrect data, can be used to override the existing data in the
+    final SDT, or add a custom board `.dtsi`/`.dtso` file.
   * `-trace` : Enables traces of the procs called to generate the SDT
   * `-debug` : Enables the warning prints wherever mentioned in the
   	TCL scripts 
-  	* Helpful in getting more info on what might go missing
+		* Helpful in getting more info on what might go missing
   	in the final SDT even though the SDT generation is successful.
   * `-zocl` : Add zocl nodes for extended interrupts usecase
     (enable/disable, default: disable)
@@ -153,35 +167,50 @@ Note: sdtgen binary can be used in two ways as described below:
 ### sdtgen as a binary
 #### Basic usage:
 ```bash
+#  Take system.xsa as an input, create system device tree under sdt_outdir folder
 sdtgen -xsa system.xsa -dir sdt_outdir
+
+# List all the known AMD board dtsi files available in this repository
 sdtgen -list_boards
-sdtgen -xsa system.xsa -dir sdt_outdir -board_dts zcu102-rev1.0
+
+#  Take system.xsa as an input, create system device tree under sdt_outdir folder, and include zcu102-rev1.0.dtsi file (which is a known AMD board dtsi file available at `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD` PATH) inside the final SDT.
+sdtgen -xsa system.xsa -dir sdt_outdir -user_dts zcu102-rev1.0.dtsi
 ```
 
 #### PMC domain specific device tree:
 ```bash
+# Take system.xsa as an input, create PMC domain specific device tree under sdt_outdir folder
 sdtgen -xsa system.xsa -dir sdt_outdir -domain pmc
 ```
 
 #### Advanced usage with multiple options:
 ```bash
-sdtgen -xsa system.xsa -dir sdt_outdir -board_dts zcu102-rev1.0 -user_dts ./user1.dtsi ./user2.dtsi -trace enable -debug enable
+#  Take system.xsa as an input, create system device tree under sdt_outdir folder, include zcu102-rev1.0.dtsi file (which is a known AMD board dtsi file available at `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD` PATH) and user1.dtso (which is a user defined custom dtsi overlay present in the current directory) inside the final SDT, and also enable the trace and debug options.
+sdtgen -xsa system.xsa -dir sdt_outdir -user_dts zcu102-rev1.0.dtsi ./user1.dtso -trace enable -debug enable
+
+#  Take system.xsa as an input, create system device tree under sdt_outdir folder, include custom_board.dtsi (which is a user defined custom dtsi file present in the current directory) inside the final SDT, and also enable the trace and debug options.
+sdtgen -xsa system.xsa -dir sdt_outdir -user_dts custom_board.dtsi -trace enable -debug enable
 ```
 
 #### DFX (Dynamic Function eXchange) use cases:
 ```bash
+# Pass the partial hw design files rp0_rm0.xsa and rp0_rm1.xsa for DFX use case along with the full hw design file full.xsa to generate the system device tree under dfx_dts folder.
 sdtgen -xsa full.xsa -dir dfx_dts -rm_xsa rp0_rm0.xsa -rm_xsa rp0_rm1.xsa
 ```
 
 ### sdtgen as a TCL shell:
 #### Interactive mode:
 ```bash
-sdtgen -eval "set_dt_param -xsa system.xsa -dir sdt_outdir -board_dts zcu102-rev1.0; generate_sdt"
+# Launch sdtgen in interactive mode using -eval option and run the set_dt_param and generate_sdt commands one by one to generate the SDT.
+sdtgen -eval "set_dt_param -xsa system.xsa -dir sdt_outdir -user_dts zcu102-rev1.0.dtsi; generate_sdt"
+
+# Launch sdtgen in interactive mode using -eval option, open an XSA file and list the processor cells in the hw design.
 sdtgen -eval "hsi::open_hw_design system.xsa; puts [hsi::get_cells -hier -filter IP_TYPE==PROCESSOR]"
 ```
 
 #### TCL file mode:
 ```bash
+# Create a TCL file named sdt.tcl with the set_dt_param and generate_sdt commands and run the below command to execute the TCL file using sdtgen and generate the SDT.
 sdtgen sdt.tcl system.xsa sdt_outdir
 ```
 
@@ -190,7 +219,7 @@ Where `sdt.tcl` contains:
 set outdir [lindex $argv 1]
 set xsa [lindex $argv 0]
 exec rm -rf $outdir
-set_dt_param -xsa $xsa -dir $outdir -board_dts zcu102-rev1.0 -user_dts /home/abc/xyz.dtsi
+set_dt_param -xsa $xsa -dir $outdir -user_dts zcu102-rev1.0.dtsi /home/abc/overlay.dtso
 generate_sdt
 ```
 
@@ -276,7 +305,7 @@ sdtgen% set_dt_param -xsa system.xsa -dir sdt_outdir
 # Include board specific dtsi file from <SDT repo>/device_tree/data/kernel_dtsi/2025.2/BOARD path
 # Below command copies the <SDT repo>/device_tree/data/kernel_dtsi/2025.2/BOARD/zcu102-rev1.0.dtsi file
 # into SDT output directory and add include statement in system-top.dts
-sdtgen% set_dt_param -board_dts zcu102-rev1.0
+sdtgen% set_dt_param -user_dts zcu102-rev1.0.dtsi
 
 # List board specific dtsi files from <SDT repo>/device_tree/data/kernel_dtsi/<release_version>/BOARD path
 # Below command lists all the board dtsi files in <SDT repo>/device_tree/data/kernel_dtsi/<release_version>/BOARD path that contain the given regex.
@@ -307,9 +336,23 @@ sdtgen% set_dt_param -domain pmc
 sdtgen% set_dt_param -help
             Usage: set/get_dt_param \[OPTION\]
             -xsa              Vivado hw design file
-            -board_dts        board specific file
+            -board_dts        Includes the static board specific DTSI file available at
+                              `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD`
+                              inside the final SDT. Takes the file name without the .dtsi extension
+                              as input. e.g. `-board_dts zcu102-rev1.0` will include the
+                              `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD/zcu102-rev1.0.dtsi`
+                              file in the final SDT. This option will be deprecated from 2026.2 and removed
+                              in future releases. Use `-user_dts` with board `.dtsi` files instead.
             -dir              Directory where the dt files will be generated
-            -user_dts         DTS file to be include into final device tree
+            -user_dts         Includes user defined custom `.dtsi`/`.dtso` files inside the
+                              final SDT. Supports one or more files. Each file can be provided
+                              as an absolute path, relative path, or by file name if present in
+                              `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD`. The
+                              file will be first searched with the absolute path, then with the
+                              relative path from where SDTGen is being run, and then in the
+                              `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD` directory.
+                              This is the recommended replacement for `-board_dts`.
+                              Example: `-user_dts zcu102-rev1.0.dtsi ./test_dir/overlay.dtsi`.
             -debug            Enable DTG++ debug
             -trace            Enable DTG++ traces
             -zocl             add zocl nodes for extended interrupts usecase
@@ -318,7 +361,7 @@ sdtgen% set_dt_param -help
             -list_boards      List all the board specific files in system device tree
 
 # Combining everything in one command
-sdtgen% set_dt_param -xsa system.xsa -dir sdt_outdir -board_dts zcu102-rev1.0 -user_dts ./custom.dtsi -trace enable -debug enable -zocl enable -domain pmc
+sdtgen% set_dt_param -xsa system.xsa -dir sdt_outdir -user_dts zcu102-rev1.0.dtsi ./custom.dtso -trace enable -debug enable -zocl enable -domain pmc
 ```
 ### get_dt_param
 Returns the values set for the given argument. Returns the default
@@ -331,9 +374,23 @@ sdtgen% get_dt_param -help
             Usage: set/get_dt_param \[OPTION\]
             -repo             system device tree repo source
             -xsa              Vivado hw design file
-            -board_dts        board specific file
+            -board_dts        Includes the static board specific DTSI file available at
+                              `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD`
+                              inside the final SDT. Takes the file name without the .dtsi extension
+                              as input. e.g. `-board_dts zcu102-rev1.0` will include the
+                              `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD/zcu102-rev1.0.dtsi`
+                              file in the final SDT. This option will be deprecated from 2026.2 and removed
+                              in future releases. Use `-user_dts` with board `.dtsi` files instead.
             -dir              Directory where the dt files will be generated
-            -user_dts         DTS file to be include into final device tree
+            -user_dts         Includes user defined custom `.dtsi`/`.dtso` files inside the
+                              final SDT. Supports one or more files. Each file can be provided
+                              as an absolute path, relative path, or by file name if present in
+                              `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD`. The
+                              file will be first searched with the absolute path, then with the
+                              relative path from where SDTGen is being run, and then in the
+                              `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD` directory.
+                              This is the recommended replacement for `-board_dts`.
+                              Example: `-user_dts zcu102-rev1.0.dtsi ./test_dir/overlay.dtsi`.
             -debug            Enable DTG++ debug
             -trace            Enable DTG++ traces
             -zocl             add zocl nodes for extended interrupts usecase

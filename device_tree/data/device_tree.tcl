@@ -358,11 +358,25 @@ proc print_usage args {
             Usage: set/get_dt_param \[OPTION\]
             -repo             system device tree repo source
             -xsa              Vivado hw design file
-            -board_dts        board specific file
+            -board_dts        Includes the static board specific DTSI file available at
+                              `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD`
+                              inside the final SDT. Takes the file name without the .dtsi extension
+                              as input. e.g. `-board_dts zcu102-rev1.0` will include the
+                              `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD/zcu102-rev1.0.dtsi`
+                              file in the final SDT. This option will be deprecated from 2026.2 and removed
+                              in future releases. Use `-user_dts` with board `.dtsi` files instead.
             -mainline_kernel  mainline kernel version
             -kernel_ver       kernel version
             -dir              Directory where the dt files will be generated
-            -user_dts         DTS file to be include into final device tree
+            -user_dts         Includes user defined custom `.dtsi`/`.dtso` files inside the
+	                      final SDT. Supports one or more files. Each file can be provided as
+			      an absolute path, relative path, or by file name if present in
+			      `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD`.
+			      The file will be first searched with the absolute path, then with
+			      the relative path from where SDTGen is being run, and then in the
+			      `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD` directory.
+			      This is the recommended replacement for `-board_dts`.
+			      Example: `-user_dts zcu102-rev1.0.dtsi ./test_dir/overlay.dtsi`.
             -debug            Enable DTG++ debug
             -trace            Enable DTG++ traces
             -zocl             Create zocl node in device tree. Possible options: enable/disable. Default option: disable
@@ -487,6 +501,8 @@ proc set_dt_param args {
 					set env(rm_xsa) $rm_xsa_file
 				}
 				-board_dts {
+					puts "WARNING: '-board_dts' option is going to be deprecated from 2026.2 and removed in future releases. \
+						Use -user_dts option with board '.dtsi' files instead. Example: '-user_dts zcu102-rev1.0.dtsi ./test_dir/overlay.dtsi'"
 					set board_dts_file [Pop args 1]
 					if {[string tolower [file extension $board_dts_file]] eq ".dtsi"} {
 						error "ERROR: board_dts expects file name without .dtsi extension. Please update"

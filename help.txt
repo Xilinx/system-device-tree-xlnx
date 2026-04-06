@@ -16,8 +16,22 @@ Required Arguments:
 
 Optional Arguments:
     -list_boards      List all the board specific files in system device tree
-    -board_dts        board specific file
-    -user_dts         DTS file to be include into final device tree
+    -board_dts        Includes the static board specific DTSI file available at
+                      `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD`
+                      inside the final SDT. Takes the file name without the .dtsi extension
+                      as input. e.g. `-board_dts zcu102-rev1.0` will include the
+                      `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD/zcu102-rev1.0.dtsi`
+                      file in the final SDT. This option will be deprecated from 2026.2 and removed
+                      in future releases. Use `-user_dts` with board `.dtsi` files instead.
+    -user_dts         Includes user defined custom `.dtsi`/`.dtso` files inside the
+	                  final SDT. Supports one or more files. Each file can be provided as
+			          an absolute path, relative path, or by file name if present in
+			          `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD`.
+                      The file will be first searched with the absolute path, then with the
+                      relative path from where SDTGen is being run, and then in the
+                      `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD` directory.
+			          This is the recommended replacement for `-board_dts`.
+			          Example: `-user_dts zcu102-rev1.0.dtsi ./test_dir/overlay.dtsi`.
     -debug            enable SDTGen debug (enable/disable, default: disable)
     -trace            enable SDTGen traces (enable/disable, default: disable)
     -zocl             add zocl nodes for extended interrupts usecase
@@ -34,10 +48,11 @@ Examples:
     sdtgen -xsa system.xsa -dir sdt_outdir
     sdtgen -list_boards "zcu102-*"
     sdtgen -xsa system.xsa -dir sdt_outdir -board_dts zcu102-rev1.0
+    sdtgen -xsa system.xsa -dir sdt_outdir -user_dts zcu102-rev1.0.dtsi
     sdtgen -xsa system.xsa -dir sdt_outdir -domain pmc
-    sdtgen -xsa system.xsa -dir sdt_outdir -board_dts zcu102-rev1.0 -user_dts ./user1.dtsi ./user2.dtsi -trace enable -debug enable
+    sdtgen -xsa system.xsa -dir sdt_outdir -user_dts zcu102-rev1.0.dtsi ./user1.dtso -trace enable -debug enable
     sdtgen -xsa full.xsa -dir dfx_dts -rm_xsa rp0_rm0.xsa -rm_xsa rp0_rm1.xsa
-    sdtgen -eval "set_dt_param -xsa system.xsa -dir sdt_outdir -board_dts zcu102-rev1.0; generate_sdt"
+    sdtgen -eval "set_dt_param -xsa system.xsa -dir sdt_outdir -user_dts zcu102-rev1.0.dtsi; generate_sdt"
     sdtgen -eval "hsi::open_hw_design system.xsa; puts [hsi::get_cells -hier -filter IP_TYPE==PROCESSOR]"
 
 Usage b) sdtgen [TCL FILE]...
@@ -49,5 +64,5 @@ Examples:
       set outdir [lindex $argv 1]
       set xsa [lindex $argv 0]
       exec rm -rf $outdir
-      set_dt_param -xsa $xsa -dir $outdir -board_dts zcu102-rev1.0 -user_dts /home/abc/xyz.dtsi
+      set_dt_param -xsa $xsa -dir $outdir -user_dts zcu102-rev1.0.dtsi /home/abc/overlay.dtso
       generate_sdt
