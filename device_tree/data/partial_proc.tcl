@@ -391,7 +391,11 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 		set rp_info [get_rprm_for_drv $drv_handle]
 		if {[llength $rp_info] != 0} {
 			if {$skip == 0} {
-				set fpga_inst [regexp -inline {\d+} [lindex $rp_info 0]]
+				set rp_inst [lindex $rp_info 0]
+				set fpga_inst [regexp -inline {\d+} $rp_inst]
+				if {$fpga_inst eq ""} {
+					set fpga_inst $rp_inst
+				}
 				set firmware_name [get_partial_file]
 				set replacement {
 					".pdi" ".dtsi"
@@ -412,7 +416,7 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 					add_prop $pr_node "firmware-name" $firmware_name string ${dts} 1
 				}
 				if {$is_bridge_en} {
-					set connectip [dict get $rp_region_dict "rp$fpga_inst"]
+					set connectip [dict get $rp_region_dict $rp_inst]
 					add_prop "${pr_node}" "fpga-bridges" "$connectip" reference $dts 1
 				}
 				add_prop $pr_node "partial-fpga-config" "" boolean $dts 1

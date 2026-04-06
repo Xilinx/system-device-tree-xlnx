@@ -979,6 +979,9 @@ proc gen_afi_node {} {
 		foreach rp $pr_regions {
 			set intf_pins [::hsi::get_intf_pins -of_objects $rp]
 			set fpga_inst [regexp -inline {\d+} $rp]
+			if {$fpga_inst eq ""} {
+				set fpga_inst $rp
+			}
 			set pr_node [create_node -l "fpga_PR$fpga_inst" -n "fpga-PR$fpga_inst" -p $amba_pl_node -d $dts]
 			add_prop "${pr_node}" "compatible" "fpga-region" string $dts 1
 			add_prop "${pr_node}" "#address-cells" 2 int $dts 1
