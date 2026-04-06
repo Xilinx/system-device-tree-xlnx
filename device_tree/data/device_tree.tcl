@@ -529,21 +529,39 @@ proc set_dt_param args {
 					# FIXME: Below line should not be needed. It is added to support
 					# -user_dts {a.dtsi b.dtsi} kind of input which Vitis uses. Otherwise
 					# files are not getting copied with the usage of lappend in defining user_dts.
-					set env(user_dts) [Pop args 1]
+					set user_dts_inputs [Pop args 1]
 					set user_dts_args [lrange $args 1 end]
 					foreach arg $user_dts_args {
 						if {![string match "-*" $arg]} {
-							lappend env(user_dts) $arg
+							lappend user_dts_inputs $arg
 							Pop args 1
 						} else {
 							break
 						}
 					}
-					foreach dts $env(user_dts) {
+					set normalized_path ""
+					set_sdt_default_repo
+					set common_file "$env(CUSTOM_SDT_REPO)/device_tree/data/config.yaml"
+					set kernel_ver [get_user_config $common_file -kernel_ver]
+					set kernel_dtsi [file normalize "$env(CUSTOM_SDT_REPO)/device_tree/data/kernel_dtsi/$kernel_ver/BOARD"]
+					foreach dts $user_dts_inputs {
+						if {![regexp -nocase {\.(dtsi|dtso)$} $dts]} {
+							error "ERROR: \"$dts\" file is not a dtsi/dtso file. Can't be used as a user dts include file."
+						}
 						if {![file exists $dts]} {
-							error "$dts does not exist"
+							if {![file exists $kernel_dtsi]} {
+								error "ERROR: \"$kernel_dtsi\" folder is not found. Could not validate $dts against the known board includes."
+							}
+							set target_board_file [file join $kernel_dtsi $dts]
+							if {![file exists $target_board_file]} {
+								error "ERROR: Invalid \"$dts\" file. The $dts could neither be located at ${kernel_dtsi} nor with its relative/absolute path."
+							}
+							lappend normalized_path $target_board_file
+						} else {
+							lappend normalized_path [file normalize $dts]
 						}
 					}
+					set env(user_dts) $normalized_path
                                 }
                                 -debug {
 					set debug [Pop args 1]
@@ -789,12 +807,10 @@ proc include_custom_dts {} {
 		set user_dts ""
 	}
 	set dir_name $env(dir)
-	foreach include_dts_file [split $user_dts] {
-		if {[file exists $include_dts_file]} {
-			file normalize $include_dts_file
-			file copy -force $include_dts_file $dir_name
-			}
-		}
+	foreach include_dts_file $user_dts {
+		file copy -force $include_dts_file $dir_name
+		gen_include_dtfile $include_dts_file $dir_name
+	}
 }
 
 proc gen_afi_node {} {
@@ -977,13 +993,16 @@ proc gen_include_dtfile {args} {
 		if {[regexp $include_regexp $line matched]} {
 			set include_dt [lindex [split $line " "] 1]
 			regsub -all " |\t|;|\"" $include_dt {} include_dt
-			foreach file [glob [file normalize [file dirname ${kernel_dtsi}]/*]] {
-				# NOTE: ./ works only if we did not change our directory
-				if {[regexp $include_dt $file match]} {
-					file copy -force $file ${outdir_path}/
-					gen_include_dtfile $file ${outdir_path}/
-					break
+			set include_file [file normalize [file dirname ${kernel_dtsi}]/$include_dt]
+			if {[file exists $include_file]} {
+				set include_outdir [file normalize [file dirname ${outdir_path}/$include_dt]]
+				if {![file exists $include_outdir]} {
+					file mkdir $include_outdir
 				}
+				file copy -force $include_file $include_outdir
+				gen_include_dtfile $include_file ${outdir_path}/
+			} else {
+				error "Include file $include_file not found (resolved under [file dirname ${kernel_dtsi}])."
 			}
 		}
 	}
@@ -1198,7 +1217,6 @@ proc gen_board_info {} {
 		set valid_board_file 0
 		foreach file [glob [file normalize [file dirname ${kernel_dtsi}]/BOARD/*]] {
 			set dtsi_name "$dts_name.dtsi"
-			# NOTE: ./ works only if we did not change our directory
 			if {[regexp $dtsi_name $file match]} {
 				file copy -force $file $dir_path
 				update_system_dts_include [file tail $file]
