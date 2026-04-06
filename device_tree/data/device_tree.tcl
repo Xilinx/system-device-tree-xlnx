@@ -996,6 +996,18 @@ proc gen_afi_node {} {
 					}
 				}
 			}
+			# Fallback for Versal NoC DFX: dfx_decoupler uses scalar interrupt pins,
+			# not AXI, so get_connected_stream_ip finds nothing.  Identify the bridge
+			# by tracing rp_int_INTERRUPT INPUT pins to the RP container's OUTPUT port
+			# (ip2intc_irpt / dout) on the static-design net.
+			if {![info exists rp_region_dict] || ![dict exists $rp_region_dict $rp]} {
+				set rp_name [hsi get_property NAME [hsi::get_cells -hier $rp]]
+				set dec [find_decoupler_for_rp $rp_name]
+				if {$dec ne ""} {
+					dict set rp_region_dict $rp $dec
+					set is_bridge_en 1
+				}
+			}
 		}
 	}
 	

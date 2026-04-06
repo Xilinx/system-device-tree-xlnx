@@ -309,6 +309,9 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 	global pl_ps_irq0
 	global env
 
+	if {![info exists is_bridge_en]} {
+		set is_bridge_en 0
+	}
 	set pl_ps_irq1 0
 	set pl_ps_irq0 0
 	set is_rm_design 1
@@ -353,6 +356,19 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 	set cur_hw_design [hsi::current_hw_design]
 	file delete -force "$static_xsa_path"
 	file delete -force "$rm_xsa_path"
+
+	# Versal NoC DFX fallback: replicate gen_afi_node's bridge detection for
+	# the RM context.  Trace rp_int_INTERRUPT INPUT pins back to the RP
+	# container's OUTPUT port (ip2intc_irpt / dout) on the combined-design net.
+	if {!$is_bridge_en || \
+			![info exists rp_region_dict] || \
+			![dict exists $rp_region_dict $rp_cell]} {
+		set dec [find_decoupler_for_rp $rp_cell]
+		if {$dec ne ""} {
+			dict set rp_region_dict $rp_cell $dec
+			set is_bridge_en 1
+		}
+	}
 	dict set node_dict $cur_hw_design {}
 	dict set nodename_dict $cur_hw_design {}
 	dict set property_dict $cur_hw_design {}

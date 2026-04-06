@@ -3874,6 +3874,11 @@ proc get_intr_type {intc_name ip_name port_name} {
 	}
 	set intc_type [hsi get_property IP_NAME $intc ]
 	set valid_intc_list "ps7_scugic psu_acpu_gic psv_acpu_gic psx_acpu_gic acpu_gic"
+	# When interrupt path crosses dfx_decoupler isolation boundary, axi_intc needs GIC trigger convention.
+	global is_rm_design
+	if {[info exists is_rm_design] && $is_rm_design} {
+		lappend valid_intc_list "axi_intc"
+	}
 	if {[lsearch  -nocase $valid_intc_list $intc_type] >= 0} {
 		if {[string match -nocase $sensitivity "EDGE_FALLING"]} {
 			dict set intr_type_dict $cur_hw_design $intc_name $ip_name $port_name 2
@@ -4199,6 +4204,75 @@ proc get_cascade_interrupt_number {sink_pn peri periph} {
     return $number
 }
 
+# Return the static-side interrupt output pins of a dfx_decoupler.
+# HSI only sets TYPE==INTERRUPT on the bus pin for WIDTH=1; for WIDTH>1 the
+# type attribute is absent, so fall back to matching by pin name.
+proc get_decoupler_static_output_pins {dec_handle} {
+    set pins [hsi::get_pins -of_objects $dec_handle \
+            -filter {TYPE==INTERRUPT&&DIRECTION==O}]
+    if {[llength $pins] == 0} {
+        set pins [hsi::get_pins -of_objects $dec_handle \
+                -filter {NAME==s_int_INTERRUPT&&DIRECTION==O}]
+    }
+    return $pins
+}
+
+# Return the dfx_decoupler whose rp_int_INTERRUPT INPUT net is driven by the
+# named RP container cell, or an empty string if none is found.
+# Used as a Versal NoC DFX fallback when AXI-based bridge detection finds no
+# bridge for a given RP (scalar interrupt pins carry no AXI interface).
+proc find_decoupler_for_rp {rp_cell_name} {
+    foreach dec [hsi::get_cells -hier -filter {IP_NAME==dfx_decoupler}] {
+        set rp_intr_pins [hsi::get_pins -of_objects $dec \
+                -filter {NAME=~rp_int_INTERRUPT*&&DIRECTION==I}]
+        foreach rp_pin $rp_intr_pins {
+            set net [hsi::get_nets -of_objects $rp_pin]
+            if {[llength $net] == 0} continue
+            foreach src_pin [hsi::get_pins -of_objects $net -filter {DIRECTION==O}] {
+                set src_cell [hsi::get_cells -of_objects $src_pin]
+                if {[llength $src_cell] && \
+                        [hsi get_property NAME $src_cell] eq $rp_cell_name} {
+                    return $dec
+                }
+            }
+        }
+    }
+    return ""
+}
+
+# Return the dfx_decoupler whose rp_int_INTERRUPT INPUT pin is sourced by
+# xlconcat_periph, or an empty string if none is found.
+# HSI cannot trace a multi-bit xlconcat dout through TYPE==INTERRUPT, so for
+# RM designs we walk each decoupler's RP-side pins to locate the match.
+proc find_decoupler_for_xlconcat {xlconcat_periph} {
+    foreach dec [hsi::get_cells -hier -filter {IP_NAME==dfx_decoupler}] {
+        set rp_pins [hsi::get_pins -of_objects $dec \
+                -filter {NAME=~rp_int_INTERRUPT*&&DIRECTION==I}]
+        foreach rp_pin $rp_pins {
+            foreach src_pin [get_source_pins $rp_pin] {
+                set src_cell [hsi::get_cells -of_objects $src_pin]
+                if {[llength $src_cell] && \
+                        [hsi get_property NAME $src_cell] eq \
+                        [hsi get_property NAME $xlconcat_periph]} {
+                    return $dec
+                }
+            }
+        }
+    }
+    return ""
+}
+
+# Trace a dfx_decoupler's static-side output pins to their downstream interrupt
+# controller(s) and collect results into intr_cntrl.  Accepts and returns the
+# list by value so the caller can do: set intr_cntrl [append_intr_cntrl_through_decoupler ...]
+proc append_intr_cntrl_through_decoupler {intr_cntrl dec_periph} {
+    set pins [get_decoupler_static_output_pins $dec_periph]
+    foreach pin $pins {
+        lappend intr_cntrl [get_intr_cntrl_name $dec_periph "$pin"]
+    }
+    return $intr_cntrl
+}
+
 proc get_interrupt_parent {  periph_name intr_pin_name } {
     lappend intr_cntrl
     if { [llength $intr_pin_name] == 0 } {
@@ -4234,13 +4308,30 @@ proc get_interrupt_parent {  periph_name intr_pin_name } {
         if { [llength $sink_periph ] && [is_intr_cntrl $sink_periph] == 1 } {
             lappend intr_cntrl $sink_periph
         } elseif {[llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"xlconcat" "ilconcat"}) } {
-           set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "dout"]]
+           set new_intc [get_connected_intr_cntrl $sink_periph "dout"]
+           set intr_cntrl [list {*}$intr_cntrl {*}$new_intc]
+           # Fallback (RM): multi-bit xlconcat dout untraceable; find the decoupler
+           # whose RP-side pin is driven by this xlconcat, then trace to intc.
+           if {[llength $intr_cntrl] == 0} {
+               global is_rm_design
+               if {[info exists is_rm_design] && $is_rm_design} {
+                   set dec [find_decoupler_for_xlconcat $sink_periph]
+                   if {$dec ne ""} {
+                       set s_out [get_decoupler_static_output_pins $dec]
+                       foreach s_pin $s_out {
+                           set downstream [get_connected_intr_cntrl $dec "$s_pin"]
+                           set intr_cntrl [list {*}$intr_cntrl {*}$downstream]
+                       }
+                   }
+               }
+           }
          } elseif { [llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"xlslice" "ilslice"}) } {
             set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "Dout"]]
         } elseif { [llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"util_reduced_logic" "ilreduced_logic"}) } {
             set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "Res"]]
         }  elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "dfx_decoupler"] } {
-		set intr [hsi::get_pins -of_objects $sink_periph -filter {TYPE==INTERRUPT&&DIRECTION==O}]
+		# Trace through dfx_decoupler to the downstream axi_intc (true interrupt parent).
+		set intr [get_decoupler_static_output_pins $sink_periph]
 		set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "$intr"]]
 	} elseif {[llength $sink_periph] &&  [string match -nocase [hsi get_property IP_NAME $sink_periph] "util_ff"]} {
 		set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "Q"]]
@@ -4254,6 +4345,11 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 	# generate interrupts and interrupt-parent properties for soft IP
 	proc_called_by
 	if {[is_ps_ip $drv_handle]} {
+		return 0
+	}
+	# dfx_decoupler is a hardware pass-through, not a software interrupt source.
+	# Interrupt properties belong to the RP IPs, not the decoupler node.
+	if {[string match -nocase [get_ip_property $drv_handle IP_NAME] "dfx_decoupler"]} {
 		return 0
 	}
 	set proctype [get_hw_family]
@@ -4341,6 +4437,69 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 					set intr_id [get_psu_interrupt_id $drv_handle $pin]
 				}
 			}
+			# Fallback for RM IPs behind a dfx_decoupler: get_psu_interrupt_id returns -1
+			# because axi_intc's direct source is the decoupler, not the RM IP.
+			# Recompute: Phase 1 = bit of RM IP in decoupler's RP-side bus,
+			#            Phase 2 = decoupler's start bit in axi_intc.
+			# intr_id = dec_start_bit + intr_id_in_dec
+			if {[string match -nocase $intr_id "-1"] && \
+					[info exists is_rm_design] && $is_rm_design && \
+					[string match -nocase $intc_name "axi_intc"]} {
+				foreach dec [hsi::get_cells -hier -filter {IP_NAME==dfx_decoupler}] {
+					# Only consider decouplers whose static-side output feeds our intc
+					set dec_s_out [get_decoupler_static_output_pins $dec]
+					if {[llength $dec_s_out] == 0} continue
+					set match 0
+					foreach s_pin $dec_s_out {
+						set ds [get_connected_intr_cntrl $dec "$s_pin"]
+						if {[string match -nocase $ds \
+								[hsi get_property NAME $intc]]} {
+							set match 1
+							break
+						}
+					}
+					if {!$match} continue
+
+					# Phase 1: bit index of this RM IP within the decoupler's RP-side input bus.
+					set dec_srcs [get_interrupt_sources $dec]
+					set intr_id_in_dec -1
+					set bit 0
+					foreach dec_src $dec_srcs {
+						set src_cell [hsi::get_cells -of_objects $dec_src]
+						if {[string match -nocase \
+								[hsi get_property NAME $src_cell] \
+								[hsi get_property NAME $slave]] && \
+								[string match -nocase \
+								[hsi get_property NAME $dec_src] $pin]} {
+							set intr_id_in_dec $bit
+							break
+						}
+						incr bit
+					}
+					if {$intr_id_in_dec < 0} continue
+
+					# Phase 2: bit offset of decoupler output in axi_intc.
+					# Accumulate source widths until reaching this decoupler's pin.
+					set dec_start_bit 0
+					foreach intc_src [get_interrupt_sources $intc] {
+						set src_dir [hsi get_property DIRECTION $intc_src]
+						if {![string match -nocase $src_dir "I"]} {
+							set src_cell [hsi::get_cells -of_objects $intc_src]
+							if {[string match -nocase \
+									[hsi get_property NAME $src_cell] \
+									[hsi get_property NAME $dec]]} {
+								break
+							}
+						}
+						set w [get_port_width $intc_src]
+						if {$w < 1} { set w 1 }
+						incr dec_start_bit $w
+					}
+
+					set intr_id [expr {$dec_start_bit + $intr_id_in_dec}]
+					break
+				}
+			}
 			if {[string match -nocase $intr_id "-1"] && ![string match -nocase [get_ip_property $drv_handle IP_NAME] "axi_intc"]} {
 				continue
 			}
@@ -4351,6 +4510,11 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 
 			set cur_intr_info ""
 			set valid_intc_list "ps7_scugic psu_acpu_gic psv_acpu_gic psx_acpu_gic acpu_gic"
+			# When interrupt path crosses dfx_decoupler isolation boundary, axi_intc needs GIC trigger convention.
+			global is_rm_design
+			if {[info exists is_rm_design] && $is_rm_design} {
+				lappend valid_intc_list "axi_intc"
+			}
 			global intrpin_width
 			if { [string match -nocase $proctype "zynq"] }  {
 				if {[string match -nocase $intc_name "ps7_scugic"] } {
@@ -5571,22 +5735,11 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 					lappend intr_cntrl $sink_periph
 				} elseif { [llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"microblaze" "microblaze_riscv"})} {
 					lappend intr_cntrl $sink_periph
-				} elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "tmr_voter"] } {
-					lappend intr_cntrl $sink_periph
-				} elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "dfx_decoupler"] } {
-					set intr [hsi::get_pins -of_objects $sink_periph -filter {TYPE==INTERRUPT&&DIRECTION==O}
-					# Encountered a design where dfx decoupler had two sets of interrupt ports.
-					# One port is directly connected to axi_intc_cascaded and another port is connected
-					# to xlconcat. xlconcat is getting input interrupts from axi_intc_cascaded and the
-					# second interrupt port of dfx_decoupler. Output of xlconcat is going into
-					# axi_intc_parent which is connected to gic. This design seems to be wrong from
-					# linux perspective as the same dfx_decoupler IP is having two different
-					# interrupt_parents axi_intc_cascaded for first interrupt port and axi_intc_parent
-					# for second interrupt port. Adding below logic to avoid issues during PLM generation,
-					# taking all interrupt pins into account.
-					foreach pin $intr {
-						lappend intr_cntrl [get_intr_cntrl_name $sink_periph "$pin"]
-					}
+			} elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "tmr_voter"] } {
+				lappend intr_cntrl $sink_periph
+			} elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "dfx_decoupler"] } {
+				# Trace through dfx_decoupler to the downstream intc (true interrupt parent).
+				set intr_cntrl [append_intr_cntrl_through_decoupler $intr_cntrl $sink_periph]
 			}
 			if {[llength $intr_cntrl] > 1} {
 				foreach intc $intr_cntrl {
@@ -5631,7 +5784,22 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 			}
 		} elseif { [llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"xlconcat" "ilconcat"}) } {
 			# this the case where interrupt port is connected to XLConcat/ILConcat IP.
-			lappend intr_cntrl [get_intr_cntrl_name $sink_periph "dout"]
+			set concat_intc [get_intr_cntrl_name $sink_periph "dout"]
+			lappend intr_cntrl {*}$concat_intc
+			# Fallback (RM): multi-bit xlconcat dout untraceable; find the decoupler
+			# whose RP-side pin is driven by this xlconcat, then trace to intc.
+			if {[llength $intr_cntrl] == 0} {
+				global is_rm_design
+				if {[info exists is_rm_design] && $is_rm_design} {
+					set dec [find_decoupler_for_xlconcat $sink_periph]
+					if {$dec ne ""} {
+						set s_out [get_decoupler_static_output_pins $dec]
+						set downstream [get_intr_cntrl_name $dec \
+								[hsi get_property NAME [lindex $s_out 0]]]
+						lappend intr_cntrl {*}$downstream
+					}
+				}
+			}
 		} elseif { [llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"xlslice" "ilslice"}) } {
 			lappend intr_cntrl [get_intr_cntrl_name $sink_periph "Dout"]
 		} elseif {[llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"util_reduced_logic" "ilreduced_logic"})} {
@@ -5644,19 +5812,8 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 		} elseif {[llength $sink_periph] &&  [string match -nocase [hsi get_property IP_NAME $sink_periph] "util_ff"]} {
 			lappend intr_cntrl [get_intr_cntrl_name $sink_periph "Q"]
 		} elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "dfx_decoupler"] } {
-			set intr [hsi::get_pins -of_objects $sink_periph -filter {TYPE==INTERRUPT&&DIRECTION==O}]
-			# Encountered a design where dfx decoupler had two sets of interrupt ports.
-			# One port is directly connected to axi_intc_cascaded and another port is connected
-			# to xlconcat. xlconcat is getting input interrupts from axi_intc_cascaded and the
-			# second interrupt port of dfx_decoupler. Output of xlconcat is going into
-			# axi_intc_parent which is connected to gic. This design seems to be wrong from
-			# linux perspective as the same dfx_decoupler IP is having two different
-			# interrupt_parents axi_intc_cascaded for first interrupt port and axi_intc_parent
-			# for second interrupt port. Adding below logic to avoid issues during PLM generation,
-			# taking all interrupt pins into account.
-			foreach pin $intr {
-				lappend intr_cntrl [get_intr_cntrl_name $sink_periph "$pin"]
-			}
+			# Trace through dfx_decoupler to the downstream intc (true interrupt parent).
+			set intr_cntrl [append_intr_cntrl_through_decoupler $intr_cntrl $sink_periph]
 		}
 		if {[llength $intr_cntrl] > 1} {
 				foreach intc $intr_cntrl {
@@ -5881,6 +6038,11 @@ proc get_psu_interrupt_id { ip_name port_name } {
 	set i $cascade_id
 	set found 0
 	set j $or_id
+	global is_rm_design
+	if {[info exists is_rm_design] && $is_rm_design} {
+		global intrpin_width
+		set intrpin_width 0
+	}
 	foreach intc_src_port $intc_src_ports {
 	# Check whether externel port is interrupting not peripheral
 	# like externel[7:0] port to gic
@@ -5901,18 +6063,29 @@ proc get_psu_interrupt_id { ip_name port_name } {
 		}
 	}
 	set width [is_orgate $intc_src_port $ip_name]
-	if { [string compare -nocase "$port_name"  "$intc_src_port" ] == 0 } {
-		if { [string compare -nocase "$intr_periph" "$periph"] == 0  && $width != -1} {
-			set or_cnt [expr $or_cnt + 1]
-			if { $or_cnt == $width} {
-				set or_cnt 0
-				set or_id [expr $or_id + 1]
+	set port_match [expr {[string compare -nocase "$port_name" "$intc_src_port"] == 0}]
+	if {!$port_match && [info exists is_rm_design] && $is_rm_design} {
+		set normalized_src_port [regsub {\[\d+\]$} [string trim $intc_src_port] ""]
+		set port_match [expr {[string compare -nocase "$port_name" "$normalized_src_port"] == 0}]
+	}
+	if {$port_match} {
+		if { [string compare -nocase "$intr_periph" "$periph"] == 0 } {
+			if { $width != -1 } {
+				set or_cnt [expr $or_cnt + 1]
+				if { $or_cnt == $width} {
+					set or_cnt 0
+					set or_id [expr $or_id + 1]
+				}
 			}
 			set ret $i
-			set found 1
-			break
-		} elseif { [string compare -nocase "$intr_periph" "$periph"] == 0 } {
-			set ret $i
+			if {[info exists is_rm_design] && $is_rm_design} {
+				if { [string compare -nocase "$port_name" "$intc_src_port"] != 0 } {
+					set bus_pin [hsi::get_pins -of_objects $periph -filter "NAME==$port_name"]
+					if {[llength $bus_pin]} { set intrpin_width [get_port_width $bus_pin] }
+				} elseif { $intr_width > 1 } {
+					set intrpin_width $intr_width
+				}
+			}
 			set found 1
 			break
 		}
