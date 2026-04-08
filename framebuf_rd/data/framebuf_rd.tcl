@@ -129,13 +129,13 @@
 			append vid_formats " " "xv20"
 		}
 		if {$has_y_uv10_m16le == 1} {
-			append vid_formats " " "P210"
+			append vid_formats " " "p210"
 		}
 		if {$has_y_uv10_420 == 1} {
 			append vid_formats " " "xv15"
 		}
 		if {$has_y_uv10_420_m16le == 1} {
-			append vid_formats " " "P010"
+			append vid_formats " " "p010"
 		}
 		if {$has_y_u_v8 == 1} {
 			append vid_formats " " "y_u_v8"
@@ -153,7 +153,7 @@
 			append vid_formats " " "x012m"
 		}
 		if {$has_y_uv12_420_m16le == 1} {
-			append vid_formats " " "P012"
+			append vid_formats " " "p012"
 		}
 		if {![string match $vid_formats ""]} {
 			add_prop "${node}" "xlnx,vid-formats" $vid_formats stringlist $dts_file
