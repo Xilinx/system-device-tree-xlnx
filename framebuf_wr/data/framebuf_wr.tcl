@@ -100,7 +100,7 @@
 			append vid_formats " " "y12"
 		}
 		if {$has_y12_m16le == 1} {
-			append vid_formats " " "Y012"
+			append vid_formats " " "y012"
 		}
 		if {$has_yuv8 == 1} {
 			append vid_formats " " "vuy888"
@@ -127,7 +127,7 @@
 			append vid_formats " " "xv15"
 		}
 		if {$has_y_uv10_420_m16le == 1} {
-			append vid_formats " " "P010"
+			append vid_formats " " "p010"
 		}
 		if {$has_y_u_v8 == 1} {
 			append vid_formats " " "y_u_v8"
@@ -145,7 +145,7 @@
 			append vid_formats " " "x012m"
 		}
 		if {$has_y_uv12_420_m16le == 1} {
-			append vid_formats " " "P012"
+			append vid_formats " " "p012"
 		}
 		if {![string match $vid_formats ""]} {
 			add_prop "${node}" "xlnx,vid-formats" $vid_formats stringlist $dts_file
