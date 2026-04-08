@@ -6238,11 +6238,29 @@ proc get_psu_interrupt_id { ip_name port_name } {
 				if {!("$connected_ip" in {"xlconcat" "ilconcat"})} {
 					break
 				}
+				# Per concat stage, add the bit offset from inputs In0 through In(n-1).
+				# The interrupt path enters this block via input In(n) from sink_pins.
+				foreach outer_entry_pin $sink_pins {
+					set outer_pin_name [hsi get_property NAME $outer_entry_pin]
+					set outer_pin_nums [regexp -all -inline -- {[0-9]+} $outer_pin_name]
+					if {[llength $outer_pin_nums] > 0} {
+						set outer_pin_idx [lindex $outer_pin_nums end]
+						for {set k 0} {$k < $outer_pin_idx} {incr k} {
+							set kpin [hsi::get_pins -of_objects $sink_periph \
+								-filter "NAME==In$k"]
+							if {[llength $kpin] > 0} {
+								set kw [hsi get_property LEFT $kpin]
+								if {$kw == ""} { set kw 0 }
+								set number [expr {$number + $kw + 1}]
+							}
+						}
+					}
+				}
 	                       set dout "dout"
 	                       set intr_pin [hsi::get_pins -of_objects $sink_periph -filter "NAME==$dout"]
 	                       set sink_pins [get_sink_pins $intr_pin]
 			       if {[llength $sink_pins] == 0 } {
-					continue
+					break
 				}
 	                       set sink_periph [::hsi::get_cells -of_objects $sink_pins]
 			        set connected_ip [hsi get_property IP_NAME [hsi::get_cells -hier $sink_periph]]
@@ -6354,8 +6372,8 @@ proc get_psu_interrupt_id { ip_name port_name } {
 	    set connected_ip [hsi get_property IP_NAME [hsi::get_cells -hier $sink_periph]]
 	    if {[string match -nocase $connected_ip "axi_intc"] } {
 	        set sink_pin [hsi::get_pins -of_objects $periph -filter {TYPE==INTERRUPT && DIRECTION==O}]
-	        # Apply xlconcat/ilconcat offset for axi_intc connections
-	        # When xlconcat is involved, use the xlconcat pin offset, not the INTC position
+	        # number is the full interrupt bit index at axi_intc for concat-routed paths.
+	        # Covers multilevel xlconcat/ilconcat chains, including pin-name-only routing.
 	        if {$concat_block == 1 && [info exists number]} {
 			set ret $number
 	        }
