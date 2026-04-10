@@ -26,6 +26,11 @@
         set pres_mode [hsi get_property CONFIG.C_DPDC_PRESENTATION_MODE [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
         add_prop $node "xlnx,dc-presentation-mode" $pres_mode string $dts_file
 
+        set video_intfc [hsi get_property CONFIG.C_DC_VIDEO_INTERFACE [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
+        if {$video_intfc != "None"} {
+                add_prop $node "xlnx,vid-intfc-mode" $video_intfc string $dts_file
+        }
+
         if {$operating_mode == "DC_Functional"} {
                 if {$pres_mode == "Live" || $pres_mode == "Mixed"} {
 
