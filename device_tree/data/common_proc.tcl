@@ -4053,82 +4053,108 @@ proc gen_mb_interrupt_property {cpu_handle {intr_port_name ""}} {
 	}
 }
 
-# Get cascade offset for an interrupt controller
-# Per PG099: First cascade = 32, second cascade = 64, third = 96
-proc get_intc_cascade_offset {intc_handle} {
-    set ip [hsi::get_cells -hier $intc_handle]
-    if {[llength $ip] == 0} {
+# Return 1 if parent axi_intc has PG099 cascade enabled (C_EN_CASCADE_MODE).
+# Avoid expr/numeric compares on $v until we know it is integer — HSI may return strings (e.g. "false").
+proc parent_axi_intc_cascade_enabled {parent_cell} {
+    if {![llength $parent_cell]} {
         return 0
     }
-
-    set cascade_mode 0
-    set cascade_master 0
-
-    if {[catch {set cascade_mode [hsi get_property CONFIG.C_EN_CASCADE_MODE $ip]}]} {
-        set cascade_mode 0
+    set v [get_ip_param_value $parent_cell C_EN_CASCADE_MODE]
+    if {$v eq ""} {
+        catch {set v [hsi get_property CONFIG.C_EN_CASCADE_MODE $parent_cell]}
     }
-    if {[catch {set cascade_master [hsi get_property CONFIG.C_CASCADE_MASTER $ip]}]} {
-        set cascade_master 0
-    }
-
-    if {$cascade_mode == "" || $cascade_mode == -1} {
-        set cascade_mode 0
-    }
-    if {$cascade_master == "" || $cascade_master == -1} {
-        set cascade_master 0
-    }
-
-    if {$cascade_master == 1} {
+    if {$v eq ""} {
         return 0
     }
+    if {[string match -nocase $v false] || [string match -nocase $v no]} {
+        return 0
+    }
+    if {[string is integer -strict $v]} {
+        if {$v == -1 || $v == 0} {
+            return 0
+        }
+        return [expr {$v == 1}]
+    }
+    return [expr {[string match -nocase $v true] || [string match -nocase $v yes]}]
+}
 
+# Append cell to list if not already present (HSI cell handles).
+proc intc_lappend_unique_parent {parents_var cell} {
+    upvar $parents_var parents
+    if {![llength $cell]} {
+        return
+    }
+    if {[lsearch -exact $parents $cell] < 0} {
+        lappend parents $cell
+    }
+}
+
+# Ordered list of parent axi_intc cells reachable from this intc's irq (direct or via concat).
+# Traverses at most one xlconcat/ilconcat stage (irq→concat→dout sinks); nested concat→concat
+# chains are not followed — same scope as the pre-refactor implementation.
+proc intc_irq_parent_axi_intcs {ip} {
+    set parents {}
+    if {![llength $ip]} {
+        return $parents
+    }
     set irq_pin [hsi::get_pins -of_objects $ip -filter {NAME==irq && DIRECTION==O}]
-    if {[llength $irq_pin] == 0} {
-        return 0
+    if {![llength $irq_pin]} {
+        return $parents
     }
-
-    set sink_pins [get_sink_pins $irq_pin]
-    if {[llength $sink_pins] == 0} {
-        return 0
-    }
-
-    foreach sink_pin $sink_pins {
+    foreach sink_pin [get_sink_pins $irq_pin] {
         set sink_periph [hsi::get_cells -of_objects $sink_pin]
-
-        if {[llength $sink_periph] == 0} {
+        if {![llength $sink_periph]} {
             continue
         }
-
         set sink_ip_name [hsi get_property IP_NAME $sink_periph]
-
-        # Handle xlconcat/ilconcat intermediate connection (INTC.irq → xlconcat/ilconcat → parent_INTC.intr)
         if {$sink_ip_name in {"xlconcat" "ilconcat"}} {
-            set concat_out_pin [hsi::get_pins -of_objects $sink_periph -filter {NAME==dout && DIRECTION==O}]
-            if {[llength $concat_out_pin] > 0} {
-                set concat_sinks [get_sink_pins $concat_out_pin]
-                foreach concat_sink $concat_sinks {
-                    set concat_target [hsi::get_cells -of_objects $concat_sink]
-                    if {[llength $concat_target] > 0} {
-                        set target_ip_name [hsi get_property IP_NAME $concat_target]
-
-                        if {$target_ip_name == "axi_intc"} {
-                            set parent_offset [get_intc_cascade_offset $concat_target]
-                            set cascade_increment 32
-                            return [expr {$parent_offset + $cascade_increment}]
-                        }
+            set dout [hsi::get_pins -of_objects $sink_periph -filter {NAME==dout && DIRECTION==O}]
+            if {[llength $dout] > 0} {
+                foreach concat_sink [get_sink_pins $dout] {
+                    set ct [hsi::get_cells -of_objects $concat_sink]
+                    if {[llength $ct] && [string match -nocase [hsi get_property IP_NAME $ct] "axi_intc"]} {
+                        intc_lappend_unique_parent parents $ct
                     }
                 }
             }
         }
-
-        # Direct connection to parent axi_intc
-        if {$sink_ip_name == "axi_intc"} {
-            set parent_offset [get_intc_cascade_offset $sink_periph]
-            set cascade_increment 32
-            return [expr {$parent_offset + $cascade_increment}]
+        if {[string match -nocase $sink_ip_name "axi_intc"]} {
+            intc_lappend_unique_parent parents $sink_periph
         }
     }
+    return $parents
+}
 
+# Get cascade offset for an interrupt controller
+# Per PG099: First cascade = 32, second cascade = 64, third cascade = 96
+#
+# We do not read C_EN_CASCADE_MODE on this controller. PG099 ties cascade masters to
+# C_CASCADE_MASTER == 1 (report offset 0 at top of stack). Each +32 step toward the
+# parent is applied only when parent_axi_intc_cascade_enabled says the parent has
+# cascade mode on — so chained axi_intc without PG099 cascade do not accumulate offset.
+#
+# visited — break cycles in malformed netlists (recursive A<->B); second arg is internal.
+proc get_intc_cascade_offset {intc_handle {visited {}}} {
+    set ip [hsi::get_cells -hier $intc_handle]
+    if {![llength $ip]} {
+        return 0
+    }
+    if {[lsearch -exact $visited $ip] >= 0} {
+        return 0
+    }
+    lappend visited $ip
+    set cascade_master [get_ip_param_value $ip C_CASCADE_MASTER]
+    if {$cascade_master eq "" || $cascade_master == -1} {
+        set cascade_master 0
+    }
+    if {$cascade_master == 1} {
+        return 0
+    }
+    foreach parent [intc_irq_parent_axi_intcs $ip] {
+        if {[parent_axi_intc_cascade_enabled $parent]} {
+            return [expr {[get_intc_cascade_offset $parent $visited] + 32}]
+        }
+    }
     return 0
 }
 
@@ -6034,6 +6060,9 @@ proc get_psu_interrupt_id { ip_name port_name } {
 
 	#Special Handling for cascading case of axi_intc Interrupt controller
 	set cascade_id 0
+	if {[string match -nocase [hsi get_property IP_NAME $intc_periph] "axi_intc"]} {
+		set cascade_id [get_intc_cascade_offset $intc_periph]
+	}
 
 	set i $cascade_id
 	set found 0
