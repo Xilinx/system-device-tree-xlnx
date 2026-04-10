@@ -59,16 +59,16 @@
             set cascade_master 0
         }
         # Determine intc type:
-        # 0 - Generic standalone (parent is not axi_intc)
+        # 0 - Generic standalone (not in PG099 cascade, or irq to axi_intc with cascade off)
         # 1 - Cascade master (cascade enabled, master)
         # 2 - Cascade intermediate (cascade enabled, not master)
-        # 3 - Cascade leaf (parent is axi_intc, cascade disabled)
+        # 3 - Cascade leaf (local cascade off, irq feeds axi_intc with cascade on, PG099 slave)
         if {$cascade_mode == 1 && $cascade_master == 1} {
             set intc_type 1
         } elseif {$cascade_mode == 1 && $cascade_master == 0} {
             set intc_type 2
         } else {
-            # cascade_mode == 0: Check if parent exists using existing cascade offset logic
+            # cascade_mode == 0: PG099 leaf iff get_intc_cascade_offset > 0 (parent cascade off => 0).
             if {[get_intc_cascade_offset $drv_handle] > 0} {
                 set intc_type 3
             } else {
