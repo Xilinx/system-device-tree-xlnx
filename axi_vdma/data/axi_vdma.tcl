@@ -72,10 +72,14 @@
         set_drv_conf_prop $drv_handle C_ENABLE_DEBUG_ALL xlnx,enable-debug-all $node
 
         set baseaddr [get_baseaddr $dma_ip no_prefix]
+	set label_prefix ""
+	if {$baseaddr == "" || $baseaddr == "0" || $baseaddr == 0} {
+		set label_prefix "${drv_handle}_"
+	}
         set tx_chan [get_ip_param_value $dma_ip C_INCLUDE_MM2S]
         if { $tx_chan == 1 } {
                 set connected_ip [get_connected_stream_ip $dma_ip "M_AXIS_MM2S"]
-                set tx_chan_node [axi_vdma_add_dma_channel $drv_handle $node "axi-vdma" $baseaddr "MM2S" $vdma_count ]
+		set tx_chan_node [axi_vdma_add_dma_channel $drv_handle $node "axi-vdma" $baseaddr "MM2S" $vdma_count $label_prefix]
                 set intr_info [get_intr_id $drv_handle "mm2s_introut"]
                 if { [llength $intr_info] && ![string match -nocase $intr_info "-1"] } {
                         add_prop $tx_chan_node "interrupts" $intr_info intlist $dts_file
@@ -87,7 +91,7 @@
         if { $rx_chan ==1 } {
                 set connected_ip [get_connected_stream_ip $dma_ip "S_AXIS_S2MM"]
                 set rx_bassaddr [format %08x [expr 0x$baseaddr + 0x30]]
-                set rx_chan_node [axi_vdma_add_dma_channel $drv_handle $node "axi-vdma" $rx_bassaddr "S2MM" $vdma_count]
+		set rx_chan_node [axi_vdma_add_dma_channel $drv_handle $node "axi-vdma" $rx_bassaddr "S2MM" $vdma_count $label_prefix]
                 set intr_info [get_intr_id $drv_handle "s2mm_introut"]
                 if { [llength $intr_info] && ![string match -nocase $intr_info "-1"] } {
                         add_prop $rx_chan_node "interrupts" $intr_info intlist $dts_file
@@ -118,12 +122,12 @@
         }
     }
 
-    proc axi_vdma_add_dma_channel {drv_handle parent_node xdma addr mode devid} {
+    proc axi_vdma_add_dma_channel {drv_handle parent_node xdma addr mode devid {label_prefix ""}} {
         set ip [hsi::get_cells -hier $drv_handle]
         set modellow [string tolower $mode]
         set modeIndex [string index $mode 0]
         set dts_file [set_drv_def_dts $drv_handle]
-        set dma_channel [create_node -n "dma-channel" -l "dma_channel_$addr" -u $addr -p $parent_node -d $dts_file]
+	set dma_channel [create_node -n "dma-channel" -l "${label_prefix}dma_channel_$addr" -u $addr -p $parent_node -d $dts_file]
         add_prop $dma_channel "compatible" [format "xlnx,%s-%s-channel" $xdma $modellow] stringlist $dts_file 1
         add_prop $dma_channel "xlnx,device-id" $devid hexint $dts_file 1
 
