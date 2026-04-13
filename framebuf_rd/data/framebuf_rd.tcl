@@ -104,8 +104,20 @@
 		if {$has_y10 == 1} {
 			append vid_formats " " "y10"
 		}
+		if {$has_y10_l16le == 1} {
+			append vid_formats " " "ly10"
+		}
 		if {$has_y12 == 1} {
 			append vid_formats " " "y12"
+		}
+		if {$has_y12_l16le == 1} {
+			append vid_formats " " "ly12"
+		}
+		if {$has_y12_m16le == 1} {
+			append vid_formats " " "y012"
+		}
+		if {$has_y10_m16le == 1} {
+			append vid_formats " " "y010"
 		}
 		if {$has_yuv8 == 1} {
 			append vid_formats " " "vuy888"
@@ -128,11 +140,17 @@
 		if {$has_y_uv10 == 1} {
 			append vid_formats " " "xv20"
 		}
+		if {$has_y_uv10_l16le == 1} {
+			append vid_formats " " "l210"
+		}
 		if {$has_y_uv10_m16le == 1} {
 			append vid_formats " " "p210"
 		}
 		if {$has_y_uv10_420 == 1} {
 			append vid_formats " " "xv15"
+		}
+		if {$has_y_uv10_420_l16le == 1} {
+			append vid_formats " " "l010"
 		}
 		if {$has_y_uv10_420_m16le == 1} {
 			append vid_formats " " "p010"
@@ -143,14 +161,35 @@
 		if {$has_y_u_v10 == 1} {
 			append vid_formats " " "y_u_v10"
 		}
+		if {$has_y_u_v10_l16le == 1} {
+			append vid_formats " " "l410"
+		}
+		if {$has_y_u_v10_m16le == 1} {
+			append vid_formats " " "q410"
+		}
 		if {$has_y_u_v12 == 1} {
 			append vid_formats " " "y_u_v12"
+		}
+		if {$has_y_u_v12_l16le == 1} {
+			append vid_formats " " "l412"
+		}
+		if {$has_y_u_v12_m16le == 1} {
+			append vid_formats " " "q412"
 		}
 		if {$has_y_uv12 == 1} {
 			append vid_formats " " "x212m"
 		}
+		if {$has_y_uv12_l16le == 1} {
+			append vid_formats " " "l212"
+		}
+		if {$has_y_uv12_m16le == 1} {
+			append vid_formats " " "p212"
+		}
 		if {$has_y_uv12_420 == 1} {
 			append vid_formats " " "x012m"
+		}
+		if {$has_y_uv12_420_l16le == 1} {
+			append vid_formats " " "l012"
 		}
 		if {$has_y_uv12_420_m16le == 1} {
 			append vid_formats " " "p012"
