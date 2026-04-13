@@ -1,0 +1,22 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * dts file for Xilinx Versal VP-P-C3340-00 revA
+ *
+ * (C) Copyright 2026, Advanced Micro Devices, Inc.
+ *
+ * Michal Simek <michal.simek@amd.com>
+ */
+
+#include "include/dt-bindings/gpio/gpio.h"
+
+/ {
+	compatible = "xlnx,versal-vp-p-c3340-00-revA",
+		     "xlnx,versal-vp-p-c3340-00", "xlnx,versal";
+	model = "Xilinx Versal VP-P-C3340-00 Processor Char Board revA";
+
+	/*
+	 * 4x 4GB LPDDR5 x32 on MC0/1/4/5
+	 * 1x 8GB LPDDR5 x64 on MC2/3
+	 */
+
+};

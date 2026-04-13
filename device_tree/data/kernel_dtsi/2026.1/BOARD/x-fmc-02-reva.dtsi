@@ -1,0 +1,101 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * dts overlay file for X-FMC-02 daughter card revA
+ *
+ * (C) Copyright 2019 - 2026, Advanced Micro Devices, Inc.
+ */
+
+&{/} {
+	model = "X-FMC-02 revA";
+
+	/* 25MHz crystal for AR8031 PHY */
+	xfmc_gem_clk: xfmc-gem-clk {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <25000000>;
+	};
+};
+
+#if 0
+&i2c_scm {
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	/* X-FMC-02 FMC1 I2C EEPROM - M24C02-R (u19) */
+	eeprom_fmc1: eeprom@51 {
+		compatible = "atmel,24c02";
+		reg = <0x51>;
+		label = "x-fmc-02-fmc1-eeprom";
+	};
+
+	/* 9FGV1006BQ PCIe Gen4 Clock Generator (u16) disconnected */
+	/* SI5338A (u15) 0x70 */
+	/* 97ML1245A (u17) */
+};
+#endif
+
+&gem0 { /* Replace with actual node from PL design */
+	phy-handle = <&xfmc_phy>;
+	phy-mode = "rgmii-id";
+
+	mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		xfmc_phy: ethernet-phy@1 { /* u28 Qualcomm Atheros AR8031 */
+			compatible = "ethernet-phy-id004d.d074";
+			reg = <1>;
+			/* AR8031 internal delays configured via strapping */
+		};
+	};
+};
+
+&sdhci0 {
+	no-1-8-v;
+	disable-wp;
+	bus-width = <4>;
+};
+
+&sdhci1 { /* MTFC8GAKAJCN-1M 8GB (U1) */
+	bus-width = <8>;
+	non-removable;
+	no-sdio;
+	no-sd;
+};
+
+&spi0 { /* Replace with actual node from PL design */
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	flash@0 {
+		compatible = "jedec,spi-nor"; /* u29 IS25LP128 */
+		reg = <0>;
+		spi-max-frequency = <25000000>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		partition@0 {
+			reg = <0 0x200000>; /* 2MB */
+		};
+	};
+};
+
+&i2c0 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	eeprom_xfmc_i2c0: eeprom@51 { /* u13 m24128-br */
+		compatible = "st,24c128";
+		reg = <0x51>;
+	};
+};
+
+&i2c1 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	eeprom_xfmc_i2c1: eeprom@52 {
+		compatible = "atmel,24c128"; /* u14 cat24c128y */
+		reg = <0x52>;
+	};
+};
