@@ -163,6 +163,14 @@
 		clock-output-names = "lp5_osc2_clk";
 	};
 
+	/* j91/u71 - OE i2c_main_5_scl */
+	lp5_osc2_clk: clock-controller@59 { /* u43 */
+		compatible = "renesas,proxo-xp";
+		reg = <0x59>;
+		#clock-cells = <0>;
+		clock-output-names = "xpl7_ps_refclk";
+	};
+
 	/* m24c128 u67 0x54 board eeprom in SCM */
 
 	/* j86 - OE ucd_pmbus_scl */
