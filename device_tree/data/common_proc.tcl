@@ -6687,3 +6687,120 @@ proc map_node_to_processor {node_label processor reg bit_format baseaddr size} {
 		set_memmap "${node_label}" $memmap_key $reg
 	}
 }
+
+proc merge_address_intervals {addresses} {
+	if {[llength $addresses] == 0} {
+		return {}
+	}
+	set sorted [lsort -index 0 -integer $addresses]
+	set union {}
+	set current_start [lindex [lindex $sorted 0] 0]
+	set current_end [lindex [lindex $sorted 0] 1]
+	if {[llength $sorted] > 1} {
+		foreach interval [lrange $sorted 1 end] {
+			set start [lindex $interval 0]
+			set end [lindex $interval 1]
+			if {[expr $start] <= [expr {$current_end + 1}]} {
+				set current_end [format "0x%lx" [expr {max($end, $current_end)}]]
+			} else {
+				lappend union [list $current_start $current_end]
+				set current_start $start
+				set current_end $end
+			}
+		}
+	}
+	lappend union [list $current_start $current_end]
+	return $union
+}
+
+proc generate_undriven_memory_nodes {} {
+	global is_64_bit_mb
+	global apu_proc_ip
+
+	set family [get_hw_family]
+	if {$family in {"microblaze" "microblaze_riscv" "zynq"} && !$is_64_bit_mb} {
+		set bit_format 32
+	} else {
+		set bit_format 64
+	}
+
+	set proclist [get_proc_list_without_pmc]
+
+	set undriven_mem_ips [list]
+	foreach procc $proclist {
+		set mem_ranges [hsi::get_mem_ranges -of_objects [hsi::get_cells -hier $procc] -filter {MEM_TYPE == "MEMORY"}]
+		foreach mem_range $mem_ranges {
+			set ip_handle [hsi::get_cells -hier $mem_range]
+			if {[string_is_empty $ip_handle]} {
+				continue
+			}
+			set ip_name [get_ip_property $ip_handle IP_NAME]
+			if { [dict exists $::sdtgen::namespacelist $ip_name] } {
+				continue
+			}
+			set ip_type [get_ip_property $ip_handle IP_TYPE]
+			if {![is_pl_ip $ip_handle] && ![string match -nocase $ip_type "MEMORY_CNTLR"]} {
+				continue
+			}
+			if {[lsearch $undriven_mem_ips $mem_range] < 0} {
+				lappend undriven_mem_ips $mem_range
+			}
+		}
+	}
+
+	foreach drv_handle $undriven_mem_ips {
+		set label "${drv_handle}_memory"
+		set all_addresses {}
+		set a53 0
+
+		foreach procc $proclist {
+			set proc_ip_name [get_ip_property $procc IP_NAME]
+			if { $proc_ip_name == $apu_proc_ip} {
+				if {$a53 == 1} { continue }
+				set a53 1
+			}
+
+			set ip_mem_handles [hsi::get_mem_ranges -of_objects [hsi::get_cells -hier $procc] $drv_handle -filter {MEM_TYPE == "MEMORY"}]
+
+			foreach bank $ip_mem_handles {
+				set base [hsi get_property BASE_VALUE $bank]
+				set high [hsi get_property HIGH_VALUE $bank]
+				set size [format 0x%x [expr {${high} - ${base} + 1}]]
+
+				set reg [gen_reg_property_format $base $high $bit_format]
+				map_node_to_processor "${label}" $procc $reg $bit_format $base $size
+
+				set addr_pair [list $base $high]
+				if {[lsearch -exact $all_addresses $addr_pair] == -1} {
+					lappend all_addresses $addr_pair
+				}
+			}
+		}
+
+		set merged_intervals [merge_address_intervals $all_addresses]
+
+		if {[llength $merged_intervals] > 0} {
+			set overall_reg {}
+			foreach interval $merged_intervals {
+				lappend overall_reg [gen_reg_property_format [lindex $interval 0] [lindex $interval 1] $bit_format]
+			}
+			set overall_reg_str [join $overall_reg ">, <"]
+			set first_base [lindex [lindex $merged_intervals 0] 0]
+			set unit_addr [regsub -all {^0x} ${first_base} {}]
+
+			set memory_node [create_node -n "memory" -l "${label}" -u $unit_addr -p root -d "system-top.dts"]
+			add_prop "${memory_node}" "compatible" [gen_compatible_string [hsi::get_cells -hier $drv_handle]] string "system-top.dts"
+			add_prop "${memory_node}" "device_type" "memory" string "system-top.dts"
+			add_prop "${memory_node}" "xlnx,ip-name" [get_ip_property $drv_handle IP_NAME] string "system-top.dts"
+			add_prop "${memory_node}" "memory_type" "memory" string "system-top.dts"
+			add_prop "${memory_node}" "reg" $overall_reg_str hexlist "system-top.dts" 1
+			if {$bit_format == 32} {
+				add_prop "${memory_node}" "#address-cells" 1 int "system-top.dts" 1
+				add_prop "${memory_node}" "#size-cells" 1 int "system-top.dts" 1
+			} else {
+				add_prop "${memory_node}" "#address-cells" 2 int "system-top.dts" 1
+				add_prop "${memory_node}" "#size-cells" 2 int "system-top.dts" 1
+			}
+		}
+	}
+}
