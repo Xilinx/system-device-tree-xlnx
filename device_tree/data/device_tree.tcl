@@ -2138,7 +2138,7 @@ proc proc_mapping {} {
 			set ipname [get_ip_property [hsi::get_cells -hier $periph] IP_NAME]
 
 			# Do not process memory object if the corresponding cell object doesnt have the IP NAME
-			if {[string_is_empty $ipname]} {
+			if {[string_is_empty $ipname] && ![is_external_intf $periph]} {
 				continue
 			}
 
