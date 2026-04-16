@@ -2268,6 +2268,20 @@ proc update_system_dts_include {include_file} {
 	set include_list $cur_inc_list
 }
 
+
+proc is_external_intf {drv_handle} {
+	set avail_intf_ports [hsi::get_intf_ports]
+	if {$drv_handle in $avail_intf_ports} {
+		set type [hsi::get_property TYPE [hsi::get_intf_ports $drv_handle]]
+		set connected [hsi::get_property IS_CONNECTED [hsi::get_intf_ports $drv_handle]]
+		if {$connected == 1 && $type == "MASTER"} {
+			return 1
+		}
+	}
+	return 0
+}
+
+
 proc set_drv_def_dts {drv_handle} {
 	proc_called_by
 	global env
