@@ -1930,7 +1930,6 @@ Generates system device tree based on args given in:
 	update_alias
     	update_cpu_node
 	gen_r5_trustzone_config
-	generate_undriven_memory_nodes
 	proc_mapping
 	update_chosen
 	update_memory_node

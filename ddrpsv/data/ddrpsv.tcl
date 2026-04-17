@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2019-2022 Xilinx, Inc.
-# (C) Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -98,8 +98,33 @@ proc ddrpsv_process_addresses {instances} {
                       lappend addresses $local_list
 		}
 	}
-	set merged_intervals [merge_address_intervals $addresses]
+	set merged_intervals [ddrpsv_merge_intervals [lsort -index 0 -integer $addresses]]
 	return $merged_intervals
+}
+
+# Merge overlapping address ranges
+proc ddrpsv_merge_intervals {address} {
+	if {[llength $address] == 0} {
+		return {}
+	}
+	set union {}
+	set current_start [lindex [lindex $address 0] 0]
+	set current_end [lindex [lindex $address 0] 1]
+	if {[llength $address] > 1} {
+		foreach interval [lrange $address 1 end] {
+			set start [lindex $interval 0]
+			set end [lindex $interval 1]
+			if {[expr $start] <= [expr {$current_end + 1}]} {
+				set current_end [format "0x%lx" [expr {max($end, $current_end)}]]
+			} else {
+				lappend union [list $current_start $current_end]
+				set current_start $start
+				set current_end $end
+			}
+		}
+	}
+	lappend union [list $current_start $current_end]
+	return $union
 }
 
 proc ddrpsv_generate_reg_property {addr_intervals} {
