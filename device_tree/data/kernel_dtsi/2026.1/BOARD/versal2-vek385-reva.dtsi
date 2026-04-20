@@ -15,8 +15,8 @@
 	model = "AMD Versal VEK385 revA";
 
 	chosen {
-		bootargs = "earlycon=pl011,mmio32,0xf1920000 console=ttyAMA0,115200";
-		stdout-path = "serial0:115200n8";
+		bootargs = "earlycon=pl011,mmio32,0xf1930000 console=ttyAMA1,115200";
+		stdout-path = "serial1:115200n8";
 	};
 
 	aliases {
