@@ -3,7 +3,7 @@
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # Michal SIMEK <monstr@monstr.eu>
 #
@@ -482,40 +482,50 @@
             if {$connected_ipname == "axi_dma" || $connected_ipname == "axi_mcdma"} {
                 set proctype [get_hw_family]
                 if {![regexp "microblaze" $proctype match]} {
-                    set eth_clk_names [pldt get $node clock-names]
-                    set eth_clks [pldt get $node clocks]
-                    set eth_clks [string trimright $eth_clks ">"]
-                    set eth_clks [string trimleft $eth_clks "<"]
-                    set eth_clks [string trimleft $eth_clks "&"]
-                    set eth_clk_names [split $eth_clk_names " , "]
-                    set eth_clkname_len [llength $eth_clk_names]
-                    for {set i 0 } {$i < $eth_clkname_len} {incr i} {
-                        set trimvar [lindex $eth_clk_names $i]
-                        set trimvar [string trimright $trimvar "\""]
-                        set trimvar [string trimleft $trimvar "\""]
-                        append temp "$trimvar "
+                    set skip_eth_clocks 0
+                    if {[catch {set eth_clk_names [pldt get $node clock-names]} msg]} {
+                        set skip_eth_clocks 1
                     }
-                    if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g")) && $core == 0} {
-                        add_prop "${nodep}" "zclocks" $eth_clks reference "pl.dtsi"
-                        set_drv_prop $drv_handle "zclock-names" $temp $node stringlist
+                    if {!$skip_eth_clocks && [catch {set eth_clks [pldt get $node clocks]} msg]} {
+                        set skip_eth_clocks 1
                     }
-                    if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g"))&& $core != 0} {
-                        set eth_clks [pldt get $nodep zclocks]
-                        set eth_clk_names [pldt get $nodep zclock-names]
+                    if {$skip_eth_clocks} {
+                        dtg_warning "Clocks not connected for $node . Please check design as \
+                            this might affect Ethernet functionality. Skipping clock properties generation."
+                    }
+                    if {!$skip_eth_clocks} {
                         set eth_clks [string trimright $eth_clks ">"]
                         set eth_clks [string trimleft $eth_clks "<"]
                         set eth_clks [string trimleft $eth_clks "&"]
                         set eth_clk_names [split $eth_clk_names " , "]
                         set eth_clkname_len [llength $eth_clk_names]
-                        set temp ""
                         for {set i 0 } {$i < $eth_clkname_len} {incr i} {
                             set trimvar [lindex $eth_clk_names $i]
                             set trimvar [string trimright $trimvar "\""]
                             set trimvar [string trimleft $trimvar "\""]
                             append temp "$trimvar "
                         }
-                    }
-                    set eth_clk_names $temp
+                        if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g")) && $core == 0} {
+                            add_prop "${nodep}" "zclocks" $eth_clks reference "pl.dtsi"
+                            set_drv_prop $drv_handle "zclock-names" $temp $node stringlist
+                        }
+                        if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g"))&& $core != 0} {
+                            set eth_clks [pldt get $nodep zclocks]
+                            set eth_clk_names [pldt get $nodep zclock-names]
+                            set eth_clks [string trimright $eth_clks ">"]
+                            set eth_clks [string trimleft $eth_clks "<"]
+                            set eth_clks [string trimleft $eth_clks "&"]
+                            set eth_clk_names [split $eth_clk_names " , "]
+                            set eth_clkname_len [llength $eth_clk_names]
+                            set temp ""
+                            for {set i 0 } {$i < $eth_clkname_len} {incr i} {
+                                set trimvar [lindex $eth_clk_names $i]
+                                set trimvar [string trimright $trimvar "\""]
+                                set trimvar [string trimleft $trimvar "\""]
+                                append temp "$trimvar "
+                            }
+                        }
+                        set eth_clk_names $temp
 
                     set eth_clkname_len [llength $eth_clk_names]
                     set i 0
@@ -541,7 +551,18 @@
                 set eth_clk_len [expr {[llength [split $eth_clks ","]]}]
                 set clk_list [split $eth_clks ","]
                 set ipnode [get_node $target_handle]
-                set clk_names [pldt get $ipnode clock-names]
+                set skip_dma_clocks 0
+                if {[catch {set clk_names [pldt get $ipnode clock-names]} msg]} {
+                    set skip_dma_clocks 1
+                }
+                if {!$skip_dma_clocks && [catch {set clks [pldt get $ipnode clocks]} msg]} {
+                    set skip_dma_clocks 1
+                }
+                if {$skip_dma_clocks} {
+                    dtg_warning "Clocks not connected for $ipnode . Please check design \
+                        as this might affect Ethernet functionality. Skipping clock properties generation."
+                }
+                if {!$skip_dma_clocks} {
                 set clk_names [split $clk_names " , "]
 
                 set len [llength $clk_names]
@@ -553,7 +574,6 @@
                     append temp "$trimvar "
                 }
                 set clk_names $temp
-                set clks [pldt get $ipnode clocks]
                 append names "$eth_clk_names" "$clk_names"
                 set names ""
                 append clk  "$eth_clks>," " $clks"
@@ -674,6 +694,8 @@
                         }
                     }
                 }
+                }
+            }
             }
         if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g")) &&
             $core!= 0 && [llength $eth_node]} {
