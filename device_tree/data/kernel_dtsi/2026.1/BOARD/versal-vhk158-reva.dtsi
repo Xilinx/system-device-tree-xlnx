@@ -91,6 +91,17 @@
 	no-1-8-v;
 };
 
+&i2c1 { /* PMC_MIO44/45 */
+	bootph-all;
+	clock-frequency = <100000>;
+
+	/* Use for storing information about SC board */
+	eeprom: eeprom@54 { /* u34 - m24128 16kB */
+		compatible = "st,24c128", "atmel,24c128";
+		reg = <0x54>; /* & 0x5c */
+		bootph-all;
+	};
+};
 
 &gem0 { /* PMC_MIO_48, LPD_MIO0-11/24/25 */
 	phy-handle = <&phy1>;
