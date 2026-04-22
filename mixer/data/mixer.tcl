@@ -19,7 +19,7 @@
         if {$node == 0} {
                 return
         }
-        pldt append $node compatible "\ \, \"xlnx,mixer-3.0\"\ \, \"xlnx,mixer-4.0\"\ \, \"xlnx,v-mix-5.3\"\ \, \"xlnx,mixer-5.0\""
+        pldt append $node compatible "\ \, \"xlnx,mixer-3.0\"\ \, \"xlnx,mixer-4.0\"\ \, \"xlnx,v-mix-5.3\"\ \, \"xlnx,mixer-5.0\"\ \, \"xlnx,v-mix-6.0\""
         set mixer_ip [hsi::get_cells -hier $drv_handle]
         set num_layers [hsi get_property CONFIG.NR_LAYERS [hsi::get_cells -hier $drv_handle]]
         add_prop "${node}" "xlnx,num-layers" $num_layers int $dts_file
