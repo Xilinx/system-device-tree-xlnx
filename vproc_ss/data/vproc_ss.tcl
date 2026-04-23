@@ -41,8 +41,6 @@ proc vproc_ss_generate {drv_handle} {
 		set interlace [hsi get_property CONFIG.C_ENABLE_INTERLACED [hsi::get_cells -hier $drv_handle]]
 		add_prop "${node}" "xlnx,enable-interlaced" $interlace boolean $dts_file
 		set v_scaler_taps [hsi get_property CONFIG.C_V_SCALER_TAPS [hsi::get_cells -hier $drv_handle]]
-		add_prop "${node}" "xlnx,v-scaler-taps" $v_scaler_taps int $dts_file
-		add_prop "${node}" "xlnx,num-vert-taps" $v_scaler_taps int $dts_file
 		set madi [hsi get_property CONFIG.C_DEINT_MOTION_ADAPTIVE [hsi::get_cells -hier $drv_handle]]
 		add_prop "${node}" "xlnx,deint-motion-adaptive" $madi boolean $dts_file
 		set csc_enable_422 [hsi get_property CONFIG.C_CSC_ENABLE_422 [hsi::get_cells -hier $drv_handle]]
@@ -51,8 +49,6 @@ proc vproc_ss_generate {drv_handle} {
 		add_prop "${node}" "xlnx,h-scaler-phases" $h_scaler_phases int $dts_file
 		add_prop "${node}" "xlnx,max-num-phases" $h_scaler_phases int $dts_file
 		set h_scaler_taps [hsi get_property CONFIG.C_H_SCALER_TAPS [hsi::get_cells -hier $drv_handle]]
-		add_prop "${node}" "xlnx,h-scaler-taps" $h_scaler_taps int $dts_file
-		add_prop "${node}" "xlnx,num-hori-taps" $h_scaler_taps int $dts_file
 		set max_cols [hsi get_property CONFIG.C_MAX_COLS [hsi::get_cells -hier $drv_handle]]
 		add_prop "${node}" "xlnx,max-width" $max_cols int $dts_file
 		set max_rows [hsi get_property CONFIG.C_MAX_ROWS [hsi::get_cells -hier $drv_handle]]
@@ -66,6 +62,32 @@ proc vproc_ss_generate {drv_handle} {
 		add_prop "${node}" "xlnx,pix-per-clk" $samples_per_clk int $dts_file
 		set scaler_algo [hsi get_property CONFIG.C_SCALER_ALGORITHM [hsi::get_cells -hier $drv_handle]]
 		add_prop "${node}" "xlnx,scaler-algorithm" $scaler_algo int $dts_file
+		if {$scaler_algo == 0} {
+			# Set taps to 2 for Bilinear
+			set v_scaler_taps 2
+			add_prop "${node}" "xlnx,v-scaler-taps" $v_scaler_taps int $dts_file 1
+			add_prop "${node}" "xlnx,num-vert-taps" $v_scaler_taps int $dts_file 1
+
+			set h_scaler_taps 2
+			add_prop "${node}" "xlnx,h-scaler-taps" $h_scaler_taps int $dts_file 1
+			add_prop "${node}" "xlnx,num-hori-taps" $h_scaler_taps int $dts_file 1
+		} elseif {$scaler_algo == 1} {
+			# Set taps to 4 for Bicubic
+			set v_scaler_taps 4
+			add_prop "${node}" "xlnx,v-scaler-taps" $v_scaler_taps int $dts_file 1
+			add_prop "${node}" "xlnx,num-vert-taps" $v_scaler_taps int $dts_file 1
+
+			set h_scaler_taps 4
+			add_prop "${node}" "xlnx,h-scaler-taps" $h_scaler_taps int $dts_file 1
+			add_prop "${node}" "xlnx,num-hori-taps" $h_scaler_taps int $dts_file 1
+		} else {
+			# Set taps for polyphase as per user configuration
+			add_prop "${node}" "xlnx,v-scaler-taps" $v_scaler_taps int $dts_file 1
+			add_prop "${node}" "xlnx,num-vert-taps" $v_scaler_taps int $dts_file 1
+
+			add_prop "${node}" "xlnx,h-scaler-taps" $h_scaler_taps int $dts_file 1
+			add_prop "${node}" "xlnx,num-hori-taps" $h_scaler_taps int $dts_file 1
+		}
 		set enable_csc [hsi get_property CONFIG.C_ENABLE_CSC [hsi::get_cells -hier $drv_handle]]
 		add_prop "${node}" "xlnx,enable-csc" $enable_csc string $dts_file
 		set color_support [hsi get_property CONFIG.C_COLORSPACE_SUPPORT [hsi::get_cells -hier $drv_handle]]
