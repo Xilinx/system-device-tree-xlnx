@@ -78,6 +78,7 @@ Takes the user inputs as command line arguments and generates the System Device 
   * `-domain` : Generate PMC domain specific device tree
     (only valid input: pmc)
   * `-h|--help` : Prints the usage of the command line arguments.
+  * `-c|--changelog`: Prints Changelog for SDTgen release
   * `-eval` : Evaluate the given command string. This can be used to
     run SDTGen in interactive mode or run a TCL script file.
     * For more details, see [sdtgen as a TCL
