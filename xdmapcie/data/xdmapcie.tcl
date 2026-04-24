@@ -1,5 +1,5 @@
 #
-# (C) Copyright 2025 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2026 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -11,6 +11,24 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
+
+proc set_reg_qdma {drv_handle} {
+        set node [get_node $drv_handle]
+
+        set ip_mem_handle [lindex [hsi::get_mem_ranges $drv_handle] 0]
+        set cfg_baseaddr [string tolower [hsi get_property BASE_VALUE $ip_mem_handle]]
+        set cfg_highaddr [string tolower [hsi get_property HIGH_VALUE $ip_mem_handle]]
+        set cfg_size [format 0x%X [expr {$cfg_highaddr - $cfg_baseaddr + 1}]]
+        set cfg [get_64_bit_reg $cfg_baseaddr $cfg_size]
+
+        set breg_baseaddr [get_ip_property $drv_handle CONFIG.baseaddr]
+        set breg_highaddr [get_ip_property $drv_handle CONFIG.highaddr]
+        set breg_size [format 0x%X [expr {$breg_highaddr - $breg_baseaddr + 1}]]
+        set breg [get_64_bit_reg $breg_baseaddr $breg_size]
+
+        set reg "$cfg $breg"
+        add_prop $node reg $reg hexlist "pl.dtsi" 1
+}
 
 proc xdmapcie_generate {drv_handle} {
 	set node [get_node $drv_handle]
@@ -33,10 +51,15 @@ proc xdmapcie_generate {drv_handle} {
 			set high_64bit 0x00000000
 			set ranges ""
 			set proctype [get_hw_family]
+			set no_address_translation [hsi::get_property CONFIG.axibar_notranslate [hsi::get_cells $drv_handle]]
 			for {set x 0} {$x < $axibar_num} {incr x} {
 				if {[string match -nocase [get_ip_property $drv_handle IP_NAME] "qdma"]} {
 					set axi_baseaddr [get_ip_property $drv_handle [format "CONFIG.axibar_%d" $x]]
-					set pcie_baseaddr [get_ip_property $drv_handle [format "CONFIG.axibar2pciebar_%d" $x]]
+					if {$no_address_translation} {
+                                                set pcie_baseaddr [get_ip_property $drv_handle [format "CONFIG.axibar_%d" $x]]
+                                        } else {
+                                                set pcie_baseaddr [get_ip_property $drv_handle [format "CONFIG.axibar2pciebar_%d" $x]]
+                                        }
 					set axi_highaddr [get_ip_property $drv_handle [format "CONFIG.axibar_highaddr_%d" $x]]
 			        }
 				set size [expr $axi_highaddr -$axi_baseaddr + 1]
@@ -90,6 +113,7 @@ proc xdmapcie_generate {drv_handle} {
 				}
 			}
 			add_prop $node "ranges" $ranges hexlist "pl.dtsi"
+			set_reg_qdma $drv_handle
 		}
 
 	if {[string match -nocase $val "Root_Port_of_PCI_Express_Root_Complex"]} {
