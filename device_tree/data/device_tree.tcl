@@ -338,6 +338,11 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "mmi_udh_dp" "axi_mmi_dptx"
 	dict set ::sdtgen::namespacelist "mmi_usb_cfg" "mmi_usb"
 
+	dict set ::sdtgen::namespacelist "axi_xspi" "xspi"
+	dict set ::sdtgen::namespacelist "xram" "xram"
+	dict set ::sdtgen::namespacelist "psv_xram" "xram"
+	dict set ::sdtgen::namespacelist "psv_xram_bank" "xram"
+
 	part_specific_init_proclist
 }
 
