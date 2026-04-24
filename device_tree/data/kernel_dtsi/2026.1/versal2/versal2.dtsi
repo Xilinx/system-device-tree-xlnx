@@ -1701,8 +1701,8 @@
 			interrupt-parent = <&imux>;
 			interrupts = <0 234 4>;
 			reg = <0 0xf10b0000 0 0x100>;
-			freq-table-hz = <0 0>;
-			clock-names = "core";
+			freq-table-hz = <0 0>, <0 0>;
+			clock-names = "core", "ref_clk";
 			reset-names = "host", "phy";
 		};
 
