@@ -16,12 +16,13 @@
 	model = "Xilinx Versal VRK160 Eval board revA";
 
 	chosen {
-		bootargs = "console=ttyAMA0 earlycon=pl011,mmio32,0xFF000000,115200n8";
-		stdout-path = "serial0:115200";
+		bootargs = "console=ttyAMA1 earlycon=pl011,mmio32,0xFF010000,115200n8";
+		stdout-path = "serial1:115200";
 	};
 
 	aliases {
 		serial0 = &serial0;
+		serial1 = &serial1;
 		serial2 = &dcc;
 		i2c0 = &i2c0;
 		i2c1 = &i2c1;
