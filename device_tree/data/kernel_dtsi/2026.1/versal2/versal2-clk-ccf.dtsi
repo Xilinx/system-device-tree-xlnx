@@ -85,6 +85,13 @@
 		clock-frequency = <256000000>;
 	};
 
+	ufs_ref_clk: ufs-ref-clk {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		/* Override in board dts if different from default 26 MHz */
+		clock-frequency = <26000000>;
+	};
+
 	firmware {
 		versal2_firmware: versal2-firmware {
 			compatible = "xlnx,versal2-firmware";
@@ -722,7 +729,7 @@
 };
 
 &ufshc {
-	clocks = <&versal2_clk UFS_REF>;
+	clocks = <&versal2_clk UFS_REF>, <&ufs_ref_clk>;
 	power-domains = <&versal2_firmware PM_DEV_UFS>;
 	resets = <&versal2_reset VERSAL_RST_UFS>, <&versal2_reset VERSAL_RST_UFS_PHY>;
 };
