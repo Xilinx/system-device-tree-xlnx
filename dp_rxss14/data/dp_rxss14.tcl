@@ -123,14 +123,19 @@ proc dp_rxss14_generate {drv_handle} {
         add_prop "${node}" "xlnx,sim-mode" $sim_mode string $dts_file
         set video_interface [hsi get_property CONFIG.VIDEO_INTERFACE [hsi::get_cells -hier $drv_handle]]
         add_prop "${node}" "xlnx,video-interface" $video_interface int $dts_file
-	set vid_phy_ctlr [find_best_match $node [hsi get_cells -hier -filter IP_NAME==vid_phy_controller]]
-	if {[llength $vid_phy_ctlr]} {
-		add_prop "${node}" "xlnx,vidphy" $vid_phy_ctlr reference $dts_file
+	set connected_phy [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_lnk_rx_lane0"]
+	set is_vphy [expr {[llength $connected_phy] && [string match -nocase [hsi::get_property IP_NAME $connected_phy] "vid_phy_controller"]}]
+	if {$is_vphy} {
+		add_prop "${node}" "xlnx,vidphy" $connected_phy reference $dts_file
 	}
 	set freq [get_clk_pin_freq  $drv_handle "S_AXI_ACLK"]
-	add_prop "${node}" "xlnx,dp-retimer" "xfmc$drv_handle" reference $dts_file
+	if {$is_vphy} {
+		add_prop "${node}" "xlnx,dp-retimer" "xfmc$connected_phy" reference $dts_file
+	} else {
+		add_prop "${node}" "xlnx,dp-retimer" "xfmc$drv_handle" reference $dts_file
+	}
 
-	set edid_ip [find_best_match $node [hsi get_cells -hier -filter IP_NAME==vid_edid]]
+	set edid_ip [find_best_match $drv_handle [hsi get_cells -hier -filter IP_NAME==vid_edid]]
 	if {[llength $edid_ip]} {
 		set baseaddr_dp_rx [hsi get_property CONFIG.C_BASEADDR [hsi get_cells -hier $drv_handle]]
 		set highaddr_dp_rx [hsi get_property CONFIG.C_HIGHADDR [hsi get_cells -hier $drv_handle]]
@@ -242,7 +247,6 @@ proc dp_rxss14_generate {drv_handle} {
 			}
 		}
 	}
-		gen_xfmc_node $drv_handle $dts_file
 }
 
 proc gen_frmbuf_wr_node {outip drv_handle port0_node dtsi_file} {
@@ -315,13 +319,4 @@ proc dp_rx_add_hier_instances {drv_handle} {
 		}
 	}
 
-}
-#generate fmc card node as this is required when display port exits
-proc gen_xfmc_node {drv_handle dts_file} {
-	global env
-	set path $env(CUSTOM_SDT_REPO)
-	set common_file "$path/device_tree/data/config.yaml"
-	set bus_node "amba_pl: amba_pl"
-        set pl_disp [create_node -n "xv_fmc$drv_handle" -l "xfmc$drv_handle" -p $bus_node -d $dts_file]
-        add_prop $pl_disp "compatible" "xilinx-vfmc" string $dts_file 1
 }
