@@ -61,7 +61,12 @@ proc dp_txss14_generate {drv_handle} {
         add_prop "${node}" "xlnx,sim-mode" $sim_mode string $dtsi_file
         set video_interface [hsi get_property CONFIG.VIDEO_INTERFACE [hsi::get_cells -hier $drv_handle]]
         add_prop "${node}" "xlnx,video-interface" $video_interface int $dtsi_file
-	add_prop "${node}" "xlnx,dp-retimer" "xfmc$drv_handle" reference $dtsi_file
+	set tx_phy_retimer [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "m_axis_lnk_tx_lane0"]
+	if {[llength $tx_phy_retimer] && [string match -nocase [hsi::get_property IP_NAME $tx_phy_retimer] "vid_phy_controller"]} {
+		add_prop "${node}" "xlnx,dp-retimer" "xfmc$tx_phy_retimer" reference $dtsi_file
+	} else {
+		add_prop "${node}" "xlnx,dp-retimer" "xfmc$drv_handle" reference $dtsi_file
+	}
 	set clknames "s_axi_aclk tx_vid_clk"
 	set reg_names "dp_base"
         set hdcp_enable [hsi get_property CONFIG.HDCP_ENABLE [hsi::get_cells -hier $drv_handle]]
@@ -99,11 +104,13 @@ proc dp_txss14_generate {drv_handle} {
 	overwrite_clknames $clknames $drv_handle
 	set phy_names ""
 	set phys ""
-	set vtcip [hsi get_cells -hier -filter {IP_NAME == "v_tc"}]
+	# Scope VTC lookup to this TXSS hierarchy; take first VTC sub-core
+	set vtcip [set_ip_handles_for_ss_subcores v_tc $drv_handle]
         if {[llength $vtcip]} {
-                set baseaddr [hsi get_property CONFIG.C_BASEADDR [hsi get_cells -hier $vtcip]]
+                set vtc_first [lindex $vtcip 0]
+                set baseaddr [hsi get_property CONFIG.C_BASEADDR [hsi::get_cells -hier $vtc_first]]
                 if {[llength $baseaddr]} {
-                        add_prop "${node}" "xlnx,vtc-offset" "$baseaddr" int $dtsi_file
+                        add_prop "${node}" "xlnx,vtc-offset" $baseaddr int $dtsi_file
                 }
         }
 	set links {m_axis_lnk_tx_lane0 m_axis_lnk_tx_lane1 m_axis_lnk_tx_lane2 m_axis_lnk_tx_lane3}
@@ -212,7 +219,6 @@ proc dp_txss14_generate {drv_handle} {
 				}
 			}
 		}
-		gen_xfmc_node $drv_handle $dtsi_file
 	}
 }
 
@@ -223,14 +229,20 @@ proc gen_frmbuf_rd_node {ip drv_handle port0_node dtsi_file} {
 	set path $env(CUSTOM_SDT_REPO)
 	set common_file "$path/device_tree/data/config.yaml"
 	set bus_node "amba_pl: amba_pl"
-        set pl_disp [create_node -n "drm-pl-disp-drv" -l "v_pl_disp$drv_handle" -p $bus_node -d $dtsi_file]
+	# Derive instance suffix from hierarchy name (e.g. dp_tx_hier_0_... -> 0)
+	if {[regexp {hier_(\d+)} $drv_handle -> hier_idx]} {
+		set inst_suffix $hier_idx
+	} else {
+		set inst_suffix 0
+	}
+        set pl_disp [create_node -n "drm-pl-disp-drv-$inst_suffix" -l "v_pl_disp$drv_handle" -p $bus_node -d $dtsi_file]
         add_prop $pl_disp "compatible" "xlnx,pl-disp" string $dtsi_file 1
 	add_prop $pl_disp "dmas" "$ip 0" reference $dtsi_file 1
         add_prop $pl_disp "dma-names" "dma0" string $dtsi_file 1
         add_prop $pl_disp "xlnx,vformat" "YUYV" string $dtsi_file 1
         add_prop $pl_disp "#address-cells" 1 int $dtsi_file 1
         add_prop $pl_disp "#size-cells" 0 int $dtsi_file 1
-	set pl_port_node [create_node -n "port" -l pl_disp_port -u 0 -p $pl_disp -d $dtsi_file]
+	set pl_port_node [create_node -n "port" -l "pl_disp_port$inst_suffix" -u 0 -p $pl_disp -d $dtsi_file]
 	add_prop "$pl_port_node" "reg" 0 int $dtsi_file 1
         set pl_disp_crtc_node [create_node -n "endpoint" -l $ip$drv_handle -p $pl_port_node -d $dtsi_file]
         add_prop "$pl_disp_crtc_node" "remote-endpoint" dptx_out$drv_handle reference $dtsi_file 1
@@ -305,15 +317,4 @@ proc dp_tx_add_hier_instances {drv_handle} {
 		}
 	}
 
-
-}
-
-#generate fmc card node as this is required when display port exits
-proc gen_xfmc_node {drv_handle dts_file} {
-	global env
-	set path $env(CUSTOM_SDT_REPO)
-	set common_file "$path/device_tree/data/config.yaml"
-	set bus_node "amba_pl: amba_pl"
-        set pl_disp [create_node -n "xv_fmc$drv_handle" -l "xfmc$drv_handle" -p $bus_node -d $dts_file]
-        add_prop $pl_disp "compatible" "xilinx-vfmc" string $dts_file 1
 }
