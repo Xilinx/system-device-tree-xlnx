@@ -134,6 +134,11 @@
 
         add_prop "${node}" "xlnx,axi-aclk-freq-mhz" $afreq hexint $dts_file 1
         add_prop "${node}" "xlnx,drpclk-freq" $rfreq hexint $dts_file 1
+
+        # Generate one xfmc node per VPhy instance
+        set bus_node "amba_pl: amba_pl"
+        set xfmc_node [create_node -n "xv_fmc$drv_handle" -l "xfmc$drv_handle" -p $bus_node -d $dts_file]
+        add_prop $xfmc_node "compatible" "xilinx-vfmc" string $dts_file 1
     }
 
 
