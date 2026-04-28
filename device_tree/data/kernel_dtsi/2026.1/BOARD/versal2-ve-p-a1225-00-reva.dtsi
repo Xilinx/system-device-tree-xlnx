@@ -69,6 +69,7 @@
 		gpio-controller;
 		#interrupt-cells = <2>;
 		interrupt-controller;
+		clocks = <&clk100>;
 		power-domains = <&versal2_firmware PM_DEV_GPIO_EIO>;
 	};
 
