@@ -41,14 +41,10 @@
 
 	set afreq  0
 	set rfreq  0
-	set is_telluride_board 0
 	if {$is_vek385_board} {
-		set is_telluride_board 1
-	}
-	if {$is_telluride_board} {
-		puts "INFO: hdmi_gt_ctrl: telluride DRU widened values enabled for board '$board_dts'"
+		puts "INFO: hdmi_gt_ctrl: vek385 DRU widened values enabled for board '$board_dts'"
 	} else {
-		puts "INFO: hdmi_gt_ctrl: telluride DRU widened values disabled for board '$board_dts'"
+		puts "INFO: hdmi_gt_ctrl: vek385 DRU widened values disabled for board '$board_dts'"
 	}
 
 	set transceiver [hsi get_property CONFIG.Transceiver [hsi get_cells -hier $drv_handle]]
@@ -123,7 +119,7 @@
 	set speedgrade [hsi get_property CONFIG.C_SPEEDGRADE [hsi get_cells -hier $drv_handle]]
 	add_prop "${node}" "xlnx,speedgrade" $speedgrade stringlist $dts_file 1
 
-	if {$transceiver == "GTYP" && $is_telluride_board} {
+	if {$transceiver == "GTYP" && $is_vek385_board} {
 		set dru_refclk2_min_hz 399970000
 		set dru_refclk2_max_hz 400050000
 		add_prop "${node}" "xlnx,dru-refclk2-min-hz" $dru_refclk2_min_hz int $dts_file 1
