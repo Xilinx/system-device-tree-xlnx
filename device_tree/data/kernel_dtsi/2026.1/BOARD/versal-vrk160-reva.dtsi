@@ -16,13 +16,12 @@
 	model = "Xilinx Versal VRK160 Eval board revA";
 
 	chosen {
-		bootargs = "console=ttyAMA1 earlycon=pl011,mmio32,0xFF010000,115200n8";
-		stdout-path = "serial1:115200";
+		bootargs = "console=ttyAMA0 earlycon=pl011,mmio32,0xFF000000,115200n8";
+		stdout-path = "serial0:115200";
 	};
 
 	aliases {
 		serial0 = &serial0;
-		serial1 = &serial1;
 		serial2 = &dcc;
 		i2c0 = &i2c0;
 		i2c1 = &i2c1;
@@ -43,6 +42,24 @@
 		#gpio-cells = <3>;
 		gpio-controller;
 		gpios = <&gpio0 16 GPIO_ACTIVE_LOW>;
+	};
+
+	vdd_usb_hub: regulator-vdd-usb-hub {
+		compatible = "regulator-fixed";
+		regulator-name = "vdd_usb_hub";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		regulator-always-on;
+		regulator-boot-on;
+	};
+
+	vdd2_usb_hub: regulator-vdd2-usb-hub {
+		compatible = "regulator-fixed";
+		regulator-name = "vdd2_usb_hub";
+		regulator-min-microvolt = <1200000>;
+		regulator-max-microvolt = <1200000>;
+		regulator-always-on;
+		regulator-boot-on;
 	};
 };
 
@@ -102,6 +119,8 @@
 		compatible = "usb424,2744";
 		reg = <1>;
 		reset-gpios = <&usb_hub_delay 0 10000 10000>;
+		vdd-supply = <&vdd_usb_hub>;
+		vdd2-supply = <&vdd2_usb_hub>;
 	};
 };
 
