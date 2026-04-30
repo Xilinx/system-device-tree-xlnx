@@ -131,6 +131,13 @@ proc dp_rxss14_generate {drv_handle} {
 	set freq [get_clk_pin_freq  $drv_handle "S_AXI_ACLK"]
 	if {$is_vphy} {
 		add_prop "${node}" "xlnx,dp-retimer" "xfmc$connected_phy" reference $dts_file
+	} elseif {[string match -nocase $versal_gt "1"] && [llength $connected_phy]} {
+		set gt_quad [get_connected_stream_ip [hsi::get_cells -hier $connected_phy] "GT_RX0"]
+		if {[llength $gt_quad]} {
+			add_prop "${node}" "xlnx,dp-retimer" "xfmc$gt_quad" reference $dts_file
+		} else {
+			add_prop "${node}" "xlnx,dp-retimer" "xfmc$drv_handle" reference $dts_file
+		}
 	} else {
 		add_prop "${node}" "xlnx,dp-retimer" "xfmc$drv_handle" reference $dts_file
 	}
