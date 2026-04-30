@@ -23,6 +23,11 @@
 	set compatible [get_comp_str $drv_handle]
 	pldt append $node compatible "\ \, \"xlnx,gt-quad-base-1.1\" "
 
+	# Generate one xfmc node per dp_gt_ctrl instance
+	set bus_node "amba_pl: amba_pl"
+	set xfmc_node [create_node -n "xv_fmc$drv_handle" -l "xfmc$drv_handle" -p $bus_node -d $dts_file]
+	add_prop $xfmc_node "compatible" "xilinx-vfmc" string $dts_file 1
+
 	# Get the number of Rx and Tx interfaces
 	set Rx_No_Of_Interfaces [hsi get_property CONFIG.INTF0_NO_OF_LANES [hsi::get_cells -hier $drv_handle]]
 	set Tx_No_Of_Interfaces [hsi get_property CONFIG.INTF1_NO_OF_LANES [hsi::get_cells -hier $drv_handle]]
