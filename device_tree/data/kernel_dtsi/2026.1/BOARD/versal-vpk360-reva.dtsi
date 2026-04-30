@@ -26,6 +26,24 @@
 		rtc0 = &rtc;
 		nvmem0 = &eeprom;
 	};
+
+	vdd_usb_hub: regulator-vdd-usb-hub {
+		compatible = "regulator-fixed";
+		regulator-name = "vdd_usb_hub";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		regulator-always-on;
+		regulator-boot-on;
+	};
+
+	vdd2_usb_hub: regulator-vdd2-usb-hub {
+		compatible = "regulator-fixed";
+		regulator-name = "vdd2_usb_hub";
+		regulator-min-microvolt = <1200000>;
+		regulator-max-microvolt = <1200000>;
+		regulator-always-on;
+		regulator-boot-on;
+	};
 };
 
 &ospi { /* PMC MIO0-10, 12, u470 MT35XU02G */
@@ -78,6 +96,8 @@
 		reg = <1>;
 		i2c-bus = <&hub>;
 		reset-gpios = <&gpio0 20 GPIO_ACTIVE_LOW>; /* LPD_MIO20 */
+		vdd-supply = <&vdd_usb_hub>;
+		vdd2-supply = <&vdd2_usb_hub>;
 	};
 	/* port 0 to U647 - USB MUX - host/peripherals FIXME - control from SC */
 	/* port 1 to connector */
