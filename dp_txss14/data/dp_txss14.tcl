@@ -61,9 +61,17 @@ proc dp_txss14_generate {drv_handle} {
         add_prop "${node}" "xlnx,sim-mode" $sim_mode string $dtsi_file
         set video_interface [hsi get_property CONFIG.VIDEO_INTERFACE [hsi::get_cells -hier $drv_handle]]
         add_prop "${node}" "xlnx,video-interface" $video_interface int $dtsi_file
+	set versal_gt [hsi get_property CONFIG.C_VERSAL [hsi::get_cells -hier $drv_handle]]
 	set tx_phy_retimer [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "m_axis_lnk_tx_lane0"]
 	if {[llength $tx_phy_retimer] && [string match -nocase [hsi::get_property IP_NAME $tx_phy_retimer] "vid_phy_controller"]} {
 		add_prop "${node}" "xlnx,dp-retimer" "xfmc$tx_phy_retimer" reference $dtsi_file
+	} elseif {[string match -nocase $versal_gt "1"] && [llength $tx_phy_retimer]} {
+		set gt_quad [get_connected_stream_ip [hsi::get_cells -hier $tx_phy_retimer] "GT_TX0"]
+		if {[llength $gt_quad]} {
+			add_prop "${node}" "xlnx,dp-retimer" "xfmc$gt_quad" reference $dtsi_file
+		} else {
+			add_prop "${node}" "xlnx,dp-retimer" "xfmc$drv_handle" reference $dtsi_file
+		}
 	} else {
 		add_prop "${node}" "xlnx,dp-retimer" "xfmc$drv_handle" reference $dtsi_file
 	}
@@ -91,7 +99,6 @@ proc dp_txss14_generate {drv_handle} {
                 add_prop "${node}" "xlnx,hdcp-authenticate" 0x1 int $dtsi_file 1
                 add_prop "${node}" "xlnx,hdcp-encrypt" 0x1 int $dtsi_file 1
         }
-	set versal_gt [hsi get_property CONFIG.C_VERSAL [hsi::get_cells -hier $drv_handle]]
 	if {[string match -nocase $versal_gt "1"]} {
 		add_prop "${node}" "xlnx,versal-gt" $versal_gt boolean $dtsi_file 1
 
