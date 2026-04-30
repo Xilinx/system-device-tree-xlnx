@@ -23,10 +23,14 @@ variable phy_count 0
 ##############################################################################
 
 # Helper function to configure PHY properties
-proc emacps_configure_phy_props {pcspma_phy_node node dts_file phy_type is_sgmii} {
+proc emacps_configure_phy_props {pcspma_phy_node node dts_file phy_type is_sgmii {proc_type ""}} {
     if {$phy_type == "1000BASEX"} {
-        add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x5 int $dts_file
-        add_prop $node "phy-mode" "1000base-x" string $dts_file 1
+	add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x5 int $dts_file
+	if {$proc_type == "versal"} {
+		add_prop $node "phy-mode" "gmii" string $dts_file 1
+	} else {
+		add_prop $node "phy-mode" "1000base-x" string $dts_file 1
+	}
     } elseif {$is_sgmii == "true"} {
         add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x4 int $dts_file
         add_prop $node "phy-mode" "sgmii" string $dts_file 1
@@ -52,14 +56,14 @@ proc emacps_get_phyaddr_suffix {zynq_periph mdio_interface} {
 }
 
 # Helper function to process PCS/PMA PHY configuration
-proc emacps_process_pcspma_phy {drv_handle node dts_file connected_ip zynq_periph mdio_interface} {
+proc emacps_process_pcspma_phy {drv_handle node dts_file connected_ip zynq_periph mdio_interface {proc_type ""}} {
     set phyaddr_suffix [emacps_get_phyaddr_suffix $zynq_periph $mdio_interface]
     set phyaddr "phyaddr"
     if {[llength $phyaddr_suffix]} {
         append phyaddr "_$phyaddr_suffix"
     }
-
     set pin [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $connected_ip] $phyaddr]]
+
     if {[llength $pin]} {
         set sink_periph [hsi::get_cells -of_objects $pin]
         if {[llength $sink_periph]} {
@@ -71,7 +75,7 @@ proc emacps_process_pcspma_phy {drv_handle node dts_file connected_ip zynq_perip
                 add_prop "${pcspma_phy_node}" "reg" $val int $dts_file
                 set phy_type [hsi get_property CONFIG.Standard $connected_ip]
                 set is_sgmii [hsi get_property CONFIG.c_is_sgmii $connected_ip]
-                emacps_configure_phy_props $pcspma_phy_node $node $dts_file $phy_type $is_sgmii
+                emacps_configure_phy_props $pcspma_phy_node $node $dts_file $phy_type $is_sgmii $proc_type
             } else {
                 dtg_warning "Cannot auto-detect PCS/PMA PHY address configuration. \
                 Skipping PHY node creation. Please verify hardware configuration \
@@ -160,6 +164,7 @@ proc emacps_generate {drv_handle} {
     } elseif { !($is_versal_2ve_2vm_platform && [string match -nocase $ip_name "mmi_10gbe"]) } {
         add_prop $node "phy-mode" "rgmii-id" string $dts_file
     }
+
 
     # Configure PTP ethernet clock if available
     set ps7_cortexa9_1x_clk [get_ip_param_value [lindex [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}] 0] "C_CPU_1X_CLK_FREQ_HZ"]
@@ -299,6 +304,32 @@ proc emacps_generate {drv_handle} {
                     set connected_ip_name [hsi get_property IP_NAME $connected_ip]
                     if {[llength $connected_ip_name] && [string match -nocase $connected_ip_name "gig_ethernet_pcs_pma"]} {
                         emacps_process_pcspma_phy $drv_handle $node $dts_file $connected_ip $zynq_periph $mdio_interface
+                        break
+                    }
+                }
+            }
+        }
+    }
+
+    if {[string match -nocase $proc_type "versal"]} {
+        # Versal has gem0 and gem1
+        set gem_interfaces [list \
+            [list "&gem0" "GEM0_MDIO"] \
+            [list "&gem1" "GEM1_MDIO"] \
+        ]
+
+        # For Versal with ps_wizard, the peripheral reference would be different
+        set versal_ps_periph [hsi get_cells -hier -filter {IP_NAME == versal_cips || IP_NAME == ps_wizard}]
+
+        foreach gem_interface $gem_interfaces {
+            set gem_node [lindex $gem_interface 0]
+            set mdio_interface [lindex $gem_interface 1]
+            if {[string match -nocase $node $gem_node]} {
+                set connected_ip [get_connected_stream_ip $versal_ps_periph $mdio_interface]
+                if {[llength $connected_ip]} {
+                    set connected_ip_name [hsi get_property IP_NAME $connected_ip]
+                    if {[llength $connected_ip_name] && [string match -nocase $connected_ip_name "gig_ethernet_pcs_pma"]} {
+                        emacps_process_pcspma_phy $drv_handle $node $dts_file $connected_ip $versal_ps_periph $mdio_interface "versal"
                         break
                     }
                 }
