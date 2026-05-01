@@ -157,6 +157,11 @@ proc hdmi_tx_ss_generate {drv_handle} {
 		}
 	}
 
+	set video_in_pin [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $drv_handle] -filter "NAME==VIDEO_IN"]
+	set vpss [get_in_connect_ip $drv_handle $video_in_pin]
+	if {[llength $vpss] && [string match -nocase [hsi::get_property IP_NAME $vpss] "v_proc_ss"]} {
+		add_prop "${node}" "xlnx,vpss" $vpss reference $dts_file 1
+	}
 }
 
 proc hdmi_tx_ss_update_endpoints {drv_handle} {
