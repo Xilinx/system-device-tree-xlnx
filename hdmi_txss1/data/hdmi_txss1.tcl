@@ -161,6 +161,11 @@
 	set frl_clk_freq [hsi get_property CONFIG.C_FRL_CLK_FREQ_KHZ [hsi get_cells -hier $drv_handle]]
 	add_prop "${node}" "xlnx,frl-clk-freq-khz" $frl_clk_freq hexint $dts_file 1
 
+	set video_in_pin [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $drv_handle] -filter "NAME==VIDEO_IN"]
+	set vpss [get_in_connect_ip $drv_handle $video_in_pin]
+	if {[llength $vpss] && [string match -nocase [hsi::get_property IP_NAME $vpss] "v_proc_ss"]} {
+		add_prop "${node}" "xlnx,vpss" $vpss reference $dts_file 1
+	}
 }
 
 proc hdmi_txss1_update_endpoints {drv_handle} {
