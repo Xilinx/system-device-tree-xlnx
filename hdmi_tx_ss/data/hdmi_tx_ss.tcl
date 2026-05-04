@@ -200,6 +200,12 @@ proc hdmi_tx_ss_update_endpoints {drv_handle} {
 				if {[string match -nocase [hsi::get_property IP_NAME $inip] "axis_register_slice"]} {
 					set intf "S_AXIS"
 					set streamin_ip [get_connected_stream_ip [hsi::get_cells -hier $inip] $intf]
+					if {[string match -nocase [hsi::get_property IP_NAME $streamin_ip] "v_proc_ss"]} {
+						set streamin_ip [get_connected_stream_ip [hsi::get_cells -hier $streamin_ip] $intf]
+						if {[string match -nocase [hsi::get_property IP_NAME $streamin_ip] "v_frmbuf_rd"]} {
+							gen_frmbuf_rd_node $streamin_ip $drv_handle $hdmi_port_node $dts_file
+						}
+					}
 					if {[llength $streamin_ip]} {
 						set ip_mem_handles [hsi::get_mem_ranges $streamin_ip]
 					}
