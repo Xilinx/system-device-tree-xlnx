@@ -97,60 +97,85 @@ proc vproc_ss_generate {drv_handle} {
 		set max_data_width [hsi get_property CONFIG.C_MAX_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
 		add_prop "${node}" "xlnx,video-width" $max_data_width int $dts_file
 
-		set ports_node [create_node -n "ports" -l scaler_ports$drv_handle -p $node -d $dts_file]
-		add_prop "$ports_node" "#address-cells" 1 int $dts_file
-		add_prop "$ports_node" "#size-cells" 0 int $dts_file
-		set port1_node [create_node -n "port" -l scaler_port1$drv_handle -u 1 -p $ports_node -d $dts_file]
-		# add_prop "${port1_node}" "/* For xlnx,video-format user needs to fill as per their requirement */" "" comment
-		add_prop "$port1_node" "reg" 1 int $dts_file
-		add_prop "$port1_node" "xlnx,video-format" 3 int $dts_file
-		add_prop "$port1_node" "xlnx,video-width" $max_data_width int $dts_file
+		# Check if connected output IP is HDMI before creating ports
 		set scaoutip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "m_axis"]
-		if {[llength $scaoutip]} {
-			if {[string match -nocase [hsi::get_property IP_NAME $scaoutip] "axis_broadcaster"]} {
-				set sca_node [create_node -n "endpoint" -l sca_out$drv_handle -p $port1_node -d $dts_file]
-				gen_endpoint $drv_handle "sca_out$drv_handle"
-				add_prop "$sca_node" "remote-endpoint" $scaoutip$drv_handle reference $dts_file
-				gen_remoteendpoint $drv_handle "$scaoutip$drv_handle"
-			}
-		}
-
+		set is_drm_vpss_scaler 0
 		foreach outip $scaoutip {
 			if {[llength $outip]} {
-					if {[string match -nocase [hsi::get_property IP_NAME $outip] "system_ila"]} {
-						continue
-					}
-				set master_intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $outip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
 				set ip_mem_handles [hsi::get_mem_ranges $outip]
-				if {[llength $ip_mem_handles]} {
-					set base [string tolower [hsi::get_property BASE_VALUE $ip_mem_handles]]
-					set sca_node [create_node -n "endpoint" -l sca_out$drv_handle -p $port1_node -d $dts_file]
-					gen_endpoint $drv_handle "sca_out$drv_handle"
-					if {[string match -nocase [hsi::get_property IP_NAME $outip] "v_mix"]} {
-						add_prop "$sca_node" "remote-endpoint" "mixer_crtc$outip" reference $dts_file
-					} else {
-						add_prop "$sca_node" "remote-endpoint" $outip$drv_handle reference $dts_file
-					}
-					gen_remoteendpoint $drv_handle "$outip$drv_handle"
-					if {[string match -nocase [hsi::get_property IP_NAME $outip] "v_frmbuf_wr"] \
-					    || [string match -nocase [hsi::get_property IP_NAME $outip] "axi_vdma"]} {
-						vpss_gen_sca_frm_buf_node $outip $drv_handle $dts_file
-					}
-				} else {
+				if {![llength $ip_mem_handles]} {
+					set master_intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $outip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
 					set connectip [get_connect_ip $outip $master_intf $dts_file]
 					if {[llength $connectip]} {
-						set sca_node [create_node -n "endpoint" -l sca_out$drv_handle -p $port1_node -d $dts_file]
-						gen_endpoint $drv_handle "sca_out$drv_handle"
-						add_prop "$sca_node" "remote-endpoint" $connectip$drv_handle reference $dts_file
-						gen_remoteendpoint $drv_handle "$connectip$drv_handle"
-						if {[string match -nocase [hsi::get_property IP_NAME $connectip] "v_frmbuf_wr"] \
-						    || [string match -nocase [hsi::get_property IP_NAME $connectip] "axi_vdma"]} {
-							vpss_gen_sca_frm_buf_node $connectip $drv_handle $dts_file
+						set connectip_name [hsi::get_property IP_NAME $connectip]
+						if {[string match -nocase $connectip_name "v_hdmi_txss1"] ||
+						    [string match -nocase $connectip_name "v_hdmi_tx_ss"]} {
+							set is_drm_vpss_scaler 1
+							break
 						}
 					}
 				}
-			} else {
-				dtg_warning "$drv_handle pin m_axis is not connected..check your design"
+			}
+		}
+
+		if {$is_drm_vpss_scaler} {
+			pldt unset $node "compatible"
+			pldt append $node compatible "\"xlnx,vpss-scaler-2.2\""
+		} else {
+			set ports_node [create_node -n "ports" -l scaler_ports$drv_handle -p $node -d $dts_file]
+			add_prop "$ports_node" "#address-cells" 1 int $dts_file
+			add_prop "$ports_node" "#size-cells" 0 int $dts_file
+			set port1_node [create_node -n "port" -l scaler_port1$drv_handle -u 1 -p $ports_node -d $dts_file]
+			# add_prop "${port1_node}" "/* For xlnx,video-format user needs to fill as per their requirement */" "" comment
+			add_prop "$port1_node" "reg" 1 int $dts_file
+			add_prop "$port1_node" "xlnx,video-format" 3 int $dts_file
+			add_prop "$port1_node" "xlnx,video-width" $max_data_width int $dts_file
+			if {[llength $scaoutip]} {
+				if {[string match -nocase [hsi::get_property IP_NAME $scaoutip] "axis_broadcaster"]} {
+					set sca_node [create_node -n "endpoint" -l sca_out$drv_handle -p $port1_node -d $dts_file]
+					gen_endpoint $drv_handle "sca_out$drv_handle"
+					add_prop "$sca_node" "remote-endpoint" $scaoutip$drv_handle reference $dts_file
+					gen_remoteendpoint $drv_handle "$scaoutip$drv_handle"
+				}
+			}
+
+			foreach outip $scaoutip {
+				if {[llength $outip]} {
+						if {[string match -nocase [hsi::get_property IP_NAME $outip] "system_ila"]} {
+							continue
+						}
+					set master_intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $outip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
+					set ip_mem_handles [hsi::get_mem_ranges $outip]
+					if {[llength $ip_mem_handles]} {
+						set base [string tolower [hsi::get_property BASE_VALUE $ip_mem_handles]]
+						set sca_node [create_node -n "endpoint" -l sca_out$drv_handle -p $port1_node -d $dts_file]
+						gen_endpoint $drv_handle "sca_out$drv_handle"
+						if {[string match -nocase [hsi::get_property IP_NAME $outip] "v_mix"]} {
+							add_prop "$sca_node" "remote-endpoint" "mixer_crtc$outip" reference $dts_file
+						} else {
+							add_prop "$sca_node" "remote-endpoint" $outip$drv_handle reference $dts_file
+						}
+						gen_remoteendpoint $drv_handle "$outip$drv_handle"
+						if {[string match -nocase [hsi::get_property IP_NAME $outip] "v_frmbuf_wr"] \
+						    || [string match -nocase [hsi::get_property IP_NAME $outip] "axi_vdma"]} {
+							vpss_gen_sca_frm_buf_node $outip $drv_handle $dts_file
+						}
+					} else {
+						set connectip [get_connect_ip $outip $master_intf $dts_file]
+						if {[llength $connectip]} {
+							set sca_node [create_node -n "endpoint" -l sca_out$drv_handle -p $port1_node -d $dts_file]
+							gen_endpoint $drv_handle "sca_out$drv_handle"
+							add_prop "$sca_node" "remote-endpoint" $connectip$drv_handle reference $dts_file
+							gen_remoteendpoint $drv_handle "$connectip$drv_handle"
+							if {[string match -nocase [hsi::get_property IP_NAME $connectip] "v_frmbuf_wr"] \
+							    || [string match -nocase [hsi::get_property IP_NAME $connectip] "axi_vdma"]} {
+								vpss_gen_sca_frm_buf_node $connectip $drv_handle $dts_file
+							}
+						}
+					}
+				} else {
+					dtg_warning "$drv_handle pin m_axis is not connected..check your design"
+				}
 			}
 		}
 		vproc_ss_gen_gpio_reset $drv_handle $node $topology $dts_file
@@ -265,6 +290,21 @@ proc vproc_ss_update_endpoints {drv_handle} {
 	set topology [hsi get_property CONFIG.C_TOPOLOGY [hsi::get_cells -hier $drv_handle]]
 
 	if {$topology == 0} {
+		set connectoutip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "m_axis"]
+		foreach outip $connectoutip {
+			set connectip $outip
+			if {[llength $outip] && ![llength [hsi::get_mem_ranges $outip]]} {
+				set master_intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $drv_handle] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
+				set connectip [get_connect_ip $outip $master_intf $dts_file]
+			}
+			if {[llength $connectip] && [llength [hsi::get_mem_ranges $connectip]]} {
+				set connectip_name [hsi::get_property IP_NAME $connectip]
+				if {[string match -nocase $connectip_name "v_hdmi_txss1"] ||
+					[string match -nocase $connectip_name "v_hdmi_tx_ss"]} {
+					return
+				}
+			}
+		}
 		set ports_node [create_node -n "ports" -l scaler_ports$drv_handle -p $node -d $dts_file]
 		set max_data_width [hsi get_property CONFIG.C_MAX_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
 		set port_node [create_node -n "port" -l scaler_port0$drv_handle -u 0 -p $ports_node -d $dts_file]
