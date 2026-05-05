@@ -869,6 +869,15 @@
                     "44" {
                             append vid_formats " " "X423"
                     }
+                    "54" {
+                            append vid_formats " " "P210"
+                    }
+                    "55" {
+                            append vid_formats " " "P010"
+                    }
+                    "59" {
+                            append vid_formats " " "P012"
+                    }
                     default {
                             dtg_warning "Not supported format:$num"
                     }
