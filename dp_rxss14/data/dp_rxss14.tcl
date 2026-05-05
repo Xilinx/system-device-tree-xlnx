@@ -20,6 +20,54 @@
 # 'find_best_match' is used to return the sub node whose name matches
 # best the name of the dp_rx node
 
+# Resolve the board short name. Prefers $::env(sdt_board_dts) when the
+# user passed -board_dts on the command line; otherwise derives it from
+# the HSI BOARD property, dropping the vendor prefix (e.g. the BOARD
+# property "xilinx.com:vek385:part0:1.0" becomes "vek385").
+proc dp_sdt_get_board_dts {} {
+	set board_dts ""
+	set board_hsi ""
+	if {[info exists ::env(sdt_board_dts)]} {
+		set board_dts $::env(sdt_board_dts)
+	}
+	set hw_design [hsi::current_hw_design]
+	if {[llength $hw_design]} {
+		set board_hsi [hsi get_property BOARD $hw_design]
+	}
+	if {![llength $board_dts] && [llength $board_hsi]} {
+		set board_parts [split $board_hsi ":"]
+		if {[llength $board_parts] > 1} {
+			set board_dts [lindex $board_parts 1]
+		} else {
+			set board_dts $board_hsi
+		}
+	}
+	return [string tolower $board_dts]
+}
+
+# Resolve the device PART string from the active hardware design.
+proc dp_sdt_get_hw_part {} {
+	set hw_part ""
+	set hw_design [hsi::current_hw_design]
+	if {[llength $hw_design]} {
+		set hw_part [hsi get_property PART $hw_design]
+	}
+	return [string tolower $hw_part]
+}
+
+# Return 1 when the active design targets a VEK385 (Versal 2VE/2VM)
+# board, either by BOARD property or by silicon part match.
+proc dp_sdt_is_vek385_board {board_dts} {
+	if {[string match "*vek385*" $board_dts]} {
+		return 1
+	}
+	set hw_part [dp_sdt_get_hw_part]
+	if {[string match "*ve385*" $hw_part]} {
+		return 1
+	}
+	return 0
+}
+
 proc common_prefix {a b} {
 	set res {}
 	foreach i [split $a {}] j [split $b {}] {
@@ -102,6 +150,14 @@ proc dp_rxss14_generate {drv_handle} {
 
 	} else {
 		pldt unset $node "xlnx,versal-gt"
+	}
+	# On Versal 2VE/2VM platforms (e.g. VEK385) the GT Quad needs a
+	# small settling delay during DP RX bring-up. The DP RX driver
+	# consumes "xlnx,versal-2ve-2vm" together with "xlnx,versal-gt".
+	if {[string match -nocase $versal_gt "1"] && [dp_sdt_is_vek385_board [dp_sdt_get_board_dts]]} {
+		add_prop "${node}" "xlnx,versal-2ve-2vm" 1 boolean $dts_file 1
+	} else {
+		pldt unset $node "xlnx,versal-2ve-2vm"
 	}
         set include_fec_ports [hsi get_property CONFIG.INCLUDE_FEC_PORTS [hsi::get_cells -hier $drv_handle]]
         add_prop "${node}" "xlnx,include-fec-ports" $include_fec_ports int $dts_file
