@@ -18,6 +18,63 @@
 # - For input port@0, only add a fallback endpoint label (no remote-endpoint) when mappings are missing.
 # - MIPI input creates its endpoint on the MIPI side; subset port@0 may remain without remote-endpoint.
 
+# Walk an AXIS chain through transparent passthrough IPs and return the
+# first "real" peer IP. Direction selects the interface filter.
+#   direction = "down" -> follow MASTER/INITIATOR (m_axis_video side)
+#   direction = "up"   -> follow SLAVE/TARGET    (s_axis side)
+# Returns "" if the chain dead-ends without a non-passthrough IP.
+proc axis_subset_resolve_peer {ip direction {max_hops 8}} {
+	set passthrough_list "axis_data_fifo axis_register_slice axis_dwidth_converter \
+	                      axis_clock_converter axis_subset_converter system_ila ila \
+	                      axis_combiner axis_broadcaster"
+	set cur $ip
+	for {set hop 0} {$hop < $max_hops} {incr hop} {
+		if {$direction eq "down"} {
+			set intfs [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $cur] \
+			           -filter {TYPE==MASTER || TYPE==INITIATOR}]
+		} else {
+			set intfs [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $cur] \
+			           -filter {TYPE==SLAVE  || TYPE==TARGET}]
+		}
+		set next ""
+		foreach intf $intfs {
+			set peers [get_connected_stream_ip [hsi::get_cells -hier $cur] $intf]
+			foreach p $peers {
+				if {[regexp -nocase "ila" $p]} { continue }
+				set next $p ; break
+			}
+			if {[llength $next]} { break }
+		}
+		if {![llength $next]} { return "" }
+		set nname [hsi get_property IP_NAME $next]
+		if {[lsearch -nocase $passthrough_list $nname] < 0} {
+			return $next
+		}
+		set cur $next
+	}
+	return ""
+}
+
+# Returns 1 if ip is part of a valid multimedia pipeline (downstream-first,
+# upstream as fallback). Mirrors valid_mmip_list used by axis_broadcaster
+# and video_utils.tcl.
+proc axis_subset_is_mm_connected {ip} {
+	set valid_mmip_list "mipi_csi2_rx_subsystem v_tpg v_hdmi_rx_ss \
+	    v_smpte_uhdsdi_rx_ss v_smpte_uhdsdi_tx_ss v_demosaic v_gamma_lut \
+	    v_proc_ss v_frmbuf_rd v_frmbuf_wr v_hdmi_tx_ss v_hdmi_txss1 \
+	    v_uhdsdi_audio audio_formatter i2s_receiver i2s_transmitter \
+	    mipi_dsi_tx_subsystem v_mix v_multi_scaler v_scenechange \
+	    ISPPipeline_accel visp_ss axis_switch"
+	foreach dir {down up} {
+		set peer [axis_subset_resolve_peer $ip $dir]
+		if {[llength $peer]} {
+			set pname [hsi get_property IP_NAME $peer]
+			if {[lsearch -nocase $valid_mmip_list $pname] >= 0} { return 1 }
+		}
+	}
+	return 0
+}
+
 proc axis_subset_converter_generate {drv_handle} {
         set ip $drv_handle
 	set ip_name [hsi get_property IP_NAME [hsi get_cells -hier $drv_handle]]
@@ -32,6 +89,13 @@ proc axis_subset_converter_generate {drv_handle} {
 		return
 	}
 
+	# Skip DT generation when this subset converter is not part of a real
+	# multimedia pipeline (downstream-first, upstream as fallback).
+	if {![axis_subset_is_mm_connected $drv_handle]} {
+		dtg_warning "$drv_handle is not connected to a valid multimedia pipeline; skipping DT generation."
+		return
+	}
+
 	set bus_node [detect_bus_name $ip]
         set dts_file [set_drv_def_dts $drv_handle]
         set subset_node [create_node -n "axis_subset$ip" -l $ip -u 0 -p $bus_node -d $dts_file]
@@ -42,23 +106,15 @@ proc axis_subset_converter_generate {drv_handle} {
         add_prop "$ports_node" "#address-cells" 1 int $dts_file
         add_prop "$ports_node" "#size-cells" 0 int $dts_file
 
-	# Create port0 (input) early if connected to MIPI (which has no memory map)
-	set axis_subset_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "S_AXIS"]
+	# Create port0 (input) early if connected to MIPI (which has no memory map).
+	# Defect B.1 fix: walk through ALL transparent AXIS passthroughs
+	# (axis_data_fifo, axis_register_slice, axis_dwidth_converter,
+	# axis_clock_converter, system_ila/ila, chained subset converters, ...)
+	# via axis_subset_resolve_peer so MIPI detection survives extra adapters
+	# between the converter and the CSI-RX subsystem.
+	set axis_subset_inip [axis_subset_resolve_peer $drv_handle up]
 	if {[llength $axis_subset_inip]} {
 		set axis_subset_inip_name [hsi get_property IP_NAME $axis_subset_inip]
-	} else {
-	}
-	if {[llength $axis_subset_inip]} {
-	}
-
-	# Skip over transparent IPs like axis_data_fifo to find the real source
-	while {[llength $axis_subset_inip] && [string match -nocase [hsi get_property IP_NAME $axis_subset_inip] "axis_data_fifo"]} {
-		set axis_subset_inip [get_connected_stream_ip [hsi::get_cells -hier $axis_subset_inip] "S_AXIS"]
-		if {[llength $axis_subset_inip]} {
-			set axis_subset_inip_name [hsi get_property IP_NAME $axis_subset_inip]
-		}
-		if {[llength $axis_subset_inip]} {
-		}
 	}
 
 	if {[llength $axis_subset_inip] && [string match -nocase [hsi get_property IP_NAME $axis_subset_inip] "mipi_csi2_rx_subsystem"]} {
@@ -143,6 +199,11 @@ proc axis_subset_converter_generate {drv_handle} {
 					set has_remote 1
 				}
 				if {!$has_remote} {
+					# Defect A fix: fallback when end_mappings has not yet
+					# registered $connectip (downstream IP _generate runs after
+					# subset converter _generate). gen_remoteendpoint below
+					# reserves the matching label on the downstream side.
+					add_prop "$subset_node" "remote-endpoint" "$connectip$drv_handle" reference $dts_file
 				}
 				gen_remoteendpoint $drv_handle "$connectip$drv_handle"
 			}
@@ -159,6 +220,11 @@ proc axis_subset_converter_generate {drv_handle} {
 proc axis_subset_converter_update_endpoints {drv_handle} {
         set ip $drv_handle
 	set node [get_node $drv_handle]
+	# Defensive guard: if generate phase skipped this instance because it
+	# is not part of a multimedia pipeline, skip endpoint updates too.
+	if {![axis_subset_is_mm_connected $drv_handle]} {
+		return
+	}
         set dts_file [set_drv_def_dts $drv_handle]
         set axis_subset_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "S_AXIS"]
         set subset_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "S_AXIS_VIDEO"]
@@ -175,19 +241,13 @@ proc axis_subset_converter_update_endpoints {drv_handle} {
                 return
         }
 
-	# Check if port0 was already created in generate phase (for MIPI case)
-	set axis_subset_inip_check [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "S_AXIS"]
+	# Check if port0 was already created in generate phase (for MIPI case).
+	# Defect B.1 fix: use axis_subset_resolve_peer so the MIPI early-return
+	# below fires even when the upstream chain contains
+	# axis_register_slice / axis_dwidth_converter / axis_clock_converter
+	# / system_ila / chained subset converters between the converter and CSI-RX.
+	set axis_subset_inip_check [axis_subset_resolve_peer $drv_handle up]
 
-	# Skip over axis_data_fifo to find real source
-	while {[llength $axis_subset_inip_check] && [string match -nocase [hsi get_property IP_NAME $axis_subset_inip_check] "axis_data_fifo"]} {
-		set axis_subset_inip_check [get_connected_stream_ip [hsi::get_cells -hier $axis_subset_inip_check] "S_AXIS"]
-		if {[llength $axis_subset_inip_check]} {
-			set axis_subset_inip_check_name [hsi get_property IP_NAME $axis_subset_inip_check]
-		}
-	}
-
-	if {[llength $axis_subset_inip_check]} {
-	}
 	if {[llength $axis_subset_inip_check] && [string match -nocase [hsi get_property IP_NAME $axis_subset_inip_check] "mipi_csi2_rx_subsystem"]} {
 		# Check if MIPI created its ports node - if not, create it now
 		set mipi_node [get_node $axis_subset_inip_check]
@@ -217,9 +277,22 @@ proc axis_subset_converter_update_endpoints {drv_handle} {
 	global end_mappings
 	global remo_mappings
 
-	set ports_node [create_node -n "ports" -l axis_subset_ports$drv_handle -p $node -d $dts_file]
-	add_prop "$ports_node" "#address-cells" 1 int $dts_file 1
-	add_prop "$ports_node" "#size-cells" 0 int $dts_file 1
+	# Defect B.2 fix: reuse the ports node created by _generate instead of
+	# blindly re-inserting a duplicate. common_proc.tcl create_node does not
+	# reliably dedupe by label, so a second insert orphans children written
+	# by _generate (e.g. the MIPI port@0 endpoint with its remote-endpoint).
+	set ports_node ""
+	foreach _child [pldt children $node] {
+		if {[string match "*ports*" $_child]} {
+			set ports_node $_child
+			break
+		}
+	}
+	if {[string_is_empty $ports_node]} {
+		set ports_node [create_node -n "ports" -l axis_subset_ports$drv_handle -p $node -d $dts_file]
+		add_prop "$ports_node" "#address-cells" 1 int $dts_file 1
+		add_prop "$ports_node" "#size-cells" 0 int $dts_file 1
+	}
         set len [llength $axis_subset_inip]
 	global port1_broad_end_mappings
 	if {$len > 1} {
@@ -235,9 +308,21 @@ proc axis_subset_converter_update_endpoints {drv_handle} {
 	if {[string_is_empty $axis_subset_inip]} {
 		return
 	}
-	set port0_node [create_node -n "port" -l axis_subset_port0$axis_subset_inip -u 0 -p $ports_node -d $dts_file]
-	add_prop "$port0_node" "reg" 0 int $dts_file
-	add_prop "$port0_node" "xlnx,video-format" 12 int $dts_file
+	# Defect B.2 fix: reuse port@0 if _generate already produced it (MIPI
+	# block); otherwise create a fresh one.
+	set port0_label "axis_subset_port0$axis_subset_inip"
+	set port0_node ""
+	foreach _child [pldt children $ports_node] {
+		if {[string match "*$port0_label*" $_child]} {
+			set port0_node $_child
+			break
+		}
+	}
+	if {[string_is_empty $port0_node]} {
+		set port0_node [create_node -n "port" -l $port0_label -u 0 -p $ports_node -d $dts_file]
+		add_prop "$port0_node" "reg" 0 int $dts_file
+		add_prop "$port0_node" "xlnx,video-format" 12 int $dts_file
+	}
 	if {[string match -nocase [hsi get_property IP_NAME $axis_subset_inip] "mipi_csi2_rx_subsystem"]} {
 		# MIPI endpoint already created in generate phase, skip the generic endpoint creation below
 		return
