@@ -278,54 +278,139 @@ proc dp_rxss14_generate {drv_handle} {
 	set ports_node [create_node -n "ports" -l dprx_ports$drv_handle -p ${node} -d $dts_file]
 	add_prop "$ports_node" "#address-cells" 1 int $dts_file
 	add_prop  "$ports_node" "#size-cells" 0 int $dts_file
-	set port0_node [create_node -n "port" -u 0 -l dprx_port$drv_handle -p $ports_node -d $dts_file]
-	add_prop  "$port0_node" "reg" 0 int $dts_file
-	add_prop "$port0_node" "xlnx,video-format" 0 int $dts_file
-	add_prop "$port0_node" "xlnx,video-width" 8 int $dts_file
-	set dprxip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "m_axis_video_stream1"]
-	foreach ip $dprxip {
-		set intfpins [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
-		set ip_mem_handles [hsi::get_mem_ranges $ip]
-		if {[llength $ip_mem_handles]} {
-			set dp_rx_node [create_node -n "endpoint" -l dprx_out$drv_handle -p $port0_node -d $dts_file]
-			gen_endpoint $drv_handle "dprx_out$drv_handle"
-			if {[string match -nocase [hsi::get_property IP_NAME $ip] "v_frmbuf_wr"]} {
-				add_prop  "$dp_rx_node" "remote-endpoint" $ip$drv_handle reference $dts_file
-				gen_remoteendpoint $drv_handle $ip$drv_handle
-				gen_frmbuf_wr_node $ip $drv_handle $ports_node $dts_file
-			} else {
-				add_prop  "$dp_rx_node" "remote-endpoint" $ip reference $dts_file
-				gen_remoteendpoint $drv_handle $ip$drv_handle
-			}
+
+	# Decide how many sink-side stream ports to generate.
+	# SST (xlnx,mode=0) only ever drives a single video stream, so we keep
+	# the legacy single port@0 node. MST (xlnx,mode=1) splits the link into
+	# xlnx,num-streams independent video streams, each of which needs its
+	# own port@N + remote frmbuf_wr endpoint and a matching dma in the
+	# vcap_dprx node. Anything else is conservatively treated as SST.
+	if {[string match -nocase $mode "1"]} {
+		set total_streams $num_streams
+	} else {
+		set total_streams 1
+	}
+
+	# Aggregate the frmbuf_wr endpoints across streams so that a single
+	# vcap_dprx node can be emitted with the full dmas / dma-names list.
+	set vcap_frmbuf_list {}
+
+	for {set stream_idx 0} {$stream_idx < $total_streams} {incr stream_idx} {
+		set stream_pin "m_axis_video_stream[expr {$stream_idx + 1}]"
+		# Preserve the legacy unsuffixed labels for the primary stream so
+		# that consumers (driver, kernel video pipeline) keep working in
+		# SST and in the first MST stream.
+		if {$stream_idx == 0} {
+			set port_label "dprx_port$drv_handle"
+			set endpoint_label "dprx_out$drv_handle"
 		} else {
-			set connectip [get_connect_ip $ip $intfpins $dtsi_file]
-			if {[llength $connectip]} {
-				set sdi_rx_node [create_node -n "endpoint" -l dprx_out$drv_handle -p $port0_node -d $dts_file]
-				gen_endpoint $drv_handle "dprx_out$drv_handle"
-				add_prop  "$dp_rx_node" "remote-endpoint" $connectip$drv_handle reference $dts_file
-				gen_remoteendpoint $drv_handle $connectip$drv_handle
-				if {[string match -nocase [hsi::get_property IP_NAME $connectip] "axi_vdma"] || [string match -nocase [hsi::get_property IP_NAME $connectip] "v_frmbuf_wr"]} {
-					gen_frmbuf_wr_node $connectip $drv_handle $ports_node $dts_file
+			set port_label "dprx_port${stream_idx}$drv_handle"
+			set endpoint_label "dprx_out${stream_idx}$drv_handle"
+		}
+
+		set port_node [create_node -n "port" -u $stream_idx -l $port_label -p $ports_node -d $dts_file]
+		add_prop  "$port_node" "reg" $stream_idx int $dts_file
+		add_prop "$port_node" "xlnx,video-format" 0 int $dts_file
+		add_prop "$port_node" "xlnx,video-width" 8 int $dts_file
+
+		set dprxip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $stream_pin]
+		foreach ip $dprxip {
+			set intfpins [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
+			set ip_mem_handles [hsi::get_mem_ranges $ip]
+			if {[llength $ip_mem_handles]} {
+				set dp_rx_node [create_node -n "endpoint" -l $endpoint_label -p $port_node -d $dts_file]
+				gen_endpoint $drv_handle $endpoint_label
+				if {[string match -nocase [hsi::get_property IP_NAME $ip] "v_frmbuf_wr"]} {
+					add_prop  "$dp_rx_node" "remote-endpoint" $ip$drv_handle reference $dts_file
+					gen_remoteendpoint $drv_handle $ip$drv_handle
+					lappend vcap_frmbuf_list [list $ip $stream_idx $endpoint_label]
+				} else {
+					add_prop  "$dp_rx_node" "remote-endpoint" $ip reference $dts_file
+					gen_remoteendpoint $drv_handle $ip$drv_handle
+				}
+			} else {
+				set connectip [get_connect_ip $ip $intfpins $dtsi_file]
+				if {[llength $connectip]} {
+					set sdi_rx_node [create_node -n "endpoint" -l $endpoint_label -p $port_node -d $dts_file]
+					gen_endpoint $drv_handle $endpoint_label
+					add_prop  "$sdi_rx_node" "remote-endpoint" $connectip$drv_handle reference $dts_file
+					gen_remoteendpoint $drv_handle $connectip$drv_handle
+					if {[string match -nocase [hsi::get_property IP_NAME $connectip] "axi_vdma"] || [string match -nocase [hsi::get_property IP_NAME $connectip] "v_frmbuf_wr"]} {
+						lappend vcap_frmbuf_list [list $connectip $stream_idx $endpoint_label]
+					}
 				}
 			}
 		}
 	}
+
+	# Emit a single vcap_dprx node aggregating every collected frmbuf_wr.
+	# For SST this collapses to one entry, matching the previous behaviour;
+	# for MST it produces port@0..port@N-1 with one dma per stream.
+	if {[llength $vcap_frmbuf_list] > 0} {
+		gen_vcap_dprx_node $drv_handle $dts_file $vcap_frmbuf_list
+	}
 }
 
 proc gen_frmbuf_wr_node {outip drv_handle port0_node dtsi_file} {
+        # Backwards-compatible single-stream wrapper around
+        # gen_vcap_dprx_node. Kept so any out-of-tree caller that still
+        # invokes the old proc continues to work.
+        set frmbuf_list [list [list $outip 0 dprx_out$drv_handle]]
+        gen_vcap_dprx_node $drv_handle $dtsi_file $frmbuf_list
+}
+
+# Generate the vcap_dprx node aggregating every frmbuf_wr endpoint feeding
+# the DP RX. frmbuf_list is a list of {ip stream_idx endpoint_label}
+# triples, one per active stream (1 for SST, num_streams for MST).
+proc gen_vcap_dprx_node {drv_handle dtsi_file frmbuf_list} {
         set bus_node [detect_bus_name $drv_handle]
         set vcap [create_node -n "vcap_dprx$drv_handle" -p $bus_node -d $dtsi_file]
         add_prop $vcap "compatible" "xlnx,video" string $dtsi_file
-        add_prop $vcap "dmas" "$outip 0" reference $dtsi_file
-        add_prop $vcap "dma-names" "port0" string $dtsi_file
+
+        # Build the dmas reference list and matching dma-names list. The
+        # add_prop "reference" type wraps the first entry in <&...>; for
+        # subsequent entries we explicitly close the previous angle bracket
+        # and open a new one with the &-prefix, mirroring the pattern used
+        # by the existing phys-list generation.
+        set dma_refs ""
+        set dma_names ""
+        set first 1
+        foreach entry $frmbuf_list {
+                set ip [lindex $entry 0]
+                set idx [lindex $entry 1]
+                if {$first} {
+                        set dma_refs "$ip 0"
+                        set first 0
+                } else {
+                        append dma_refs ">, <&$ip 0"
+                }
+                if {[string length $dma_names]} {
+                        append dma_names " "
+                }
+                append dma_names "port$idx"
+        }
+        add_prop $vcap "dmas" $dma_refs reference $dtsi_file 1
+        add_prop $vcap "dma-names" $dma_names stringlist $dtsi_file 1
+
         set vcap_ports_node [create_node -n "ports" -l vcap_ports$drv_handle -p $vcap -d $dtsi_file]
         add_prop $vcap_ports_node "#address-cells" 1 int $dtsi_file
         add_prop "$vcap_ports_node" "#size-cells" 0 int $dtsi_file
-	set vcap_port_node [create_node -n "port" -l vcap_port$drv_handle -u 0 -p $vcap_ports_node -d $dtsi_file]
-        add_prop "$vcap_port_node" "reg" 0 int $dtsi_file 1
-        add_prop "$vcap_port_node" "direction" input string $dtsi_file 1
-        set vcap_in_node [create_node -n "endpoint" -l $outip$drv_handle -p $vcap_port_node -d $dtsi_file]
-        add_prop "$vcap_in_node" "remote-endpoint" dprx_out$drv_handle reference $dtsi_file
+
+        foreach entry $frmbuf_list {
+                set ip [lindex $entry 0]
+                set idx [lindex $entry 1]
+                set ep_label [lindex $entry 2]
+                if {$idx == 0} {
+                        set port_label "vcap_port$drv_handle"
+                } else {
+                        set port_label "vcap_port${idx}$drv_handle"
+                }
+                set vcap_port_node [create_node -n "port" -l $port_label -u $idx -p $vcap_ports_node -d $dtsi_file]
+                add_prop "$vcap_port_node" "reg" $idx int $dtsi_file 1
+                add_prop "$vcap_port_node" "direction" input string $dtsi_file 1
+                set vcap_in_node [create_node -n "endpoint" -l $ip$drv_handle -p $vcap_port_node -d $dtsi_file]
+                add_prop "$vcap_in_node" "remote-endpoint" $ep_label reference $dtsi_file
+        }
 }
 
 proc dp_rx_add_hier_instances {drv_handle} {
