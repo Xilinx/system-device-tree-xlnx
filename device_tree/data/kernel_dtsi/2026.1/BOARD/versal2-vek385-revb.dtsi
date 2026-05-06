@@ -64,6 +64,14 @@
 		regulator-always-on;
 		regulator-boot-on;
 	};
+
+	/* CLK95314 OUT3 provides a dedicated 24 MHz LVDS reference clock to the USB3 PHY */
+	usb3_dp_phy_ref_clk: usb3-phy-ref-clk {
+		bootph-all;
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <24000000>;
+	};
 };
 
 /* u272 - TPS66993BAR usb, i2c, DP */
@@ -192,13 +200,6 @@
 					reg = <1>;
 					/* sfp */
 				};
-				i2c@2 {
-					#address-cells = <1>;
-					#size-cells = <0>;
-					reg = <2>;
-					/* usbdp */
-					/* u272 tps66993 FIXME */
-				};
 				i2c@3 {
 					#address-cells = <1>;
 					#size-cells = <0>;
@@ -288,5 +289,48 @@
 	fixed-link {
 		speed = <10000>;
 		full-duplex;
+	};
+};
+
+/* TI USB-C PD (TPS6699x) on PMC I2C + Versal combo USB-C / DP TX PHY. */
+&i2c8 {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+	clock-frequency = <400000>;
+
+	usb_pd: usb-pd@22 {
+		compatible = "ti,tps6699x";
+		reg = <0x22>;
+
+		connector {
+			compatible = "usb-c-connector";
+			label = "USB-C";
+			data-role = "dual";
+
+			ports {
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				port@1 {
+					reg = <1>;
+
+					tipd_connector_ep: endpoint {
+						remote-endpoint = <&usb3_dp_phy_ep>;
+					};
+				};
+			};
+		};
+	};
+};
+
+&usb3_dp_phy {
+	status = "okay";
+	clocks = <&usb3_dp_phy_ref_clk>;
+
+	port {
+		usb3_dp_phy_ep: endpoint {
+			remote-endpoint = <&tipd_connector_ep>;
+		};
 	};
 };
