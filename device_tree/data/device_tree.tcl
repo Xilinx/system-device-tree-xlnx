@@ -267,6 +267,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "ps7_usb" "usbps"
 	dict set ::sdtgen::namespacelist "psu_usb_xhci" "usbps"
 	dict set ::sdtgen::namespacelist "psv_usb_xhci" "usbps"
+	dict set ::sdtgen::namespacelist "pmc_ufs_xhci" "ufspsxc"
 	dict set ::sdtgen::namespacelist "vid_phy_controller" "vid_phy_ctrl"
 	dict set ::sdtgen::namespacelist "v_tc" "vtc"
 	dict set ::sdtgen::namespacelist "v_proc_ss" "vproc_ss"
