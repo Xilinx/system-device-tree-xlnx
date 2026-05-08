@@ -32,37 +32,14 @@ proc add_iba_properties {drv_handle port_node dts_file isp_index iba_index tile_
 
 #OBA_MP
 proc add_oba_properties_mp {drv_handle port_node dts_file isp_index oba_index tile_index} {
-	set config_properties {
-		"CONFIG.C_TILE0_ISP0_OBA0_MP_YUV420"
-		"CONFIG.C_TILE0_ISP0_OBA0_MP_YUV422"
-		"CONFIG.C_TILE0_ISP1_OBA0_MP_YUV420"
-		"CONFIG.C_TILE0_ISP1_OBA0_MP_YUV422"
-		"CONFIG.C_TILE1_ISP0_OBA0_MP_YUV420"
-		"CONFIG.C_TILE1_ISP0_OBA0_MP_YUV422"
-		"CONFIG.C_TILE1_ISP1_OBA0_MP_YUV420"
-		"CONFIG.C_TILE1_ISP1_OBA0_MP_YUV422"
-		"CONFIG.C_TILE2_ISP0_OBA0_MP_YUV420"
-		"CONFIG.C_TILE2_ISP0_OBA0_MP_YUV422"
-		"CONFIG.C_TILE2_ISP1_OBA0_MP_YUV420"
-		"CONFIG.C_TILE2_ISP1_OBA0_MP_YUV422"
-	}
+	set prefix "CONFIG.C_TILE${tile_index}_ISP${isp_index}_OBA${oba_index}_"
 	set mp_data_format ""
-	set sp_data_format ""
-	foreach config_name $config_properties {
-		set is_enabled [get_ip_property $drv_handle $config_name]
-		if {$is_enabled eq "true"} {
-			if {[string match *MP* $config_name]} {
-				set format_type "MP"
-				set format_name [string range $config_name [expr [string last "_" $config_name] + 1] end]
-				set mp_data_format $format_name
-			} elseif {[string match *SP* $config_name]} {
-				set format_type "SP"
-				set format_name [string range $config_name [expr [string last "_" $config_name] + 1] end]
-				set sp_data_format $format_name
-			}
+	foreach fmt {YUV420 YUV422} {
+		if {[get_ip_property $drv_handle "${prefix}MP_${fmt}"] eq "true"} {
+			set mp_data_format $fmt
+			break
 		}
 	}
-	set prefix "CONFIG.C_TILE${tile_index}_ISP${isp_index}_OBA${oba_index}_"
 	set mp_bpp [get_ip_property $drv_handle "${prefix}MP_BPP"]
 	set mp_ppc [get_ip_property $drv_handle "${prefix}PPC"]
 	add_prop "$port_node" "xlnx,oba${oba_index}_mp_bpp" $mp_bpp int $dts_file
@@ -73,36 +50,14 @@ proc add_oba_properties_mp {drv_handle port_node dts_file isp_index oba_index ti
 
 #OBA_SP
 proc add_oba_properties_sp {drv_handle port_node dts_file isp_index oba_index tile_index} {
-	set config_properties {
-		"CONFIG.C_TILE0_ISP0_OBA0_SP_YUV420"
-		"CONFIG.C_TILE0_ISP0_OBA0_SP_YUV422"
-		"CONFIG.C_TILE0_ISP1_OBA0_SP_YUV420"
-		"CONFIG.C_TILE0_ISP1_OBA0_SP_YUV422"
-		"CONFIG.C_TILE1_ISP0_OBA0_SP_YUV420"
-		"CONFIG.C_TILE1_ISP0_OBA0_SP_YUV422"
-		"CONFIG.C_TILE1_ISP1_OBA0_SP_YUV420"
-		"CONFIG.C_TILE1_ISP1_OBA0_SP_YUV422"
-		"CONFIG.C_TILE2_ISP0_OBA0_SP_YUV420"
-		"CONFIG.C_TILE2_ISP0_OBA0_SP_YUV422"
-		"CONFIG.C_TILE2_ISP1_OBA0_SP_YUV420"
-		"CONFIG.C_TILE2_ISP1_OBA0_SP_YUV422"
-	}
+	set prefix "CONFIG.C_TILE${tile_index}_ISP${isp_index}_OBA${oba_index}_"
 	set sp_data_format ""
-	foreach config_name $config_properties {
-		set is_enabled [get_ip_property $drv_handle $config_name]
-		if {$is_enabled eq "true"} {
-			if {[string match *MP* $config_name]} {
-				set format_type "MP"
-				set format_name [string range $config_name [expr [string last "_" $config_name] + 1] end]
-				set mp_data_format $format_name
-			} elseif {[string match *SP* $config_name]} {
-				set format_type "SP"
-				set format_name [string range $config_name [expr [string last "_" $config_name] + 1] end]
-				set sp_data_format $format_name
-			}
+	foreach fmt {YUV420 YUV422} {
+		if {[get_ip_property $drv_handle "${prefix}SP_${fmt}"] eq "true"} {
+			set sp_data_format $fmt
+			break
 		}
 	}
-	set prefix "CONFIG.C_TILE${tile_index}_ISP${isp_index}_OBA${oba_index}_"
 	set sp_bpp [get_ip_property $drv_handle "${prefix}SP_BPP"]
 	set sp_ppc [get_ip_property $drv_handle "${prefix}PPC"]
 	add_prop "$port_node" "xlnx,oba${oba_index}_sp_bpp" $sp_bpp int $dts_file
