@@ -29,7 +29,8 @@
 
         set pmcbridge [hsi::get_cells -hier -filter IP_NAME==pmcbridge]
         if {![string_is_empty $pmcbridge]} {
-                [return_tree_obj $drv_handle] append $node compatible "\ \, \"xlnx,pmc-ospi\""
+                add_prop $node "bootph-all" boolean $dtsi_name
+                [return_tree_obj $drv_handle] append $node compatible "\ \, \"xlnx,pmc-ospi\" , \"amd,pmc-ospi\" \, \"cdns,qspi-nor\""
         }
     }
 
