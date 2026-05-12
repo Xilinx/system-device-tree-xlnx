@@ -5652,6 +5652,7 @@ proc gen_mb_ccf_subnode {drv_handle name freq reg} {
 	add_prop $clk_subnode "clock-output-names" $clk_subnode_name string $default_dts
 	add_prop $clk_subnode "reg" $reg int $default_dts
 	add_prop $clk_subnode "clock-frequency" $freq int $default_dts
+	add_prop $clk_subnode "bootph-all" "" boolean $default_dts
 }
 
 proc generate_mb_ccf_node {drv_handle} {
