@@ -4277,6 +4277,18 @@ proc find_decoupler_for_rp {rp_cell_name} {
             }
         }
     }
+    # Fallback: when the RP exposes individual interrupt ports, the static
+    # design may place an xlconcat/ilconcat between the RP and the decoupler.
+    foreach concat [hsi::get_cells -hier -filter {IP_NAME==xlconcat||IP_NAME==ilconcat}] {
+        foreach cin [hsi::get_pins -of_objects $concat -filter {DIRECTION==I}] {
+            foreach src_pin [get_source_pins $cin] {
+                set c [hsi::get_cells -of_objects $src_pin]
+                if {[llength $c] && [hsi get_property NAME $c] eq $rp_cell_name} {
+                    return [find_decoupler_for_xlconcat $concat]
+                }
+            }
+        }
+    }
     return ""
 }
 
