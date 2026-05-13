@@ -445,7 +445,11 @@
                             set intr_val1 [string trimleft $intr_val1 "< "]
                             lappend intr_val1 $intr_val
                             set intr_name [pldt get $node interrupt-names]
-                            append intr_names $intr_name " , \"$int1\" , \"$int2\""
+                            if {$connected_ipname == "axi_mcdma"} {
+                                set intr_names "$intr_name , $int_names"
+                            } else {
+                                append intr_names $intr_name " , \"$int1\" , \"$int2\""
+                            }
                         } else {
                             set intr_val1 $intr_val
                             set intr_names $int_names
