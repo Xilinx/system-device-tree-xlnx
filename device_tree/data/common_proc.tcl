@@ -2622,6 +2622,7 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping e2000000 label gic_a78
 				dict set def_ps_mapping eb9a0000 label gic_r52
 
+				dict set def_ps_mapping edeb8000 label usb3_dp_phy
 				dict set def_ps_mapping eba00000 label r52_0a_atcm_global
 				dict set def_ps_mapping eba10000 label r52_0a_btcm_global
 				dict set def_ps_mapping eba20000 label r52_0a_ctcm_global
