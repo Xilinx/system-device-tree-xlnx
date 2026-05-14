@@ -86,8 +86,7 @@
         set_drv_conf_prop $drv_handle C_IVAR_RESET_VALUE "xlnx,ivar-rst-val" $node
         set_drv_conf_prop $drv_handle C_ADDR_WIDTH "xlnx,addr-width" $node
 
-        set variant [hsi get_property CONFIG.C_FAMILY [hsi get_cells -hier $ip]]
-        if {[string match -nocase $variant "spartanuplus"]} {
+        if {[llength [hsi get_cells -hier -filter IP_NAME==microblaze_riscv]] > 0} {
             add_prop $node "interrupt-parent" "cpu0_intc" reference "pl.dtsi"
         }
     }
