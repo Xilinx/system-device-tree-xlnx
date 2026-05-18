@@ -201,10 +201,6 @@
 		add_prop $node "riscv,isa" "${riscv_isa_entry}" string "pl.dtsi"
 
 		add_prop $node "riscv,isa-extensions" $ext stringlist "pl.dtsi"
-		set cpu_intc [create_node -n "interrupt-controller" -l "cpu${nr}_intc" -d "pl.dtsi" -p $node]
-		add_prop $cpu_intc "compatible" "riscv,cpu-intc" string "pl.dtsi"
-		add_prop $cpu_intc "interrupt-controller" "" boolean "pl.dtsi"
-		add_prop $cpu_intc "#interrupt-cells" 1 int "pl.dtsi"
 	}
 
 	# Speical handling for xlnx,memory-ip-list
