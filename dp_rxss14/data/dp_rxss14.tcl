@@ -435,18 +435,25 @@ proc dp_rx_add_hier_instances {drv_handle} {
 		}
 	}
 
-	dict set ip_subcores "clk_wizard" "clkWiz"
-	dict set ip_subcores "clkx5_wiz" "clkWiz"
+	dict set ip_subcores "clk_wizard" "xlnx,clk-wiz"
+	dict set ip_subcores "clkx5_wiz" "xlnx,clk-wiz"
 
+	# The DP Rx driver consumes only the "xlnx,clk-wiz" phandle property
+	# (renamed from the legacy camelCase "clkWiz-connected" to match the
+	# v-dp-rxss dt-binding). It auto-detects the connected wizard variant
+	# (xlnx,clkx5-wiz-1.0 vs xlnx,clk-wizard-1.0) from the referenced
+	# node's compatible string, so no separate "-type" / "-present" flag
+	# is exported here. "xlnx,clk-wiz-present" is kept for back-compat
+	# tooling that needs to know whether a wizard exists in the design.
 	set clk_ip_handle [set_ip_handles_for_ss_subcores clkx5_wiz $drv_handle]
 	if {[string_is_empty $clk_ip_handle]} {
 		set clk_ip_handle [set_ip_handles_for_ss_subcores clk_wizard $drv_handle]
 	}
 	if {![string_is_empty $clk_ip_handle]} {
-		add_prop "$node" "clkWiz-present" 1 int $dts_file
-		add_prop "$node" "clkWiz-connected" $clk_ip_handle reference $dts_file
+		add_prop "$node" "xlnx,clk-wiz-present" 1 int $dts_file
+		add_prop "$node" "xlnx,clk-wiz" $clk_ip_handle reference $dts_file
 	} else {
-		add_prop "$node" "clkWiz-present" 0 int $dts_file
+		add_prop "$node" "xlnx,clk-wiz-present" 0 int $dts_file
 	}
 
 	set timers [set_ip_handles_for_ss_subcores axi_timer $drv_handle]
