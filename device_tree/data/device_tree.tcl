@@ -2080,6 +2080,7 @@ proc gen_r5_trustzone_config {} {
 
 proc proc_mapping {} {
 	global is_versal_net_platform
+	global is_versal_2ve_2vm_platform
 	global linear_spi_list
 	global monitor_ip_exclusion_list
 	global 64_bit_processor_list
@@ -2101,6 +2102,7 @@ proc proc_mapping {} {
 		IP_NAME==ddr3 || IP_NAME==ddr4 || IP_NAME==mig_7series}]"
 	global dup_periph_handle
 	set pmc_scan 0
+	set pmc_i2c_scan 0
         foreach val $proc_list {
 		set iptype [hsi get_property IP_NAME [hsi::get_cells -hier $val]]
 		# For devices where we have multiple PMCs, there can be some wrong mappings for SECONDARY PMCs
@@ -2278,6 +2280,10 @@ proc proc_mapping {} {
 				set temp [lindex $temp 0]
 			}
 
+			if {$iptype == "cortexa78" && $temp == "i2c8"} {
+				set pmc_i2c_scan 1
+			}
+
 			if {[string match -nocase $ipname "psv_rcpu_gic"] } {
 				set temp "gic_r5"
 			} elseif {$ipname in {"psx_rcpu_gic" "rcpu_gic"}} {
@@ -2342,6 +2348,10 @@ proc proc_mapping {} {
 		}
 	    #}]"
 		
+	}
+
+	if {$is_versal_2ve_2vm_platform && !$pmc_i2c_scan} {
+		set_memmap i2c8 a53 "0x0 0xf1000000 0x0 0x1000"
 	}
 	if {[catch [set_updated_hier_info $hier_mapped_drv_list] msg]} {
 	}
