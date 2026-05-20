@@ -273,12 +273,12 @@ proc get_interrupt_sources {periph_handle } {
    lappend interrupt_pins
    set interrupt_pins [hsi::get_pins -of_objects $periph_handle -filter {TYPE==INTERRUPT && DIRECTION==I}]
    # For dfx_decoupler WIDTH>1, HSI omits TYPE==INTERRUPT on the bus pin.
-   # Use rp_int_INTERRUPT* glob to get individual bit pins (e.g. rp_int_INTERRUPT[0]),
+   # Use rp_int*INTERRUPT* glob to get individual bit pins (e.g. rp_intf_2_INTERRUPT),
    # each traceable by get_intr_src_pins to its RM IP interrupt source.
    if {[llength $interrupt_pins] == 0 && \
            [string match -nocase [hsi get_property IP_NAME $periph_handle] "dfx_decoupler"]} {
        set interrupt_pins [hsi::get_pins -of_objects $periph_handle \
-               -filter {NAME=~rp_int_INTERRUPT*&&DIRECTION==I}]
+               -filter {NAME=~rp_int*INTERRUPT*&&DIRECTION==I}]
    }
    foreach interrupt_pin $interrupt_pins {
        set source_pins [get_intr_src_pins $interrupt_pin]
