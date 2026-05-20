@@ -174,4 +174,130 @@
                         }
                 }
         }
+
+        # Check if video pins are connected on ps_wizard_0 or ps_wizard_0_mmi_0
+        set video_s0_connected 0
+        set video_s1_connected 0
+        set live_video0_connected 0
+        set live_video1_connected 0
+        set aud_index -1
+        set index -1
+        set bypass_index -1
+
+        set ps_wiz_cell [hsi::get_cells -hier ps_wizard_0 -quiet]
+        set ps_wiz_mmi_cell [hsi::get_cells -hier ps_wizard_0_mmi_0 -quiet]
+
+        # Data-driven video pin connectivity checks
+        # Each entry: {flag_var intf_pin fallback_pin intf_label pin_label}
+        set video_pin_checks {
+            {video_s0_connected    video_s0       video_s0_active_video     {video_s0} {video_s0}}
+            {video_s1_connected    video_s1       video_s1_active_video     {video_s1} {video_s1}}
+            {live_video0_connected vp0_axi_video  s0_timing_in_active_video {live_video0 (vp0_axi_video)} {live_video0 (s0_timing_in_active_video)}}
+            {live_video1_connected vp1_axi_video  vp1_video_in_tdata        {live_video1 (vp1_axi_video)} {live_video1 (vp1_video_in_tdata)}}
+        }
+
+        foreach check $video_pin_checks {
+            lassign $check flag_var intf_name fallback_pin intf_label pin_label
+            foreach cell [list $ps_wiz_cell $ps_wiz_mmi_cell] {
+                if {$cell eq "" || [set $flag_var]} continue
+                # Check interface pin
+                set intf [hsi::get_intf_pins $intf_name -of_objects $cell -quiet]
+                if {$intf ne ""} {
+                    set intf_net [hsi::get_intf_nets -of_objects $intf -quiet]
+                    if {[llength $intf_net] > 0} {
+                        set $flag_var 1
+                        dtg_debug "$intf_label is connected on $cell (intf)"
+                        continue
+                    }
+                }
+                # Fallback: check individual pin
+                set pin [hsi::get_pins $fallback_pin -of_objects $cell -quiet]
+                if {$pin ne ""} {
+                    set src_pins [get_source_pins $pin]
+                    if {[llength $src_pins] > 0} {
+                        set $flag_var 1
+                        dtg_debug "$pin_label is connected on $cell (pin)"
+                    }
+                }
+            }
+        }
+
+        # Resolve PL clock indices from clkx5_wiz for video and audio clocks
+        # Each entry: pin_name result_index_var result_ip_var
+        foreach {pin_name result_idx_var result_ip_var} {
+            pl_mmi_dc_2x_clk     index        connected_ip
+            pl_mmi_dc_1x_clk     bypass_index bypass_connected_ip
+            pl_mmi_dc_i2s_s0_clk aud_index    aud_clk_connected_ip
+        } {
+            set $result_idx_var -1
+            set $result_ip_var ""
+            set pl_pin [hsi::get_pins $pin_name -of_objects [hsi::get_cells -hier ps_wizard_0_mmi_0] -quiet]
+            if {$pl_pin eq ""} {
+                dtg_warning "$pin_name pin not found on ps_wizard_0_mmi_0"
+                continue
+            }
+            set src_pin [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier ps_wizard_0_mmi_0] $pl_pin]]
+            if {[llength $src_pin] == 0} {
+                dtg_warning "$pin_name has no source pin connected"
+                continue
+            }
+            set pinobj [hsi::get_pins $src_pin]
+            if {$pinobj eq ""} continue
+            set ip [hsi::get_cells -of_objects $pinobj -quiet]
+            if {$ip eq "" || [hsi get_property IP_NAME $ip] != "clkx5_wiz"} {
+                dtg_warning "clkx5_wiz IP is not connected to $pin_name source pin"
+                continue
+            }
+            set $result_ip_var $ip
+            set is_clk_wiz_dyn_reconfig [hsi get_property CONFIG.USE_DYN_RECONFIG $ip]
+            if {$is_clk_wiz_dyn_reconfig == "false"} {
+                dtg_warning "clkx5_wiz IP is not dynamic reconfigurable"
+                continue
+            }
+            set clkout_list [split [hsi get_property CONFIG.CLKOUT_PORT $ip] ","]
+            set idx [lsearch -exact $clkout_list $src_pin]
+            if {$idx < 0} {
+                # Check if the string ends with "_oN" (N=1-4)
+                if {[string match "*_o\[1-4\]" $src_pin]} {
+                    set cleaned [string range $src_pin 0 end-3]
+                    set idx_list [lsearch -all $clkout_list $cleaned]
+                    set drives_list [split [hsi get_property CONFIG.CLKOUT_DRIVES $ip] ","]
+                    foreach i $idx_list {
+                        if {[lindex $drives_list $i] eq "MBUFGCE"} {
+                            set idx $i
+                        }
+                    }
+                }
+                if {$idx < 0} {
+                    dtg_warning "$pin_name clock index not found in $ip"
+                }
+            }
+            set $result_idx_var $idx
+        }
+
+        if {$index < 0 && ($live_video0_connected || $live_video1_connected || $video_s0_connected || $video_s1_connected)} {
+            error "pl_mmi_dc_2x_clk has no source pin connected which is required in case of live video"
+        }
+
+        # Build clock-names and clocks dynamically based on connected PL clocks
+        set clk_names [list "mmi_pll" "ps_vid_clk" "stc_ref_clk"]
+        set clk_refs [list "<&versal2_clk MMIPLL>" "<&versal2_clk DC_PIXEL>" "<&versal2_clk MMI_AUX1_REF>"]
+
+        if {$index >= 0} {
+            lappend clk_names "pl_vid_func_clk"
+            lappend clk_refs "<&$connected_ip $index>"
+        }
+        if {$bypass_index >= 0} {
+            lappend clk_names "pl_vid_bypass_clk"
+            lappend clk_refs "<&$bypass_connected_ip $bypass_index>"
+        }
+        if {$aud_index >= 0} {
+            lappend clk_names "pl_aud_clk"
+            lappend clk_refs "<&$aud_clk_connected_ip $aud_index>"
+        }
+
+        if {$index >= 0 || $bypass_index >= 0 || $aud_index >= 0} {
+            add_prop $node clock-names "[join $clk_names " "]" stringlist $dts_file
+            add_prop $node clocks "[join $clk_refs ", "]" noformating $dts_file
+        }
     }
