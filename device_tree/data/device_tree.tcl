@@ -1004,7 +1004,7 @@ proc gen_afi_node {} {
 			}
 			# Fallback for Versal NoC DFX: dfx_decoupler uses scalar interrupt pins,
 			# not AXI, so get_connected_stream_ip finds nothing.  Identify the bridge
-			# by tracing rp_int_INTERRUPT INPUT pins to the RP container's OUTPUT port
+			# by tracing rp_int*INTERRUPT INPUT pins to the RP container's OUTPUT port
 			# (ip2intc_irpt / dout) on the static-design net.
 			if {![info exists rp_region_dict] || ![dict exists $rp_region_dict $rp]} {
 				set rp_name [hsi get_property NAME [hsi::get_cells -hier $rp]]
@@ -1757,6 +1757,16 @@ Generates system device tree based on args given in:
 	set peri_list [move_match_elements_to_top $peri_list "clk_wiz"]
 	set peri_list [move_match_elements_to_top $peri_list "clk_wizard"]
 	set peri_list [move_match_elements_to_top $peri_list "clkx5_wiz"]
+
+	# Ensure BLOCK_CONTAINER child cells are filtered from peri_list so RP devices are excluded from static DT generation
+	if {$rm_xsa_exist != 0} {
+		foreach pr_region [hsi::get_cells -hier -filter BD_TYPE==BLOCK_CONTAINER] {
+			hsi::current_hw_instance [hsi::get_cells -hier $pr_region]
+			set rp_cells [hsi::get_cells]
+			hsi::current_hw_instance
+			foreach c $rp_cells {set peri_list [lsearch -all -inline -not -exact $peri_list $c]}
+		}
+	}
 
 	set proclist [get_valid_proc_list]
 	set processor_ip_list [list]

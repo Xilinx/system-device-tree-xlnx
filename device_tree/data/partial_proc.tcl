@@ -358,7 +358,7 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 	file delete -force "$rm_xsa_path"
 
 	# Versal NoC DFX fallback: replicate gen_afi_node's bridge detection for
-	# the RM context.  Trace rp_int_INTERRUPT INPUT pins back to the RP
+	# the RM context.  Trace rp_int*INTERRUPT INPUT pins back to the RP
 	# container's OUTPUT port (ip2intc_irpt / dout) on the combined-design net.
 	if {!$is_bridge_en || \
 			![info exists rp_region_dict] || \
@@ -406,9 +406,14 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 
 		set rp_info [get_rprm_for_drv $drv_handle]
 		if {[llength $rp_info] != 0} {
+			set rp_inst [lindex $rp_info 0]
+			# Skip devices that belong to a different RP
+			if {![string match -nocase $rp_inst $rp_cell]} {
+				continue
+			}
 			if {$skip == 0} {
-				set rp_inst [lindex $rp_info 0]
-				set fpga_inst [regexp -inline {\d+} $rp_inst]
+				# Derive fpga_PR index from the target RP
+				set fpga_inst [regexp -inline {\d+} $rp_cell]
 				if {$fpga_inst eq ""} {
 					set fpga_inst $rp_inst
 				}
@@ -436,7 +441,7 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 					add_prop "${pr_node}" "fpga-bridges" "$connectip" reference $dts 1
 				}
 				add_prop $pr_node "partial-fpga-config" "" boolean $dts 1
-				set $skip 1
+				set skip 1
 			}
 
 			set ip_name [get_ip_property $drv_handle IP_NAME]

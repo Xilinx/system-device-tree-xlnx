@@ -4258,14 +4258,14 @@ proc get_decoupler_static_output_pins {dec_handle} {
     return $pins
 }
 
-# Return the dfx_decoupler whose rp_int_INTERRUPT INPUT net is driven by the
+# Return the dfx_decoupler whose rp_int*INTERRUPT INPUT net is driven by the
 # named RP container cell, or an empty string if none is found.
 # Used as a Versal NoC DFX fallback when AXI-based bridge detection finds no
 # bridge for a given RP (scalar interrupt pins carry no AXI interface).
 proc find_decoupler_for_rp {rp_cell_name} {
     foreach dec [hsi::get_cells -hier -filter {IP_NAME==dfx_decoupler}] {
         set rp_intr_pins [hsi::get_pins -of_objects $dec \
-                -filter {NAME=~rp_int_INTERRUPT*&&DIRECTION==I}]
+                -filter {NAME=~rp_int*INTERRUPT*&&DIRECTION==I}]
         foreach rp_pin $rp_intr_pins {
             set net [hsi::get_nets -of_objects $rp_pin]
             if {[llength $net] == 0} continue
@@ -4293,14 +4293,14 @@ proc find_decoupler_for_rp {rp_cell_name} {
     return ""
 }
 
-# Return the dfx_decoupler whose rp_int_INTERRUPT INPUT pin is sourced by
+# Return the dfx_decoupler whose rp_int*INTERRUPT INPUT pin is sourced by
 # xlconcat_periph, or an empty string if none is found.
 # HSI cannot trace a multi-bit xlconcat dout through TYPE==INTERRUPT, so for
 # RM designs we walk each decoupler's RP-side pins to locate the match.
 proc find_decoupler_for_xlconcat {xlconcat_periph} {
     foreach dec [hsi::get_cells -hier -filter {IP_NAME==dfx_decoupler}] {
         set rp_pins [hsi::get_pins -of_objects $dec \
-                -filter {NAME=~rp_int_INTERRUPT*&&DIRECTION==I}]
+                -filter {NAME=~rp_int*INTERRUPT*&&DIRECTION==I}]
         foreach rp_pin $rp_pins {
             foreach src_pin [get_source_pins $rp_pin] {
                 set src_cell [hsi::get_cells -of_objects $src_pin]
