@@ -1595,13 +1595,19 @@ proc gen_zynqmp_pinctrl {} {
        }
 }
 
-proc move_match_elements_to_top {peri_list pattern} {
+proc move_match_elements_to_top {peri_list pattern {match_cell_name 0}} {
 	set matchedList {}
 	set nonMatchedList {}
 
 	foreach drv_handle $peri_list {
 		set ip_name [hsi get_property IP_NAME $drv_handle]
-		if {[string match -nocase $pattern $ip_name]} {
+		set match [string match -nocase $pattern $ip_name]
+		if {$match && $match_cell_name} {
+			if {![string match -nocase "*${pattern}*" $drv_handle]} {
+				set match 0
+			}
+		}
+		if {$match} {
 			lappend matchedList $drv_handle
 		} else {
 			lappend nonMatchedList $drv_handle
@@ -1752,7 +1758,7 @@ Generates system device tree based on args given in:
 
 	set list_offiles {}
 	set peri_list [hsi::get_cells -hier]
-	set peri_list [move_match_elements_to_top $peri_list "axi_gpio"]
+	set peri_list [move_match_elements_to_top $peri_list "axi_gpio" 1]
 	set peri_list [move_match_elements_to_top $peri_list "axi_intc"]
 	set peri_list [move_match_elements_to_top $peri_list "clk_wiz"]
 	set peri_list [move_match_elements_to_top $peri_list "clk_wizard"]
