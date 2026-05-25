@@ -34,6 +34,8 @@
         }
         pldt unset $node "clock-frequency"
         set keyval [pldt append $node compatible "\ \, \"xlnx,axi-uart16550\""]
+        set keyval [pldt append $node compatible "\ \, \"ns16550a\""]
+
     }
 
 
