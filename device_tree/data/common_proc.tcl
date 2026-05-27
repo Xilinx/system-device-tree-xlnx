@@ -3872,19 +3872,33 @@ proc get_intr_type {intc_name ip_name port_name} {
 	set intr_pin [hsi::get_pins -of_objects $ip $port_name]
 	set sensitivity ""
 	if {[llength $intr_pin] >= 1} {
-		# For axi_intc cascade mode, check sink pin sensitivity (irq output has none)
-		set pin_dir [hsi get_property DIRECTION $intr_pin]
-		if {[string match -nocase $pin_dir "O"] && [string match -nocase [hsi get_property IP_NAME $ip] "axi_intc"]} {
-			set sink_pins [get_sink_pins $intr_pin]
-			if {[llength $sink_pins] > 0} {
-				set sink_pin [lindex $sink_pins 0]
-				set sensitivity [hsi get_property SENSITIVITY $sink_pin]
+		set sensitivity [hsi get_property SENSITIVITY $intr_pin]
+		if {[string_is_empty $sensitivity] && [string match -nocase [hsi get_property IP_NAME $ip] "axi_intc"]} {
+			set pin_dir [hsi get_property DIRECTION $intr_pin]
+			if {[string match -nocase $pin_dir "O"]} {
+				set sink_pins [get_sink_pins $intr_pin]
+				if {[llength $sink_pins] > 0} {
+					set sink_pin [lindex $sink_pins 0]
+					set sensitivity [hsi get_property SENSITIVITY $sink_pin]
+				}
 				if {[string_is_empty $sensitivity]} {
-					set sensitivity "LEVEL_HIGH"
+					set irq_is_level [hsi get_property CONFIG.C_IRQ_IS_LEVEL $ip]
+					set irq_active [hsi get_property CONFIG.C_IRQ_ACTIVE $ip]
+					if {$irq_is_level == 0} {
+						if {$irq_active == 1} {
+							set sensitivity "EDGE_RISING"
+						} else {
+							set sensitivity "EDGE_FALLING"
+						}
+					} else {
+						if {$irq_active == 1} {
+							set sensitivity "LEVEL_HIGH"
+						} else {
+							set sensitivity "LEVEL_LOW"
+						}
+					}
 				}
 			}
-		} else {
-			set sensitivity [hsi get_property SENSITIVITY $intr_pin]
 		}
 	}
 	set intc_type [hsi get_property IP_NAME $intc ]
