@@ -1752,7 +1752,6 @@ Generates system device tree based on args given in:
 
 	set list_offiles {}
 	set peri_list [hsi::get_cells -hier]
-	set peri_list [move_match_elements_to_top $peri_list "axi_gpio"]
 	set peri_list [move_match_elements_to_top $peri_list "axi_intc"]
 	set peri_list [move_match_elements_to_top $peri_list "clk_wiz"]
 	set peri_list [move_match_elements_to_top $peri_list "clk_wizard"]
