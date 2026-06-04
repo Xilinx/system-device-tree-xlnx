@@ -1,0 +1,87 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * dts file for AMD SCU200 revA
+ *
+ * (C) Copyright 2025-2026, Advanced Micro Devices, Inc.
+ *
+ * Michal Simek <michal.simek@amd.com>
+ */
+
+
+&{/} {
+	model = "MB-V SCU200 revA";
+	compatible = "amd,mbv-scu200-revA", "amd,mbv-scu200", "amd,mbv";
+};
+
+&axi_ethernet_0 {
+	phy-handle = <&phy0>;
+
+	mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		phy0: ethernet-phy@1 { /* u42 - DP83867 */
+			#phy-cells = <1>;
+			compatible = "ethernet-phy-id2000.a231";
+			reg = <1>;
+			ti,dp83867-rxctrl-strap-quirk;
+			/* reset-gpios = <&gpio 77 GPIO_ACTIVE_LOW>; TBD */
+			reset-assert-us = <2500>;
+			reset-deassert-us = <500>;
+		};
+	};
+};
+
+&axi_iic_0 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	i2carb: i2c-arbitrator@72 { /* u75 */
+		compatible = "nxp,pca9541";
+		reg = <0x72>;
+
+		i2carb1: i2c-arb {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			eeprom_user: eeprom@57 { /* also at address 0x5f - 1024Kbit */
+				bootph-all;
+				compatible = "atmel,24c1025"; /* st 24FC1025T */
+				reg = <0x57>;
+			};
+		};
+	};
+};
+
+&pmcbridge_0_pmcl_ospi_0 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	clocks = <&clk_cpu_0>;
+	cdns,fifo-depth = <256>;
+        cdns,fifo-width = <4>;
+        #address-cells = <1>;
+        #size-cells = <0>;
+
+	flash@0 {
+		bootph-all;
+		compatible = "jedec,spi-nor"; /* mt35xu01g */
+		reg = <0>;
+		#address-cells = <1>;
+		#size-cells = <1>;
+		cdns,read-delay = <0>;
+		cdns,tshsl-ns = <0>;
+		cdns,tsd2d-ns = <0>;
+		cdns,tchsh-ns = <10>;
+		cdns,tslch-ns = <10>;
+		spi-tx-bus-width = <8>;
+		spi-rx-bus-width = <8>;
+		spi-max-frequency = <20000000>;
+		no-wp;
+
+		/* reset-gpios = <&gpio 0 GPIO_ACTIVE_LOW>; TBD */
+		partition@0 {
+			label = "spi0-flash0";
+			reg = <0 0x8000000>;
+		};
+	};
+};
