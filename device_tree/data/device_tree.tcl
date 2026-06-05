@@ -3,7 +3,7 @@
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # Michal SIMEK <monstr@monstr.eu>
 #
@@ -1181,6 +1181,7 @@ proc gen_board_info {} {
 		"xc2vp3402" {
 			set variant "Versal_2VP"
 		}
+		"xc2vp3102" -
 		"xc2vp3202" {
 			set variant "Versal_2VP_P"
 		}

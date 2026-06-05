@@ -449,7 +449,7 @@ proc set_hw_family {proclist} {
 				set design_family "versal"
 				set ps_design 1
 				set apu_proc_ip "psv_cortexa72"
-				if {$part_num in {"xc2vp3602" "xc2vp3202" "xc2vp3402" "xc2vp3502"}} {
+				if {$part_num in {"xc2vp3102" "xc2vp3202" "xc2vp3402" "xc2vp3502" "xc2vp3602"}} {
 					set is_versal_2vp_platform 1
 				}
 			} "psu_cortexa53" {
