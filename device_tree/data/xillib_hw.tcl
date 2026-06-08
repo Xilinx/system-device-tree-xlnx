@@ -201,7 +201,7 @@ proc get_other_intf_pin { intf_net given_intf_pin} {
         
         #set cell_type [hsi get_property IP_NAME $other_cell]
         set cell_type [hsi get_property BD_TYPE $other_cell]
-        if { [ string match -nocase $cell_type "block_container" ] } {
+        if { $cell_type in {"block_container" "RBD"}} {
             set other_bdry_intf_net [get_other_intf_net $other_intf_pin $intf_net]
             if { [llength $other_bdry_intf_net] == 0 } {
                 continue
@@ -498,7 +498,7 @@ proc get_real_source_pin_traverse_in { pin } {
     
     set ipname [hsi get_property IP_NAME [hsi::get_cells -of_objects $pin]]
     set source_type [hsi get_property BD_TYPE [hsi::get_cells -of_objects $pin]]
-    if { [ string match -nocase $source_type "block_container" ] || [ string match -nocase $ipname "versal_cips" ] || [ string match -nocase $ipname "pspmc" ] || [ string match -nocase $ipname "psxl" ] || [ string match -nocase $ipname "psx_wizard" ] || [ string match -nocase $ipname "pmcps" ] || [ string match -nocase $ipname "ps_wizard" ] } {
+    if { ($source_type in {"block_container" "RBD"}) || ($ipname in {"versal_cips" "pspmc" "psxl" "psx_wizard" "pmcps" "ps_wizard"}) } {
 
         set lower_net [hsi::get_nets -boundary_type lower -of_objects $pin]
         set upper_net [hsi::get_nets -boundary_type upper -of_objects $pin]
@@ -707,7 +707,7 @@ proc get_real_sink_pins_traverse_in { test_pin } {
     }
     set ipname [hsi get_property IP_NAME [hsi::get_cells -of_objects $test_pin]]
     set source_type [hsi get_property BD_TYPE [hsi::get_cells -of_objects $test_pin]]
-    if { [ string match -nocase $source_type "block_container" ] || [ string match -nocase $ipname "ps11" ] || [ string match -nocase $ipname "ps11xgui" ] || [ string match -nocase $ipname "psxt" ] || [ string match -nocase $ipname "versal_cips" ] || [ string match -nocase $ipname "pspmc" ] || [ string match -nocase $ipname "psxl" ] || [ string match -nocase $ipname "psx_wizard" ] || [ string match -nocase $ipname "pmcps" ] || [ string match -nocase $ipname "ps_wizard" ]} {
+    if { ($source_type in {"block_container" "RBD"}) || ($ipname in {"ps11" "ps11xgui" "psxt" "versal_cips" "pspmc" "psxl" "psx_wizard" "pmcps" "ps_wizard"}) } {
     
         set lower_net [hsi::get_nets -boundary_type lower -of_objects $test_pin]
         set upper_net [hsi::get_nets -boundary_type upper -of_objects $test_pin]
@@ -779,7 +779,7 @@ proc get_real_sink_pins_traverse_out_recurse { periph_pin } {
 	set hasCells [hsi::get_cells -of_objects $periph_pin]
          set ipname [hsi get_property IP_NAME [hsi::get_cells -of_objects $periph_pin]]
          set source_type [hsi get_property BD_TYPE [hsi::get_cells -of_objects $periph_pin]]
-		 if { [ string match -nocase $source_type "block_container" ] || [ string match -nocase $ipname "versal_cips" ] || [ string match -nocase $ipname "pspmc" ] || [ string match -nocase $ipname "psxl" ] || [ string match -nocase $ipname "psx_wizard" ] || [ string match -nocase $ipname "pmcps" ] || [ string match -nocase $ipname "ps_wizard" ] } {
+		 if { ($source_type in {"block_container" "RBD"}) || ($ipname in {"versal_cips" "pspmc" "psxl" "psx_wizard" "pmcps" "ps_wizard"}) } {
          
             set lower_net [hsi::get_nets -boundary_type lower -of_objects $periph_pin]
             set upper_net [hsi::get_nets -boundary_type upper -of_objects $periph_pin]
