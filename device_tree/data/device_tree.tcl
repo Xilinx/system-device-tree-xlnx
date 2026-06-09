@@ -1201,6 +1201,20 @@ proc gen_board_info {} {
 	   }
 	}
 
+	set axi_noc2_handle [hsi::get_cells -hier -filter {IP_NAME==axi_noc2}]
+	if {[llength $axi_noc2_handle] > 0} {
+		foreach noc_cell $axi_noc2_handle {
+			set i2c_master [hsi::get_property CONFIG.DDRMC5_I2C_MASTER $noc_cell]
+			set debug_elf [hsi::get_property CONFIG.DDRMC5_DEBUG_ELF $noc_cell]
+			if {![string_is_empty $i2c_master]} {
+				add_prop "root" "xlnx,ddrmc5-i2c-master" $i2c_master string $default_dts
+			}
+			if {![string_is_empty $debug_elf]} {
+				add_prop "root" "xlnx,ddrmc5-debug-elf" $debug_elf string $default_dts
+			}
+		}
+	}
+
 	if {[hsi get_current_part] != ""} {
 		set slrcount [common::get_property NUM_OF_SLRS [hsi get_current_part]]
 		if {$slrcount != -1} {
