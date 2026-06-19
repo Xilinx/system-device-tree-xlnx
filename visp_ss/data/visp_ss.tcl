@@ -440,6 +440,7 @@ proc visp_ss_inip_endpoints {drv_handle node default_dts sub port_addr_counter v
 						set mipi_remo_in_end ""
 						set max_ports [expr {$intlen}]
 
+						set broadcaster_ep_created 0
 						for {set i 1} {$i <= $max_ports} {incr i} {
 							# Construct variable names dynamically
 							set port_var "port${i}_broad_end_mappings"
@@ -461,11 +462,20 @@ proc visp_ss_inip_endpoints {drv_handle node default_dts sub port_addr_counter v
 							if {[info exists mipi_remo_in_end] && [regexp -nocase $sub "$mipi_remo_in_end" match]} {
 								if {[llength $mipi_remo_in_end]} {
 									set mipi_node [create_node -n "endpoint" -l $mipi_remo_in_end -p $port_node -d $default_dts]
-								}
-								if {[llength $mipi_in_end]} {
-									add_prop "$mipi_node" "remote-endpoint" $mipi_in_end reference $default_dts
+									set broadcaster_ep_created 1
+									if {[llength $mipi_in_end]} {
+										add_prop "$mipi_node" "remote-endpoint" $mipi_in_end reference $default_dts
+									}
 								}
 							}
+						}
+						# broadcaster dicts (port*_broad_end_mappings) are populated by
+						# axis_broadcaster_update_endpoints which runs after all _generate procs.
+						# Defer if nothing was created yet.
+						if {!$broadcaster_ep_created} {
+							global visp_pending_endpoints
+							if {![info exists visp_pending_endpoints]} { set visp_pending_endpoints {} }
+							lappend visp_pending_endpoints [list broadcaster $port_node $inip $default_dts $sub]
 						}
 					}
 				}
@@ -510,42 +520,52 @@ proc visp_ss_inip_endpoints {drv_handle node default_dts sub port_addr_counter v
 						set visp_remo_in3_end [dict get $axis_port4_remo_mappings $visp_inip]
 						dtg_verbose "visp_remo_in3_end:$visp_remo_in3_end"
 					}
-					set drv [split $visp_remo_in_end "-"]
-					set handle [lindex $drv 0]
+					set switch_nomem_ep_created 0
 					if {[info exists visp_remo_in_end] && [regexp -nocase $sub "$visp_remo_in_end" match]} {
 						if {[llength $visp_remo_in_end]} {
 							set visp_ss_node [create_node -n "endpoint" -l $visp_remo_in_end -p $port_node -d $default_dts]
-						}
-						if {[llength $visp_in_end]} {
-							add_prop "$visp_ss_node" "remote-endpoint" $visp_in_end reference $default_dts
+							set switch_nomem_ep_created 1
+							if {[llength $visp_in_end]} {
+								add_prop "$visp_ss_node" "remote-endpoint" $visp_in_end reference $default_dts
+							}
 						}
 					}
 
 					if {[info exists visp_remo_in1_end] && [regexp -nocase $sub "$visp_remo_in1_end" match]} {
 						if {[llength $visp_remo_in1_end]} {
 							set visp_ss_node1 [create_node -n "endpoint" -l $visp_remo_in1_end -p $port_node -d $default_dts]
-						}
-						if {[llength $visp_in1_end]} {
-							add_prop "$visp_ss_node1" "remote-endpoint" $visp_in1_end reference $default_dts
+							set switch_nomem_ep_created 1
+							if {[llength $visp_in1_end]} {
+								add_prop "$visp_ss_node1" "remote-endpoint" $visp_in1_end reference $default_dts
+							}
 						}
 					}
 
 					if {[info exists visp_remo_in2_end] && [regexp -nocase $sub "$visp_remo_in2_end" match]} {
 						if {[llength $visp_remo_in2_end]} {
 							set visp_ss_node2 [create_node -n "endpoint" -l $visp_remo_in2_end -p $port_node -d $default_dts]
-						}
-						if {[llength $visp_in2_end]} {
-							add_prop "$visp_ss_node2" "remote-endpoint" $visp_in2_end reference $default_dts
+							set switch_nomem_ep_created 1
+							if {[llength $visp_in2_end]} {
+								add_prop "$visp_ss_node2" "remote-endpoint" $visp_in2_end reference $default_dts
+							}
 						}
 					}
 
 					if {[info exists visp_remo_in3_end] && [regexp -nocase $sub "$visp_remo_in3_end" match]} {
 						if {[llength $visp_remo_in3_end]} {
 							set visp_ss_node3 [create_node -n "endpoint" -l $visp_remo_in3_end -p $port_node -d $default_dts]
+							set switch_nomem_ep_created 1
+							if {[llength $visp_in3_end]} {
+								add_prop "$visp_ss_node3" "remote-endpoint" $visp_in3_end reference $default_dts
+							}
 						}
-						if {[llength $visp_in3_end]} {
-							add_prop "$visp_ss_node3" "remote-endpoint" $visp_in3_end reference $default_dts
-						}
+					}
+					# axis_switch dicts are populated by axis_switch_update_endpoints which
+					# runs after all _generate procs — defer if nothing created yet.
+					if {!$switch_nomem_ep_created} {
+						global visp_pending_endpoints
+						if {![info exists visp_pending_endpoints]} { set visp_pending_endpoints {} }
+						lappend visp_pending_endpoints [list switch_nomem $port_node $visp_inip $default_dts $sub]
 					}
 					return
 				} else {
@@ -583,24 +603,30 @@ proc visp_ss_inip_endpoints {drv_handle node default_dts sub port_addr_counter v
 						set visp_remo_in3_end [dict get $axis_switch_port4_remo_mappings $visp_inip]
 						dtg_verbose "visp_remo_in3_end:$visp_remo_in3_end"
 					}
-					set drv [split $visp_remo_in_end "-"]
-					set handle [lindex $drv 0]
+					set switch_mem_ep_created 0
 					if {[regexp -nocase $drv_handle "$visp_remo_in_end" match]} {
 						if {[llength $visp_remo_in_end]} {
 							set visp_ss_node [create_node -n "endpoint" -l $visp_remo_in_end -p $port_node -d $default_dts]
-						}
-						if {[llength $visp_in_end]} {
-							add_prop "$visp_ss_node" "remote-endpoint" $visp_in_end reference $default_dts
+							set switch_mem_ep_created 1
+							if {[llength $visp_in_end]} {
+								add_prop "$visp_ss_node" "remote-endpoint" $visp_in_end reference $default_dts
+							}
 						}
 					}
 
 					if {[regexp -nocase $drv_handle "$visp_remo_in1_end" match]} {
 						if {[llength $visp_remo_in1_end]} {
 							set visp_ss_node1 [create_node -n "endpoint" -l $visp_remo_in1_end -p $port_node -d $default_dts]
+							set switch_mem_ep_created 1
+							if {[llength $visp_in1_end]} {
+								add_prop "$visp_ss_node1" "remote-endpoint" $visp_in1_end reference $default_dts
+							}
 						}
-						if {[llength $visp_in1_end]} {
-							add_prop "$visp_ss_node1" "remote-endpoint" $visp_in1_end reference $default_dts
-						}
+					}
+					if {!$switch_mem_ep_created} {
+						global visp_pending_endpoints
+						if {![info exists visp_pending_endpoints]} { set visp_pending_endpoints {} }
+						lappend visp_pending_endpoints [list switch_mem $port_node $visp_inip $default_dts $drv_handle]
 					}
 				}
 			}
@@ -630,9 +656,19 @@ proc visp_ss_inip_endpoints {drv_handle node default_dts sub port_addr_counter v
 					}
 					if {[llength $visp_remo_in_end]} {
 						set visp_ss_node [create_node -n "endpoint" -l $visp_remo_in_end -p $port_node -d $default_dts]
-					}
-					if {[llength $visp_in_end]} {
-						add_prop "$visp_ss_node" "remote-endpoint" $visp_in_end reference $default_dts
+						if {[llength $visp_in_end]} {
+							add_prop "$visp_ss_node" "remote-endpoint" $visp_in_end reference $default_dts
+						}
+					} elseif {[llength $inip]} {
+						# end_mappings/remo_mappings not yet populated — visp_ss generates before
+						# MIPI/broadcaster/switch when the ISP is inside a hierarchy block whose
+						# base address is lower than the MIPI's.  Defer to visp_ss_update_endpoints
+						# which runs after all _generate procs have completed.
+						global visp_pending_endpoints
+						if {![info exists visp_pending_endpoints]} {
+							set visp_pending_endpoints {}
+						}
+						lappend visp_pending_endpoints [list mipi $port_node $inip $default_dts ""]
 					}
 				}
 			}
@@ -1253,4 +1289,143 @@ proc get_visp_baseaddr {drv_handle} {
         return [string trimleft [lindex $apu_addrs 0] "0x"]
     }
     return ""
+}
+
+# Called by the DTG framework after ALL _generate procs have completed.
+# Processes endpoints that were deferred during visp_ss_generate because
+# end_mappings/remo_mappings were not yet populated at generate time
+# (happens when the visp_ss hierarchy block has a lower base address than MIPI).
+proc visp_ss_update_endpoints {drv_handle} {
+	global visp_pending_endpoints
+	global visp_endpoints_processed
+	global end_mappings
+	global remo_mappings
+	global port1_end_mappings port2_end_mappings port3_end_mappings port4_end_mappings
+	global axis_port1_remo_mappings axis_port2_remo_mappings
+	global axis_port3_remo_mappings axis_port4_remo_mappings
+	global axis_switch_port1_end_mappings axis_switch_port2_end_mappings
+	global axis_switch_port3_end_mappings axis_switch_port4_end_mappings
+	global axis_switch_port1_remo_mappings axis_switch_port2_remo_mappings
+	global axis_switch_port3_remo_mappings axis_switch_port4_remo_mappings
+	global port1_broad_end_mappings port2_broad_end_mappings
+	global port3_broad_end_mappings port4_broad_end_mappings
+	global port5_broad_end_mappings port6_broad_end_mappings port7_broad_end_mappings
+	global broad_port1_remo_mappings broad_port2_remo_mappings
+	global broad_port3_remo_mappings broad_port4_remo_mappings
+	global broad_port5_remo_mappings broad_port6_remo_mappings broad_port7_remo_mappings
+
+	# All tile instances share one pending list; only the first call processes it.
+	if {[info exists visp_endpoints_processed]} {
+		return
+	}
+	set visp_endpoints_processed 1
+
+	if {![info exists visp_pending_endpoints] || ![llength $visp_pending_endpoints]} {
+		return
+	}
+
+	foreach entry $visp_pending_endpoints {
+		set type       [lindex $entry 0]
+		set port_node  [lindex $entry 1]
+		set ip_handle  [lindex $entry 2]
+		set entry_dts  [lindex $entry 3]
+		set filter     [lindex $entry 4]
+
+		switch $type {
+			"mipi" {
+				# Upstream is MIPI/direct memory-mapped source.
+				# end_mappings / remo_mappings are now populated.
+				set visp_in_end ""
+				set visp_remo_in_end ""
+				if {[info exists end_mappings] && [dict exists $end_mappings $ip_handle]} {
+					set visp_in_end [dict get $end_mappings $ip_handle]
+				}
+				if {[info exists remo_mappings] && [dict exists $remo_mappings $ip_handle]} {
+					set visp_remo_in_end [dict get $remo_mappings $ip_handle]
+				}
+				if {[llength $visp_remo_in_end]} {
+					set nd [create_node -n "endpoint" -l $visp_remo_in_end -p $port_node -d $entry_dts]
+					if {[llength $visp_in_end]} {
+						add_prop "$nd" "remote-endpoint" $visp_in_end reference $entry_dts
+					}
+				}
+			}
+			"broadcaster" {
+				# Upstream is axis_broadcaster.
+				# port*_broad_end_mappings populated by axis_broadcaster_update_endpoints.
+				set master_intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip_handle] \
+				                 -filter {TYPE==MASTER || TYPE==INITIATOR}]
+				set max_ports [llength $master_intf]
+				for {set i 1} {$i <= $max_ports} {incr i} {
+					set port_var "port${i}_broad_end_mappings"
+					set remo_var "broad_port${i}_remo_mappings"
+					set b_in_end ""
+					set b_remo_end ""
+					if {[info exists $port_var] && [dict exists [set $port_var] $ip_handle]} {
+						set b_in_end [dict get [set $port_var] $ip_handle]
+					} else { continue }
+					if {[info exists $remo_var] && [dict exists [set $remo_var] $ip_handle]} {
+						set b_remo_end [dict get [set $remo_var] $ip_handle]
+					} else { continue }
+					if {[llength $b_remo_end] && [regexp -nocase $filter "$b_remo_end" match]} {
+						set nd [create_node -n "endpoint" -l $b_remo_end -p $port_node -d $entry_dts]
+						if {[llength $b_in_end]} {
+							add_prop "$nd" "remote-endpoint" $b_in_end reference $entry_dts
+						}
+					}
+				}
+			}
+			"switch_nomem" {
+				# Non-memory-mapped axis_switch.
+				# port*_end_mappings / axis_port*_remo_mappings populated by axis_switch_update_endpoints.
+				set sw_pairs [list \
+					port1_end_mappings axis_port1_remo_mappings \
+					port2_end_mappings axis_port2_remo_mappings \
+					port3_end_mappings axis_port3_remo_mappings \
+					port4_end_mappings axis_port4_remo_mappings]
+				foreach {in_map remo_map} $sw_pairs {
+					set s_in_end ""
+					set s_remo_end ""
+					if {[info exists $in_map] && [dict exists [set $in_map] $ip_handle]} {
+						set s_in_end [dict get [set $in_map] $ip_handle]
+					}
+					if {[info exists $remo_map] && [dict exists [set $remo_map] $ip_handle]} {
+						set s_remo_end [dict get [set $remo_map] $ip_handle]
+					}
+					if {[llength $s_remo_end] && [regexp -nocase $filter "$s_remo_end" match]} {
+						set nd [create_node -n "endpoint" -l $s_remo_end -p $port_node -d $entry_dts]
+						if {[llength $s_in_end]} {
+							add_prop "$nd" "remote-endpoint" $s_in_end reference $entry_dts
+						}
+					}
+				}
+			}
+			"switch_mem" {
+				# Memory-mapped axis_switch.
+				# axis_switch_port*_end_mappings populated by axis_switch_update_endpoints.
+				set sw_pairs [list \
+					axis_switch_port1_end_mappings axis_switch_port1_remo_mappings \
+					axis_switch_port2_end_mappings axis_switch_port2_remo_mappings \
+					axis_switch_port3_end_mappings axis_switch_port3_remo_mappings \
+					axis_switch_port4_end_mappings axis_switch_port4_remo_mappings]
+				foreach {in_map remo_map} $sw_pairs {
+					set s_in_end ""
+					set s_remo_end ""
+					if {[info exists $in_map] && [dict exists [set $in_map] $ip_handle]} {
+						set s_in_end [dict get [set $in_map] $ip_handle]
+					}
+					if {[info exists $remo_map] && [dict exists [set $remo_map] $ip_handle]} {
+						set s_remo_end [dict get [set $remo_map] $ip_handle]
+					}
+					# switch_mem uses drv_handle (stored in filter) as the match string
+					if {[llength $s_remo_end] && [regexp -nocase $filter "$s_remo_end" match]} {
+						set nd [create_node -n "endpoint" -l $s_remo_end -p $port_node -d $entry_dts]
+						if {[llength $s_in_end]} {
+							add_prop "$nd" "remote-endpoint" $s_in_end reference $entry_dts
+						}
+					}
+				}
+			}
+		}
+	}
 }
