@@ -8,9 +8,13 @@
  */
 
 
-&{/} {
+/ {
 	model = "MB-V SCU200 revA";
 	compatible = "amd,mbv-scu200-revA", "amd,mbv-scu200", "amd,mbv";
+
+	chosen {
+		bootargs = "console=ttyUL0,115200 earlycon root=/dev/ram0 rw";
+	};
 };
 
 &axi_ethernet_0 {
