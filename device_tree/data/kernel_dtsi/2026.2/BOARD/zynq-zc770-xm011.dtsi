@@ -2,10 +2,8 @@
 /*
  * Xilinx ZC770 XM011 board DTS
  *
- * (C) Copyright 2023 Advanced Micro Devices, Inc. All Rights Reserved.
+ * (C) Copyright 2023-2026 Advanced Micro Devices, Inc. All Rights Reserved.
  */
-
-#include "zynq-7000.dtsi"
 
 / {
 	model = "Xilinx ZC770 XM011 board";
