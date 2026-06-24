@@ -258,12 +258,17 @@ proc set_soc_dtsi {} {
 	global is_versal_net_platform
 	global is_versal_2ve_2vm_platform
 	global is_versal_2vp_platform
+	global is_versal_2ve_2vm_small_platform
 	global platform_name ""
 	if {$design_family == "versal"} {
 		if { $is_versal_net_platform } {
 			if {$is_versal_2ve_2vm_platform} {
 				set platform_name "versal2"
-				update_system_dts_include [file tail "${platform_name}-clk-ccf.dtsi"]
+				if {$is_versal_2ve_2vm_small_platform} {
+					update_system_dts_include [file tail "${platform_name}-small-clk-ccf.dtsi"]
+				} else {
+					update_system_dts_include [file tail "${platform_name}-clk-ccf.dtsi"]
+				}
 			} else {
 				set platform_name "versal-net"
 				update_system_dts_include [file tail "${platform_name}-clk-ccf.dtsi"]
@@ -276,6 +281,9 @@ proc set_soc_dtsi {} {
 		set dtsi_fname "${platform_name}/${platform_name}.dtsi"
 		if {$is_versal_2vp_platform} {
 			set dtsi_fname "${platform_name}/versal2vp.dtsi"
+		}
+		if {$is_versal_2ve_2vm_small_platform} {
+			set dtsi_fname "versal2/versal2-small.dtsi"
 		}
 		update_system_dts_include [file tail ${dtsi_fname}]
 	}
