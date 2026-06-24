@@ -83,6 +83,16 @@
                         gen_remoteendpoint $drv_handle "dptx_out$outip"
                     } elseif {[string match -nocase [hsi::get_property IP_NAME $outip] "v_frmbuf_wr"]} {
                         set mix_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video"]
+                        set mix_inip_len [llength $mix_inip]
+                        if {$mix_inip_len > 1} {
+                            for {set i 0} {$i < $mix_inip_len} {incr i} {
+                                set ip [lindex $mix_inip $i]
+                                if {[regexp -nocase "ila" $ip match]} {
+                                    continue
+                                }
+                                set mix_inip "$ip"
+                            }
+                        }
                         if {[llength $mix_inip]} {
                             add_prop "$mixer0_endpoint" "remote-endpoint" "sca_out$mix_inip" reference $dts_file
                         }
