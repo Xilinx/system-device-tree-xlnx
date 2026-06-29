@@ -247,6 +247,22 @@
 			}
 		}
 	}
+
+	if {$ip_name eq "microblaze_riscv"} {
+		# medlow: symbols in the 2 GiB range containing address 0 (0x0-0x7FFFFFFF).
+		# medany: required when any valid memory region starts at or extends to >= 0x80000000.
+		set mcmodel_flag "medlow"
+		set two_gb 0x80000000
+		foreach mem_range $valid_mem_list {
+			set base [hsi get_property BASE_VALUE $mem_range]
+			set high [hsi get_property HIGH_VALUE $mem_range]
+			if {$base >= $two_gb || $high >= $two_gb} {
+				set mcmodel_flag "medany"
+				break
+			}
+		}
+		add_prop $node "xlnx,use-mcmodel" $mcmodel_flag string "pl.dtsi"
+	}
     }
 
     # Compute the memory node label for a given hsi mem-range element so it
