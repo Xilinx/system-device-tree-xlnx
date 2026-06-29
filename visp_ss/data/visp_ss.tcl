@@ -117,8 +117,21 @@ proc visp_ss_generate {drv_handle} {
 		if {!$tile_enabled} {
 			continue
 		}
+		# Skip visp_ss sub-node creation for config-only IP instances.
+		# In config-only mode only the config path is enabled (no ISP processing).
+		# Skipping avoids inflating XPAR_XVISP_SS_NUM_INSTANCES with non-functional nodes.
+		set config_only [get_ip_property $drv_handle "CONFIG.C_CONFIG_ONLY"]
+		if {[string match -nocase $config_only "true"] || $config_only == 1} {
+			continue
+		}
 		for {set isp 0} {$isp < 2} {incr isp} {
 			set isp_id [expr {$tile * 2 + $isp}]
+			# Read io_type early so we can skip ISPs with no valid mode (0 = not configured).
+			# This prevents generating a dummy "xlnx,visp-disabled" node for unused ISPs.
+			set io_type [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_IO_TYPE]
+			if {$io_type != 1 && $io_type != 2 && $io_type != 3} {
+				continue
+			}
 			set sub_node_label "visp_ss_${tile}${isp_id}"
 			set baseaddr [get_visp_baseaddr $drv_handle]
 			set sub_region_size 0x800  ;#2KB
@@ -137,8 +150,7 @@ proc visp_ss_generate {drv_handle} {
 			add_prop "$sub_node" "status" "okay" string $default_dts
 			dict set reg_mapping $sub_node_label $reg_value
 			set live_stream [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_LIVE_INPUTS]
-			set io_mode [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_IO_TYPE]
-			set io_type [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_IO_TYPE]
+			set io_mode $io_type
 			if {$io_type == 1} {
 				set io_mode_name "lilo"
 			} elseif {$io_type == 2} {
@@ -1224,8 +1236,15 @@ proc rpu_info_mbox_create { drv_handle default_dts bus_name} {
                if {!$tile_enabled} {
                        continue
                }
+               set config_only [get_ip_property $drv_handle "CONFIG.C_CONFIG_ONLY"]
+               if {[string match -nocase $config_only "true"] || $config_only == 1} {
+                       continue
+               }
                for {set isp 0} {$isp < 2} {incr isp} {
                        set io_type [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_IO_TYPE]
+                       if {$io_type != 1 && $io_type != 2 && $io_type != 3} {
+                               continue
+                       }
                        set rpu [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_RPU]
                        lappend rpu_ids $rpu
                        lappend rpu_info_list [list $rpu $io_type]
