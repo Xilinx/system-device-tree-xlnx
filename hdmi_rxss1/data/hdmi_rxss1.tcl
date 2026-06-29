@@ -20,7 +20,6 @@
                 return
         }
 	hdmi_rxss_add_hier_instances $drv_handle
-        pldt append $node compatible "\ \, \"xlnx,v-hdmi-rx-ss-3.1\""
         set ports_node [create_node -n "ports" -l hdmirx_ports$drv_handle -p $node -d $dts_file]
         add_prop "$ports_node" "#address-cells" 1 int $dts_file
         add_prop "$ports_node" "#size-cells" 0 int $dts_file
