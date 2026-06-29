@@ -17,19 +17,19 @@ Required Arguments:
 Optional Arguments:
     -list_boards      List all the board specific files in system device tree
     -board_dts        Includes the static board specific DTSI file available at
-                      `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD`
+                      `<this repo>/device_tree/data/kernel_dtsi/BOARD/linux`
                       inside the final SDT. Takes the file name without the .dtsi extension
                       as input. e.g. `-board_dts zcu102-rev1.0` will include the
-                      `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD/zcu102-rev1.0.dtsi`
+                      `<this repo>/device_tree/data/kernel_dtsi/BOARD/linux/zcu102-rev1.0.dtsi`
                       file in the final SDT. This option will be deprecated from 2026.2 and removed
                       in future releases. Use `-user_dts` with board `.dtsi` files instead.
     -user_dts         Includes user defined custom `.dtsi`/`.dtso` files inside the
 	                  final SDT. Supports one or more files. Each file can be provided as
 			          an absolute path, relative path, or by file name if present in
-			          `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD`.
+			          `<this repo>/device_tree/data/kernel_dtsi/BOARD/linux`.
                       The file will be first searched with the absolute path, then with the
                       relative path from where SDTGen is being run, and then in the
-                      `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD` directory.
+                      `<this repo>/device_tree/data/kernel_dtsi/BOARD/linux` directory.
 			          This is the recommended replacement for `-board_dts`.
 			          Example: `-user_dts zcu102-rev1.0.dtsi ./test_dir/overlay.dtsi`.
     -debug            enable SDTGen debug (enable/disable, default: disable)

@@ -298,8 +298,7 @@ proc set_soc_dtsi {} {
 proc fetch_soc_dtsi {dir path platform_name} {
 	set common_file "$path/device_tree/data/config.yaml"
 	global include_list
-	set release [get_user_config $common_file -kernel_ver]
-	set soc_dtsi_folder [file normalize "$path/device_tree/data/kernel_dtsi/${release}/${platform_name}"]
+	set soc_dtsi_folder [file normalize "$path/device_tree/data/kernel_dtsi/${platform_name}"]
 	set include_dts_list [split $include_list ","]
 	foreach file [glob [file normalize ${soc_dtsi_folder}/*]] {
 		set filename [file tail $file]

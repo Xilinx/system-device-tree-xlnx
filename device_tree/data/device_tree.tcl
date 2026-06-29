@@ -365,22 +365,21 @@ proc print_usage args {
             -repo             system device tree repo source
             -xsa              Vivado hw design file
             -board_dts        Includes the static board specific DTSI file available at
-                              `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD`
+                              `<this repo>/device_tree/data/kernel_dtsi/BOARD/linux`
                               inside the final SDT. Takes the file name without the .dtsi extension
                               as input. e.g. `-board_dts zcu102-rev1.0` will include the
-                              `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD/zcu102-rev1.0.dtsi`
+                              `<this repo>/device_tree/data/kernel_dtsi/BOARD/linux/zcu102-rev1.0.dtsi`
                               file in the final SDT. This option will be deprecated from 2026.2 and removed
                               in future releases. Use `-user_dts` with board `.dtsi` files instead.
             -mainline_kernel  mainline kernel version
-            -kernel_ver       kernel version
             -dir              Directory where the dt files will be generated
             -user_dts         Includes user defined custom `.dtsi`/`.dtso` files inside the
 	                      final SDT. Supports one or more files. Each file can be provided as
 			      an absolute path, relative path, or by file name if present in
-			      `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD`.
+			      `<this repo>/device_tree/data/kernel_dtsi/BOARD/linux`.
 			      The file will be first searched with the absolute path, then with
 			      the relative path from where SDTGen is being run, and then in the
-			      `<this repo>/device_tree/data/kernel_dtsi/<release>/BOARD` directory.
+			      `<this repo>/device_tree/data/kernel_dtsi/BOARD/linux` directory.
 			      This is the recommended replacement for `-board_dts`.
 			      Example: `-user_dts zcu102-rev1.0.dtsi ./test_dir/overlay.dtsi`.
             -debug            Enable DTG++ debug
@@ -408,7 +407,6 @@ proc get_user_config args {
 		set cfg [get_yaml_dict $config_file]
 	        set user [dict get $cfg dict_devicetree]
 		set mainline_kernel [dict get $user mainline_kernel]
-		set kernel_ver [dict get $user kernel_ver]
 		set dir [dict get $user output_dir]
 		set zocl [dict get $user zocl]
 		set param ""
@@ -425,8 +423,6 @@ proc get_user_config args {
 				set param $pl_only
 			} -mainline_kernel {
 				set param $mainline_kernel
-			} -kernel_ver {
-				set param $kernel_ver
 			} -dir {
 				set param $dir
 			} -zocl {
@@ -457,8 +453,7 @@ proc list_board_files {{pattern ""}} {
     global env
     set path [set_sdt_default_repo]
     set common_file "$path/device_tree/data/config.yaml"
-    set kernel_ver [get_user_config $common_file -kernel_ver]
-    set board_dir [file normalize "$path/device_tree/data/kernel_dtsi/${kernel_ver}/BOARD"]
+    set board_dir [file normalize "$path/device_tree/data/kernel_dtsi/BOARD/linux"]
     if {![file isdirectory $board_dir]} {
         error "Error: Cannot retrieve the board_dir. $board_dir does not exist."
     }
@@ -515,8 +510,7 @@ proc set_dt_param args {
 					}
 					set_sdt_default_repo
 					set common_file "$env(CUSTOM_SDT_REPO)/device_tree/data/config.yaml"
-					set kernel_ver [get_user_config $common_file -kernel_ver]
-					set kernel_dtsi [file normalize "$env(CUSTOM_SDT_REPO)/device_tree/data/kernel_dtsi/$kernel_ver/BOARD"]
+					set kernel_dtsi [file normalize "$env(CUSTOM_SDT_REPO)/device_tree/data/kernel_dtsi/BOARD/linux"]
 					set target_board_file [file join $kernel_dtsi "${board_dts_file}.dtsi"]
 					if {![file exists $target_board_file]} {
 						error "Error: The board file '${board_dts_file}.dtsi' was not found in the repository. Please refer $kernel_dtsi for valid board names."
@@ -531,7 +525,6 @@ proc set_dt_param args {
 					set env(dt_domain) $dt_domain
 				}
                                 -mainline_kernel {set env(kernel) [Pop args 1] }
-                                -kernel_ver {set env(kernel_ver) [Pop args 1]}
                                 -dir {
 					set dir [Pop args 1]
 					if {[file exists $dir]} {
@@ -564,8 +557,7 @@ proc set_dt_param args {
 					set normalized_path ""
 					set_sdt_default_repo
 					set common_file "$env(CUSTOM_SDT_REPO)/device_tree/data/config.yaml"
-					set kernel_ver [get_user_config $common_file -kernel_ver]
-					set kernel_dtsi [file normalize "$env(CUSTOM_SDT_REPO)/device_tree/data/kernel_dtsi/$kernel_ver/BOARD"]
+					set kernel_dtsi [file normalize "$env(CUSTOM_SDT_REPO)/device_tree/data/kernel_dtsi/BOARD/linux"]
 					foreach dts $user_dts_inputs {
 						if {![regexp -nocase {\.(dtsi|dtso)$} $dts]} {
 							error "ERROR: \"$dts\" file is not a dtsi/dtso file. Can't be used as a user dts include file."
@@ -644,8 +636,6 @@ proc get_dt_param args {
 		if {[catch {set val $env(sdt_board_dts)} msg ]} {}
 	} -mainline_kernel {
 		if {[catch {set val $env(kernel)} msg ]} {}
-	} -kernel_ver {
-		if {[catch {set val $env(kernel_ver)} msg ]} {}
 	} -dir {
 		if {[catch {set val $env(dir)} msg ]} {}
 	} -trace {
@@ -811,8 +801,7 @@ proc gen_sata_laneinfo {} {
 proc gen_include_headers {} {
 	global env
 	set common_file "$env(CUSTOM_SDT_REPO)/device_tree/data/config.yaml"
-	set kernel_ver [get_user_config $common_file -kernel_ver]
-	set includes_dir [file normalize "$env(CUSTOM_SDT_REPO)/device_tree/data/kernel_dtsi/${kernel_ver}/include"]
+	set includes_dir [file normalize "$env(CUSTOM_SDT_REPO)/device_tree/data/kernel_dtsi/include"]
 	set dir_path [get_user_config $common_file -dir]
 	# Copy full include directory to dt WS
 	if {[file exists $includes_dir]} {
@@ -1115,7 +1104,6 @@ proc gen_board_info {} {
 	set path $env(CUSTOM_SDT_REPO)
 	set default_dts "system-top.dts"
 	set common_file "$path/device_tree/data/config.yaml"
-	set kernel_ver [get_user_config $common_file -kernel_ver]
 	set dtsi_file [get_user_config $common_file -board_dts]
 	set dir_path [get_user_config $common_file -dir]
 	set device [hsi get_property DEVICE [hsi::current_hw_design]]
@@ -1264,10 +1252,10 @@ proc gen_board_info {} {
 		return
 	}
 
-	set kernel_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${kernel_ver}/BOARD"]
+	set kernel_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/BOARD/linux"]
 	if {[file exists $kernel_dtsi]} {
 		set valid_board_file 0
-		foreach file [glob [file normalize [file dirname ${kernel_dtsi}]/BOARD/*]] {
+		foreach file [glob [file normalize ${kernel_dtsi}/*]] {
 			set dtsi_name "$dts_name.dtsi"
 			if {[regexp $dtsi_name $file match]} {
 				file copy -force $file $dir_path
@@ -1938,7 +1926,6 @@ Generates system device tree based on args given in:
     	gen_include_headers
         include_custom_dts
 	set proctype [get_hw_family]
-	set kernel_ver [get_user_config $common_file -kernel_ver]
 	if {[string match -nocase $env(zocl) "enable"]} {
 		if {$proctype in {"zynq" "zynqmp" "versal"}} {
 			source [file join $path "zocl" "data" "zocl.tcl"]
@@ -1972,10 +1959,9 @@ Generates system device tree based on args given in:
 		set pinctrl_node [create_node -n "&pinctrl0" -p root -d "pcw.dtsi"]
 		add_prop $pinctrl_node "status" "okay" string "pcw.dtsi"
 	}
-	set release [get_user_config $common_file -kernel_ver]
 	global dtsi_fname
 	if {[string match -nocase $family "versal"] || [string match -nocase $family "zynq"] || [is_zynqmp_platform $family]} {
-		set mainline_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${release}/${dtsi_fname}"]
+		set mainline_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${dtsi_fname}"]
 		global include_list
 		set include_dts_list [split $include_list ","]
 		foreach file [glob [file normalize [file dirname ${mainline_dtsi}]/*]] {

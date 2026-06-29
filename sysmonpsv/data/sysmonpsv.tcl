@@ -76,9 +76,8 @@
 
         set label "sensor0"
         set common_file "$path/device_tree/data/config.yaml"
-        set release [get_user_config $common_file -kernel_ver]
         if {[info exists ::dtsi_fname]} {
-            set filename "$path/device_tree/data/kernel_dtsi/$release/$dtsi_fname"
+            set filename "$path/device_tree/data/kernel_dtsi/$dtsi_fname"
             if {[label_exists $label $filename]} {
                 set thermal_sensor [create_node -n "&sensor0" -d "pcw.dtsi" -p root]
                 add_prop $thermal_sensor "$iochnames" stringlist "pcw.dtsi"

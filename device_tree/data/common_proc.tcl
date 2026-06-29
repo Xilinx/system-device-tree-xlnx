@@ -5169,21 +5169,10 @@ proc ps7_reset_handle {drv_handle reset_pram conf_prop} {
 	if {[llength $value]} {
 		# if MIO, assume gpio0 (bad assumption as this needs to match zynq-7000.dtsi)
 		if {[regexp "^MIO" $value matched]} {
-			# switch with kernel version
 			global env
 			set path $env(CUSTOM_SDT_REPO)
-
 			#set drvname [get_drivers $drv_handle]
-			#
-			#set common_file "$path/device_tree/data/config.yaml"
-			set common_file [file join [file dirname [dict get [info frame 0] file]] "config.yaml"]
-			set kernel_ver [get_user_config $common_file -kernel_ver]
-
-			switch -exact $kernel_ver {
-				default {
-					set src_ip "gpio0"
-				}
-			}
+			set src_ip "gpio0"
 		}
 		regsub -all "MIO( |)" $value "" value
 		if {$src_ip != "-1"} {
