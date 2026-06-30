@@ -692,49 +692,15 @@ proc vproc_ss_add_hier_instances {drv_handle} {
 }
 
 proc vproc_ss_gen_gpio_reset {drv_handle node topology dts_file} {
+	# topology selects the reset pin; a directly-connected axi_gpio uses line 0.
 	if {$topology == 3} {
-		set pins [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier [hsi::get_cells -hier $drv_handle]] "aresetn"]]
+		set reset_pin "aresetn"
+	} elseif {$topology == 0} {
+		set reset_pin "aresetn_ctrl"
+	} else {
+		return
 	}
-	if {$topology == 0} {
-		set pins [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier [hsi::get_cells -hier $drv_handle]] "aresetn_ctrl"]]
-	}
-	foreach pin $pins {
-		set sink_periph [hsi::get_cells -of_objects $pin]
-		if {[llength $sink_periph]} {
-			set sink_ip [hsi::get_property IP_NAME $sink_periph]
-			if {[string match -nocase $sink_ip "axi_gpio"]} {
-				add_prop "$node" "reset-gpios" "$sink_periph 0 1" reference $dts_file
-			}
-			if {$sink_ip in {"xlslice" "ilslice"}} {
-				set gpio [hsi::get_property CONFIG.DIN_FROM $sink_periph]
-				set pins [hsi::get_pins -of_objects [hsi::get_nets -of_objects [hsi::get_pins -of_objects $sink_periph "Din"]]]
-				foreach pin $pins {
-					set periph [hsi::get_cells -of_objects $pin]
-					if {[llength $periph]} {
-						set ip [hsi::get_property IP_NAME $periph]
-						if { $ip in { "versal_cips" "ps_wizard" }} {
-							# As versal has only bank0 for MIOs
-							set gpio [expr $gpio + 26]
-							add_prop "$node" "reset-gpios" "gpio0 $gpio 1" reference $dts_file
-							break
-						}
-						if {[string match -nocase $ip "zynq_ultra_ps_e"]} {
-							set gpio [expr $gpio + 78]
-							add_prop "$node" "reset-gpios" "gpio $gpio 1" reference $dts_file
-							break
-						}
-						if {[string match -nocase $ip "axi_gpio"]} {
-							add_prop "$node" "reset-gpios" "$periph $gpio 1" reference $dts_file
-						}
-					} else {
-					    dtg_warning "peripheral is NULL for the $pin $periph"
-					}
-				}
-			}
-		} else {
-			dtg_warning "$drv_handle:peripheral is NULL for the $pin $sink_periph"
-		}
-	}
+	gen_video_reset_gpio $drv_handle $node $dts_file $reset_pin "reset-gpios" 1 0
 }
 
 proc vpss_gen_sca_frm_buf_node {outip drv_handle dts_file} {
