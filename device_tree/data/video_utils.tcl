@@ -1013,3 +1013,70 @@ proc set_ip_handles_for_ss_subcores {ip_name drv_handle} {
 		return [::struct::set difference $all_hier_drv_handle $multi_level_hier_drv_handle]
 	}
 }
+
+proc gen_video_reset_gpio {drv_handle node dts_file {reset_pin "ap_rst_n"} {prop_name "reset-gpios"} {active 1} {direct_gpio_pin "left"}} {
+	# Resolve reset-gpios by tracing the reset pin to its source:
+	#   - CIPS/PS wizard EMIO GPIO: PMC -> gpio1, LPD/PS -> gpio0
+	#   - ZynqMP PS GPIO -> gpio
+	#   - axi_gpio (with or without a slice)
+	# direct_gpio_pin: line for a direct axi_gpio ("left" = MSB of gpio_io_o).
+	set src_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier [hsi get_cells -hier $drv_handle]] $reset_pin]]
+	foreach pin $src_pins {
+		set sink_periph [hsi get_cells -of_objects $pin]
+		if {![llength $sink_periph]} {
+			dtg_warning "$drv_handle: peripheral is NULL for the $pin $sink_periph"
+			continue
+		}
+		set sink_ip [hsi get_property IP_NAME $sink_periph]
+		if {$sink_ip in {"xlslice" "ilslice"}} {
+			set gpio [hsi get_property CONFIG.DIN_FROM $sink_periph]
+			set din_pins [hsi get_pins -of_objects [hsi get_nets -of_objects [hsi get_pins -of_objects $sink_periph "Din"]]]
+			foreach dpin $din_pins {
+				set periph [hsi get_cells -of_objects $dpin]
+				if {![llength $periph]} {
+					dtg_warning "$drv_handle: peripheral is NULL for the $dpin $periph"
+					continue
+				}
+				set ip [hsi get_property IP_NAME $periph]
+				if {$ip in {"versal_cips" "ps_wizard"}} {
+					# PMC -> gpio1 (52 MIO before EMIO); LPD/PS -> gpio0 (26 MIO)
+					if {[string match -nocase "*PMC_GPIO*" $dpin]} {
+						set gpio_label "gpio1"
+						set emio_base 52
+					} else {
+						set gpio_label "gpio0"
+						set emio_base 26
+					}
+					# Add widths of lower-indexed EMIO banks (LPD_GPIO0 before LPD_GPIO1)
+					if {[regexp -nocase {([A-Za-z_]*GPIO)([0-9]+)} $dpin -> gpio_prefix bank_idx]} {
+						for {set b 0} {$b < $bank_idx} {incr b} {
+							if {![catch {hsi get_pins -of_objects $periph "${gpio_prefix}${b}_o"} prev_pin] && [llength $prev_pin]} {
+								if {![catch {hsi get_property LEFT $prev_pin} prev_left] && $prev_left ne ""} {
+									set emio_base [expr {$emio_base + $prev_left + 1}]
+								}
+							}
+						}
+					}
+					add_prop "$node" "$prop_name" "$gpio_label [expr {$gpio + $emio_base}] $active" reference $dts_file
+					break
+				}
+				if {[string match -nocase $ip "zynq_ultra_ps_e"]} {
+					add_prop "$node" "$prop_name" "gpio [expr {$gpio + 78}] $active" reference $dts_file
+					break
+				}
+				if {[string match -nocase $ip "axi_gpio"]} {
+					add_prop "$node" "$prop_name" "$periph $gpio $active" reference $dts_file
+				}
+			}
+		}
+		# reset driven directly by axi_gpio (no slice)
+		if {[string match -nocase $sink_ip "axi_gpio"]} {
+			if {[string match -nocase $direct_gpio_pin "left"]} {
+				set gpio_number [hsi get_property LEFT [hsi get_pins -of_objects [hsi get_cells -hier $sink_periph] "gpio_io_o"]]
+			} else {
+				set gpio_number $direct_gpio_pin
+			}
+			add_prop "$node" "$prop_name" "$sink_periph $gpio_number $active" reference $dts_file
+		}
+	}
+}
