@@ -249,7 +249,7 @@
         set max_cols [hsi get_property CONFIG.MAX_COLS [hsi::get_cells -hier $drv_handle]]
         add_prop "$node" "xlnx,max-width" $max_cols int $dts_file
 
-	framebuf_wr_gen_gpio_reset $drv_handle $node $dts_file
+	gen_video_reset_gpio $drv_handle $node $dts_file
 
         set frmbuf_inips [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video"]
         foreach inip $frmbuf_inips {
@@ -290,49 +290,4 @@ proc framebuf_wr_gen_frmbuf_node {ip drv_handle dts_file} {
         add_prop "$vcap_port_node" "direction" input string $dts_file
         set vcap_in_node [create_node -n "endpoint" -l $drv_handle$ip -p $vcap_port_node -d $dts_file]
         add_prop "$vcap_in_node" "remote-endpoint" $ip$drv_handle reference $dts_file
-}
-
-
-    proc framebuf_wr_gen_gpio_reset {drv_handle node dts_file} {
-	set pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier [hsi get_cells -hier $drv_handle]] "ap_rst_n"]]
-	foreach pin $pins {
-		set sink_periph [hsi get_cells -of_objects $pin]
-		if {[llength $sink_periph]} {
-			set sink_ip [hsi get_property IP_NAME $sink_periph]
-			if {$sink_ip in {"xlslice" "ilslice"}} {
-				set gpio [hsi get_property CONFIG.DIN_FROM $sink_periph]
-				set pins [hsi get_pins -of_objects [hsi get_nets -of_objects [hsi get_pins -of_objects $sink_periph "Din"]]]
-				foreach pin $pins {
-					set periph [hsi get_cells -of_objects $pin]
-					if {[llength $periph]} {
-						set ip [hsi get_property IP_NAME $periph]
-						if { $ip in { "versal_cips" "ps_wizard" }} {
-							# As versal has only bank0 for MIOs
-							set gpio [expr $gpio + 26]
-							add_prop "$node" "reset-gpios" "gpio0 $gpio 1" reference $dts_file
-							break
-						}
-						if {[string match -nocase $ip "zynq_ultra_ps_e"]} {
-							set gpio [expr $gpio + 78]
-							add_prop "$node" "reset-gpios" "gpio $gpio 1" reference $dts_file
-							break
-						}
-						if {[string match -nocase $ip "axi_gpio"]} {
-							add_prop "$node" "reset-gpios" "$periph $gpio 1" reference $dts_file
-						}
-					} else {
-						dtg_warning "$drv_handle peripheral is NULL for the $pin $periph"
-					}
-				}
-			}
-			# add reset-gpio pin when no slice is connected between v_tpg ip and axi_gpio ip
-			set ip_name [hsi::get_property IP_NAME $sink_periph]
-			if {[string match -nocase $ip_name "axi_gpio"]} {
-				set gpio_number [hsi::get_property LEFT [hsi::get_pins -of_objects [hsi::get_cells -hier "$sink_periph"] "gpio_io_o" ]]
-				add_prop "$node" "reset-gpios" "$sink_periph $gpio_number 1" reference $dts_file
-			}
-		} else {
-			dtg_warning "$drv_handle peripheral is NULL for the $pin $sink_periph"
-		}
-	}
 }
