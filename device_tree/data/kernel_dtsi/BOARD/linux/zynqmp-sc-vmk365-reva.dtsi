@@ -1,0 +1,230 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * dts file for SC on VMK365 revA (k24)
+ *
+ * (C) Copyright 2026, Advanced Micro Devices, Inc.
+ *
+ * Michal Simek <michal.simek@amd.com>
+ */
+
+&{/} {
+	compatible = "xlnx,zynqmp-sc-vmk365-revA",
+		     "xlnx,zynqmp-sc-vmk365", "xlnx,zynqmp";
+	model = "ZynqMP SC VMK365 revA";
+};
+
+&i2c0 { /* FMC/J13  - MIO66/67 - board_i2c0 */
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	tca6416_u266: gpio@21 { /* u266 */
+		compatible = "ti,tca6416";
+		reg = <0x21>;
+		gpio-controller; /* interrupt on MIO69 */
+		#gpio-cells = <2>;
+		gpio-line-names = "QSFP_MODSELL", "QSFP_RESETL", "QSFP_MODPRSL", "QSFP_INTL", /* 0 - 3 */
+				  "QSFP_LPMODE", "", "", "", /* 4 - 7 */
+				  "", "", "", "", /* 10 - 13 */
+				  "", "", "", ""; /* 14 - 17 */
+	};
+
+	tca9535_u362: gpio@26 { /* u362 */
+		compatible = "ti,tca9535";
+		reg = <0x26>;
+		gpio-controller; /* interrupt on MIO69 */
+		#gpio-cells = <2>;
+		gpio-line-names = "SFP28_P0_TX_FAULT", "SFP28_P0_RX_LOS", "SFP28_P0_MOD_ABS", "SFP28_P0_TX_DISABLE", /* 0 - 3 */
+				  "SFP28_P0_RS0_R", "SFP28_P0_RS1_R", "", "", /* 4 - 7 */
+				  "SFP28_P1_TX_FAULT", "SFP28_P1_RX_LOS", "SFP28_P1_MOD_ABS", "SFP28_P1_TX_DISABLE", /* 10 - 13 */
+				  "SFP28_P1_RS0_R", "SFP28_P1_RS1_R", "", ""; /* 14 - 17 */
+	};
+
+	tca9535_u363: gpio@27 { /* u363 */
+		compatible = "ti,tca9535";
+		reg = <0x27>;
+		gpio-controller; /* interrupt on MIO69 */
+		#gpio-cells = <2>;
+		gpio-line-names = "SFP28_P2_TX_FAULT", "SFP28_P2_RX_LOS", "SFP28_P2_MOD_ABS", "SFP28_P2_TX_DISABLE", /* 0 - 3 */
+				  "SFP28_P2_RS0_R", "SFP28_P2_RS1_R", "", "", /* 4 - 7 */
+				  "SFP28_P3_TX_FAULT", "SFP28_P3_RX_LOS", "SFP28_P3_MOD_ABS", "SFP28_P3_TX_DISABLE", /* 10 - 13 */
+				  "SFP28_P3_RS0_R", "SFP28_P3_RS1_R", "", ""; /* 14 - 17 */
+	};
+
+	i2c0_mux_71: i2c-mux@71 { /* u411 */
+		compatible = "nxp,pca9548";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x71>;
+		i2c-mux-idle-disconnect;
+		qsfp: i2c@0 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0>;
+		};
+		sfp28_p0: i2c@1 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <1>;
+		};
+		sfp28_p1: i2c@2 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <2>;
+		};
+		sfp28_p2: i2c@3 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <3>;
+		};
+		sfp28_p3: i2c@4 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <4>;
+		};
+		/* 5 - 6 unused */
+	};
+};
+
+&i2c1 { /* MIO24/25 - sysctrl_i2c1 - board_i2c1 */
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	/* slg7xl46528: gpio@10/11 u169 - reset logic */
+	/* m24c128 - eeprom u35 - board identification */
+	/* There is no arbitrator available */
+
+	tca6416_u37: gpio@21 { /* u37 */
+		compatible = "ti,tca6416";
+		reg = <0x21>;
+		gpio-controller; /* interrupt on MIO69 */
+		#gpio-cells = <2>;
+		gpio-line-names = "USB2_USB3_MUX_SEL", "PMBUS5_INA_ALERT", "PMBUS4_INA_ALERT", "PMBUS3_INA_ALERT", /* 0 - 3 */
+				  "PMBUS2_INA_ALERT", "PMBUS1_INA_ALERT", "PMBUS1_ALERT", "", /* 4 - 7 */
+				  "USB_FLEX_STATUS", "USB_P1_HOST_DET", "", "", /* 10 - 13 */
+				  "", "", "", ""; /* 14 - 17 */
+	};
+
+	i2c_mux_71: i2c-mux@71 { /* u162 */
+		compatible = "nxp,pca9548";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x71>;
+		i2c-mux-idle-disconnect;
+		pmbus1: i2c@0 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0>;
+			/* pmbus1 */
+			/* J1 connector */
+			/* u176 mpq2285 0x1d */
+			/* u219 mpq72963 0x22 */
+			/* u220 mpq72963 0x23 */
+			/* u320 mpq70170 0x24 */
+			/* u328 mpq70170 0x25 */
+		};
+		pmbus2: i2c@1 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <1>;
+			/* pmbus2 */
+			/* J166 connector */
+			/* u205 mpq2285 0x1 */
+			/* u189 mpq2285 0x3 */
+			/* u190 mpq2283 0x4 */
+		};
+		pmbus1_ina: i2c@2 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <2>;
+			/* u282 ina745a 0x40 vr_0v8_vcc_fpd_bus */
+			/* u318 ina745a 0x41 vr_0v8_vcc_soc_io_bus */
+			/* u319 ina745a 0x44 vr_0v88_vcc_lpd_bus */
+			/* u324 ina700a 0x45 vr_1v5_vccaux_lpd_bus */
+			/* u321 ina700a 0x46 vr_1v8_vcco_50x_bus */
+			/* u322 ina700a 0x47 vr_0v8_vcc_mipi_507_bus */
+			/* u64 ina745a 0x48 vr_0v8_vccint_bus1 */
+			/* u275 ina745a 0x49 vr_0v8_vccint_bus2 */
+			/* u276 ina745a 0x4a vr_0v8_vccint_bus3 */
+		};
+		pmbus2_ina: i2c@3 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <3>;
+			/* u327 ina700a 0x44 vr_1v8_vccaio_mipi_507 */
+			/* u329 ina700a 0x45 vr_3v3_vccio_usb2_505 */
+			/* u288 ina700a 0x46 vr_1v5_vccaux */
+			/* u416 ina700a 0x47 vr_0v8_vcc_paux_505 */
+		};
+		pmbus3_ina: i2c@4 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <4>;
+			/* u290 ina700a 0x44 vr_3v3_vcco_4xx */
+			/* u291 ina700a 0x45 vr_1v5_gtyp_avccaux */
+			/* u292 ina700a 0x46 vr_1v2_gtyp_avtt */
+			/* u295 ina700a 0x47 vr_1v0_vcco_7xx_lp5 */
+		};
+		pmbus4_ina: i2c@5 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <5>;
+			/* u293 ina700a 0x44 vr_0v8_vcc_mmd */
+			/* u331 ina700a 0x45 vr_0v8_vcc_ram */
+			/* u330 ina700a 0x46 vr_0v92_gtyp_avcc */
+			/* u414 ina700a 0x47 vr_1v8_vccio_paux_505 */
+		};
+		pmbus5_ina: i2c@6 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <6>;
+			/* u325 ina700a 0x44 vr_0v92_gtyp_mmi_avcc */
+			/* u326 ina700a 0x45 vr_1v5_gtyp_mmi_avccaux */
+			/* u323 ina700a 0x46 vr_1v2_gtyp_mmi_avtt */
+			/* u415 ina700a 0x47 vr_1v8_vccio_usb3_505 */
+		};
+		pmbus_seq: i2c@7 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <7>;
+			/* u338 ucd90320 0x73 */
+		};
+	};
+
+	i2c_mux_77: i2c-mux@77 { /* u253 */
+		compatible = "nxp,pca9548";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x77>;
+		i2c-mux-idle-disconnect;
+		clkgen_sit95211: i2c@0 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0>;
+			/* clock-generator@0x69 - u101 */
+			eeprom_u165: eeprom@57 { /* u166 - required by spec - also at address 0x5F */
+				compatible = "atmel,24c64";
+				label = "eeprom_sit95211";
+				reg = <0x57>;
+			};
+		};
+		usbdp: i2c@2 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <2>;
+			/* u272 tps66993 */
+		};
+		i2c_10g_aqr: i2c@3 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <3>;
+			/* u389 - aqr113c */
+		};
+		usb0_hub: i2c@4 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <4>;
+			/* u398 - DNP usb5734@74 */
+		};
+		/* 1, 5 - 7 not connected */
+	};
+};
