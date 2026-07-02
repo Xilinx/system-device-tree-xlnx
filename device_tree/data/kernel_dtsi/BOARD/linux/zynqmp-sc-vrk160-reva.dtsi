@@ -99,10 +99,10 @@
 					/* u141 mpq2283 0x18 */
 					/* u145 mpq2283 0x19 */
 					/* u147 mpq2283 0x1b */
-					/* u6 mp54522 61 */
-					/* u7 mp54522 62 */
-					/* u8 mp54322 63 */
-					/* u9 mp54322 64 */
+					/* u6 mp54522 61 (revA), lt7182s 0x41 (revB) */
+					/* u7 mp54522 62 (revA), lt7182s 0x42 (revB) */
+					/* u8 mp54322 63 (revA), lt7182s 0x43 (revB) */
+					/* u9 mp54322 64 (revA), lt7182s 0x44 (revB) */
 				};
 				i2cmux0_2: i2c@2 {
 					#address-cells = <1>;

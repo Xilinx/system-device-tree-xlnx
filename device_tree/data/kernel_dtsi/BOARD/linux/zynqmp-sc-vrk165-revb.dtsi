@@ -1,0 +1,16 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * dts file for SC on VRK165 revB (k24)
+ *
+ * (C) Copyright 2025 - 2026, Advanced Micro Devices, Inc.
+ *
+ * Michal Simek <michal.simek@amd.com>
+ */
+
+#include "zynqmp-sc-vrk160-revb.dtsi"
+
+/ {
+	compatible = "xlnx,zynqmp-sc-vrk165-revB",
+		     "xlnx,zynqmp-sc-vrk165", "xlnx,zynqmp";
+	model = "ZynqMP SC VRK165 revB";
+};
