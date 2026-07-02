@@ -161,7 +161,6 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 		phy0: ethernet-phy@1 { /* u201 */
-			#phy-cells = <1>;
 			compatible = "ethernet-phy-id2000.a231";
 			reg = <1>;
 			ti,rx-internal-delay = <DP83867_RGMIIDCTL_3_00_NS>;

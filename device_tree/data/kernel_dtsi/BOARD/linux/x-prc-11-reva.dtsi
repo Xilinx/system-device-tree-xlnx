@@ -76,7 +76,6 @@
 		#size-cells = <0>;
 
 		phy0: ethernet-phy@1 { /* u139 - marwell 88e1512 */
-			#phy-cells = <1>;
 			reg = <1>;
 			reset-gpios = <&gpio0 7 GPIO_ACTIVE_LOW>;
 		};

@@ -28,7 +28,6 @@
 		/* u393 DP83867 - DNP */
 		/*
 		phy0: ethernet-phy@1 {
-			#phy-cells = <1>;
 			compatible = "ethernet-phy-id2000.a231";
 			reg = <1>;
 			ti,rx-internal-delay = <0x8>;
@@ -40,7 +39,6 @@
 		*/
 		/* phy also respond on broadcast address 0 */
 		phy0: ethernet-phy@1 { /* u396 RTL8201F */
-			#phy-cells = <1>;
 			compatible = "ethernet-phy-id001c.c816";
 			reg = <1>;
 		};

@@ -71,11 +71,15 @@
 		compatible = "jedec,spi-nor"; /* u29 IS25LP128 */
 		reg = <0>;
 		spi-max-frequency = <25000000>;
-		#address-cells = <1>;
-		#size-cells = <1>;
 
-		partition@0 {
-			reg = <0 0x200000>; /* 2MB */
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				reg = <0 0x200000>; /* 2MB */
+			};
 		};
 	};
 };
