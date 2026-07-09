@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -76,4 +76,11 @@
                 add_prop $node "d-cache-size" $dcache_size int "pcw.dtsi"
                 add_prop $node "d-cache-line-size" $dcache_line_size int "pcw.dtsi"
         }
+
+        if {$ip_name in {"psv_pmc" "pmc" "psx_pmc"}} {
+            if {[llength [hsi::get_cells -hier -filter {IP_NAME =~ "*cpm6"}]]} {
+                add_prop $node "xlnx,cpm6_supported" "" boolean "pcw.dtsi" 1
+            }
+        }
+
     }
