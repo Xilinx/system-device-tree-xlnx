@@ -372,6 +372,12 @@
 			#address-cells = <2>;
 			#size-cells = <2>;
 			ranges;
+			its: msi-controller@e2040000 {
+				compatible = "arm,gic-v3-its";
+				msi-controller;
+				#msi-cells = <1>;
+				reg = <0 0xe2040000 0 0x20000>;
+			};
 			its1: msi-controller@e2060000 {
 				compatible = "arm,gic-v3-its";
 				msi-controller;
