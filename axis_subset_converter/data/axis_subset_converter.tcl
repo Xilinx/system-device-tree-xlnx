@@ -164,10 +164,10 @@ proc axis_subset_converter_generate {drv_handle} {
 			}
 			if {[llength $connectip]} {
 				#to handle scaler subsystem IP
-				set sub_set_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "S_AXIS"]
+				set sub_set_inip [axis_subset_resolve_peer $drv_handle up]
 				set subset_node [create_node -n "endpoint" -l $drv_handle$connectip -p $port_node -d $dts_file]
 				gen_endpoint $drv_handle "subset_out$drv_handle"
-				if {[string match -nocase [hsi get_property IP_NAME $sub_set_inip] "v_proc_ss"]} {
+				if {[llength $sub_set_inip] && [string match -nocase [hsi get_property IP_NAME $sub_set_inip] "v_proc_ss"]} {
 					dtg_warning "$drv_handle scaler sub-core use case skipped.!"
 				#	add_prop "$subset_node" "remote-endpoint" "" reference $dts_file
 					return
