@@ -60,11 +60,12 @@
 &pmcbridge_0_pmcl_ospi_0 {
 	#address-cells = <1>;
 	#size-cells = <0>;
-	clocks = <&clk_cpu_0>;
+	clocks = <&pmc_clk 2>;
+	resets = <&pmc_reset 2>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&ospi_default>;
 	cdns,fifo-depth = <256>;
-        cdns,fifo-width = <4>;
-        #address-cells = <1>;
-        #size-cells = <0>;
+	cdns,fifo-width = <4>;
 
 	flash@0 {
 		bootph-all;
@@ -86,6 +87,138 @@
 		partition@0 {
 			label = "spi0-flash0";
 			reg = <0 0x8000000>;
+		};
+	};
+};
+
+&pmcbridge_0_pmcl_global_0 {
+	clocks = <&clk_cpu_0>;
+	clock-names = "ref";
+	bootph-all;
+	pmc_reset: reset-controller {
+	        compatible = "amd,pmc-reset";
+	        #reset-cells = <1>;
+	        bootph-all;
+	};
+
+	pmc_clk: clock-controller {
+	        compatible = "amd,pmc-clk";
+	        #clock-cells = <1>;
+	        bootph-all;
+	};
+
+	pmc_pinctrl: pinctrl {
+	        compatible = "amd,pmc-pinctrl";
+	        bootph-all;
+	        ospi_default: ospi-state {
+	                groups = "ospi";
+	                function = "ospi";
+	                bootph-all;
+	        };
+	};
+	pmc_nvmem: nvmem {
+		compatible = "amd,pmc-nvmem";
+
+		nvmem-layout {
+			compatible = "fixed-layout";
+			#address-cells = <1>;
+			#size-cells = <1>;
+			reset_reason: reset-reason@70 {
+				reg = <0x70 0x4>;
+			};
+			last_reset_reason: last-reset-reason@74 {
+				reg = <0x74 0x4>;
+			};
+			boot_mode_por: boot-mode-por@78 {
+				reg = <0x78 0x4>;
+			};
+			boot_mode_user: boot-mode-user@7c {
+				reg = <0x7c 0x4>;
+			};
+			global_gen_storage0: global-gen-storage0@a0 {
+				reg = <0xa0 0x4>;
+			};
+			global_gen_storage1: global-gen-storage1@a4 {
+				reg = <0xa4 0x4>;
+			};
+			global_gen_storage2: global-gen-storage2@a8 {
+				reg = <0xa8 0x4>;
+			};
+			global_gen_storage3: global-gen-storage3@ac {
+				reg = <0xac 0x4>;
+			};
+			global_gen_storage4: global-gen-storage4@b0 {
+				reg = <0xb0 0x4>;
+			};
+			global_gen_storage5: global-gen-storage5@b4 {
+				reg = <0xb4 0x4>;
+			};
+			global_gen_storage6: global-gen-storage6@b8 {
+				reg = <0xb8 0x4>;
+			};
+			global_gen_storage7: global-gen-storage7@bc {
+				reg = <0xbc 0x4>;
+			};
+			pers_glob_gen_storage0: pers-glob-gen-storage0@c0 {
+				reg = <0xc0 0x4>;
+			};
+			pers_glob_gen_storage1: pers-glob-gen-storage1@c4 {
+				reg = <0xc4 0x4>;
+			};
+			pers_glob_gen_storage2: pers-glob-gen-storage2@c8 {
+				reg = <0xc8 0x4>;
+			};
+			pers_glob_gen_storage3: pers-glob-gen-storage3@cc {
+				reg = <0xcc 0x4>;
+			};
+			pers_glob_gen_storage4: pers-glob-gen-storage4@d0 {
+				reg = <0xd0 0x4>;
+			};
+			pers_glob_gen_storage5: pers-glob-gen-storage5@d4 {
+				reg = <0xd4 0x4>;
+			};
+			pers_glob_gen_storage6: pers-glob-gen-storage6@d8 {
+				reg = <0xd8 0x4>;
+			};
+			pers_glob_gen_storage7: pers-glob-gen-storage7@dc {
+				reg = <0xdc 0x4>;
+			};
+			pmc_fw_auth_hash0: pmc-fw-auth-hash0@160 {
+				reg = <0x160 0x4>;
+			};
+			pmc_fw_auth_hash1: pmc-fw-auth-hash1@164 {
+				reg = <0x164 0x4>;
+			};
+			pmc_fw_auth_hash2: pmc-fw-auth-hash2@168 {
+				reg = <0x168 0x4>;
+			};
+			pmc_fw_auth_hash3: pmc-fw-auth-hash3@16c {
+				reg = <0x16c 0x4>;
+			};
+			pmc_fw_auth_hash4: pmc-fw-auth-hash4@170 {
+				reg = <0x170 0x4>;
+			};
+			pmc_fw_auth_hash5: pmc-fw-auth-hash5@174 {
+				reg = <0x174 0x4>;
+			};
+			pmc_fw_auth_hash6: pmc-fw-auth-hash6@178 {
+				reg = <0x178 0x4>;
+			};
+			pmc_fw_auth_hash7: pmc-fw-auth-hash7@17c {
+				reg = <0x17c 0x4>;
+			};
+			pmc_fw_auth_hash8: pmc-fw-auth-hash8@180 {
+				reg = <0x180 0x4>;
+			};
+			pmc_fw_auth_hash9: pmc-fw-auth-hash9@184 {
+				reg = <0x184 0x4>;
+			};
+			pmc_fw_auth_hash10: pmc-fw-auth-hash10@188 {
+				reg = <0x188 0x4>;
+			};
+			pmc_fw_auth_hash11: pmc-fw-auth-hash11@18c {
+				reg = <0x18c 0x4>;
+			};
 		};
 	};
 };
