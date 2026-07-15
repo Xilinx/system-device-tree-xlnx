@@ -265,10 +265,20 @@
                         framebuf_wr_gen_frmbuf_node $inip $drv_handle $dts_file
                 } elseif {[string match -nocase [hsi get_property IP_NAME $inip] "preprocess_accel"] } {
                         framebuf_wr_gen_frmbuf_node $inip $drv_handle $dts_file
+                } elseif {[string match -nocase [hsi get_property IP_NAME $inip] "v_frmbuf_rd"] } {
+                        framebuf_wr_gen_mem2mem_node $inip $drv_handle $dts_file
                 }
         }
 
     }
+
+proc framebuf_wr_gen_mem2mem_node {ip drv_handle dts_file} {
+        set bus_node [detect_bus_name $drv_handle]
+        set m2m [create_node -n "video_m2m_$drv_handle" -l video_m2m_$drv_handle -p $bus_node -d $dts_file]
+        add_prop $m2m "compatible" "xlnx,mem2mem" string $dts_file
+        add_prop $m2m "dmas" "$ip 0>, <&$drv_handle 0" reference $dts_file
+        add_prop $m2m "dma-names" "tx rx" stringlist $dts_file
+}
 
 proc framebuf_wr_gen_frmbuf_node {ip drv_handle dts_file} {
         set proctype [get_hw_family]
