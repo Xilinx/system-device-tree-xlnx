@@ -3,7 +3,7 @@
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # Michal SIMEK <monstr@monstr.eu>
 #
@@ -77,6 +77,10 @@
         }
 
         add_prop $node "xlnx,intc-type" $intc_type hexint $dts_file 1
+
+        # Detect unsupported cascade connections (interrupts will not work correctly).
+        check_intc_mixed_cascade $drv_handle $intc_type
+
         if {[string match -nocase $env(zocl) "enable"]} {
                 add_prop $node "xlnx,num-intr-inputs" 0x20 hexint "pl.dtsi" 1
         } else {

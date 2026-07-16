@@ -4187,6 +4187,76 @@ proc get_intc_cascade_offset {intc_handle {visited {}}} {
     return 0
 }
 
+# Return axi_intc cells driving this INTC's intr inputs (direct or via one concat stage).
+proc intc_intr_source_axi_intcs {ip} {
+    set sources {}
+    if {![llength $ip]} {
+        return $sources
+    }
+    set intr_pins [hsi::get_pins -of_objects $ip -filter {TYPE==INTERRUPT && DIRECTION==I}]
+    foreach pin $intr_pins {
+        set src_pins [get_source_pins $pin]
+        foreach sp $src_pins {
+            set src_cell [hsi::get_cells -of_objects $sp]
+            if {![llength $src_cell]} continue
+            set src_ip_name [hsi get_property IP_NAME $src_cell]
+            if {$src_ip_name in {"xlconcat" "ilconcat"}} {
+                # Traverse one concat level to find feeding axi_intc cells
+                foreach cin [hsi::get_pins -of_objects $src_cell -filter {DIRECTION==I}] {
+                    foreach csp [get_source_pins $cin] {
+                        set cc [hsi::get_cells -of_objects $csp]
+                        if {[llength $cc] && \
+                                [string match -nocase \
+                                    [hsi get_property IP_NAME $cc] "axi_intc"]} {
+                            intc_lappend_unique_parent sources $cc
+                        }
+                    }
+                }
+            } elseif {[string match -nocase $src_ip_name "axi_intc"]} {
+                intc_lappend_unique_parent sources $src_cell
+            }
+        }
+    }
+    return $sources
+}
+
+# Warn if an intc with cascade mode disabled is connected to one with cascade mode enabled.
+# Check 1: non-cascade irq feeds a cascade leaf. Check 2: cascade intc drives another intc's intr input.
+proc check_intc_mixed_cascade {drv_handle intc_type} {
+    if {$intc_type != 0} {
+        return
+    }
+    set ip [hsi::get_cells -hier $drv_handle]
+    if {![llength $ip]} {
+        return
+    }
+    set ip_name [hsi get_property NAME $ip]
+
+    # Check 1: non-cascade irq feeds a cascade leaf (cascade_mode==0 but offset>0).
+    foreach parent [intc_irq_parent_axi_intcs $ip] {
+        set par_cascade_mode [get_ip_param_value $parent C_EN_CASCADE_MODE]
+        if {$par_cascade_mode eq "" || $par_cascade_mode == -1} {
+            set par_cascade_mode 0
+        }
+        if {$par_cascade_mode == 0 && [get_intc_cascade_offset $parent] > 0} {
+            set parent_name [hsi get_property NAME $parent]
+            puts "ERROR: Unsupported cascade connection detected between '$ip_name' and '$parent_name'. Cascade mode must be uniformly enabled or disabled across all connected intcs."
+        }
+    }
+
+    # Check 2: cascade-mode-enabled intc drives another intc's intr input.
+    foreach src_intc [intc_intr_source_axi_intcs $ip] {
+        set src_cascade_mode [get_ip_param_value $src_intc C_EN_CASCADE_MODE]
+        if {$src_cascade_mode eq "" || $src_cascade_mode == -1} {
+            set src_cascade_mode 0
+        }
+        if {$src_cascade_mode == 1 || [get_intc_cascade_offset $src_intc] > 0} {
+            set src_name [hsi get_property NAME $src_intc]
+            puts "ERROR: Unsupported cascade connection detected between '$src_name' and '$ip_name'. Cascade mode must be uniformly enabled or disabled across all connected intcs."
+        }
+    }
+}
+
 # Helper function to extract cascade interrupt number from pin connections
 proc get_cascade_interrupt_number {sink_pn peri periph} {
     # Extract number from pin name (e.g., intr[5] -> 5, In2 -> 2)
@@ -6448,8 +6518,9 @@ proc get_psu_interrupt_id { ip_name port_name } {
 	}
 	}
 
-	# Apply cascade offset for axi_intc
-	if {[llength $intc_periph] > 0} {
+	# Only apply cascade offset for xlconcat paths (concat_block==1); direct
+	# connections already have it baked into ret via the loop counter i=cascade_id.
+	if {[llength $intc_periph] > 0 && $concat_block == 1} {
 		set intc_ip_name [hsi get_property IP_NAME $intc_periph]
 		if {[string match -nocase $intc_ip_name "axi_intc"]} {
 			set cascade_offset [get_intc_cascade_offset $intc_periph]
