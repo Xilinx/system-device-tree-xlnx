@@ -382,6 +382,10 @@ proc print_usage args {
 			      `<this repo>/device_tree/data/kernel_dtsi/BOARD/linux` directory.
 			      This is the recommended replacement for `-board_dts`.
 			      Example: `-user_dts zcu102-rev1.0.dtsi ./test_dir/overlay.dtsi`.
+            -user_zephyr_dts  Provides a custom Zephyr board `.dtsi` file to copy into the
+                              generated SDT output folder. The file can be an absolute path,
+                              relative path, or a file name present in
+                              `<this repo>/device_tree/data/kernel_dtsi/BOARD/zephyr`.
             -debug            Enable DTG++ debug
             -trace            Enable DTG++ traces
             -zocl             Create zocl node in device tree. Possible options: enable/disable. Default option: disable
@@ -577,6 +581,23 @@ proc set_dt_param args {
 					}
 					set env(user_dts) $normalized_path
                                 }
+				-user_zephyr_dts {
+					set zephyr_dts_input [Pop args 1]
+					if {![regexp -nocase {\.dtsi$} $zephyr_dts_input]} {
+						error "ERROR: \"$zephyr_dts_input\" is not a .dtsi file. Can't be used as a Zephyr board DTSI file."
+					}
+					set_sdt_default_repo
+					set zephyr_dts_dir [file normalize "$env(CUSTOM_SDT_REPO)/device_tree/data/kernel_dtsi/BOARD/zephyr"]
+					set zephyr_dts_ref [get_zephyr_dts_ref_path]
+					if {![file exists $zephyr_dts_input]} {
+						set target_zephyr_file [file join $zephyr_dts_dir $zephyr_dts_input]
+						if {![file exists $target_zephyr_file]} {
+							error "ERROR: Invalid \"$zephyr_dts_input\" file. The file could neither be located at ${zephyr_dts_ref} nor with its relative/absolute path."
+						}
+						set zephyr_dts_input $target_zephyr_file
+					}
+					set env(user_zephyr_dts) [file normalize $zephyr_dts_input]
+				}
                                 -debug {
 					set debug [Pop args 1]
 					if {!($debug in {"enable" "disable"})} {
@@ -652,6 +673,8 @@ proc get_dt_param args {
 		}
 	} -user_dts {
 		if {[catch {set val $env(user_dts)} msg ]} {}
+	} -user_zephyr_dts {
+		if {[catch {set val $env(user_zephyr_dts)} msg ]} {}
 	} -include_dts {
 		if {[catch {set val $env(user_dts)} msg ]} {}
 	} -list_boards {
@@ -1284,6 +1307,17 @@ proc copy_zephyr_board_dts {zephyr_dts_file dir_path dest_name} {
 	return $dest_path
 }
 
+proc validate_user_zephyr_dts_name {user_zephyr_dts board} {
+	if {$board eq "" || $user_zephyr_dts eq ""} {
+		return
+	}
+	set user_zephyr_name [file tail $user_zephyr_dts]
+	set board_zephyr_name "${board}_zephyr.dtsi"
+	if {[string equal -nocase $user_zephyr_name $board_zephyr_name]} {
+		error "ERROR: Zephyr user board DTSI \"$user_zephyr_name\" conflicts with the auto-generated board DTSI name \"$board_zephyr_name\". Use a different file name or omit -user_zephyr_dts."
+	}
+}
+
 proc gen_zephyr_board_info {} {
 	global env
 	set path $env(CUSTOM_SDT_REPO)
@@ -1291,6 +1325,9 @@ proc gen_zephyr_board_info {} {
 	set dir_path [get_user_config $common_file -dir]
 	set zephyr_dts_dir [file normalize "$path/device_tree/data/kernel_dtsi/BOARD/zephyr"]
 	set zephyr_dts_ref [get_zephyr_dts_ref_path]
+	set copied_board ""
+	set copied_user ""
+	set user_zephyr_dts ""
 
 	set boardname [get_board_name]
 	set board ""
@@ -1298,20 +1335,29 @@ proc gen_zephyr_board_info {} {
 		lassign [split $boardname ":"] prefix board suffix
 	}
 
+	if {![catch {set user_zephyr_dts $env(user_zephyr_dts)}] && $user_zephyr_dts ne ""} {
+		validate_user_zephyr_dts_name $user_zephyr_dts $board
+		set copied_user [copy_zephyr_board_dts $user_zephyr_dts $dir_path [file tail $user_zephyr_dts]]
+	}
+
 	if {$board eq ""} {
-		puts "INFO: The Vivado design was not created with a board part when targeting Zephyr-specific use cases. User must provide the Zephyr board DTSI explicitly using the user_zephyr_dts option. For reference implementations, see $zephyr_dts_ref."
+		if {$copied_user eq ""} {
+			puts "INFO: The Vivado design was not created with a board part when targeting Zephyr-specific use cases. User must provide the Zephyr board DTSI explicitly using the user_zephyr_dts option. For reference implementations, see $zephyr_dts_ref."
+		}
 		return
 	}
 
 	if {![file isdirectory $zephyr_dts_dir]} {
-		puts "INFO: Zephyr board DTSI directory was not found at $zephyr_dts_ref. User must provide the Zephyr board DTSI explicitly using the user_zephyr_dts option."
+		if {$copied_user eq ""} {
+			puts "INFO: Zephyr board DTSI directory was not found at $zephyr_dts_ref. User must provide the Zephyr board DTSI explicitly using the user_zephyr_dts option."
+		}
 		return
 	}
 
 	set zephyr_dts_file [file join $zephyr_dts_dir "${board}.dtsi"]
 	if {[file exists $zephyr_dts_file]} {
-		copy_zephyr_board_dts $zephyr_dts_file $dir_path "${board}_zephyr.dtsi"
-	} else {
+		set copied_board [copy_zephyr_board_dts $zephyr_dts_file $dir_path "${board}_zephyr.dtsi"]
+	} elseif {$copied_user eq ""} {
 		puts "INFO: No Zephyr board DTSI file '${board}.dtsi' found in $zephyr_dts_ref. User must provide the Zephyr board DTSI explicitly using the user_zephyr_dts option."
 	}
 }

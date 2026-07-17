@@ -32,6 +32,10 @@ Optional Arguments:
                       `<this repo>/device_tree/data/kernel_dtsi/BOARD/linux` directory.
 			          This is the recommended replacement for `-board_dts`.
 			          Example: `-user_dts zcu102-rev1.0.dtsi ./test_dir/overlay.dtsi`.
+    -user_zephyr_dts  Provides a custom Zephyr board `.dtsi` file to copy into the
+                      generated SDT output folder. The file can be an absolute path,
+                      relative path, or a file name present in
+                      `<this repo>/device_tree/data/kernel_dtsi/BOARD/zephyr`.
     -debug            enable SDTGen debug (enable/disable, default: disable)
     -trace            enable SDTGen traces (enable/disable, default: disable)
     -zocl             add zocl nodes for extended interrupts usecase
@@ -49,6 +53,7 @@ Examples:
     sdtgen -list_boards "zcu102-*"
     sdtgen -xsa system.xsa -dir sdt_outdir -board_dts zcu102-rev1.0
     sdtgen -xsa system.xsa -dir sdt_outdir -user_dts zcu102-rev1.0.dtsi
+    sdtgen -xsa system.xsa -dir sdt_outdir -user_zephyr_dts kcu105.dtsi
     sdtgen -xsa system.xsa -dir sdt_outdir -domain pmc
     sdtgen -xsa system.xsa -dir sdt_outdir -user_dts zcu102-rev1.0.dtsi ./user1.dtso -trace enable -debug enable
     sdtgen -xsa full.xsa -dir dfx_dts -rm_xsa rp0_rm0.xsa -rm_xsa rp0_rm1.xsa
