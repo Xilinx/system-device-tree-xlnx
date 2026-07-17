@@ -1273,6 +1273,49 @@ proc gen_board_info {} {
 	}
 }
 
+proc get_zephyr_dts_ref_path {} {
+	return "<this repo>/device_tree/data/kernel_dtsi/BOARD/zephyr"
+}
+
+proc copy_zephyr_board_dts {zephyr_dts_file dir_path dest_name} {
+	set dest_path [file join $dir_path $dest_name]
+	file copy -force $zephyr_dts_file $dest_path
+	gen_include_dtfile $zephyr_dts_file $dir_path
+	return $dest_path
+}
+
+proc gen_zephyr_board_info {} {
+	global env
+	set path $env(CUSTOM_SDT_REPO)
+	set common_file "$path/device_tree/data/config.yaml"
+	set dir_path [get_user_config $common_file -dir]
+	set zephyr_dts_dir [file normalize "$path/device_tree/data/kernel_dtsi/BOARD/zephyr"]
+	set zephyr_dts_ref [get_zephyr_dts_ref_path]
+
+	set boardname [get_board_name]
+	set board ""
+	if {$boardname ne "."} {
+		lassign [split $boardname ":"] prefix board suffix
+	}
+
+	if {$board eq ""} {
+		puts "INFO: The Vivado design was not created with a board part when targeting Zephyr-specific use cases. User must provide the Zephyr board DTSI explicitly using the user_zephyr_dts option. For reference implementations, see $zephyr_dts_ref."
+		return
+	}
+
+	if {![file isdirectory $zephyr_dts_dir]} {
+		puts "INFO: Zephyr board DTSI directory was not found at $zephyr_dts_ref. User must provide the Zephyr board DTSI explicitly using the user_zephyr_dts option."
+		return
+	}
+
+	set zephyr_dts_file [file join $zephyr_dts_dir "${board}.dtsi"]
+	if {[file exists $zephyr_dts_file]} {
+		copy_zephyr_board_dts $zephyr_dts_file $dir_path "${board}_zephyr.dtsi"
+	} else {
+		puts "INFO: No Zephyr board DTSI file '${board}.dtsi' found in $zephyr_dts_ref. User must provide the Zephyr board DTSI explicitly using the user_zephyr_dts option."
+	}
+}
+
 proc gen_zynqmp_ccf_clk {} {
 	set ps_wrapper [hsi get_cells -hier -filter {IP_NAME==zynq_ultra_ps_e}]
 	if {[llength $ps_wrapper] == 0} {
@@ -1921,6 +1964,7 @@ Generates system device tree based on args given in:
 	namespace forget ::
 
 	gen_board_info
+	gen_zephyr_board_info
 	gen_part_specific_misc
 	gen_afi_node
     	gen_include_headers
