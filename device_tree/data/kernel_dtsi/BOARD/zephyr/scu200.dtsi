@@ -1,0 +1,23 @@
+// SPDX-License-Identifier: Apache-2.0
+/*
+ * (C) Copyright 2026, Advanced Micro Devices, Inc.
+ *
+ */
+
+/ {
+	aliases {
+		eeprom-0 = &eeprom0;
+	};
+};
+
+&axi_iic_0 {
+	eeprom0: eeprom@50 {
+		compatible = "atmel,at24";
+		status = "okay";
+		reg = <0x50>;
+		size = <8192>;
+		pagesize = <32>;
+		address-width = <16>;
+		timeout = <5>;
+	};
+};

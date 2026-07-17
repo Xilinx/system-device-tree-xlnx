@@ -1,0 +1,48 @@
+// SPDX-License-Identifier: Apache-2.0
+/*
+ * (C) Copyright 2026, Advanced Micro Devices, Inc.
+ *
+ */
+
+/ {
+	aliases {
+		eeprom-0 = &eeprom0;
+		eeprom-1 = &eeprom1;
+	};
+
+	i2c_ref_clk: i2c-ref-clk {
+		compatible = "fixed-clock";
+		clock-frequency = <50000000>;
+		#clock-cells = <0>;
+	};
+};
+
+&i2c0 {
+	status = "okay";
+	clocks = <&i2c_ref_clk>;
+	clock-frequency = <400000>;
+
+	eeprom0: eeprom@51 {
+		compatible = "st,24c128", "atmel,at24";
+		reg = <0x51>;
+		size = <0x4000>;
+		pagesize = <64>;
+		address-width = <16>;
+		timeout = <5>;
+	};
+};
+
+&i2c1 {
+	status = "okay";
+	clocks = <&i2c_ref_clk>;
+	clock-frequency = <400000>;
+
+	eeprom1: eeprom@55 {
+		compatible = "st,24c128", "atmel,at24";
+		reg = <0x55>;
+		size = <0x4000>;
+		pagesize = <64>;
+		address-width = <16>;
+		timeout = <5>;
+	};
+};

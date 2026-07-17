@@ -1,0 +1,28 @@
+// SPDX-License-Identifier: Apache-2.0
+/*
+ * (C) Copyright 2026, Advanced Micro Devices, Inc.
+ *
+ */
+
+&axi_ethernetlite {
+
+	axi_ethernet_lite_mac: axi-ethernet-lite-mac {
+		phy-handle = <&eth_phy0>;
+	};
+	axi_ethernetlite_0_mdio: mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		compatible = "xlnx,xps-ethernetlite-3.00.a-mdio";
+		status = "okay";
+
+		eth_phy0: phy@7 {
+			compatible = "ethernet-phy";
+			reg = <7>;
+			default-speeds = "10BASE Half-Duplex",
+					"10BASE Full-Duplex",
+					"100BASE Half-Duplex",
+					"100BASE Full-Duplex";
+			status = "okay";
+		};
+	};
+};

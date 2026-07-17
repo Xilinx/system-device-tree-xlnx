@@ -1,0 +1,34 @@
+// SPDX-License-Identifier: Apache-2.0
+/*
+ * (C) Copyright 2026, Advanced Micro Devices, Inc.
+ *
+ */
+&ospi {
+        status = "disabled";
+};
+
+&spi1 {
+        status = "okay";
+        flash@2 {
+                compatible = "jedec,spi-nor";
+                reg = <2>;
+                spi-max-frequency = <8000000>;
+                jedec-id = [ c2 25 36 ]; /* mx25u3235f */
+                size = <0x2000000>; /* 32Mb */
+                has-dpd;
+                t-enter-dpd = <10000>;
+                t-exit-dpd = <35000>;
+
+		/* storage_partition + fixed-partitions: drivers.flash.common.default filter */
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			storage_partition: partition@0 {
+				label = "storage";
+				reg = <0x0 0x2000000>;
+			};
+		};
+        };
+};

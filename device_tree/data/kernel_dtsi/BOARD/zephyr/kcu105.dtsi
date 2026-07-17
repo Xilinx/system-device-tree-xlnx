@@ -1,0 +1,97 @@
+// SPDX-License-Identifier: Apache-2.0
+/*
+ * (C) Copyright 2026, Advanced Micro Devices, Inc.
+ *
+ */
+
+/ {
+	aliases {
+		eeprom-0 = &eeprom0;
+		i2c-channel-0 = &ch1;
+		i2c-channel-1 = &ch3;
+	};
+};
+
+&axi_iic_0 {
+	status = "okay";
+
+	i2c_mux0: i2c-mux@75 {
+		compatible = "nxp,pca9544", "ti,tca9544a";
+		reg = <0x75>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		ch1: i2c@1 {
+			compatible = "ti,tca9544a-channel";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <1>;
+		};
+
+		ch3: i2c@3 {
+			compatible = "ti,tca9544a-channel";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <3>;
+
+			eeprom0: eeprom@54 {
+				compatible = "atmel,24c08", "atmel,at24";
+				reg = <0x54>;
+				size = <1024>;
+				pagesize = <16>;
+				address-width = <8>;
+				timeout = <5>;
+			};
+		};
+	};
+};
+
+&axi_quad_spi_0 {
+	status = "okay";
+
+	flash@0 {
+		compatible = "jedec,spi-nor";
+		reg = <0>;
+		spi-max-frequency = <8000000>;
+		jedec-id = [20 bb 19]; /* n25q256 */
+		size = <0x8000000>;
+		has-dpd;
+		t-enter-dpd = <10000>;
+		t-exit-dpd = <35000>;
+
+                partitions {
+                        compatible = "fixed-partitions";
+                        #address-cells = <1>;
+                        #size-cells = <1>;
+
+                        /* Boot partition: 1 MB */
+                        boot_partition: partition@0 {
+                                label = "boot";
+                                reg = <0x0 0x100000>;
+                        };
+
+                        /* Storage partition: 127 MB */
+                        storage_partition: partition@100000 {
+                                label = "storage";
+                                reg = <0x100000 0x7F00000>;
+                        };
+                };
+	};
+};
+
+&axi_ethernet_0 {
+	axi_ethernet_mdio: mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		compatible = "xlnx,axi-ethernet-1.00.a-mdio";
+
+		axi_ethernetphy1: phy@1 {
+			device_type = "ethernet-phy";
+			compatible = "ti,dp83867";
+			ti,rx-internal-delay = <3>;
+			ti,tx-internal-delay = <3>;
+			ti,interface-type = "rgmii-id";
+			reg = <1>;
+		};
+	};
+};

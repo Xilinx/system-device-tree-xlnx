@@ -1,0 +1,31 @@
+// SPDX-License-Identifier: Apache-2.0
+/*
+ * (C) Copyright 2026, Advanced Micro Devices, Inc.
+ *
+ */
+
+&spi1 {
+        status = "disabled";
+};
+
+&ospi {
+        status = "okay";
+        size = <0x2000000>;
+        cdns,tslch-ns = <1>;
+        cdns,tchsh-ns = <1>;
+        cdns,tsd2d-ns = <0>;
+        cdns,tshsl-ns = <0>;
+        cdns,read-delay = <0>;
+        clock-frequency = <20000000>;
+        reg-names = "qspi_reg", "qspi_data";
+        partitions {
+                compatible = "fixed-partitions";
+                #address-cells = <1>;
+                #size-cells = <1>;
+
+                storage_partition: partition@0 {
+                        label = "storage";
+                        reg = <0x00000000 0x20000>;
+                };
+        };
+};
