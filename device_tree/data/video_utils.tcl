@@ -729,6 +729,13 @@ proc gen_broadcaster {ip dts_file} {
     }
 
 proc gen_axis_switch {ip} {
+	global axis_switch_gen_done
+	# Generate each axis_switch node only once even if several downstream
+	# IPs (e.g. multiple framebuffers) trigger it during the generate phase.
+	if {[info exists axis_switch_gen_done($ip)]} {
+		return
+	}
+	set axis_switch_gen_done($ip) 1
 	set compatible [get_comp_str $ip]
 	dtg_verbose "+++++++++gen_axis_switch:$ip"
 	set routing_mode [hsi get_property CONFIG.ROUTING_MODE [hsi get_cells -hier $ip]]
@@ -759,7 +766,11 @@ proc gen_axis_switch {ip} {
 	set num_mi [hsi get_property CONFIG.NUM_MI [hsi::get_cells -hier $ip]]
 	add_prop "$switch_node" "xlnx,num-mi-slots" $num_mi int $dts
 	add_prop "$switch_node" "compatible" "$compatible" string $dts
+	gen_clk_property $ip
 
+	# Collect every frame buffer writer behind this switch so that a single
+	# xlnx,video capture node (one DMA port each) can be emitted afterwards.
+	set fb_list {}
 	set count 0
 	foreach intf $master_intf {
 	       set connectip [get_connected_stream_ip [hsi::get_cells -hier $ip] $intf]
@@ -836,6 +847,52 @@ proc gen_axis_switch {ip} {
 				add_prop "$axis_node" "remote-endpoint" $remote_endpoint_value reference $dts
 				gen_axis_port4_remoteendpoint $ip $remote_mapping_value
 			}
+		}
+	       # Remember each frame buffer writer and the switch master output
+	       # (port@<count>) that routes to it, so a single xlnx,video capture
+	       # node (one DMA port each) can be aggregated below.
+	       if {[string match -nocase [hsi get_property IP_NAME $connectip] "v_frmbuf_wr"]} {
+		       lappend fb_list [list $connectip $count]
+	       }
+	}
+
+	# The Xilinx VIPP composite model requires ONE "xlnx,video" root per
+	# media pipeline. For a TDEST-routed switch fanning out to multiple frame
+	# buffers, emit a single capture node with one input DMA port per frame
+	# buffer; two separate roots sharing the switch never complete probe.
+	# port@<k> (reg=<k>) pairs with dma-names "port<k>" and the matching
+	# switch master output endpoint axis_switch_out<count>$ip.
+	if {[llength $fb_list]} {
+		set vcap [create_node -n "vcap_$ip" -l vcap_$ip -p $bus_node -d $dts]
+		add_prop $vcap "compatible" "xlnx,video" string $dts
+		set dma_names ""
+		set dma_refs ""
+		set k 0
+		foreach fb_entry $fb_list {
+			set fb [lindex $fb_entry 0]
+			if {[string length $dma_refs]} {
+				append dma_refs ">, <&$fb 0"
+			} else {
+				set dma_refs "$fb 0"
+			}
+			append dma_names " " "port$k"
+			incr k
+		}
+		add_prop $vcap "dmas" $dma_refs reference $dts
+		add_prop $vcap "dma-names" $dma_names stringlist $dts
+		set vcap_ports [create_node -n "ports" -l vcap_ports$ip -p $vcap -d $dts]
+		add_prop "$vcap_ports" "#address-cells" 1 int $dts
+		add_prop "$vcap_ports" "#size-cells" 0 int $dts
+		set k 0
+		foreach fb_entry $fb_list {
+			set fb [lindex $fb_entry 0]
+			set mcount [lindex $fb_entry 1]
+			set vport [create_node -n "port" -l vcap_port${k}$ip -u $k -p $vcap_ports -d $dts]
+			add_prop "$vport" "reg" $k int $dts
+			add_prop "$vport" "direction" input string $dts
+			set vep [create_node -n "endpoint" -l $fb$ip -p $vport -d $dts]
+			add_prop "$vep" "remote-endpoint" axis_switch_out${mcount}$ip reference $dts
+			incr k
 		}
 	}
 }
