@@ -160,96 +160,117 @@
         }
     }
 
-    proc axi_mcdma_is_mrmac_connected {drv_handle dma_pin} {
-        set intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $drv_handle] $dma_pin]
-            if {[llength $intf]} {
-                        set connected_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $intf]
-                        # MRMAC 100G
-                        if {![llength $connected_ip]} {
-                            set dpath_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $drv_handle] "m_axis_mm2s_tdata"]]
-			    if {[llength $dpath_pin]} {
-                                 set dpath_ip [hsi::get_cells -of_objects $dpath_pin]
-				 set dpath_name [hsi get_property IP_NAME $dpath_ip]
-                                 if {[string match -nocase [hsi get_property IP_NAME $dpath_ip] "axis_data_fifo"]} {
-					 set dwidth_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $dpath_ip] "m_axis_tdata"]]
-					 set dwidth_ip [hsi::get_cells -of_objects $dwidth_pin]
-					 set fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $dwidth_ip] "m_axis_tdata"]]
-					 set fifo_ip [hsi::get_cells -of_objects $fifo_pin]
-					 set mrmac_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $fifo_ip] "m_axis_tvalid"]]
-			                 if {[llength $mrmac_pin]} {
-                                             set mrmac_per [hsi::get_cells -of_objects $mrmac_pin]
-                                             if {[string match -nocase [hsi get_property IP_NAME $mrmac_per] "mrmac"]} {
-                                                   return 1
-                                             }
+    # Breadth-first walk of the downstream AXI-Stream graph from $start_ip,
+    # returning 1 if an IP whose IP_NAME matches $target is reachable. It
+    # follows AXIS master/initiator interfaces and raw output data pins, so it
+    # crosses signal-level blocks (xlconcat/xlslice), the 10G mux, PTP-edit
+    # blocks, and custom hierarchies with no AXIS interface.
+    proc axi_mcdma_find_stream_ip {start_ip target {max_hops 16}} {
+
+         set queue [list $start_ip]
+         set visited {}
+
+         for {set hop 0} {$hop < $max_hops && [llength $queue]} {incr hop} {
+                 set next_queue {}
+                 foreach cur $queue {
+                         if {![llength $cur] || [lsearch -exact $visited $cur] >= 0} {
+                                 continue
+                         }
+                         lappend visited $cur
+
+                         if {[string match -nocase $target [hsi get_property IP_NAME $cur]]} {
+                                 return 1
+                         }
+
+                         # Descend into hierarchical wrapper internals.
+                         set cur_hier_name ""
+                         catch {set cur_hier_name [hsi get_property HIER_NAME [hsi::get_cells -hier $cur]]}
+                         if {![string_is_empty $cur_hier_name]} {
+                                 foreach child [hsi::get_cells -hier -filter "HIER_NAME=~${cur_hier_name}/*"] {
+                                         if {[lsearch -exact $visited $child] < 0} {
+                                                 lappend next_queue $child
                                          }
                                  }
-                            }
-                        }
-                        # Ethernet Offload
-                        if {[llength $connected_ip]} {
-                             if {[string match -nocase [hsi get_property IP_NAME $connected_ip] "ethernet_offload"]} {
-				     set connected_ip [get_connected_stream_ip [hsi::get_cells -hier $connected_ip] "tx_axis"]
-				     set ipname [hsi get_property IP_NAME $connected_ip]
-                             }
-                             if {[string match -nocase [hsi get_property IP_NAME $connected_ip] "axis_clock_converter"]} {
-                                  set mux_ip [get_connected_stream_ip [hsi::get_cells -hier $connected_ip] "M_AXIS"]
-                                  if {[llength $mux_ip]} {
-                                      if {[string match -nocase [hsi get_property IP_NAME $mux_ip] "mrmac_10g_mux"]} {
-                                            set data_fifo_per [get_connected_stream_ip [hsi::get_cells -hier $mux_ip] "tx_m_axis"]
-                                            if {[string match -nocase [hsi get_property IP_NAME $data_fifo_per] "axis_data_fifo"]} {
-                                                  set fifo_ip [get_connected_stream_ip [hsi::get_cells -hier $data_fifo_per] "M_AXIS"]
-                                                  set ipname [get_ip_property $fifo_ip IP_NAME]
-                                                  if {[llength $fifo_ip]} {
-                                                     if {[string match -nocase [hsi get_property IP_NAME $fifo_ip] "axis_register_slice"]} {							                      set fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $fifo_ip] "m_axis_tdata"]]
-                                                     }
-                                                     if {[llength $fifo_pin]} {
-                                                           set mrmac_per [hsi::get_cells -of_objects $fifo_pin]
-				                           if {[string match -nocase [hsi get_property IP_NAME $mrmac_per] "mrmac"]} {
-                                                                 return 1
-                                                           }
-                                                     }
-                                                  }
-                                            }
-                                      }
-                                  }
-                             }
+                         }
 
-                             # MRMAC Rhino
-                             if {[string match -nocase [hsi get_property IP_NAME $connected_ip] "axis_data_fifo"]} {
-                                set fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $connected_ip] "m_axis_tdata"]]
-                                if {[llength $fifo_pin]} {
-                                      set mrmac_per [::hsi::get_cells -of_objects $fifo_pin]
-                                }
-                                if {[string match -nocase [hsi get_property IP_NAME $mrmac_per] "mrmac"]} {
-                                      return 1
-                                }
-                             }
+                         set downstream {}
 
-                             # MRMAC TRD
-                             if {[string match -nocase [hsi get_property IP_NAME $connected_ip] "axis_data_fifo"]} {
-                               set mux_ip [get_connected_stream_ip [hsi::get_cells -hier $connected_ip] "M_AXIS"]
-                                        if {[llength $mux_ip]} {
-                                                if {[string match -nocase [hsi get_property IP_NAME $mux_ip] "mrmac_10g_mux"]} {
-                                                        set data_fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mux_ip] "tx_m_axis_tdata"]]
-                                                        set data_fifo_per [hsi::get_cells -of_objects $data_fifo_pin]
-                                                        if {[string match -nocase [hsi get_property IP_NAME $data_fifo_per] "axis_data_fifo"]} {
-                                                            set fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $data_fifo_per] "m_axis_tdata"]]
-                                                            set mrmac_per [hsi::get_cells -of_objects $fifo_pin]
-						            if {[llength $mrmac_per]} {
-						                 if {[string match -nocase [hsi get_property IP_NAME $mrmac_per] "mrmac_ptp_one_step_pkt_edit"]} {
-							              set ptp_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_per] "m_tdata"]]
-							              set mrmac_per [hsi::get_cells -of_objects $ptp_pin]
-						                 }
-						                 if {[string match -nocase [hsi get_property IP_NAME $mrmac_per] "mrmac"]} {
-                                                                      return 1
-                                                                 }
-	                                                    }
-                                                        }
-                                                }
-                                        }
-                                }
-                        }
-        }
+                         # Follow AXIS master/initiator interfaces (stream blocks).
+                         set intfs [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $cur] \
+                                    -filter {TYPE==MASTER || TYPE==INITIATOR}]
+                         foreach intf $intfs {
+                                 foreach peer [get_connected_stream_ip [hsi::get_cells -hier $cur] $intf] {
+                                         if {[llength $peer]} {
+                                                 lappend downstream $peer
+                                         }
+                                 }
+                         }
+
+                         # Follow only stream data-bus output pins at the net
+                         # level (tdata / m_axis / concat-slice dout). This crosses
+                         # signal-level blocks (xlconcat/xlslice) that carry the AXIS
+                         # bus on raw pins, while avoiding wide shared control nets.
+                         set out_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $cur] \
+                                       -filter {DIRECTION==O}]
+                         foreach opin $out_pins {
+                                 if {![regexp -nocase {tdata|m_axis|dout} [hsi get_property NAME $opin]]} {
+                                         continue
+                                 }
+                                 foreach sp [get_sink_pins $opin] {
+                                         set sp_cell [hsi::get_cells -of_objects $sp]
+                                         if {[llength $sp_cell]} {
+                                                 lappend downstream $sp_cell
+                                         }
+                                 }
+                         }
+
+                         foreach peer $downstream {
+                                 if {![llength $peer] || [regexp -nocase "ila" $peer]} {
+                                         continue
+                                 }
+                                 if {[string match -nocase $target [hsi get_property IP_NAME $peer]]} {
+                                         return 1
+                                 }
+                                 if {[lsearch -exact $visited $peer] < 0} {
+                                         lappend next_queue $peer
+                                 }
+                         }
+                 }
+                 set queue $next_queue
+         }
+
+         return 0
+    }
+
+    proc axi_mcdma_is_mrmac_connected {drv_handle dma_pin} {
+
+         # Discover an mrmac reachable from the MM2S stream output generically.
+         # This crosses FIFOs, converters, concat/slice, the 10G mux, PTP edit
+         # blocks, ethernet_offload, and custom hierarchies without any
+         # design-specific parsing.
+         set mcdma [hsi::get_cells -hier $drv_handle]
+         set start {}
+
+         set connected_ip [get_connected_stream_ip $mcdma $dma_pin]
+         if {[llength $connected_ip]} {
+                 lappend start $connected_ip
+         } else {
+                 set dpath_pin [get_sink_pins [hsi::get_pins -of_objects $mcdma "m_axis_mm2s_tdata"]]
+                 foreach p $dpath_pin {
+                         set c [hsi::get_cells -of_objects $p]
+                         if {[llength $c]} {
+                                 lappend start $c
+                         }
+                 }
+         }
+
+         foreach s $start {
+                 if {[axi_mcdma_find_stream_ip $s "mrmac"]} {
+                         return 1
+                 }
+         }
+
+         return 0
     }
 
     proc axi_mcdma_add_dma_channel {drv_handle parent_node xdma addr mode devid} {
