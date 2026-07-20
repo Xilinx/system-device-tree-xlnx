@@ -161,6 +161,16 @@ proc mipi_csi2_rx_ss_generate {drv_handle} {
 					add_prop "$mipi_node" "remote-endpoint" $ip_type$drv_handle reference $dts_file 1
 					gen_axis_switch_in_remo_endpoint $drv_handle "$ip_type$drv_handle"
 					set mipi_out_ep_created 1
+				} elseif {![llength $ip_mem_handles] && !$mipi_out_ep_created} {
+					# Non memory-mapped axis_switch (TDEST routing). Wire the CSI
+					# source endpoint to the switch sink and let the switch driver
+					# generate its own routed master ports via gen_axis_switch.
+					set mipi_node [create_node -n "endpoint" -l mipi_csirx_out$drv_handle -p $port_node -d $dts_file]
+					gen_axis_switch_in_endpoint $drv_handle "mipi_csirx_out$drv_handle"
+					add_prop "$mipi_node" "remote-endpoint" $ip_type$drv_handle reference $dts_file 1
+					gen_axis_switch_in_remo_endpoint $drv_handle "$ip_type$drv_handle"
+					gen_axis_switch $ip_type
+					set mipi_out_ep_created 1
 				}
 			}
 		}
@@ -168,6 +178,9 @@ proc mipi_csi2_rx_ss_generate {drv_handle} {
 
 	foreach ip $outip {
 		if {[llength $ip]} {
+			if {[string match -nocase [hsi get_property IP_NAME $ip] "axis_switch"] && ![llength [hsi get_mem_ranges $ip]]} {
+				continue
+			}
 			set ip_name [hsi get_property IP_NAME $ip]
 			# Skip transparent IPs like axis_data_fifo - look through them to find actual target
 			while {[string match -nocase $ip_name "axis_data_fifo"]} {
