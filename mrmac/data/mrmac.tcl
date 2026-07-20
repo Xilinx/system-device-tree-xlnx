@@ -131,6 +131,10 @@
 	set mrmac_ip [hsi::get_cells -hier $drv_handle]
         if {$mode eq "new"} {
             set reset_pin_name "rx_serdes_data0"
+            set gt_reset_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $mrmac_ip] $reset_pin_name]]
+            if {![llength $gt_reset_pins]} {
+                set reset_pin_name "rxdata_out_0"
+            }
         } else {
             set reset_pin_name "gt_reset_all_in"
         }
@@ -325,8 +329,11 @@
             set port_dwidth [string trimright $port_dwidth "b"]
             add_prop "${current_port_node}" "xlnx,axistream-dwidth" $port_dwidth int $dts_file
 
-	    set gt_old_pin [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $mrmac_ip] "gt_reset_all_in"]]
-	    set gt_new_pin [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $mrmac_ip] "rx_serdes_data0"]]
+            set gt_old_pin [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $mrmac_ip] "gt_reset_all_in"]]
+            set gt_new_pin [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $mrmac_ip] "rx_serdes_data0"]]
+            if {![llength $gt_new_pin]} {
+                set gt_new_pin [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $mrmac_ip] "rxdata_out_0"]]
+            }
 
             if {[llength $gt_old_pin]} {
 		 set mode "old"
