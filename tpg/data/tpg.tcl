@@ -108,6 +108,12 @@
 			        gen_axis_switch_in_remo_endpoint $drv_handle "$resolved_ip$drv_handle"
 			        gen_endpoint $drv_handle "tpg_out$drv_handle"
 			        gen_remoteendpoint $drv_handle "$resolved_ip$drv_handle"
+			        # Non memory-mapped axis_switch (TDEST routing): let the switch
+			        # driver generate its own routed master ports and the aggregated
+			        # capture node via gen_axis_switch.
+			        if {![llength [hsi::get_mem_ranges $resolved_ip]]} {
+			                gen_axis_switch $resolved_ip
+			        }
 			continue
 			}
 
