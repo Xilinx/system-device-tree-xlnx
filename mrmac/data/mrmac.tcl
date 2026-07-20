@@ -817,8 +817,101 @@
          mrmac_generate_intr_info  $drv_handle $node $fifo_ip
     }
 
+    # Breadth-first walk of the downstream AXI-Stream graph starting from
+    # $start_ip, returning the first connected axi_mcdma cell (or "").
+    # Traversal is generic: it follows AXIS master/initiator interfaces as
+    # well as raw output data pins, so it crosses signal-level blocks
+    # (xlconcat/xlslice) and custom hierarchies with no AXIS interface.
+    proc mrmac_find_connected_mcdma {start_ip {max_hops 16}} {
+
+         set queue [list $start_ip]
+         set visited {}
+
+         for {set hop 0} {$hop < $max_hops && [llength $queue]} {incr hop} {
+                 set next_queue {}
+                 foreach cur $queue {
+                         if {![llength $cur] || [lsearch -exact $visited $cur] >= 0} {
+                                 continue
+                         }
+                         lappend visited $cur
+
+                         if {[string match -nocase [hsi get_property IP_NAME $cur] "axi_mcdma"]} {
+                                 return $cur
+                         }
+
+                         # Descend into hierarchical wrapper internals.
+                         set cur_hier_name ""
+                         catch {set cur_hier_name [hsi get_property HIER_NAME [hsi::get_cells -hier $cur]]}
+                         if {![string_is_empty $cur_hier_name]} {
+                                 foreach child [hsi::get_cells -hier -filter "HIER_NAME=~${cur_hier_name}/*"] {
+                                         if {[lsearch -exact $visited $child] < 0} {
+                                                 lappend next_queue $child
+                                         }
+                                 }
+                         }
+
+                         set downstream {}
+
+                         # Follow AXIS master/initiator interfaces (stream blocks).
+                         set intfs [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $cur] \
+                                    -filter {TYPE==MASTER || TYPE==INITIATOR}]
+                         foreach intf $intfs {
+                                 foreach peer [get_connected_stream_ip [hsi::get_cells -hier $cur] $intf] {
+                                         if {[llength $peer]} {
+                                                 lappend downstream $peer
+                                         }
+                                 }
+                         }
+
+                         # Follow only stream data-bus output pins at the net
+                         # level (tdata / m_axis / concat-slice dout). This crosses
+                         # signal-level blocks (xlconcat/xlslice) that carry the AXIS
+                         # bus on raw pins, while avoiding wide shared control nets.
+                         set out_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $cur] \
+                                       -filter {DIRECTION==O}]
+                         foreach opin $out_pins {
+                                 if {![regexp -nocase {tdata|m_axis|dout} [hsi get_property NAME $opin]]} {
+                                         continue
+                                 }
+                                 foreach sp [get_sink_pins $opin] {
+                                         set sp_cell [hsi::get_cells -of_objects $sp]
+                                         if {[llength $sp_cell]} {
+                                                 lappend downstream $sp_cell
+                                         }
+                                 }
+                         }
+
+                         foreach peer $downstream {
+                                 if {![llength $peer] || [regexp -nocase "ila" $peer]} {
+                                         continue
+                                 }
+                                 if {[string match -nocase [hsi get_property IP_NAME $peer] "axi_mcdma"]} {
+                                         return $peer
+                                 }
+                                 if {[lsearch -exact $visited $peer] < 0} {
+                                         lappend next_queue $peer
+                                 }
+                         }
+                 }
+                 set queue $next_queue
+         }
+
+         return ""
+    }
+
     proc mrmac_connect_axistream {drv_handle node port_num sink_periph dts_file} {
 
+         # Discover the downstream MCDMA generically. This crosses hierarchies,
+         # FIFOs, converters, concat/slice, the 10G mux, and PTP/offload blocks,
+         # and emits axistream-connected + queue + interrupt properties.
+         set mcdma_ip [mrmac_find_connected_mcdma $sink_periph]
+         if {[llength $mcdma_ip]} {
+                mrmac_get_axistream_info $drv_handle $node $mcdma_ip $dts_file
+         }
+
+         # The remaining logic derives properties the generic walker does not
+         # produce: xlnx,rxmem from the RX FIFO and the 10G mux aux GPIO nodes.
+         # Resolve the immediate stream sink to reach the RX FIFO.
          if {[get_ip_property $sink_periph IP_NAME] in {"xlconcat" "ilconcat"}} {
                 set fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $sink_periph] "dout"]]
                 set sink_periph [hsi::get_cells -of_objects $fifo_pin]
@@ -839,6 +932,7 @@
          }
 
          if {[string match -nocase [hsi get_property IP_NAME $sink_periph] "axis_data_fifo"]} {
+                 # Derive xlnx,rxmem from the receive FIFO size (in bytes).
                  set fifo_width_bytes [hsi get_property CONFIG.TDATA_NUM_BYTES $sink_periph]
                  if {[string_is_empty $fifo_width_bytes]} {
                         set fifo_width_bytes 1
@@ -848,54 +942,20 @@
                  # FIFO can be other than 8 bits, and we need the rxmem in bytes
                  set rxethmem [expr $rxethmem * $fifo_width_bytes]
                  add_prop "${node}" "xlnx,rxmem" $rxethmem int $dts_file
+
+                 # Detect the 10G mux topology to emit the aux mux GPIO nodes.
                  set fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $sink_periph] "m_axis_tdata"]]
                  set fiforx_connect_ip [hsi::get_cells -of_objects $fifo_pin]
-                 if {[string match -nocase [hsi get_property IP_NAME $fiforx_connect_ip] "axis_dwidth_converter"]} {
+                 if {[llength $fiforx_connect_ip] && [string match -nocase [hsi get_property IP_NAME $fiforx_connect_ip] "axis_dwidth_converter"]} {
                        set fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $fiforx_connect_ip] "m_axis_tdata"]]
                        set fiforx_connect_ip [hsi::get_cells -of_objects $fifo_pin]
-                       if {[string match -nocase [hsi get_property IP_NAME $fiforx_connect_ip] "axis_data_fifo"]} {
+                       if {[llength $fiforx_connect_ip] && [string match -nocase [hsi get_property IP_NAME $fiforx_connect_ip] "axis_data_fifo"]} {
                               set fiforx_connect_ip [get_connected_stream_ip [hsi::get_cells -hier $fiforx_connect_ip] "M_AXIS"]
                        }
                  }
 
-                 if {[string match -nocase [hsi get_property IP_NAME $fiforx_connect_ip] "axi_mcdma"]} {
-                        mrmac_get_axistream_info $drv_handle $node $fiforx_connect_ip $dts_file
-                 }
-
-                 if {[string match -nocase [hsi get_property IP_NAME $fiforx_connect_ip] "mrmac_10g_mux"]} {
+                 if {[llength $fiforx_connect_ip] && [string match -nocase [hsi get_property IP_NAME $fiforx_connect_ip] "mrmac_10g_mux"]} {
                         mrmac_aux_mux_gpio $fiforx_connect_ip $node $port_num $dts_file
-                        set data_fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $fiforx_connect_ip] "rx_m_axis_tdata"]]
-                        set data_fifo_per [hsi::get_cells -of_objects $data_fifo_pin]
-                        foreach data_fifo $data_fifo_per {
-                              if {[string match -nocase [hsi get_property IP_NAME $data_fifo] "axis_data_fifo"]} {
-                                      set fiforx_pin [get_sink_pins [hsi get_pins -of_objects [hsi get_cells -hier $data_fifo] "m_axis_tdata"]]
-                                      if {[llength $fiforx_pin]} {
-                                              set fiforx_per [::hsi::get_cells -of_objects $fiforx_pin]
-                                      }
-				      if {[string match -nocase [hsi get_property IP_NAME $fiforx_per] "axi_mcdma"]} {
-					      mrmac_get_axistream_info $drv_handle $node $fiforx_per $dts_file
-                                      } else {
-                                              if {[llength $fiforx_per]} {
-                                                    if {[string match -nocase [hsi get_property IP_NAME $fiforx_per] "RX_PTP_TS_PREPEND"]} {
-                                                         set fiforx_connect_ip [get_connected_stream_ip [hsi get_cells -hier $fiforx_per] "m_axis"]
-                                                    }
-                                              }
-
-					      if {[llength $fiforx_per]} {
-                                                    if {[string match -nocase [hsi get_property IP_NAME $fiforx_per] "ethernet_offload"]} {
-                                                         set fiforx_connect_ip [get_connected_stream_ip [hsi get_cells -hier $fiforx_per] "s2mm_axis"]
-                                                    }
-                                              }
-
-                                              if {[llength $fiforx_connect_ip]} {
-
-                                                     if {[string match -nocase [hsi get_property IP_NAME $fiforx_connect_ip] "axi_mcdma"]} {
-                                                                mrmac_get_axistream_info $drv_handle $node $fiforx_connect_ip $dts_file
-                                                     }
-                                              }
-                                      }
-                              }
-                        }
                  }
          }
     }
