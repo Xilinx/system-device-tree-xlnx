@@ -1,0 +1,15 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * dts file for AMD VEK386 revA
+ *
+ * Copyright (C) 2024 - 2026, Advanced Micro Devices, Inc.
+ *
+ * Michal Simek <michal.simek@amd.com>
+ */
+
+#include "versal2-vek385-revb.dtsi"
+
+/ {
+	compatible = "amd,versal2-vek386-revA", "amd,versal2-vek386", "amd,versal2";
+	model = "AMD Versal VEK386 revA";
+};

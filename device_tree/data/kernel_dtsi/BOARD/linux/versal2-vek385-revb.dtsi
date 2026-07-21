@@ -72,11 +72,33 @@
 		#clock-cells = <0>;
 		clock-frequency = <24000000>;
 	};
+
+	/* TCAN1043 on can0; nEN is hardwired, nSTB on PSXC_MIO13 */
+	can0_phy: can-phy0 {
+		compatible = "ti,tcan1043";
+		#phy-cells = <0>;
+		max-bitrate = <5000000>;
+		standby-gpios = <&gpio0 13 GPIO_ACTIVE_LOW>;
+	};
+
+	/* TCAN1043 on can1; nEN is hardwired, nSTB on PSXC_MIO22 */
+	can1_phy: can-phy1 {
+		compatible = "ti,tcan1043";
+		#phy-cells = <0>;
+		max-bitrate = <5000000>;
+		standby-gpios = <&gpio0 22 GPIO_ACTIVE_LOW>;
+	};
 };
 
 /* u272 - TPS66993BAR usb, i2c, DP */
-/* CAN at LPD_MIO12-13 FIXME */
-/* CAN at LPD_MIO21-22 FIXME */
+
+&can0 { /* PMC_MIO16-17 */
+	phys = <&can0_phy>;
+};
+
+&can1 { /* PMC_MIO18-19 */
+	phys = <&can1_phy>;
+};
 
 &ospi { /* PMC_MIO0-10, MIO12 */
 	reset-names = "qspi";
