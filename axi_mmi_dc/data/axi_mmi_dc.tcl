@@ -222,6 +222,16 @@
             }
         }
 
+        # Candidate cells that may carry the PL clock pins. Depending on how the
+        # ps_wizard block is flattened, the pins can live on either ps_wizard_0
+        # or ps_wizard_0_mmi_0, so both must be checked (same as the video pins).
+        set ps_wiz_cells {}
+        foreach cell [list $ps_wiz_cell $ps_wiz_mmi_cell] {
+            if {$cell ne ""} {
+                lappend ps_wiz_cells $cell
+            }
+        }
+
         # Resolve PL clock indices from clkx5_wiz for video and audio clocks
         # Each entry: pin_name result_index_var result_ip_var
         foreach {pin_name result_idx_var result_ip_var} {
@@ -231,12 +241,22 @@
         } {
             set $result_idx_var -1
             set $result_ip_var ""
-            set pl_pin [hsi::get_pins $pin_name -of_objects [hsi::get_cells -hier ps_wizard_0_mmi_0] -quiet]
+            set pl_pin ""
+            set src_pin ""
+            # Look for the clock pin (with a connected source) on either cell
+            foreach cell $ps_wiz_cells {
+                set candidate_pin [hsi::get_pins $pin_name -of_objects $cell -quiet]
+                if {$candidate_pin eq ""} continue
+                set candidate_src [get_source_pins [hsi::get_pins -of_objects $cell $candidate_pin]]
+                if {[llength $candidate_src] == 0} continue
+                set pl_pin $candidate_pin
+                set src_pin $candidate_src
+                break
+            }
             if {$pl_pin eq ""} {
-                dtg_warning "$pin_name pin not found on ps_wizard_0_mmi_0"
+                dtg_warning "$pin_name pin not found on ps_wizard_0 or ps_wizard_0_mmi_0"
                 continue
             }
-            set src_pin [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier ps_wizard_0_mmi_0] $pl_pin]]
             if {[llength $src_pin] == 0} {
                 dtg_warning "$pin_name has no source pin connected"
                 continue
