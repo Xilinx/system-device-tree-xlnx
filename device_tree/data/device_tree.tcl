@@ -1198,6 +1198,8 @@ proc gen_board_info {} {
 		}
 	}
 
+	set variant [gen_parts_spec_variant $device $variant]
+
 	if {![string_is_empty $variant]} {
 		add_prop "root" "variant" $variant stringlist system-top.dts 1
 	}

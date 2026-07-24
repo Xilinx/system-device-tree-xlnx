@@ -452,6 +452,11 @@ proc set_hw_family {proclist} {
 				if {$part_num in {"xc2vp3102" "xc2vp3202" "xc2vp3402" "xc2vp3502" "xc2vp3602"}} {
 					set is_versal_2vp_platform 1
 				}
+				set pmc_iomodule_cell [hsi::get_cells -hier -filter {IP_NAME==iomodule && NAME=~*psv_pmc_iomodule*}]
+				if {(![string_is_empty $pmc_iomodule_cell]) && \
+					([get_baseaddr [lindex $pmc_iomodule_cell 0] noprefix] == "f0300000")} {
+						set is_versal_2vp_platform 1
+				}
 			} "psu_cortexa53" {
 				set design_family "zynqmp"
 				set ps_design 1
