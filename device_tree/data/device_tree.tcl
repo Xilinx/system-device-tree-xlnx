@@ -1251,8 +1251,10 @@ proc gen_board_info {} {
 		if {$dtsi_file eq "" || ($family in {"microblaze" "microblaze_riscv"})} {
 			if {$family eq "microblaze_riscv"} {
 				add_prop "root" "compatible" "xlnx,${board}-riscv ${mbv_comp}" stringlist $default_dts
+			} elseif {$family eq "microblaze"} {
+				add_prop "root" "compatible" "xlnx,${board}-microblaze" stringlist $default_dts
 			} else {
-			add_prop "root" "compatible" "xlnx,${board}-microblaze" stringlist $default_dts
+				add_prop "root" "compatible" "xlnx,${board}" stringlist $default_dts
 			}
 		}
 		add_prop "root" "board" "${board}" string $default_dts
