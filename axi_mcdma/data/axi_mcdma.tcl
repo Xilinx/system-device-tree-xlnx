@@ -183,9 +183,15 @@
                          }
 
                          # Descend into hierarchical wrapper internals.
-                         set cur_hier_name ""
-                         catch {set cur_hier_name [hsi get_property HIER_NAME [hsi::get_cells -hier $cur]]}
-                         if {![string_is_empty $cur_hier_name]} {
+                         # HIER_NAME may resolve to multiple values; iterate
+                         # each individually so a space-separated list is never
+                         # injected into the -filter expression.
+                         set cur_hier_names ""
+                         catch {set cur_hier_names [hsi get_property HIER_NAME [hsi::get_cells -hier $cur]]}
+                         foreach cur_hier_name $cur_hier_names {
+                                 if {[string_is_empty $cur_hier_name]} {
+                                         continue
+                                 }
                                  foreach child [hsi::get_cells -hier -filter "HIER_NAME=~${cur_hier_name}/*"] {
                                          if {[lsearch -exact $visited $child] < 0} {
                                                  lappend next_queue $child
@@ -217,9 +223,10 @@
                                          continue
                                  }
                                  foreach sp [get_sink_pins $opin] {
-                                         set sp_cell [hsi::get_cells -of_objects $sp]
-                                         if {[llength $sp_cell]} {
-                                                 lappend downstream $sp_cell
+                                         foreach sp_cell [hsi::get_cells -of_objects $sp] {
+                                                 if {[llength $sp_cell]} {
+                                                         lappend downstream $sp_cell
+                                                 }
                                          }
                                  }
                          }
