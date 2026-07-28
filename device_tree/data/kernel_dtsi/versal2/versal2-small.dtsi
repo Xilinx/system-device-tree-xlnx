@@ -625,7 +625,7 @@
 			#address-cells = <2>;
 			#size-cells = <2>;
 			#interrupt-cells = <2>;
-			xlnx,gpu-slices = <2>;
+			xlnx,gpu-slices = <1>;
 			xlnx,gpu-clk-freq-mhz = <900000000>;
 
 			gpu_interface@ed700000 {
@@ -635,7 +635,7 @@
 				#address-cells = <2>;
 				#size-cells = <2>;
 
-				gpu_system@0 {
+				gpu_system: gpu_system@0 {
 					compatible = "arm,mali-gpu-system";
 					reg = <0 0 0 0x10000>;
 					interrupt-parent = <&imux>;
@@ -643,7 +643,7 @@
 					interrupts = <0 188 4>, <0 188 4>;
 				};
 
-				gpu_assign@10000 {
+				gpu_assign: gpu_assign@10000 {
 					compatible = "arm,mali-gpu-assign";
 					reg = <0 0x10000 0 0x10000>;
 				};
@@ -666,7 +666,7 @@
 					reg = <0 0x30000 0 0x10000>;
 					interrupt-parent = <&imux>;
 					interrupt-names = "PTM_PARTITION_IRQ";
-					interrupts = <0 182 4>;
+					interrupts = <0 186 4>;
 				};
 
 				gpu_resource_group: gpu_resource_group@a0000 {
@@ -676,7 +676,7 @@
 					partition-control = <&gpu_partition_control_a_0>;
 					interrupt-parent = <&imux>;
 					interrupt-names = "PTM_GROUP_IRQ";
-					interrupts = <0 181 4>;
+					interrupts = <0 185 4>;
 				};
 
 				gpu_aw_message_a_0: gpu_aw_message@fffc0 {
@@ -684,7 +684,7 @@
 					reg = <0 0xfffc0 0 0x40>;
 					interrupt-parent = <&imux>;
 					interrupt-names = "PTM_MESSAGE";
-					interrupts = <0 180 4>;
+					interrupts = <0 184 4>;
 				};
 
 				gpu_mali: gpu@e0000 {
@@ -692,7 +692,7 @@
 					reg = <0 0xe0000 0 0x1ffc0>;
 					interrupt-parent = <&imux>;
 					interrupt-names = "JOB", "MMU", "GPU";
-					interrupts = <0 180 4>, <0 180 4>, <0 180 4>;
+					interrupts = <0 184 4>, <0 184 4>, <0 184 4>;
 					arbiter-if = <&gpu_aw_message_a_0>;
 					reset-names = "gpu", "gpu_recov";
 					system-coherency = <0x1f>;

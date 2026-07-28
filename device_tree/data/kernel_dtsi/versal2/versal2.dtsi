@@ -844,7 +844,7 @@
 				#address-cells = <2>;
 				#size-cells = <2>;
 
-				gpu_system@0 {
+				gpu_system: gpu_system@0 {
 					compatible = "arm,mali-gpu-system";
 					reg = <0 0 0 0x10000>;
 					interrupt-parent = <&imux>;
@@ -852,7 +852,7 @@
 					interrupts = <0 188 4>, <0 188 4>;
 				};
 
-				gpu_assign@10000 {
+				gpu_assign: gpu_assign@10000 {
 					compatible = "arm,mali-gpu-assign";
 					reg = <0 0x10000 0 0x10000>;
 				};
