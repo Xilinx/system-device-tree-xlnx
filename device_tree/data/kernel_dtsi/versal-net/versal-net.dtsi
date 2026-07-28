@@ -1716,7 +1716,7 @@
 			reg = <0 0xecc10000 0 0x10000>;
 			interrupt-names = "wdt", "wwdt_reset_pending", "gwdt", "gwdt_reset_pending";
 			interrupt-parent = <&imux>;
-			interrupts = <0 139 1>, <0 140 1>, <0 141 1>, <0 142 1>;
+			interrupts = <0 139 1>, <0 140 1>, <0 141 4>, <0 142 4>;
 			timeout-sec = <30>;
 		};
 
@@ -1726,7 +1726,7 @@
 			reg = <0 0xecd10000 0 0x10000>;
 			interrupt-names = "wdt", "wwdt_reset_pending", "gwdt", "gwdt_reset_pending";
 			interrupt-parent = <&imux>;
-			interrupts = <0 143 1>, <0 144 1>, <0 145 1>, <0 146 1>;
+			interrupts = <0 143 1>, <0 144 1>, <0 145 4>, <0 146 4>;
 			timeout-sec = <30>;
 		};
 
@@ -1736,7 +1736,7 @@
 			reg = <0 0xece10000 0 0x10000>;
 			interrupt-names = "wdt", "wwdt_reset_pending", "gwdt", "gwdt_reset_pending";
 			interrupt-parent = <&imux>;
-			interrupts = <0 147 1>,  <0 148 1>,  <0 149 1>,  <0 150 1>;
+			interrupts = <0 147 1>,  <0 148 1>,  <0 149 4>,  <0 150 4>;
 			timeout-sec = <30>;
 		};
 
@@ -1746,7 +1746,7 @@
 			reg = <0 0xecf10000 0 0x10000>;
 			interrupt-names = "wdt", "wwdt_reset_pending", "gwdt", "gwdt_reset_pending";
 			interrupt-parent = <&imux>;
-			interrupts = <0 164 1>, <0 165 1>,  <0 166 1>,  <0 167 1>;
+			interrupts = <0 164 1>, <0 165 1>,  <0 166 4>,  <0 167 4>;
 			timeout-sec = <30>;
 		};
 
@@ -1755,7 +1755,7 @@
 			status = "disabled";
 			reg = <0 0xea420000 0 0x10000>;
 			interrupt-names = "wdt", "wwdt_reset_pending", "gwdt", "gwdt_reset_pending";
-			interrupts = <0 82 1>, <0 84 1>, <0 86 1>, <0 87 1>;
+			interrupts = <0 82 1>, <0 84 1>, <0 86 4>, <0 87 4>;
 			interrupt-parent = <&imux>;
 			timeout-sec = <30>;
 		};
@@ -1765,7 +1765,7 @@
 			status = "disabled";
 			reg = <0 0xea430000 0 0x10000>;
 			interrupt-names = "wdt", "wwdt_reset_pending", "gwdt", "gwdt_reset_pending";
-			interrupts = <0 83 1>, <0 85 1>, <0 88 1>, <0 89 1>;
+			interrupts = <0 83 1>, <0 85 1>, <0 88 4>, <0 89 4>;
 			interrupt-parent = <&imux>;
 			timeout-sec = <30>;
 		};
@@ -1781,7 +1781,7 @@
 			status = "disabled";
 			reg = <0 0xf03f0000 0 0x10000>;
 			interrupt-names = "wdt", "wwdt_reset_pending", "gwdt", "gwdt_reset_pending";
-			interrupts = <0 217 1>, <0 218 1>, <0 219 1>, <0 220 1>;
+			interrupts = <0 217 1>, <0 218 1>, <0 219 4>, <0 220 4>;
 			interrupt-parent = <&imux>;
 			timeout-sec = <30>;
 		};

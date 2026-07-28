@@ -987,7 +987,7 @@
 			status = "disabled";
 			reg = <0 0xfd4d0000 0 0x10000>;
 			interrupt-names = "wdt", "wwdt_reset_pending", "gwdt", "gwdt_reset_pending";
-			interrupts = <0 0x64 1>, <0 0x6D 1>, <0 0x6C 1>, <0 0x6E 1>;
+			interrupts = <0 0x64 1>, <0 0x6D 1>, <0 0x6C 4>, <0 0x6E 4>;
 			interrupt-parent = <&imux>;
 			timeout-sec = <30>;
 		};
