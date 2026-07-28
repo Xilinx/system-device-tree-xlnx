@@ -1854,12 +1854,14 @@ Generates system device tree based on args given in:
 	set peri_list [move_match_elements_to_top $peri_list "clkx5_wiz"]
 
 	# Ensure BLOCK_CONTAINER child cells are filtered from peri_list so RP devices are excluded from static DT generation
+	set ::rp_excluded_cells [list]
 	if {$rm_xsa_exist != 0} {
 		foreach pr_region [hsi::get_cells -hier -filter BD_TYPE==BLOCK_CONTAINER] {
 			hsi::current_hw_instance [hsi::get_cells -hier $pr_region]
 			set rp_cells [hsi::get_cells]
 			hsi::current_hw_instance
 			foreach c $rp_cells {set peri_list [lsearch -all -inline -not -exact $peri_list $c]}
+			lappend ::rp_excluded_cells {*}$rp_cells
 		}
 	}
 
@@ -2240,6 +2242,8 @@ proc proc_mapping {} {
 			}
 		}
 		foreach periph $periph_list {
+			# RP cells were dropped from static DT nodes; drop them here too to avoid a dangling &label
+			if {[info exists ::rp_excluded_cells] && [lsearch -exact $::rp_excluded_cells $periph] >= 0} { continue }
 			# There can be a custom IP which is appearing in the output of get_mem_ranges
 			# but is missing in get_cells -hier. Such IP's base address and high address
 			# is generated in Vitis classic via the cpu tcls using xdefine_addr_params_for_ext_intf
