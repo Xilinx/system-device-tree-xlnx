@@ -93,6 +93,7 @@
 
 &pmcbridge_0_pmcl_global_0 {
 	clocks = <&clk_cpu_0>;
+	compatible =  "syscon", "amd,pmc-global";
 	clock-names = "ref";
 	bootph-all;
 	pmc_reset: reset-controller {
