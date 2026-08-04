@@ -497,6 +497,15 @@ proc set_dt_param args {
 				}
 				-rm_xsa {
 					set rm_xsa_file [Pop args 1]
+					set rm_xsa_args [lrange $args 1 end]
+					foreach arg $rm_xsa_args {
+						if {![string match "-*" $arg]} {
+							lappend rm_xsa_file $arg
+							Pop args 1
+						} else {
+							break
+						}
+					}
 					set rm_xsa_list [split $rm_xsa_file " "]
 					foreach xsa $rm_xsa_list {
 						if {![regexp {^(file|link)$} [file type $xsa]]} {

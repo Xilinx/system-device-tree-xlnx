@@ -56,7 +56,7 @@ Examples:
     sdtgen -xsa system.xsa -dir sdt_outdir -user_zephyr_dts kcu105.dtsi
     sdtgen -xsa system.xsa -dir sdt_outdir -domain pmc
     sdtgen -xsa system.xsa -dir sdt_outdir -user_dts zcu102-rev1.0.dtsi ./user1.dtso -trace enable -debug enable
-    sdtgen -xsa full.xsa -dir dfx_dts -rm_xsa rp0_rm0.xsa -rm_xsa rp0_rm1.xsa
+    sdtgen -xsa full.xsa -dir dfx_dts -rm_xsa rp0_rm0.xsa rp0_rm1.xsa
     sdtgen -eval "set_dt_param -xsa system.xsa -dir sdt_outdir -user_dts zcu102-rev1.0.dtsi; generate_sdt"
     sdtgen -eval "hsi::open_hw_design system.xsa; puts [hsi::get_cells -hier -filter IP_TYPE==PROCESSOR]"
 

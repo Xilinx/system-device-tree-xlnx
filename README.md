@@ -196,7 +196,7 @@ sdtgen -xsa system.xsa -dir sdt_outdir -user_dts custom_board.dtsi -trace enable
 #### DFX (Dynamic Function eXchange) use cases:
 ```bash
 # Pass the partial hw design files rp0_rm0.xsa and rp0_rm1.xsa for DFX use case along with the full hw design file full.xsa to generate the system device tree under dfx_dts folder.
-sdtgen -xsa full.xsa -dir dfx_dts -rm_xsa rp0_rm0.xsa -rm_xsa rp0_rm1.xsa
+sdtgen -xsa full.xsa -dir dfx_dts -rm_xsa rp0_rm0.xsa rp0_rm1.xsa
 ```
 
 ### sdtgen as a TCL shell:
@@ -328,7 +328,7 @@ sdtgen% set_dt_param -debug enable
 sdtgen% set_dt_param -zocl enable
 
 # Pass partial hw design files for dfx use cases
-sdtgen% set_dt_param -rm_xsa rp0_rm0.xsa -rm_xsa rp0_rm1.xsa
+sdtgen% set_dt_param -rm_xsa rp0_rm0.xsa rp0_rm1.xsa
 
 # Generate PMC domain specific device tree
 sdtgen% set_dt_param -domain pmc
