@@ -86,8 +86,6 @@ proc axi_bram_generate {drv_handle} {
 			set high [hsi get_property HIGH_VALUE $bank]
 			set base_name [hsi get_property BASE_NAME $bank]
 			if {[string match -nocase $drv_ip "lmb_bram_if_cntlr"] } {
-				set base [hsi get_property CONFIG.C_BASEADDR $drv_handle]
-				set high [hsi get_property CONFIG.C_HIGHADDR $drv_handle]
 				set width [hsi get_property CONFIG.C_S_AXI_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
 				if {[llength $width] == 0} {
 					set width 32
