@@ -122,15 +122,9 @@ proc mipi_csi2_rx_ss_generate {drv_handle} {
 	add_prop "$ports_node" "#size-cells" 0 int $dts_file 1
 	set port_node [create_node -n "port" -l mipi_csi_port1$drv_handle -u 1 -p $ports_node -d $dts_file]
 	add_prop "$port_node" "reg" 1 int $dts_file 1
-	add_prop "$port_node" "xlnx,cfa-pattern" "rggb" int $dts_file 1
-	add_prop "$port_node" "xlnx,video-format" 12 int $dts_file 1
-	add_prop "$port_node" "xlnx,video-width" 8 int $dts_file 1
 
 	set port0_node [create_node -n "port" -l mipi_csi_port0$drv_handle -u 0 -p $ports_node -d $dts_file]
 	add_prop "$port0_node" "reg" 0 int $dts_file 1
-	add_prop "$port0_node" "xlnx,cfa-pattern" "rggb" int $dts_file 1
-	add_prop "$port0_node" "xlnx,video-format" 12 int $dts_file 1
-	add_prop "$port0_node" "xlnx,video-width" 8 int $dts_file 1
 #	add_prop "${port0_node}" "/* User need to add something like remote-endpoint=<&out> under the node csiss_in:endpoint */" "" comment $dts_file 1
 	set csiss_rx_node [create_node -n "endpoint" -l mipi_csi_in$drv_handle -p $port0_node -d $dts_file]
 	if {[llength $lanes]} {
