@@ -15,6 +15,13 @@
 #
 
     proc mrmac_generate {drv_handle} {
+        set mapped 0
+        foreach proc_handle [get_valid_proc_list] {
+                if {[llength [hsi::get_mem_ranges -of_objects $proc_handle -filter "INSTANCE==$drv_handle"]]} { set mapped 1; break }
+        }
+        if {!$mapped} {
+                return
+        }
         set node [get_node $drv_handle]
         if {$node == 0} {
                 return
