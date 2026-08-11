@@ -1139,8 +1139,12 @@ proc gen_board_info {} {
 	set dtsi_file [get_user_config $common_file -board_dts]
 	set dir_path [get_user_config $common_file -dir]
 	set device [hsi get_property DEVICE [hsi::current_hw_design]]
+	set vivado_version [hsi get_property VIVADO_VERSION [hsi::current_hw_design]]
 	set ddr5_handle [hsi::get_cells -hier -filter {IP_NAME==noc_mc_ddr5}]
 	add_prop "root" "device_id" "${device}" string $default_dts
+	if {![string_is_empty $vivado_version]} {
+		add_prop "root" "vivado-version" "${vivado_version}" string $default_dts
+	}
 
 	set boardname [get_board_name]
 	if { [string length $boardname] != 0 } {
