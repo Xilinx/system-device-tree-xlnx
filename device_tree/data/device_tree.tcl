@@ -1264,6 +1264,8 @@ proc gen_board_info {} {
 		add_prop "root" "semnpi-scan" $sem_npi_scan int $default_dts
 	}
 
+	gen_misc_props_node
+
 	if { [string length $board] != 0 } {
 		set mbv_comp {"qemu,mbv" "amd,mbv"}
 		if {$dtsi_file eq "" || ($family in {"microblaze" "microblaze_riscv"})} {
@@ -1807,6 +1809,7 @@ Generates system device tree based on args given in:
 	}
 
 	source [file join $path "device_tree" "data" "common_proc.tcl"]
+	source [file join $path "device_tree" "data" "common_props.tcl"]
 	source [file join $path "device_tree" "data" "video_utils.tcl"]
 	source [file join $path "device_tree" "data" "xillib_common.tcl"]
 	source [file join $path "device_tree" "data" "xillib_hw.tcl"]
