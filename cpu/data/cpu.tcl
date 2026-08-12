@@ -126,6 +126,7 @@
 			CONFIG.C_USE_MULDIV
 			CONFIG.C_USE_ATOMIC
 			CONFIG.C_USE_FPU
+			CONFIG.C_USE_EMBEDDED
 			CONFIG.C_USE_COMPRESSION
 			CONFIG.C_USE_ICACHE
 			CONFIG.C_USE_DCACHE
@@ -147,6 +148,12 @@
 			set $var_name [get_ip_property $drv_handle $prop]
 		}
 
+		# Determine base ISA letter: "e" for embedded (rv32e only), "i" otherwise
+		set isa_base_letter "i"
+		if {![string_is_empty $use_embedded] && $use_embedded > 0 && !$is_64_bit_mb} {
+			set isa_base_letter "e"
+		}
+
 		set isa_base ""
 		if {![string_is_empty $data_size]} {
 			if {$is_64_bit_mb} {
@@ -154,14 +161,14 @@
 			} else {
 				set isa_base "rv32"
 			}
-			add_prop $node "riscv,isa-base" "${isa_base}i" string "pl.dtsi"
+			add_prop $node "riscv,isa-base" "${isa_base}${isa_base_letter}" string "pl.dtsi"
 		}
 
 		if {$use_mmu == 3 && ![string_is_empty $addr_size]} {
 			add_prop $node "mmu-type" "riscv,sv${addr_size}" string "pl.dtsi"
 		}
 
-		set ext {"i"}
+		set ext [list $isa_base_letter]
 		if {$use_muldiv > 0} { lappend ext "m" }
 		if {$use_atomic > 0} { lappend ext "a" }
 
