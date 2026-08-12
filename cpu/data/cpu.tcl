@@ -130,6 +130,7 @@
 			CONFIG.C_USE_COMPRESSION
 			CONFIG.C_USE_ICACHE
 			CONFIG.C_USE_DCACHE
+			CONFIG.C_DCACHE_LINE_LEN
 			CONFIG.C_USE_BITMAN_A
 			CONFIG.C_USE_BITMAN_B
 			CONFIG.C_USE_BITMAN_C
@@ -208,6 +209,10 @@
 		add_prop $node "riscv,isa" "${riscv_isa_entry}" string "pl.dtsi"
 
 		add_prop $node "riscv,isa-extensions" $ext stringlist "pl.dtsi"
+
+		if {$use_dcache > 0 || $use_icache > 0} {
+			add_prop $node "riscv,cbom-block-size" $dcache_line_len int "pl.dtsi"
+		}
 	}
 
 	# Speical handling for xlnx,memory-ip-list
