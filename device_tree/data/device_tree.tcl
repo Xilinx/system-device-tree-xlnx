@@ -2329,18 +2329,10 @@ proc proc_mapping {} {
 			if {$ipname in {"psv_ipi" "psx_ipi" "psu_ipi" "ipi"}} {
 				continue
 			}
-			if {$ipname == "visp_ss"} {
+			if {$ipname in {"visp_ss" "mutex" "mailbox" "tsn_endpoint_ethernet_mac_block" "mmi"}} {
 				continue
 			}
-			if {$ipname == "mutex"} {
-				continue
-			}
-			if {$ipname == "mailbox"} {
-				continue
-			}
-			if {$ipname in {"tsn_endpoint_ethernet_mac_block"}} {
-				continue
-			}
+
 			set regprop ""
 			set addr_64 "0"
 			set size_64 "0"
