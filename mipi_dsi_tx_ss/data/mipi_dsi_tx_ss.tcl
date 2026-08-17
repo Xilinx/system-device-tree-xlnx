@@ -49,6 +49,12 @@
 	} elseif {[string match -nocase $dsi_datatype "RGB565"]} {
 		add_prop "$node" "xlnx,dsi-data-type" 3 int $dts_file 1
 	}
+	set en_esc_mode [hsi get_property CONFIG.C_EN_ESC_MODE [hsi::get_cells -hier $drv_handle]]
+	if {[string match -nocase "true" $en_esc_mode]} {
+		add_prop "$node" "xlnx,en-esc-mode" 1 int $dts_file 1
+	} else {
+		add_prop "$node" "xlnx,en-esc-mode" 0 int $dts_file 1
+	}
 
 	set highaddr [hsi get_property CONFIG.C_HIGHADDR  [hsi get_cells -hier $drv_handle]]
 	add_prop "${node}" "xlnx,highaddr" $highaddr hexint $dts_file 1
