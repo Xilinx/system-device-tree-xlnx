@@ -20,19 +20,20 @@
 
 ##############################################################################
 variable phy_count 0
+variable emacps_phy_addr_owner
 ##############################################################################
 
 # Helper function to configure PHY properties
 proc emacps_configure_phy_props {pcspma_phy_node node dts_file phy_type is_sgmii {proc_type ""}} {
     if {$phy_type == "1000BASEX"} {
-	add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x5 int $dts_file
+	add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x5 int $dts_file 1
 	if {$proc_type == "versal"} {
 		add_prop $node "phy-mode" "gmii" string $dts_file 1
 	} else {
 		add_prop $node "phy-mode" "1000base-x" string $dts_file 1
 	}
     } elseif {$is_sgmii == "true"} {
-        add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x4 int $dts_file
+        add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x4 int $dts_file 1
         add_prop $node "phy-mode" "sgmii" string $dts_file 1
     } else {
         dtg_warning "unsupported phytype:$phy_type"
@@ -57,10 +58,12 @@ proc emacps_get_phyaddr_suffix {zynq_periph mdio_interface} {
 
 # Helper function to process PCS/PMA PHY configuration
 proc emacps_process_pcspma_phy {drv_handle node dts_file connected_ip zynq_periph mdio_interface {proc_type ""}} {
-    set phyaddr_suffix [emacps_get_phyaddr_suffix $zynq_periph $mdio_interface]
+    global emacps_phy_addr_owner
+
+    set phyaddr_pin_suffix [emacps_get_phyaddr_suffix $zynq_periph $mdio_interface]
     set phyaddr "phyaddr"
-    if {[llength $phyaddr_suffix]} {
-        append phyaddr "_$phyaddr_suffix"
+    if {[llength $phyaddr_pin_suffix]} {
+        append phyaddr "_$phyaddr_pin_suffix"
     }
     set pin [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $connected_ip] $phyaddr]]
 
@@ -70,8 +73,27 @@ proc emacps_process_pcspma_phy {drv_handle node dts_file connected_ip zynq_perip
             set val [hsi get_property CONFIG.CONST_VAL $sink_periph]
             if {[llength $val]} {
                 set inhex [format %x $val]
-                set_drv_prop $drv_handle phy-handle "phy$inhex" $node reference
-                set pcspma_phy_node [create_node -l phy$inhex -n phy -u $inhex -p $node -d $dts_file]
+                set phy_label_suffix [string trimleft [string tolower $node] "&"]
+                set phy_label_suffix [string map {"-" "_" ":" "_" "/" "_"} $phy_label_suffix]
+                if {![llength $phy_label_suffix]} {
+                    set phy_label_suffix [string map {"-" "_" ":" "_" "/" "_"} [string tolower $mdio_interface]]
+                }
+                set phy_label "phy$inhex"
+                if {[llength $phy_label_suffix]} {
+                    append phy_label "_$phy_label_suffix"
+                }
+                set phy_addr_key "$dts_file:$inhex"
+                if {[info exists emacps_phy_addr_owner($phy_addr_key)] &&
+                    $emacps_phy_addr_owner($phy_addr_key) ne $phy_label} {
+		    puts "WARNING: PHY address 0x$inhex is reused across GEM interfaces:\
+			Generating separate PHY nodes for each GEM with\
+			corresponding labels $emacps_phy_addr_owner($phy_addr_key)\
+			and $phy_label."
+                } elseif {![info exists emacps_phy_addr_owner($phy_addr_key)]} {
+                    set emacps_phy_addr_owner($phy_addr_key) $phy_label
+                }
+                set_drv_prop $drv_handle phy-handle $phy_label $node reference
+                set pcspma_phy_node [create_node -l $phy_label -n phy -u $inhex -p $node -d $dts_file]
                 add_prop "${pcspma_phy_node}" "reg" $val int $dts_file
                 set phy_type [hsi get_property CONFIG.Standard $connected_ip]
                 set is_sgmii [hsi get_property CONFIG.c_is_sgmii $connected_ip]
