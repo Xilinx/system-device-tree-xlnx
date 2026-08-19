@@ -21,3 +21,25 @@
 		timeout = <5>;
 	};
 };
+
+&axi_enet {
+
+	axi_ethernet: ethernet-mac {
+		phy-handle = <&axi_ethernetphy1>;
+		status = "okay";
+	};
+
+	axi_ethernet_mdio: mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		compatible = "xlnx,axi-ethernet-1.00.a-mdio";
+
+		axi_ethernetphy1: phy@1 {
+			device_type = "ethernet-phy";
+			compatible = "ti,dp83867";
+			reg = <1>;
+			ti,interface-type = "gmii";
+			ti,dp83867-rxctrl-strap-quirk;
+		};
+	};
+};
