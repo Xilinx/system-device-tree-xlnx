@@ -28,7 +28,7 @@ proc cpu_cortexa78_generate {drv_handle} {
 				set platform_filename "versal2-small"
 			}
 			set dtsi_fname "versal2/${platform_filename}.dtsi"
-			update_system_dts_include [file tail "${platform_filename}-clk-ccf.dtsi"]
+			update_system_dts_include [file tail "${platform_filename}-scmi.dtsi"]
 			set cpu_node [create_node -n "&cortexa78_${cpu_nr}" -d "pcw.dtsi" -p root -h $drv_handle]
 		} else {
 			set platform_filename "versal-net"

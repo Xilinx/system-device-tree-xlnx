@@ -9,6 +9,8 @@
 
 #include "include/dt-bindings/gpio/gpio.h"
 #include "include/dt-bindings/net/ti-dp83867.h"
+#include "include/dt-bindings/clock/xlnx-versal2-clk.h"
+#include "include/dt-bindings/power/xlnx-versal2-power.h"
 
 / {
 	compatible = "amd,versal2-ve-p-a1225", "amd,versal2";

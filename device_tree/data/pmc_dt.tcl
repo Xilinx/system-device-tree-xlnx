@@ -265,9 +265,9 @@ proc set_soc_dtsi {} {
 			if {$is_versal_2ve_2vm_platform} {
 				set platform_name "versal2"
 				if {$is_versal_2ve_2vm_small_platform} {
-					update_system_dts_include [file tail "${platform_name}-small-clk-ccf.dtsi"]
+					update_system_dts_include [file tail "${platform_name}-small-scmi.dtsi"]
 				} else {
-					update_system_dts_include [file tail "${platform_name}-clk-ccf.dtsi"]
+					update_system_dts_include [file tail "${platform_name}-scmi.dtsi"]
 				}
 			} else {
 				set platform_name "versal-net"
