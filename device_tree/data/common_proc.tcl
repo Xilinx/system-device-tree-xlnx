@@ -5310,6 +5310,13 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 			set dev_type [lindex $value 2]
 		}
 	}
+	# HSI uses CIPS and PS Wizard hierarchy prefixes for equivalent R5 TCM
+	# cells.  Keep the existing label, but derive a stable node name from the
+	# final core and bank suffix.
+	set tcm_suffix [join [lrange [split $drv_handle "_"] end-3 end] "_"]
+	if {[regexp -nocase {^psv_r5_[01]_[ab]tcm$} $tcm_suffix]} {
+		set dev_type $tcm_suffix
+	}
 	if {[string match -nocase $proc_type "versal"] } {
 		set ip_type [hsi get_property IP_NAME $ip]
 		if {[string match -nocase $ip_type "psv_cpm_slcr"]} {
