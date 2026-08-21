@@ -4159,39 +4159,6 @@ proc intc_irq_parent_axi_intcs {ip} {
     return $parents
 }
 
-# Get cascade offset for an interrupt controller
-# Per PG099: First cascade = 32, second cascade = 64, third cascade = 96
-#
-# We do not read C_EN_CASCADE_MODE on this controller. PG099 ties cascade masters to
-# C_CASCADE_MASTER == 1 (report offset 0 at top of stack). Each +32 step toward the
-# parent is applied only when parent_axi_intc_cascade_enabled says the parent has
-# cascade mode on — so chained axi_intc without PG099 cascade do not accumulate offset.
-#
-# visited — break cycles in malformed netlists (recursive A<->B); second arg is internal.
-proc get_intc_cascade_offset {intc_handle {visited {}}} {
-    set ip [hsi::get_cells -hier $intc_handle]
-    if {![llength $ip]} {
-        return 0
-    }
-    if {[lsearch -exact $visited $ip] >= 0} {
-        return 0
-    }
-    lappend visited $ip
-    set cascade_master [get_ip_param_value $ip C_CASCADE_MASTER]
-    if {$cascade_master eq "" || $cascade_master == -1} {
-        set cascade_master 0
-    }
-    if {$cascade_master == 1} {
-        return 0
-    }
-    foreach parent [intc_irq_parent_axi_intcs $ip] {
-        if {[parent_axi_intc_cascade_enabled $parent]} {
-            return [expr {[get_intc_cascade_offset $parent $visited] + 32}]
-        }
-    }
-    return 0
-}
-
 # Return axi_intc cells driving this INTC's intr inputs (direct or via one concat stage).
 proc intc_intr_source_axi_intcs {ip} {
     set sources {}
@@ -4225,58 +4192,12 @@ proc intc_intr_source_axi_intcs {ip} {
     return $sources
 }
 
-# Warn if an intc with cascade mode disabled is connected to one with cascade mode enabled.
-# Check 1: non-cascade irq feeds a cascade leaf. Check 2: cascade intc drives another intc's intr input.
-proc check_intc_mixed_cascade {drv_handle intc_type} {
-    if {$intc_type != 0} {
-        return
-    }
-    set ip [hsi::get_cells -hier $drv_handle]
-    if {![llength $ip]} {
-        return
-    }
-    set ip_name [hsi get_property NAME $ip]
-
-    # Check 1: non-cascade irq feeds a cascade leaf (cascade_mode==0 but offset>0).
-    foreach parent [intc_irq_parent_axi_intcs $ip] {
-        set par_cascade_mode [get_ip_param_value $parent C_EN_CASCADE_MODE]
-        if {$par_cascade_mode eq "" || $par_cascade_mode == -1} {
-            set par_cascade_mode 0
-        }
-        if {$par_cascade_mode == 0 && [get_intc_cascade_offset $parent] > 0} {
-            set parent_name [hsi get_property NAME $parent]
-            puts "ERROR: Unsupported cascade connection detected between '$ip_name' and '$parent_name'. Cascade mode must be uniformly enabled or disabled across all connected intcs."
-        }
-    }
-
-    # Check 2: cascade-mode-enabled intc drives another intc's intr input.
-    foreach src_intc [intc_intr_source_axi_intcs $ip] {
-        set src_cascade_mode [get_ip_param_value $src_intc C_EN_CASCADE_MODE]
-        if {$src_cascade_mode eq "" || $src_cascade_mode == -1} {
-            set src_cascade_mode 0
-        }
-        if {$src_cascade_mode == 1 || [get_intc_cascade_offset $src_intc] > 0} {
-            set src_name [hsi get_property NAME $src_intc]
-            puts "ERROR: Unsupported cascade connection detected between '$src_name' and '$ip_name'. Cascade mode must be uniformly enabled or disabled across all connected intcs."
-        }
-    }
-}
 
 # Helper function to extract cascade interrupt number from pin connections
 proc get_cascade_interrupt_number {sink_pn peri periph} {
     # Extract number from pin name (e.g., intr[5] -> 5, In2 -> 2)
     set sink_pin_name [hsi get_property NAME $sink_pn]
     set pin_number [regexp -all -inline -- {[0-9]+} $sink_pin_name]
-
-    # Check if periph is axi_intc - use cascade offset, not xlconcat pin position
-    set periph_ip_name [hsi get_property IP_NAME $periph]
-	if {[string match -nocase $periph_ip_name "axi_intc"]} {
-        # For cascade INTCs, use cascade offset - 1, not xlconcat position
-        set cascade_offset [get_intc_cascade_offset $periph]
-        if {$cascade_offset > 0} {
-            return [expr {$cascade_offset - 1}]
-        }
-    }
 
     # Check if peri is xlconcat/ilconcat - calculate offset for non-INTC peripherals
     set peri_ip_name [hsi get_property IP_NAME $peri]
@@ -4323,12 +4244,15 @@ proc get_cascade_interrupt_number {sink_pn peri periph} {
                 break
             }
         }
-        # If still no number found, use the cascade interrupt ID (offset - 1)
-        if {[llength $number] == 0} {
-            set cascade_offset [get_intc_cascade_offset $periph]
-            if {$cascade_offset > 0} {
-                set number [expr {$cascade_offset - 1}]
-            }
+        # If still no number found and parent is an axi_intc, the sink pin is
+        # a dedicated cascade port (e.g. "irq_in") with no index in its name.
+        # In PG099 cascade designs, the parent is configured with C_NUM_INTR_INPUTS = 31
+        # (pins 0-30 for regular interrupts, pin 31 reserved for the cascade IRQ).
+        # So the cascade pin index equals C_NUM_INTR_INPUTS directly.
+        if {[llength $number] == 0 && [string match -nocase $peri_ip_name "axi_intc"]} {
+            set num_intr [get_ip_param_value $peri C_NUM_INTR_INPUTS]
+            if {$num_intr eq "" || $num_intr == -1} { set num_intr 31 }
+            set number $num_intr
         }
     }
     return $number
@@ -6171,13 +6095,7 @@ proc get_psu_interrupt_id { ip_name port_name } {
 
 	set intc_src_ports [get_interrupt_sources $intc_periph]
 
-	#Special Handling for cascading case of axi_intc Interrupt controller
-	set cascade_id 0
-	if {[string match -nocase [hsi get_property IP_NAME $intc_periph] "axi_intc"]} {
-		set cascade_id [get_intc_cascade_offset $intc_periph]
-	}
-
-	set i $cascade_id
+	set i 0
 	set found 0
 	set j $or_id
 	global is_rm_design
@@ -6528,18 +6446,6 @@ proc get_psu_interrupt_id { ip_name port_name } {
 	            }
 	    }
 	}
-	}
-
-	# Only apply cascade offset for xlconcat paths (concat_block==1); direct
-	# connections already have it baked into ret via the loop counter i=cascade_id.
-	if {[llength $intc_periph] > 0 && $concat_block == 1} {
-		set intc_ip_name [hsi get_property IP_NAME $intc_periph]
-		if {[string match -nocase $intc_ip_name "axi_intc"]} {
-			set cascade_offset [get_intc_cascade_offset $intc_periph]
-			if {$cascade_offset > 0} {
-				set ret [expr {$ret + $cascade_offset}]
-			}
-		}
 	}
 
 	set id $ret

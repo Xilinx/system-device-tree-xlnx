@@ -147,8 +147,3 @@ proc get_util_reduced_logic_interrupt_sources { url_ip_obj } {
     return $source_pins
 }
 
-proc get_intc_cascade_id_offset { intc } {
-    # Alias to common_proc.tcl::get_intc_cascade_offset
-    # Maintains compatibility for xillib_sw.tcl caller
-    return [get_intc_cascade_offset $intc]
-}

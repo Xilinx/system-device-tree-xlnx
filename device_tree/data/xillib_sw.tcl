@@ -918,13 +918,7 @@ proc get_interrupt_id { ip_name port_name } {
         set intc_src_ports [get_interrupt_sources $intc_periph]
     }
 
-    #Special Handling for cascading case of axi_intc Interrupt controller
-    set cascade_id 0
-    if { [string match -nocase "$intc_type" "axi_intc"] } {
-        set cascade_id [get_intc_cascade_id_offset $intc_periph]
-    }
-
-    set i $cascade_id
+    set i 0
     set found 0
     foreach intc_src_port $intc_src_ports {
         if { [llength $intc_src_port] == 0 } {

@@ -47,39 +47,27 @@
         }
         add_prop $node "xlnx,kind-of-intr" $kind_of_intr hexint $dts_file 1
 
-        # Calculate and add intc-type property based on cascade mode
-        set cascade_mode [get_ip_param_value $ip C_EN_CASCADE_MODE]
+        # Determine intc-type from netlist topology:
+        # 0=standalone, 1=master, 2=intermediate, 3=leaf
+        set cascade_mode   [get_ip_param_value $ip C_EN_CASCADE_MODE]
         set cascade_master [get_ip_param_value $ip C_CASCADE_MASTER]
-
-        # Set default values if parameters are empty
-        if {$cascade_mode == "" || $cascade_mode == -1} {
-            set cascade_mode 0
-        }
-        if {$cascade_master == "" || $cascade_master == -1} {
-            set cascade_master 0
-        }
-        # Determine intc type:
-        # 0 - Generic standalone (not in PG099 cascade, or irq to axi_intc with cascade off)
-        # 1 - Cascade master (cascade enabled, master)
-        # 2 - Cascade intermediate (cascade enabled, not master)
-        # 3 - Cascade leaf (local cascade off, irq feeds axi_intc with cascade on, PG099 slave)
-        if {$cascade_mode == 1 && $cascade_master == 1} {
+        if {$cascade_mode   eq "" || $cascade_mode   == -1} { set cascade_mode   0 }
+        if {$cascade_master eq "" || $cascade_master == -1} { set cascade_master 0 }
+        set child_intcs  [intc_intr_source_axi_intcs $ip]
+        set parent_intcs [intc_irq_parent_axi_intcs  $ip]
+        set has_child  [expr {[llength $child_intcs]  > 0}]
+        set has_parent [expr {[llength $parent_intcs] > 0}]
+        if {($has_child && !$has_parent) || ($cascade_mode == 1 && $cascade_master == 1 && !$has_parent)} {
             set intc_type 1
-        } elseif {$cascade_mode == 1 && $cascade_master == 0} {
+        } elseif {($has_child && $has_parent) || ($cascade_mode == 1 && $cascade_master == 0) \
+                  || ($cascade_mode == 1 && $cascade_master == 1 && $has_parent)} {
             set intc_type 2
+        } elseif {$cascade_mode == 0 && $cascade_master == 0 && !$has_child && $has_parent} {
+            set intc_type 3
         } else {
-            # cascade_mode == 0: PG099 leaf iff get_intc_cascade_offset > 0 (parent cascade off => 0).
-            if {[get_intc_cascade_offset $drv_handle] > 0} {
-                set intc_type 3
-            } else {
-                set intc_type 0
-            }
+            set intc_type 0
         }
-
         add_prop $node "xlnx,intc-type" $intc_type hexint $dts_file 1
-
-        # Detect unsupported cascade connections (interrupts will not work correctly).
-        check_intc_mixed_cascade $drv_handle $intc_type
 
         if {[string match -nocase $env(zocl) "enable"]} {
                 add_prop $node "xlnx,num-intr-inputs" 0x20 hexint "pl.dtsi" 1
