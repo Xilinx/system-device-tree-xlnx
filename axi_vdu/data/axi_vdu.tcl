@@ -13,13 +13,13 @@
 #
 
 proc gen_reset_gpio {drv_handle node} {
-    set ip [hsi get_cells -hier $drv_handle]
+    set ip [cells_hier $drv_handle]
     set default_dts [set_drv_def_dts $drv_handle]
-    set pins [get_source_pins [hsi get_pins -of_objects [ hsi get_cells -hier $ip] "vdu_resetn"]]
+    set pins [get_source_pins [hsi get_pins -of_objects $ip "vdu_resetn"]]
     foreach pin $pins {
 	set sink_periph [::hsi::get_cells -of_objects $pin]
 		if {[llength $sink_periph]} {
-			set sink_ip [hsi get_property IP_NAME $sink_periph]
+			set sink_ip [get_ip_property $sink_periph IP_NAME]
 		    if {[string match -nocase $sink_ip "axi_gpio"]} {
 			    add_prop $node "reset-gpios" "$sink_periph 0 1" reference $default_dts
 			}
@@ -71,19 +71,19 @@ proc axi_vdu_generate {drv_handle} {
 	if {$node == 0} {
 	   return
 	}
-	set drv_label [ps_node_mapping $drv_handle label]
+
 	set default_dts [set_drv_def_dts $drv_handle]
 
-	set vdu_ip [hsi get_cells -hier $drv_handle]
-	set core_clk [hsi get_property CONFIG.Actual_CORE_CLK [hsi get_cells -hier $drv_handle]]
+	set vdu_ip [cells_hier $drv_handle]
+	set core_clk [get_ip_property $drv_handle CONFIG.Actual_CORE_CLK]
 	if {[llength $core_clk]} {
 		add_prop $node "xlnx,core_clk" ${core_clk} int $default_dts
 	}
-	set mcu_clk [hsi get_property CONFIG.Actual_MCU_CLK [hsi get_cells -hier $drv_handle]]
+	set mcu_clk [get_ip_property $drv_handle CONFIG.Actual_MCU_CLK]
 	if {[llength $mcu_clk]} {
 		add_prop $node "xlnx,mcu_clk" ${mcu_clk} int $default_dts
 	}
-	set ref_clk [hsi get_property CONFIG.REF_CLK [hsi get_cells -hier $drv_handle]]
+	set ref_clk [get_ip_property $drv_handle CONFIG.REF_CLK]
 	if {[llength $ref_clk]} {
 		add_prop $node "xlnx,ref_clk" ${ref_clk} int $default_dts
 	}
@@ -96,7 +96,7 @@ proc axi_vdu_generate {drv_handle} {
 	set intr_parent ""
 
 	set baseaddr [get_baseaddr $vdu_ip no_prefix]
-	set num_decoders [hsi get_property CONFIG.NUM_DECODER_INSTANCES [hsi get_cells -hier $drv_handle]]
+	set num_decoders [get_ip_property $drv_handle CONFIG.NUM_DECODER_INSTANCES]
 	set al5d_baseoffset "0x20000"
 	set al5d_baseaddr [format %08x [expr 0x$baseaddr + $al5d_baseoffset]]
 	set al5d_offset "0x100000"
@@ -126,7 +126,7 @@ proc axi_vdu_generate {drv_handle} {
 		add_prop "$al5d_node" "compatible" "al,al5d" string $default_dts
 
 		add_prop "$al5d_node" "al,devicename" "allegroDecodeIP$inst" string $default_dts
-		add_prop "$al5d_node" "xlnx,vdu" "$drv_label" reference $default_dts
+		add_prop "$al5d_node" "xlnx,vdu" "$drv_handle" reference $default_dts
 		add_prop "$al5d_node" "status" "okay" string $default_dts
 		#add_prop "$al5d_node" "/* To be filled by user depending on design else CMA region will be used */" "" comment $default_dts
 		#add_prop "$al5d_node" "/*memory-region = <&mem_reg_0> */" "" comment $default_dts

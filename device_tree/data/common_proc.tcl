@@ -181,25 +181,6 @@ proc destroy_tree {} {
 	systemdt destroy
 }
 
-proc get_type args {
-	set prop [lindex $args 1]
-	set handle [lindex $args 0]
-	set value [hsi get_property $prop [cells_hier $handle]]
-	if {[regexp -nocase {0x([0-9a-f])} $value match]} {
-		set type "hexint"
-	} elseif {[string is integer -strict $value]} {
-		set type "int"
-	} elseif {[string is boolean -strict $value]} {
-		set type "boolean"
-	} elseif {[string is wordchar -strict $value]} {
-		set type "string"
-	} else {
-		set type "mixed"
-	}
-	return $type
-}
-
-
 proc is_zynqmp_platform {proctype} {
       	if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "zynquplus"] ||
 		[string match -nocase $proctype "zynquplusRFSOC"] } {
@@ -789,7 +770,7 @@ proc create_node args {
 			-h* {set drv_handle [Pop args 1]}
 			--  {Pop args ; break}
 			default {
-				error "add_or_get_dt_node bad option - [lindex $args 0]"
+				error "create_node bad option - [lindex $args 0]"
 			}
 		}
 		Pop args
@@ -1836,70 +1817,6 @@ proc check_if_forty_bit_address {addr_map} {
 	return 1
 }
 
-proc gen_dt_node_search_pattern args {
-	proc_called_by
-	# generates device tree node search pattern and return it
-
-	global def_string
-	#foreach var {node_name node_label node_unit_addr} {
-	#	set ${var} ${def_string}
-	#}
-	while {[string match -* [lindex $args 0]]} {
-		switch -glob -- [lindex $args 0] {
-			-n* {set node_name [Pop args 1]}
-			-l* {set node_label [Pop args 1]}
-			-u* {set node_unit_addr [Pop args 1]}
-			-- {Pop args ; break}
-			default {
-				error "gen_dt_node_search_pattern bad option - [lindex $args 0]"
-			}
-		}
-		Pop args
-	}
-	set pattern ""
-	# TODO: is these search patterns correct
-	# TODO: check if pattern in the list or not
-	if {![string equal -nocase ${node_label} ${def_string}] && \
-		![string equal -nocase ${node_name} ${def_string}] && \
-		![string equal -nocase ${node_unit_addr} ${def_string}]} {
-		lappend pattern "^${node_label}:${node_name}@${node_unit_addr}$"
-		lappend pattern "^${node_name}@${node_unit_addr}$"
-	}
-
-	if {![string equal -nocase ${node_label} ${def_string}] && \
-		![string equal -nocase ${node_name} ${def_string}]} {
-		lappend pattern "^${node_label}:${node_name}"
-	}
-
-	if {![string equal -nocase ${node_name} ${def_string}] && \
-		![string equal -nocase ${node_unit_addr} ${def_string}]} {
-		lappend pattern "^${node_name}@${node_unit_addr}$"
-	}
-
-	if {![string equal -nocase ${node_label} ${def_string}]} {
-		lappend pattern "^&${node_label}$"
-		lappend pattern "^${node_label}:"
-	}
-
-	return $pattern
-}
-
-proc set_cur_working_dts {{dts_file ""}} {
-	# set current working device tree
-	# return the tree object
-	proc_called_by
-	if {[string_is_empty ${dts_file}] == 1} {
-		return [current_dt_tree]
-	}
-	set dt_idx [lsearch [get_dt_trees] ${dts_file}]
-	if {$dt_idx >= 0} {
-		set dt_tree_obj [current_dt_tree [lindex [get_dt_trees] $dt_idx]]
-	} else {
-		set dt_tree_obj [create_dt_tree -dts_file $dts_file]
-	}
-	return $dt_tree_obj
-}
-
 proc remove_prefix_from_addr {addr} {
 	regsub -all {^0x} $addr {} addr
 	# Remove all the leading zeroes in the address.
@@ -2171,72 +2088,6 @@ proc get_node_object {lu_node {dts_files ""} {error_out "yes"}} {
 	}
 }
 
-proc update_dt_parent args {
-	# update device tree node's parent
-	# return the node name
-	proc_called_by
-	global def_string
-	set node [lindex $args 0]
-	set new_parent [lindex $args 1]
-	if {[llength $args] >= 3} {
-		set dts_file [lindex $args 2]
-	} else {
-		set dts_file [current_dt_tree]
-	}
-	set node [get_node_object $node $dts_file]
-	# Skip if node is a reference node (start with &) or amba
-	if {[regexp "^&.*" "$node" match] || [regexp "apu-bus" "$node" match] || [regexp "rpu-bus" "node" match] || [regexp "axi" "$node" match]} {
-		return $node
-	}
-
-	if {[string_is_empty $new_parent] || \
-		[string equal ${def_string} "$new_parent"]} {
-		return $node
-	}
-
-	# Currently the PARENT node must within the same dt tree
-	if {![check_node_in_dts $new_parent $dts_file]} {
-		error "Node '$node' is not in $dts_file tree"
-	}
-
-	set cur_parent [hsi get_property PARENT $node]
-	# set new parent if required
-	if {![string equal -nocase ${cur_parent} ${new_parent}] && [string_is_empty ${new_parent}] == 0} {
-		dtg_debug "Update parent to $new_parent"
-		set_property PARENT "${new_parent}" $node
-	}
-	return $node
-}
-
-proc get_all_dt_labels {{dts_files ""}} {
-	# get all dt node labels
-	set cur_dts [current_dt_tree]
-	set labels ""
-	if [string_is_empty $dts_files] {
-		set dts_files [get_dt_trees]
-	}
-	foreach dts_file ${dts_files} {
-		set dts_nodes [get_all_tree_nodes $dts_file]
-		foreach node ${dts_nodes} {
-			set node_label [hsi get_property "NODE_LABEL" $node]
-			if {[string_is_empty $node_label]} {
-				continue
-			}
-			lappend labels $node_label
-		}
-	}
-	current_dt_tree $cur_dts
-	return $labels
-}
-
-proc list_remove_element {cur_list elements} {
-	foreach e ${elements} {
-		set rm_idx [lsearch $cur_list $e]
-		set cur_list [lreplace $cur_list $rm_idx $rm_idx]
-	}
-	return $cur_list
-}
-
 proc update_system_dts_include {include_file} {
 	# where should we get master_dts data
 	global count
@@ -2359,195 +2210,6 @@ proc dt_node_def_checking {node_label node_name node_ua node_obj} {
 		}
 	}
 	return 1
-}
-
-proc add_or_get_dt_node args {
-	# Creates the dt node or the parent node if required
-	# return dt node
-	proc_called_by
-	global def_string
-	foreach var {node_name node_label node_unit_addr parent_obj dts_file} {
-		set ${var} ${def_string}
-	}
-	set auto_ref 1
-	set auto_ref_parent 0
-	set force_create 0
-	while {[string match -* [lindex $args 0]]} {
-		switch -glob -- [lindex $args 0] {
-			-force {set force_create 1}
-			-disable_auto_ref {set auto_ref 0}
-			-auto_ref_parent {set auto_ref_parent 1}
-			-n* {set node_name [Pop args 1]}
-			-l* {set node_label [Pop args 1]}
-			-u* {set node_unit_addr [Pop args 1]}
-			-p* {set parent_obj [Pop args 1]}
-			-d* {set dts_file [Pop args 1]}
-			--  {Pop args ; break}
-			default {
-				error "add_or_get_dt_node bad option - [lindex $args 0]"
-			}
-		}
-		Pop args
-	}
-
-	# if no dts_file provided
-	if {[string equal -nocase ${dts_file} ${def_string}]} {
-		set dts_file [current_dt_tree]
-	}
-
-	# node_name sanity checking
-	if {[string equal -nocase ${node_name} ${def_string}]} {
-		error "Node name must be provided..."
-	}
-
-	# Generate unique label name to prevent issue caused by static dtsi
-	# better way of handling this issue is required
-	set label_list [get_all_dt_labels]
-	# TODO: This only handle label duplication once. if multiple IP has
-	# the same label, it will not work. Better handling required.
-	if {[lsearch $label_list $node_label] >= 0} {
-		set tmp_node [get_node_object ${node_label}]
-		# rename if the node default properties differs
-		if {[dt_node_def_checking $node_label $node_name $node_unit_addr $tmp_node] == 0} {
-			dtg_warning "label '$node_label' found in existing tree"
-		}
-	}
-
-	set search_pattern [gen_dt_node_search_pattern -n ${node_name} -l ${node_label} -u ${node_unit_addr}]
-
-	dtg_debug ""
-	dtg_debug "node_name: ${node_name}"
-	dtg_debug "node_label: ${node_label}"
-	dtg_debug "node_unit_addr: ${node_unit_addr}"
-	dtg_debug "search_pattern: ${search_pattern}"
-	dtg_debug "parent_obj: ${parent_obj}"
-	dtg_debug "dts_file: ${dts_file}"
-
-	# save the current working dt_tree first
-	set cur_working_dts [current_dt_tree]
-	# tree switch the target tree
-	set_cur_working_dts ${dts_file}
-	set parent_dts_file ${dts_file}
-
-	# Set correct parent object
-	#  Check if the parent object in other dt_trees or not. If yes, update
-	#  parent node with reference node (&parent_obj).
-	#  Check if parent is / and see if it in the target dts file
-	#  if not /, then check if parent is created (FIXME: is right???)
-	set tmp_dts_list [list_remove_element [get_dt_trees] ${dts_file}]
-	set node_in_dts [check_node_in_dts ${parent_obj} ${tmp_dts_list}]
-	if {${node_in_dts} ==  1 && \
-		 ![string equal ${parent_obj} "/" ]} {
-		set parent_obj [get_node_object ${parent_obj} ${tmp_dts_list}]
-		set parent_label [hsi get_property "NODE_LABEL" $parent_obj]
-		if {[string_is_empty $parent_label]} {
-			set parent_label [hsi get_property "NODE_NAME" $parent_obj]
-		}
-		if {[string_is_empty $parent_label]} {
-			error "no parent node name/label"
-		}
-		if {[regexp "^&.*" "$parent_label" match]} {
-			set ref_node "${parent_label}"
-		} else {
-			set ref_node "&${parent_label}"
-		}
-		set parent_ref_in_dts [check_node_in_dts "${ref_node}" ${dts_file}]
-		if {${parent_ref_in_dts} != 1} {
-			if {$auto_ref_parent} {
-				set_cur_working_dts ${dts_file}
-				set parent_obj [create_dt_node -n "${ref_node}"]
-			}
-		} else {
-			set parent_obj [get_node_object ${ref_node} ${dts_file}]
-		}
-	}
-
-	# if dt node in the target dts file
-	# get the nodes in the current dts file
-	set dts_nodes [get_all_tree_nodes $dts_file]
-	foreach pattern ${search_pattern} {
-		foreach node ${dts_nodes} {
-			if {[regexp $pattern $node match]} {
-				if {[dt_node_def_checking $node_label $node_name $node_unit_addr $node] == 0} {
-					dtg_warning "$pattern :: $node_label : $node_name @ $node_unit_addr, is differ to the node object $node"
-				}
-				set node [update_dt_parent ${node} ${parent_obj} ${dts_file}]
-				set_cur_working_dts ${cur_working_dts}
-				return $node
-			}
-		}
-	}
-	# clean up required
-	# special search pattern for name only node
-	set_cur_working_dts ${dts_file}
-	foreach pattern "^${node_name}$" {
-		foreach node ${dts_nodes} {
-			# As there was cpu timer node already in dtsi file skipping to add ttc timer
-			# to pcw.dtsi even if ip available. This check will skip that.
-			if {[regexp $pattern $node match] && ![string match -nocase ${node_name} "timer"]} {
-				set_cur_working_dts ${dts_file}
-				set node [update_dt_parent ${node} ${parent_obj} ${dts_file}]
-				set_cur_working_dts ${cur_working_dts}
-				return $node
-			}
-		}
-	}
-	# if dt node in other target dts files
-	# create a reference node if required
-	set found_node 0
-	set tmp_dts_list [list_remove_element [get_dt_trees] ${dts_file}]
-	foreach tmp_dts_file ${tmp_dts_list} {
-		set dts_nodes [get_all_tree_nodes $tmp_dts_file]
-		# TODO: better detection here
-		foreach pattern ${search_pattern} {
-			foreach node ${dts_nodes} {
-				if {[regexp $pattern $node match]} {
-					# create reference node
-					set found_node 1
-					set found_node_obj [get_node_object ${node} $tmp_dts_file]
-					break
-				}
-			}
-		}
-	}
-	if {$found_node == 1 && $force_create == 0} {
-		if {$auto_ref == 0} {
-			# return the object found on other dts files
-			set_cur_working_dts ${cur_working_dts}
-			return $found_node_obj
-		}
-		dtg_debug "INFO: Found node and create it as reference node &${node_label}"
-		if {[string equal -nocase ${node_label} ${def_string}]} {
-			error "Unable to create reference node as reference label is not provided"
-		}
-
-		set node [create_dt_node -n "&${node_label}"]
-		set_cur_working_dts ${cur_working_dts}
-		return $node
-	}
-
-	# Others - create the dt node
-	set cmd ""
-	if {![string equal -nocase ${node_name} ${def_string}]} {
-		set cmd "${cmd} -name ${node_name}"
-	}
-	if {![string equal -nocase ${node_label} ${def_string}]} {
-		set cmd "${cmd} -label ${node_label}"
-	}
-	if {![string equal -nocase ${node_unit_addr} ${def_string}]} {
-		set cmd "${cmd} -unit_addr ${node_unit_addr}"
-	}
-	if {![string equal -nocase ${parent_obj} ${def_string}] && \
-		![string_is_empty ${parent_obj}]} {
-		# temp solution for getting the right node object
-		set cmd "${cmd} -objects \[get_node_object ${parent_obj} $parent_dts_file\]"
-	}
-
-	dtg_debug "create node command: create_dt_node ${cmd}"
-	# FIXME: create_dt_node fail detection here
-	set node [eval "create_dt_node ${cmd}"]
-	set_cur_working_dts ${cur_working_dts}
-	return $node
 }
 
 # FIXME: Consolidate it with get_ip_type, is_pl_ip, is_ps_ip, check the usecase of nochk list
@@ -3044,237 +2706,6 @@ proc gen_ps_mapping {} {
 	set ps_mapping [part_specific_ps_mapping $def_ps_mapping]
 	dict set ps_mapping_list $cur_hw_design mapping $ps_mapping
 	return $ps_mapping
-}
-
-proc gen_ps7_mapping {} {
-	# TODO: check if it is target cpu is cortex a9
-
-	# TODO: remove def_ps7_mapping
-	proc_called_by
-	set proctype "versal"
-	set def_ps_mapping [dict create]
-	if {[string match -nocase $proctype "psv_cortexa72"] ||
-	    [string match -nocase $proctype "psv_cortexr5"] ||
-	    [string match -nocase $proctype "versal"] ||
-	    [string match -nocase $proctype "psv_pmc"]} {
-		dict set def_ps_mapping f9000000 label "gic: interrupt-controller"
-		dict set def_ps_mapping f9001000 label "rpu_gic: interrupt-controller"
-		dict set def_ps_mapping fd4b0000 label gpu
-		dict set def_ps_mapping ffa80000 label "lpd_dma_chan0: dma"
-		dict set def_ps_mapping ffa90000 label "lpd_dma_chan1: dma"
-		dict set def_ps_mapping ffaa0000 label "lpd_dma_chan2: dma"
-		dict set def_ps_mapping ffab0000 label "lpd_dma_chan3: dma"
-		dict set def_ps_mapping ffac0000 label "lpd_dma_chan4: dma"
-		dict set def_ps_mapping ffad0000 label "lpd_dma_chan5: dma"
-		dict set def_ps_mapping ffae0000 label "lpd_dma_chan6: dma"
-		dict set def_ps_mapping ffaf0000 label "lpd_dma_chan7: dma"
-		dict set def_ps_mapping ff0c0000 label "gem0: ethernet"
-		dict set def_ps_mapping ff0d0000 label "gem1: ethernet"
-		dict set def_ps_mapping ff0b0000 label "gpio0: gpio"
-		dict set def_ps_mapping f1020000 label "gpio1: gpio"
-		dict set def_ps_mapping ff020000 label "i2c0: i2c"
-		dict set def_ps_mapping ff030000 label "i2c1: i2c"
-		dict set def_ps_mapping f1000000 label "i2c2: i2c"
-		dict set def_ps_mapping f1030000 label "qspi: spi"
-		dict set def_ps_mapping f12a0000 label "rtc: rtc"
-		dict set def_ps_mapping fd0c0000 label "sata: sata"
-		dict set def_ps_mapping f1040000 label "sdhci0: sdhci"
-		dict set def_ps_mapping f1050000 label "sdhci1: sdhci"
-		dict set def_ps_mapping fd800000 label "smmu: smmu"
-		dict set def_ps_mapping ff040000 label "spi0: spi"
-		dict set def_ps_mapping ff050000 label "spi1: spi"
-		dict set def_ps_mapping f1010000 label "ospi: spi"
-		dict set def_ps_mapping ff0e0000 label "ttc0: timer"
-		dict set def_ps_mapping ff0f0000 label "ttc1: timer"
-		dict set def_ps_mapping ff100000 label "ttc2: timer"
-		dict set def_ps_mapping ff110000 label "ttc3: timer"
-		dict set def_ps_mapping ff000000 label "serial0: serial"
-		dict set def_ps_mapping ff010000 label "serial1: serial"
-		dict set def_ps_mapping fe200000 label "dwc3_0: dwc3"
-		dict set def_ps_mapping fd4d0000 label "watchdog: watchdog"
-		dict set def_ps_mapping fca10000 label "cpm_pciea: pci"
-		dict set def_ps_mapping ff060000 label "can0: can"
-		dict set def_ps_mapping ff070000 label "can1: can"
-		dict set def_ps_mapping f12b0000 label cfu
-		dict set def_ps_mapping f12d0000 label cframe
-		dict set def_ps_mapping f11c0000 label pmcdma
-		dict set def_ps_mapping f11d0000 label pmcdma
-	} elseif {[string match -nocase $proctype "psu_cortexa53"] || \
-		[string match -nocase $proctype "psu_pmu"] ||
-		[string match -nocase $proctype "psu_cortexr5"]} {
-		dict set def_ps_mapping f9010000 label gic
-		dict set def_ps_mapping f9000000 label rpu_gic
-		dict set def_ps_mapping ff060000 label can0
-		dict set def_ps_mapping ff070000 label can1
-		dict set def_ps_mapping fd500000 label gdma0
-		dict set def_ps_mapping fd510000 label gdma1
-		dict set def_ps_mapping fd520000 label gdma2
-		dict set def_ps_mapping fd530000 label gdma3
-		dict set def_ps_mapping fd540000 label gdma4
-		dict set def_ps_mapping fd550000 label gdma5
-		dict set def_ps_mapping fd560000 label gdma6
-		dict set def_ps_mapping fd570000 label gdma7
-		dict set def_ps_mapping fd4b0000 label gpu
-		dict set def_ps_mapping ffa80000 label adma0
-		dict set def_ps_mapping ffa90000 label adma0
-		dict set def_ps_mapping ffaa0000 label adma2
-		dict set def_ps_mapping ffab0000 label adma3
-		dict set def_ps_mapping ffac0000 label adma4
-		dict set def_ps_mapping ffad0000 label adma5
-		dict set def_ps_mapping ffae0000 label adma6
-		dict set def_ps_mapping ffaf0000 label adma7
-		dict set def_ps_mapping ff100000 label nand0
-		dict set def_ps_mapping ff0b0000 label gem0
-		dict set def_ps_mapping ff0c0000 label gem1
-		dict set def_ps_mapping ff0d0000 label gem2
-		dict set def_ps_mapping ff0e0000 label gem3
-		dict set def_ps_mapping ff0a0000 label gpio
-		dict set def_ps_mapping ff020000 label i2c0
-		dict set def_ps_mapping ff030000 label i2c1
-		dict set def_ps_mapping ff0f0000 label qspi
-		dict set def_ps_mapping ffa60000 label rtc
-		dict set def_ps_mapping fd0c0000 label sata
-		dict set def_ps_mapping ff160000 label sdhci0
-		dict set def_ps_mapping ff170000 label sdhci1
-		dict set def_ps_mapping fd800000 label smmu
-		dict set def_ps_mapping ff040000 label spi0
-		dict set def_ps_mapping ff050000 label spi1
-		dict set def_ps_mapping ff110000 label ttc0
-		dict set def_ps_mapping ff120000 label ttc1
-		dict set def_ps_mapping ff130000 label ttc2
-		dict set def_ps_mapping ff140000 label ttc3
-		dict set def_ps_mapping ff000000 label uart0
-		dict set def_ps_mapping ff010000 label uart1
-		dict set def_ps_mapping fe200000 label usb0
-		dict set def_ps_mapping fe300000 label usb1
-		dict set def_ps_mapping fd4d0000 label watchdog0
-		dict set def_ps_mapping 43c00000 label dp
-		dict set def_ps_mapping 43c0a000 label dpsub
-		dict set def_ps_mapping fd4c0000 label dpdma
-		dict set def_ps_mapping fd0e0000 label pcie
-		dict set def_ps_mapping ff300000 label ipi0
-		dict set def_ps_mapping ff310000 label ipi1
-		dict set def_ps_mapping ff320000 label ipi2
-		dict set def_ps_mapping ff330000 label ipi3
-		dict set def_ps_mapping ff331000 label ipi4
-		dict set def_ps_mapping ff332000 label ipi5
-		dict set def_ps_mapping ff333000 label ipi6
-		dict set def_ps_mapping ffcb0000 label watchdog
-		dict set def_ps_mapping fd070000 label memory-controller
-		dict set def_ps_mapping fd1a0000 label crfapb
-		dict set def_ps_mapping ff5e0000 label crlapb
-		dict set def_ps_mapping ffcc0000 label efuse
-		dict set def_ps_mapping ff180000 label iou_slcr
-		dict set def_ps_mapping ff410000 label lpd_slcr
-	} else {
-		dict set def_ps_mapping f8891000 label pmu
-		dict set def_ps_mapping f8007100 label adc
-		dict set def_ps_mapping e0008000 label can0
-		dict set def_ps_mapping e0009000 label can1
-		dict set def_ps_mapping e000a000 label gpio0
-		dict set def_ps_mapping e0004000 label i2c0
-		dict set def_ps_mapping e0005000 label i2c1
-		dict set def_ps_mapping f8f01000 label intc
-		dict set def_ps_mapping f8f00100 label intc
-		dict set def_ps_mapping f8f02000 label L2
-		dict set def_ps_mapping f8006000 label memory-controller
-		dict set def_ps_mapping f800c000 label ocmc
-		dict set def_ps_mapping e0000000 label uart0
-		dict set def_ps_mapping e0001000 label uart1
-		dict set def_ps_mapping e0006000 label spi0
-		dict set def_ps_mapping e0007000 label spi1
-		dict set def_ps_mapping e000d000 label qspi
-		dict set def_ps_mapping e000e000 label smcc
-		dict set def_ps_mapping e1000000 label nand0
-		dict set def_ps_mapping e2000000 label nor
-		dict set def_ps_mapping e000b000 label gem0
-		dict set def_ps_mapping e000c000 label gem1
-		dict set def_ps_mapping e0100000 label sdhci0
-		dict set def_ps_mapping e0101000 label sdhci1
-		dict set def_ps_mapping f8000000 label slcr
-		dict set def_ps_mapping f8003000 label dmac_s
-		dict set def_ps_mapping f8007000 label devcfg
-		dict set def_ps_mapping f8f00200 label global_timer
-		dict set def_ps_mapping f8001000 label ttc0
-		dict set def_ps_mapping f8002000 label ttc1
-		dict set def_ps_mapping f8f00600 label scutimer
-		dict set def_ps_mapping f8005000 label watchdog0
-		dict set def_ps_mapping f8f00620 label scuwatchdog
-		dict set def_ps_mapping e0002000 label usb0
-		dict set def_ps_mapping e0003000 label usb1
-	}
-
-	set ps_mapping [dict create]
-	global zynq_soc_dt_tree
-	if {[lsearch [get_dt_trees] $zynq_soc_dt_tree] >= 0} {
-		# get nodes under bus
-		foreach node [get_all_tree_nodes $zynq_soc_dt_tree] {
-			# only care about the device with parent ambe
-			set parent [hsi get_property PARENT  $node]
-			set ignore_parent_list {(/|cpu)}
-			set node_label [hsi get_property NODE_LABEL $node]
-			if {[regexp $ignore_parent_list $parent matched] && ![string match -nocase $node_label "gic_r5"]} {
-				continue
-			}
-			set unit_addr [hsi get_property UNIT_ADDRESS $node]
-			if {[string length $unit_addr] <= 1} {
-				set unit_addr ""
-			}
-			set node_name [hsi get_property NODE_NAME $node]
-			if  {[ regexp "tcm" $node_name ]} {
-				set $node_name [dict get $ps_mapping $node_unit_addr label]
-			}
-			set node_label [hsi get_property NODE_LABEL $node]
-			if {[catch {set status_prop [hsi get_property CONFIG.status $node]} msg]} {
-				set status_prop "enable"
-			}
-			if {[string_is_empty $node_label] || \
-				[string_is_empty $unit_addr]} {
-				continue
-			}
-			dict set ps_mapping $unit_addr label $node_label
-			dict set ps_mapping $unit_addr name $node_name
-			dict set ps_mapping $unit_addr status $status_prop
-		}
-	}
-	if {[string_is_empty $ps_mapping]} {
-		return $def_ps_mapping
-	} else {
-		return $ps_mapping
-	}
-}
-
-proc ps_node_mapping {ip_name prop} {
-	# if {[is_ps_ip $ip_name]} {
-	# 	set unit_addr [get_ps_node_unit_addr $ip_name]
-	# 	if {$unit_addr == -1} {return $ip_name}
-	# 	set ps7_mapping [gen_ps7_mapping]
-
-	# 	if {[catch {set tmp [dict get $ps7_mapping $unit_addr $prop]} msg]} {
-	# 		continue
-	# 	}
-	# 	return $tmp
-	# }
-	return $ip_name
-}
-
-proc get_ps_node_unit_addr {ip_name {prop "label"}} {
-	set ip [cells_hier $ip_name]
-	set ip_mem_handle [get_ip_mem_ranges [cells_hier $ip]]
-	set ps7_mapping [gen_ps7_mapping]
-
-	# loop through the base addresses: workaround for intc
-	foreach handler ${ip_mem_handle} {
-		set unit_addr [string tolower [hsi get_property BASE_VALUE $handler]]
-		regsub -all {^0x} $unit_addr {} unit_addr
-		if {[is_ps_ip [get_drivers $ip_name]]} {
-			if {[catch {set tmp [dict get $ps7_mapping $unit_addr $prop]} msg]} {
-				continue
-			}
-			return $unit_addr
-		}
-	}
-	return -1
 }
 
 proc zynq_gen_pl_clk_binding {drv_handle} {
@@ -4104,31 +3535,6 @@ proc gen_mb_interrupt_property {cpu_handle {intr_port_name ""}} {
 	}
 }
 
-# Return 1 if parent axi_intc has PG099 cascade enabled (C_EN_CASCADE_MODE).
-# Avoid expr/numeric compares on $v until we know it is integer — HSI may return strings (e.g. "false").
-proc parent_axi_intc_cascade_enabled {parent_cell} {
-    if {![llength $parent_cell]} {
-        return 0
-    }
-    set v [get_ip_param_value $parent_cell C_EN_CASCADE_MODE]
-    if {$v eq ""} {
-        catch {set v [hsi get_property CONFIG.C_EN_CASCADE_MODE $parent_cell]}
-    }
-    if {$v eq ""} {
-        return 0
-    }
-    if {[string match -nocase $v false] || [string match -nocase $v no]} {
-        return 0
-    }
-    if {[string is integer -strict $v]} {
-        if {$v == -1 || $v == 0} {
-            return 0
-        }
-        return [expr {$v == 1}]
-    }
-    return [expr {[string match -nocase $v true] || [string match -nocase $v yes]}]
-}
-
 # Append cell to list if not already present (HSI cell handles).
 proc intc_lappend_unique_parent {parents_var cell} {
     upvar $parents_var parents
@@ -4666,7 +4072,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 	if {[string_is_empty $intc_name]} {
 		return -1
 	}
-	set intc [ps_node_mapping $intc label]
+
 	set intc_len [llength $intc]
 	if {$intc_len > 1} {
 		foreach intc_ctr $intc { 
@@ -5768,18 +5174,6 @@ proc update_eth_mac_addr {drv_handle} {
 	add_prop $node "local-mac-address" ${mac_addr} bytesequence $dts_file
 }
 
-proc get_hw_version {} {
-	set hw_ver_data [split [hsi get_property VIVADO_VERSION [hsi::get_hw_designs]] "."]
-	set hw_ver [lindex $hw_ver_data 0].[lindex $hw_ver_data 1]
-	return $hw_ver
-}
-
-proc get_hsi_version {} {
-	set hsi_ver_data [split [hsi version -short] "."]
-	set hsi_ver [lindex $hsi_ver_data 0].[lindex $hsi_ver_data 1]
-	return $hsi_ver
-}
-
 # Get the interrupt controller name, which the ip is connected
 proc get_intr_cntrl_name { periph_name intr_pin_name } {
 	proc_called_by
@@ -5966,7 +5360,7 @@ proc generate_gpio_intr_info {connected_intc drv_handle pin} {
 	if {[string_is_empty $intc]} {
 		return -1
 	}
-	set intc [ps_node_mapping $intc label]
+
 	set_drv_prop $drv_handle interrupt-parent $intc $node reference
 }
 

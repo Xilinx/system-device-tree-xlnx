@@ -388,9 +388,6 @@
                 set target_handle $ip
             }
         }
-        set hsi_version [get_hsi_version]
-        set ver [split $hsi_version "."]
-        set version [lindex $ver 0]
         if {![string_is_empty $connected_ip]} {
             set connected_ipname [hsi get_property IP_NAME $connected_ip]
             if {$connected_ipname == "axi_mcdma" || $connected_ipname == "axi_dma"} {
@@ -398,9 +395,6 @@
 		    set inhex [format %x $num_queues]
 		    set numqueues "/bits/ 16 <0x$inhex>"
 		    add_prop $node "xlnx,num-queues" $numqueues noformating "pl.dtsi"
-		    if {$version < 2018} {
-			 dtg_warning "quotes to be removed or use 2018.1 version for $node param xlnx,num-queues"
-		    }
 		    set id 1
 		    for {set i 2} {$i <= $num_queues} {incr i} {
 				set i [format "%x" $i]
