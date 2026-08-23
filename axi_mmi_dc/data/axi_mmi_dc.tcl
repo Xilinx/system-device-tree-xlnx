@@ -301,7 +301,9 @@
 
         # Build clock-names and clocks dynamically based on connected PL clocks
         set clk_names [list "mmi_pll" "ps_vid_clk" "stc_ref_clk"]
-        set clk_refs [list "<&versal2_clk MMIPLL>" "<&versal2_clk DC_PIXEL>" "<&versal2_clk MMI_AUX1_REF>"]
+        set clk_refs [list "<&scmi_clk SCMI_CLK_VERSAL2_MMIPLL>" \
+                               "<&scmi_clk SCMI_CLK_VERSAL2_DC_PIXEL>" \
+                               "<&scmi_clk SCMI_CLK_VERSAL2_MMI_AUX1_REF>"]
 
         if {$index >= 0} {
             lappend clk_names "pl_vid_func_clk"
