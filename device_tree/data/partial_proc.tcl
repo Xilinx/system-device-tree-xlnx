@@ -308,7 +308,9 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 	global pl_ps_irq1
 	global pl_ps_irq0
 	global env
-
+	global cur_hw_design
+	global get_cell
+	global ps_mapping_list
 	if {![info exists is_bridge_en]} {
 		set is_bridge_en 0
 	}
@@ -376,6 +378,8 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 	dict set comp_str_dict $cur_hw_design {}
 	dict set ip_type_dict $cur_hw_design {}
 	dict set intr_id_dict $cur_hw_design {}
+	dict set get_cell $cur_hw_design {}
+	dict set ps_mapping_list $cur_hw_design {}
 	set list_offiles {}
 
 	set peri_list [hsi::get_cells -hier]

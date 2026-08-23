@@ -706,7 +706,7 @@ proc gen_edac_node {} {
 	set pspmc [hsi get_cells -hier -filter {IP_NAME == "pspmc"}]
 	set psxwizard [hsi get_cells -hier -filter {IP_NAME == "psx_wizard"}]
 	if {[llength $pspmc]} {
-		if { [hsi get_property CONFIG.SEM_MEM_SCAN $pspmc] || [hsi get_property CONFIG.SEM_NPI_SCAN $pspmc] } {
+		if { [get_ip_property $pspmc CONFIG.SEM_MEM_SCAN] || [get_ip_property $pspmc CONFIG.SEM_NPI_SCAN] } {
 			set edac_node [create_node -n &xilsem_edac -d $dts_file -p root]
 			add_prop "${edac_node}" "status" "okay" string $dts_file
 			set_memmap "xilsem_edac" a53 "0x0 0xf2014050 0x0 0xc4"
@@ -714,7 +714,7 @@ proc gen_edac_node {} {
 		}
 	# put status=okay in edac node for versal-net when any of the CIPS parameters "CONFIG.SEM_MEM_SCAN" or "CONFIG.SEM_NPI_SCAN" are enabled in the design
 	} elseif {[llength $psxwizard]} {
-		set psx_pmcx_config [hsi get_property CONFIG.PSX_PMCX_CONFIG [hsi get_cells -hier $psxwizard]]
+		set psx_pmcx_config [get_ip_property $psxwizard CONFIG.PSX_PMCX_CONFIG]
 		if {[llength $psx_pmcx_config]} {
 			if {[dict exists $psx_pmcx_config "SEM_MEM_SCAN"] || [dict exists $psx_pmcx_config "SEM_NPI_SCAN"]} {
 				set edac_node [create_node -n &xilsem_edac -d $dts_file -p root]
@@ -746,7 +746,7 @@ proc gen_sata_laneinfo {} {
 	foreach ip [hsi::get_cells] {
 		set slane 0
 		set freq {}
-		set ip_type [hsi get_property IP_TYPE [hsi::get_cells -hier $ip]]
+		set ip_type [get_ip_property $ip IP_TYPE]
 		if {$ip_type eq ""} {
 			set ps $ip
 		}
@@ -764,10 +764,10 @@ proc gen_sata_laneinfo {} {
 
 	set param_list "ceva,p%d-cominit-params ceva,p%d-comwake-params ceva,p%d-burst-params ceva,p%d-retry-params"
 	while {$slane < 2} {
-		if {[hsi get_property CONFIG.PSU__SATA__LANE$slane\__ENABLE [hsi::get_cells -hier $ps]] == 1} {
-			set gt_lane [hsi get_property CONFIG.PSU__SATA__LANE$slane\__IO [hsi::get_cells -hier $ps]]
+		if {[hsi get_property CONFIG.PSU__SATA__LANE$slane\__ENABLE [cells_hier $ps]] == 1} {
+			set gt_lane [hsi get_property CONFIG.PSU__SATA__LANE$slane\__IO [cells_hier $ps]]
 			regexp [0-9] $gt_lane gt_lane
-			lappend freq [hsi get_property CONFIG.PSU__SATA__REF_CLK_FREQ [hsi::get_cells -hier $ps]]
+			lappend freq [hsi get_property CONFIG.PSU__SATA__REF_CLK_FREQ [cells_hier $ps]]
 		} else {
 			lappend freq 0
 			}
@@ -949,11 +949,11 @@ proc gen_afi_node {} {
 			set hw_name [::hsi::get_hw_files -filter "TYPE == bit"]
 			add_prop $amba_pl_node "firmware-name" "$hw_name.bin" string $dts 1
 			set zynq_periph [hsi::get_cells -hier -filter {IP_NAME == processing_system7}]
-			set avail_param [common::list_property [hsi::get_cells -hier $zynq_periph]]
+			set avail_param [common::list_property [cells_hier $zynq_periph]]
 			set pl_clk_buf_props "CONFIG.PCW_FPGA_FCLK0_ENABLE CONFIG.PCW_FPGA_FCLK1_ENABLE CONFIG.PCW_FPGA_FCLK2_ENABLE CONFIG.PCW_FPGA_FCLK3_ENABLE"
 			foreach prop ${pl_clk_buf_props} {
 				if {[lsearch -nocase $avail_param $prop] >= 0} {
-					set val [hsi::get_property $prop [hsi::get_cells -hier $zynq_periph]]
+					set val [get_ip_property $zynq_periph $prop]
 					if {[string match -nocase $val "1"]} {
 						set index [lsearch $pl_clk_buf_props $prop]
 						set clk_num [expr {15 + $index}]
@@ -963,7 +963,7 @@ proc gen_afi_node {} {
 						add_prop "${clocking_node}" "clock-output-names" "fabric_clk" string $dts 1
 						add_prop "${clocking_node}" "#clock-cells" 0 int $dts 1
 						add_prop "${clocking_node}" "assigned-clocks" "clkc $clk_num" reference $dts 1
-						set freq [hsi::get_property CONFIG.PCW_FPGA${index}_PERIPHERAL_FREQMHZ [hsi::get_cells -hier $zynq_periph]]
+						set freq [get_ip_property $zynq_periph CONFIG.PCW_FPGA${index}_PERIPHERAL_FREQMHZ]
 						add_prop "${clocking_node}" "assigned-clock-rates" [scan [expr $freq * 1000000] "%d"] int $dts 1
 					}
 				}
@@ -972,16 +972,16 @@ proc gen_afi_node {} {
 			set pl_afi_buf_props "CONFIG.C_USE_S_AXI_HP0 CONFIG.C_USE_S_AXI_HP1 CONFIG.C_USE_S_AXI_HP2 CONFIG.C_USE_S_AXI_HP3"
 			foreach prop ${pl_afi_buf_props} {
 				if {[lsearch -nocase $avail_param $prop] >= 0} {
-					set val [hsi::get_property $prop [hsi::get_cells -hier $zynq_periph]]
+					set val [get_ip_property $zynq_periph $prop]
 					if {[string match -nocase $val "1"]} {
 						set index [lsearch $pl_afi_buf_props $prop]
 						set afi [hsi::get_cells -hier -filter "NAME==ps7_afi_${index}"]
 						set afi_param [common::list_property [hsi::get_cells -hier "$afi"]]
 						if {[lsearch -nocase $afi_param "CONFIG.C_S_AXI_BASEADDR"] >= 0} {
-							set base_addr [hsi::get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $afi]]
+							set base_addr [get_ip_property $afi CONFIG.C_S_AXI_BASEADDR]
 						}
 						if {[lsearch -nocase $afi_param "CONFIG.C_S_AXI_HIGHADDR"] >= 0} {
-							set high_addr [hsi::get_property CONFIG.C_S_AXI_HIGHADDR [hsi::get_cells -hier $afi]]
+							set high_addr [get_ip_property $afi CONFIG.C_S_AXI_HIGHADDR]
 						}
 						set size [format 0x%x [expr {${high_addr} - ${base_addr} + 1}]]
 						set reg "$base_addr $size"
@@ -994,7 +994,7 @@ proc gen_afi_node {} {
 						add_prop $node "status" "okay" string $dts 1
 						add_prop $node "reg" "$reg" hexlist $dts 1
 						if {[lsearch -nocase $avail_param "CONFIG.C_S_AXI_HP${index}_DATA_WIDTH"] >= 0} {
-							set val [hsi::get_property CONFIG.C_S_AXI_HP${index}_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
+							set val [get_ip_property $zynq_periph CONFIG.C_S_AXI_HP${index}_DATA_WIDTH]
 							set bus_width [get_axi_datawidth $val]
 							add_prop $node "xlnx,afi-width" "$bus_width" int $dts 1
 						}
@@ -1015,7 +1015,7 @@ proc gen_afi_node {} {
 			add_prop "${pr_node}" "#size-cells" 2 int $dts 1
 			add_prop "${pr_node}" "ranges" "" boolean $dts 1
 			foreach intf $intf_pins {
-				set connectip [get_connected_stream_ip [::hsi::get_cells -hier $rp] $intf]
+				set connectip [get_connected_stream_ip [cells_hier $rp] $intf]
 				if {[llength $connectip]} {
 					if { [::hsi::get_property IP_NAME $connectip] in { "dfx_decoupler" "dfx_axi_shutdown_manager" } } {
 						dict set rp_region_dict $rp $connectip
@@ -1028,7 +1028,7 @@ proc gen_afi_node {} {
 			# by tracing rp_int*INTERRUPT INPUT pins to the RP container's OUTPUT port
 			# (ip2intc_irpt / dout) on the static-design net.
 			if {![info exists rp_region_dict] || ![dict exists $rp_region_dict $rp]} {
-				set rp_name [hsi get_property NAME [hsi::get_cells -hier $rp]]
+				set rp_name [hsi get_property NAME [cells_hier $rp]]
 				set dec [find_decoupler_for_rp $rp_name]
 				if {$dec ne ""} {
 					dict set rp_region_dict $rp $dec
@@ -1392,11 +1392,11 @@ proc gen_zynqmp_ccf_clk {} {
 	set default_dts "pcw.dtsi"
 	set periph_list [hsi::get_cells -hier]
 	foreach periph $periph_list {
-		set zynq_ultra_ps [hsi get_property IP_NAME $periph]
+		set zynq_ultra_ps [get_ip_property $periph IP_NAME]
 		if {[string match -nocase $zynq_ultra_ps "zynq_ultra_ps_e"] } {
-			set avail_param [hsi list_property [hsi::get_cells -hier $periph]]
+			set avail_param [hsi list_property [cells_hier $periph]]
 			if {[lsearch -nocase $avail_param "CONFIG.PSU__PSS_REF_CLK__FREQMHZ"] >= 0} {
-				set freq [hsi get_property CONFIG.PSU__PSS_REF_CLK__FREQMHZ [hsi::get_cells -hier $periph]]
+				set freq [get_ip_property $periph CONFIG.PSU__PSS_REF_CLK__FREQMHZ]
 				if {[string match -nocase $freq "33.333"]} {
 					return
 				} else {
@@ -1409,11 +1409,11 @@ proc gen_zynqmp_ccf_clk {} {
 	}
        set periph_list [hsi::get_cells -hier]
        foreach periph $periph_list {
-               set zynq_ultra_ps [hsi get_property IP_NAME $periph]
+               set zynq_ultra_ps [get_ip_property $periph IP_NAME]
                if {[string match -nocase $zynq_ultra_ps "zynq_ultra_ps_e"] } {
-                       set avail_param [hsi list_property [hsi::get_cells -hier $periph]]
+                       set avail_param [hsi list_property $periph]
                        if {[lsearch -nocase $avail_param "CONFIG.PSU__VIDEO_REF_CLK__FREQMHZ"] >= 0} {
-                               set freq [hsi get_property CONFIG.PSU__VIDEO_REF_CLK__FREQMHZ [hsi::get_cells -hier $periph]]
+                               set freq [get_ip_property $periph CONFIG.PSU__VIDEO_REF_CLK__FREQMHZ]
                                if {[string match -nocase $freq "27"]} {
                                        return
                                } else {
@@ -1435,9 +1435,9 @@ proc gen_versal_clk {} {
        set default_dts "pcw.dtsi"
        set periph_list [hsi::get_cells -hier]
        foreach periph $periph_list {
-               set versal_ps [hsi get_property IP_NAME $periph]
+               set versal_ps [get_ip_property $periph IP_NAME]
                if { $versal_ps in { "ps_wizard" }} {
-			set ps_wizard_params [hsi get_property CONFIG.PS_PMC_CONFIG [hsi get_cells -hier $periph]]
+			set ps_wizard_params [get_ip_property $periph CONFIG.PS_PMC_CONFIG]
 			if {[llength $ps_wizard_params ]} {
 				if {[dict exists $ps_wizard_params "PMC_REF_CLK_FREQMHZ"]} {
 					set freq [dict get $ps_wizard_params PMC_REF_CLK_FREQMHZ]
@@ -1460,9 +1460,9 @@ proc gen_versal_clk {} {
                if { $versal_ps in { "versal_cips" } } {
                        set ver [get_comp_ver $periph]
                        if {$ver < 3.0} {
-                               set avail_param [hsi list_property [hsi get_cells -hier $periph]]
+                               set avail_param [hsi list_property $periph]
                                if {[lsearch -nocase $avail_param "CONFIG.PMC_REF_CLK_FREQMHZ"] >= 0} {
-                                       set freq [hsi get_property CONFIG.PMC_REF_CLK_FREQMHZ [hsi get_cells -hier $periph]]
+                                       set freq [get_ip_property $periph CONFIG.PMC_REF_CLK_FREQMHZ]
                                        if {![string match -nocase $freq "33.333"]} {
                                                dtg_warning "Frequency $freq used instead of 33.333"
                                                set ref_node [create_node -n "&ref" -d $default_dts -p root]
@@ -1470,7 +1470,7 @@ proc gen_versal_clk {} {
                                        }
                                }
                                if {[lsearch -nocase $avail_param "CONFIG.PMC_PL_ALT_REF_CLK_FREQMHZ"] >= 0} {
-                                       set freq [hsi get_property CONFIG.PMC_PL_ALT_REF_CLK_FREQMHZ [hsi get_cells -hier $periph]]
+                                       set freq [get_ip_property $periph CONFIG.PMC_PL_ALT_REF_CLK_FREQMHZ]
                                        if {![string match -nocase $freq "33.333"]} {
                                                dtg_warning "Frequency $freq used instead of 33.333"
                                                set pl_alt_ref_node [create_node -n "&pl_alt_ref" -d $default_dts -p root]
@@ -1480,9 +1480,9 @@ proc gen_versal_clk {} {
                        }
                }
                if {[string match -nocase $versal_ps "pspmc"] } {
-                       set avail_param [hsi list_property [hsi::get_cells -hier $periph]]
+                       set avail_param [hsi list_property $periph]
                        if {[lsearch -nocase $avail_param "CONFIG.PMC_REF_CLK_FREQMHZ"] >= 0} {
-                               set freq [hsi get_property CONFIG.PMC_REF_CLK_FREQMHZ [hsi::get_cells -hier $periph]]
+                               set freq [get_ip_property $periph CONFIG.PMC_REF_CLK_FREQMHZ]
                                if {![string match -nocase $freq "33.333"]} {
                                        dtg_warning "Frequency $freq used instead of 33.333"
                                        set ref_node [create_node -n "&ref" -d $default_dts -p root]
@@ -1490,7 +1490,7 @@ proc gen_versal_clk {} {
                                }
                        }
                        if {[lsearch -nocase $avail_param "CONFIG.PMC_PL_ALT_REF_CLK_FREQMHZ"] >= 0} {
-                               set freq [hsi get_property CONFIG.PMC_PL_ALT_REF_CLK_FREQMHZ [hsi::get_cells -hier $periph]]
+                               set freq [get_ip_property $periph CONFIG.PMC_PL_ALT_REF_CLK_FREQMHZ]
                                if {![string match -nocase $freq "33.333"]} {
                                        dtg_warning "Frequency $freq used instead of 33.333"
                                        set pl_alt_ref_node [create_node -n "&pl_alt_ref" -d $default_dts -p root]
@@ -1512,7 +1512,7 @@ proc gen_opp_freq {} {
 		set proc_ps [hsi get_property IP_NAME $periph]
 		set act_freq ""
 		set div ""
-		set periph_cell [hsi get_cells -hier $periph]
+		set periph_cell [cells_hier $periph]
 		set default_opps ""
 
 		if {[string match -nocase $proc_ps "zynq_ultra_ps_e"]} {
@@ -1619,11 +1619,11 @@ proc gen_zynqmp_pinctrl {} {
        set default_dts "pcw.dtsi"
        set periph_list [hsi::get_cells -hier]
        foreach periph $ps_wrapper {
-               set zynq_ultra_ps [hsi get_property IP_NAME $periph]
+               set zynq_ultra_ps [get_ip_property $periph IP_NAME]
                if {[string match -nocase $zynq_ultra_ps "zynq_ultra_ps_e"] } {
-                       set avail_param [hsi list_property [hsi::get_cells -hier $periph]]
+                       set avail_param [hsi list_property [cells_hier $periph]]
                        if {[lsearch -nocase $avail_param "CONFIG.PSU__UART1__PERIPHERAL__IO"] >= 0} {
-                               set uart1_io [hsi get_property CONFIG.PSU__UART1__PERIPHERAL__IO [hsi::get_cells -hier $periph]]
+                               set uart1_io [get_ip_property $periph CONFIG.PSU__UART1__PERIPHERAL__IO]
                                if {[string match -nocase $uart1_io "EMIO"]} {
                                	       dtg_warning "EMIO support for UART1 PERIPHERAL is not yet available in SDT. Please manually edit the device tree"
                                	       # FIXME : Add the support with DTG as reference
@@ -1636,7 +1636,7 @@ proc gen_zynqmp_pinctrl {} {
                                }
                        }
                        if {[lsearch -nocase $avail_param "CONFIG.PSU__UART0__PERIPHERAL__IO"] >= 0} {
-                               set uart0_io [hsi get_property CONFIG.PSU__UART0__PERIPHERAL__IO [hsi::get_cells -hier $periph]]
+                               set uart0_io [get_ip_property $periph CONFIG.PSU__UART0__PERIPHERAL__IO]
                                if {[string match -nocase $uart0_io "EMIO"]} {
                                	       dtg_warning "EMIO support for UART0 PERIPHERAL is not yet available in SDT. Please manually edit the device tree"
                                	       # FIXME : Add the support with DTG as reference
@@ -1649,7 +1649,7 @@ proc gen_zynqmp_pinctrl {} {
                                }
                        }
                        if {[lsearch -nocase $avail_param "CONFIG.PSU__CAN1__PERIPHERAL__IO"] >= 0} {
-                               set can1_io [hsi get_property CONFIG.PSU__CAN1__PERIPHERAL__IO [hsi::get_cells -hier $periph]]
+                               set can1_io [get_ip_property $periph CONFIG.PSU__CAN1__PERIPHERAL__IO]
                                if {[string match -nocase $can1_io "EMIO"]} {
                                	       dtg_warning "EMIO support for CAN1 PERIPHERAL is not yet available in SDT. Please manually edit the device tree"
                                	       # FIXME : Add the support with DTG as reference
@@ -1662,7 +1662,7 @@ proc gen_zynqmp_pinctrl {} {
                                }
                        }
                        if {[lsearch -nocase $avail_param "CONFIG.PSU__SD1__PERIPHERAL__IO"] >= 0} {
-                               set sd1_io [hsi get_property CONFIG.PSU__SD1__PERIPHERAL__IO [hsi::get_cells -hier $periph]]
+                               set sd1_io [get_ip_property $periph CONFIG.PSU__SD1__PERIPHERAL__IO]
                                if {[string match -nocase $sd1_io "EMIO"]} {
                                	       dtg_warning "EMIO support for SD1 PERIPHERAL is not yet available in SDT. Please manually edit the device tree"
                                	       # FIXME : Add the support with DTG as reference
@@ -1677,7 +1677,7 @@ proc gen_zynqmp_pinctrl {} {
                                }
                        }
                        if {[lsearch -nocase $avail_param "CONFIG.PSU__ENET3__PERIPHERAL__IO"] >= 0} {
-                               set gem3_io [hsi get_property CONFIG.PSU__ENET3__PERIPHERAL__IO [hsi::get_cells -hier $periph]]
+                               set gem3_io [get_ip_property $periph CONFIG.PSU__ENET3__PERIPHERAL__IO]
                                if {[string match -nocase $gem3_io "EMIO"]} {
                                	       dtg_warning "EMIO support for ENET3 PERIPHERAL is not yet available in SDT. Please manually edit the device tree."
                                	       # FIXME : Add the support with DTG as reference
@@ -1692,7 +1692,7 @@ proc gen_zynqmp_pinctrl {} {
                                }
                        }
                        if {[lsearch -nocase $avail_param "CONFIG.PSU__I2C1__PERIPHERAL__IO"] >= 0} {
-                               set i2c1_io [hsi get_property CONFIG.PSU__I2C1__PERIPHERAL__IO [hsi::get_cells -hier $periph]]
+                               set i2c1_io [get_ip_property $periph CONFIG.PSU__I2C1__PERIPHERAL__IO]
                                if {[string match -nocase $i2c1_io "EMIO"]} {
                                	       dtg_warning "EMIO support for I2C1 PERIPHERAL is not yet available in SDT. Please manually edit the device tree"
                                	       # FIXME : Add the support with DTG as reference
@@ -1746,6 +1746,8 @@ proc generate_sdt args {
 	global is_64_bit_mb
 	global baseaddr_dict
 	global highaddr_dict
+	global get_cell
+	global ps_mapping_list
 	global processor_ip_list
 	global 64_bit_processor_list
 	global linear_spi_list
@@ -1864,6 +1866,8 @@ Generates system device tree based on args given in:
 	dict set intr_id_dict $cur_hw_design {}
 	dict set baseaddr_dict $cur_hw_design {}
 	dict set highaddr_dict $cur_hw_design {}
+	dict set get_cell $cur_hw_design {}
+	dict set ps_mapping_list $cur_hw_design {}
 
 	set list_offiles {}
 	set peri_list [hsi::get_cells -hier]
@@ -1897,7 +1901,7 @@ Generates system device tree based on args given in:
 	# remove_duplicate_addr.
 
 	foreach procperiph $proclist {
-		set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $procperiph]]
+		set ip_name [get_ip_property $procperiph IP_NAME]
 		if {[lsearch -exact $processor_ip_list $ip_name] == -1} {
 			# If not present, append it to the list
 			lappend processor_ip_list $ip_name
@@ -1926,8 +1930,8 @@ Generates system device tree based on args given in:
 	# getting IP related configs. Thus, running the cpu tcls beforehand
 	# helps.
 	foreach procperiph $proclist {
-		set proc_drv_handle [hsi::get_cells -hier $procperiph]
-        	set ip_name [hsi get_property IP_NAME $proc_drv_handle]
+		set proc_drv_handle [cells_hier $procperiph]
+		set ip_name [get_ip_property $proc_drv_handle IP_NAME]
 
         	# For tmr_manager designs, tmr_inject IPs also come as the processor
         	# and tmr_manager doesnt have a driver. It is safe to add this if dict exist check.
@@ -2183,7 +2187,7 @@ proc gen_r5_trustzone_config {} {
 		} else {
 			if {[llength $cortexr5proc] > 0} {
 				set rpu_tz [string toupper [hsi get_property TRUSTZONE [lindex [hsi::get_mem_ranges \
-				[hsi::get_cells -hier $r5proc] *rpu*] 0]]]
+				[cells_hier $r5proc] *rpu*] 0]]]
 				if {[string compare -nocase $rpu_tz "NONSECURE"] == 0} {
 					set r5_access [expr int([expr $r5_access + pow(2,$cnt)])]
 				}
@@ -2191,7 +2195,7 @@ proc gen_r5_trustzone_config {} {
 			incr cnt
 			if {[llength $cortexa72proc] == 0 && [llength $slcr_instance] > 0} {
 				set iou_slcr_tz [string toupper [hsi get_property TRUSTZONE [lindex [hsi::get_mem_ranges \
-				[hsi::get_cells -hier $r5proc] psu_iouslcr_0] 0]]]
+				[cells_hier $r5proc] psu_iouslcr_0] 0]]]
 				if {([string compare -nocase $iou_slcr_tz "NONSECURE"] == 0)} {
 					set r5_access [expr int([expr $r5_access + pow(2,$cnt)])]
 				}
@@ -2227,7 +2231,7 @@ proc proc_mapping {} {
 	global dup_periph_handle
 	set pmc_scan 0
         foreach val $proc_list {
-		set iptype [hsi get_property IP_NAME [hsi::get_cells -hier $val]]
+		set iptype [get_ip_property $val IP_NAME]
 		# For devices where we have multiple PMCs, there can be some wrong mappings for SECONDARY PMCs
 		# For versal, it is assumed that there will only be a single PMC for which PLM will be built.
 		# Therefore, ignore memmap settings for other PMCs and do it only for primary PMC.
@@ -2242,7 +2246,7 @@ proc proc_mapping {} {
 		# When get_mem_ranges output of a processor is a nested list and is too large,
 		# after certain number of elements, a ... is observed in the output.
 		# Add a join statement to avoid such behavior.
-		set periph_list [join [hsi::get_mem_ranges -of_objects [hsi::get_cells -hier $val]]]
+		set periph_list [join [hsi::get_mem_ranges -of_objects $val]]
 
 		set hier_mapped_list [::struct::set intersect $periph_list $hier_periph_list]
 		foreach entry $hier_mapped_list {
@@ -2267,8 +2271,8 @@ proc proc_mapping {} {
 			# but is missing in get_cells -hier. Such IP's base address and high address
 			# is generated in Vitis classic via the cpu tcls using xdefine_addr_params_for_ext_intf
 			# proc.
-			set ip_type [get_ip_property [hsi::get_cells -hier $periph] IP_TYPE]
-			set ipname [get_ip_property [hsi::get_cells -hier $periph] IP_NAME]
+			set ip_type [get_ip_property $periph IP_TYPE]
+			set ipname [get_ip_property $periph IP_NAME]
 
 			# Do not process memory object if the corresponding cell object doesnt have the IP NAME
 			if {[string_is_empty $ipname] && ![is_external_intf $periph]} {
@@ -2957,7 +2961,7 @@ proc update_alias {} {
 		if {$drv_handle == "generic"} {
 			continue
 		}
-		set ip_name  [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+		set ip_name  [get_ip_property $drv_handle IP_NAME]
 		if {[lsearch $valid_pluarts $ip_name] >= 0} {
 			lappend design_pluarts $drv_handle
 		} elseif {[lsearch $valid_coresights $ip_name] >= 0} {
@@ -2989,7 +2993,7 @@ proc update_alias {} {
 		if {[lsearch $design_pluarts $drv_handle] >= 0 || [lsearch $design_coresight $drv_handle] >= 0} {
 			continue
 		}
-            	set ip_name  [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+		set ip_name  [get_ip_property $drv_handle IP_NAME]
 		if {$ip_name in {"psv_pmc_qspi" "psx_pmc_qspi" "pmc_qspi"}} {
                   	set ip_type [get_ip_property $drv_handle IP_TYPE]
                   	if {[string match -nocase $ip_type "PERIPHERAL"]} {
@@ -3056,7 +3060,7 @@ proc gen_xppu {drv_handle} {
 	global env
 	set path $env(CUSTOM_SDT_REPO)
 	set common_file "$path/device_tree/data/config.yaml"
-	set ip [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+	set ip [get_ip_property $drv_handle IP_NAME]
 	set node [get_node $drv_handle]
 	set baseaddr [get_baseaddr $drv_handle noprefix]
 	set xppu [dict create]
@@ -4008,7 +4012,7 @@ proc gen_xppu {drv_handle} {
 		dict set idlist F1030000 id 0x244
 		
 		set ip_name ""
-		if {[catch {set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]} msg]} {
+		if {[catch {set ip_name [get_ip_property $drv_handle IP_NAME]} msg]} {
 		}
 		if {![string match -nocase $ip_name ""]} {
 			if {[lsearch $valid_list $ip_name] >=0} {
@@ -4457,7 +4461,7 @@ proc gen_xppu {drv_handle} {
 		dict set idlist FE300000 id 0x861
 		
 		set ip_name ""
-		if {[catch {set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]} msg]} {
+		if {[catch {set ip_name [get_ip_property $drv_handle IP_NAME]} msg]} {
 		}
 		if {![string match -nocase $ip_name ""]} {
 			if {[lsearch $valid_list $ip_name] >=0} {
@@ -4481,7 +4485,7 @@ proc gen_power_domains {drv_handle} {
 
         set path $env(CUSTOM_SDT_REPO)
         set common_file "$path/device_tree/data/config.yaml"
-        set ip [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
+        set ip [get_ip_property $drv_handle IP_NAME]
         set node [get_node $drv_handle]
         set baseaddr [get_baseaddr $drv_handle noprefix]
         set node_id [dict create]

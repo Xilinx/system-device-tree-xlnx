@@ -84,10 +84,14 @@ proc generate_pmc_dt {xsa dir} {
 		global property_dict
 		global baseaddr_dict
 		global highaddr_dict
+		global get_cell
+		global ps_mapping_list
 		dict set node_dict $cur_hw_design {}
 		dict set property_dict $cur_hw_design {}
 		dict set baseaddr_dict $cur_hw_design {}
 		dict set highaddr_dict $cur_hw_design {}
+		dict set get_cell $cur_hw_design {}
+		dict set ps_mapping_list $cur_hw_design {}
 	}
 
 	# Validate the design, check whether the XSA is a Versal or Versal-like family design.
