@@ -47,9 +47,10 @@
             dtg_warning "$drv_handle connected ip is NULL for the pin M_AXIS_MM2S"
         }
         set is_xxv [axi_dma_get_connected_ip $drv_handle "M_AXIS_MM2S"]
+        set is_mrmac [axi_dma_is_mrmac_connected $drv_handle "M_AXIS_MM2S"]
         add_prop "$node" "#dma-cells" 1 int "pl.dtsi"
 
-        if { $axiethernetfound || $is_xxv == 1} {
+        if { $axiethernetfound || $is_xxv == 1 || $is_mrmac == 1 } {
             set compatstring "xlnx,eth-dma"
             pldt set $node compatible "\"xlnx,eth-dma\""
         } else {
@@ -57,7 +58,7 @@
         }
         set tx_chan 0
         set rx_chan 0
-        if { $axiethernetfound != 1 && $is_xxv != 1} {
+        if { $axiethernetfound != 1 && $is_xxv != 1 && $is_mrmac != 1 } {
         set_drv_conf_prop $drv_handle C_INCLUDE_SG xlnx,include-sg $node boolean
         set_drv_conf_prop $drv_handle C_SG_INCLUDE_STSCNTRL_STRM xlnx,sg-include-stscntrl-strm $node boolean
         set_drv_conf_prop $drv_handle c_enable_multi_channel xlnx,multichannel-dma $node boolean
@@ -281,4 +282,108 @@
         }
     }
 
+    # Breadth-first walk of the downstream AXI-Stream graph from $start_ip,
+    # returning 1 if an IP whose IP_NAME matches $target is reachable.
+    proc axi_dma_find_stream_ip {start_ip target {max_hops 16}} {
+
+         set queue [list $start_ip]
+         set visited {}
+
+         for {set hop 0} {$hop < $max_hops && [llength $queue]} {incr hop} {
+                 set next_queue {}
+                 foreach cur $queue {
+                         if {![llength $cur] || [lsearch -exact $visited $cur] >= 0} {
+                                 continue
+                         }
+                         lappend visited $cur
+
+                         if {[string match -nocase $target [hsi get_property IP_NAME $cur]]} {
+                                 return 1
+                         }
+
+                         set cur_hier_names ""
+                         catch {set cur_hier_names [hsi get_property HIER_NAME [hsi::get_cells -hier $cur]]}
+                         foreach cur_hier_name $cur_hier_names {
+                                 if {[string_is_empty $cur_hier_name]} {
+                                         continue
+                                 }
+                                 foreach child [hsi::get_cells -hier -filter "HIER_NAME=~${cur_hier_name}/*"] {
+                                         if {[lsearch -exact $visited $child] < 0} {
+                                                 lappend next_queue $child
+                                         }
+                                 }
+                         }
+
+                         set downstream {}
+
+                         set intfs [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $cur] \
+                                    -filter {TYPE==MASTER || TYPE==INITIATOR}]
+                         foreach intf $intfs {
+                                 foreach peer [get_connected_stream_ip [hsi::get_cells -hier $cur] $intf] {
+                                         if {[llength $peer]} {
+                                                 lappend downstream $peer
+                                         }
+                                 }
+                         }
+
+                         set out_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $cur] \
+                                       -filter {DIRECTION==O}]
+                         foreach opin $out_pins {
+                                 if {![regexp -nocase {tdata|m_axis|dout} [hsi get_property NAME $opin]]} {
+                                         continue
+                                 }
+                                 foreach sp [get_sink_pins $opin] {
+                                         foreach sp_cell [hsi::get_cells -of_objects $sp] {
+                                                 if {[llength $sp_cell]} {
+                                                         lappend downstream $sp_cell
+                                                 }
+                                         }
+                                 }
+                         }
+
+                         foreach peer $downstream {
+                                 if {![llength $peer] || [regexp -nocase "ila" $peer]} {
+                                         continue
+                                 }
+                                 if {[string match -nocase $target [hsi get_property IP_NAME $peer]]} {
+                                         return 1
+                                 }
+                                 if {[lsearch -exact $visited $peer] < 0} {
+                                         lappend next_queue $peer
+                                 }
+                         }
+                 }
+                 set queue $next_queue
+         }
+
+         return 0
+    }
+
+    proc axi_dma_is_mrmac_connected {drv_handle dma_pin} {
+
+         # Discover an mrmac reachable from the MM2S stream output generically.
+         set dma [hsi::get_cells -hier $drv_handle]
+         set start {}
+
+         set connected_ip [get_connected_stream_ip $dma $dma_pin]
+         if {[llength $connected_ip]} {
+                 lappend start $connected_ip
+         } else {
+                 set dpath_pin [get_sink_pins [hsi::get_pins -of_objects $dma "m_axis_mm2s_tdata"]]
+                 foreach p $dpath_pin {
+                         set c [hsi::get_cells -of_objects $p]
+                         if {[llength $c]} {
+                                 lappend start $c
+                         }
+                 }
+         }
+
+         foreach s $start {
+                 if {[axi_dma_find_stream_ip $s "mrmac"]} {
+                         return 1
+                 }
+         }
+
+         return 0
+    }
 
