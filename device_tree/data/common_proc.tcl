@@ -3118,6 +3118,12 @@ proc gen_clk_property {drv_handle} {
 				continue
 			}
 			# if clk_freq is float convert it to int
+			# CLK_FREQ may be a colon-delimited per-bit string (e.g.
+			# "100000000:100000000:...") for wide/bus clock ports. Take the
+			# first entry, so the value passed to expr int() below, is a single
+			# scalar; otherwise expr fails with "unexpected operator ':'".
+			set clk_freq [lindex [split $clk_freq ":"] 0]
+
 			set clk_freq [expr int($clk_freq)]
 			set iptype [get_ip_property $drv_handle IP_NAME]
 			if {![string equal $clk_freq ""]} {
