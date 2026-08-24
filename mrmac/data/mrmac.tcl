@@ -842,7 +842,8 @@
                          }
                          lappend visited $cur
 
-                         if {[string match -nocase [hsi get_property IP_NAME $cur] "axi_mcdma"]} {
+                         set ip_name [hsi get_property IP_NAME $cur]
+                         if {$ip_name eq "axi_mcdma" || $ip_name eq "axi_dma"} {
                                  return $cur
                          }
 
@@ -899,7 +900,8 @@
                                  if {![llength $peer] || [regexp -nocase "ila" $peer]} {
                                          continue
                                  }
-                                 if {[string match -nocase [hsi get_property IP_NAME $peer] "axi_mcdma"]} {
+                                 set ip_name [hsi get_property IP_NAME $cur]
+                                 if {$ip_name eq "axi_mcdma" || $ip_name eq "axi_dma"} {
                                          return $peer
                                  }
                                  if {[lsearch -exact $visited $peer] < 0} {
