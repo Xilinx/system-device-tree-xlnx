@@ -66,6 +66,50 @@ proc add_oba_properties_sp {drv_handle port_node dts_file isp_index oba_index ti
 }
 
 
+#IMAGE SPLITTER STITCHER
+proc add_splitter_stitcher_properties {drv_handle node dts_file rpu} {
+	set prefix "CONFIG.C_IMAGE_SPLITTER_STITCHER_"
+	set enable [get_ip_property $drv_handle "${prefix}ENABLE"]
+	# IP cores predating this parameter return "" here; skip before any numeric test
+	if {$enable eq ""} {
+		return
+	}
+	if {![string match -nocase "true" $enable] && $enable ne "1"} {
+		return
+	}
+	set ss_rpu [get_ip_property $drv_handle "${prefix}RPU"]
+	# A valid RPU that just doesn't match this ISP node is the normal per-ISP
+	# case (skipped silently); an out-of-range RPU is a misconfiguration.
+	if {[lsearch -exact {6 7 8 9} $ss_rpu] < 0} {
+		dtg_warning "$drv_handle: invalid C_IMAGE_SPLITTER_STITCHER_RPU '$ss_rpu'; splitter/stitcher properties not emitted"
+		return
+	}
+	if {$ss_rpu ne $rpu} {
+		return
+	}
+	# Emit every image splitter/stitcher parameter; booleans as 1/0
+	set bool_params {ENABLE RGB888 Y YUV422 YUV420}
+	foreach {param prop} {
+		ENABLE      xlnx,image-splitter-stitcher-enable
+		DATA_FORMAT xlnx,image-splitter-stitcher-data-format
+		HRES        xlnx,image-splitter-stitcher-hres
+		VRES        xlnx,image-splitter-stitcher-vres
+		RPU         xlnx,image-splitter-stitcher-rpu
+		VCID        xlnx,image-splitter-stitcher-vcid
+		RGB888      xlnx,image-splitter-stitcher-rgb888
+		Y           xlnx,image-splitter-stitcher-y
+		YUV422      xlnx,image-splitter-stitcher-yuv422
+		YUV420      xlnx,image-splitter-stitcher-yuv420
+	} {
+		set val [get_ip_property $drv_handle "${prefix}${param}"]
+		if {[lsearch -exact $bool_params $param] >= 0} {
+			set val [expr {([string match -nocase "true" $val] || $val eq "1") ? 1 : 0}]
+		}
+		add_prop "$node" $prop $val int $dts_file
+	}
+}
+
+
 #VISP_SS MAIN
 proc visp_ss_generate {drv_handle} {
 	set node [get_node $drv_handle]
@@ -174,6 +218,7 @@ proc visp_ss_generate {drv_handle} {
 			add_prop "$sub_node" "xlnx,netfps" $net_fps int $default_dts
 			add_prop "$sub_node" "xlnx,rpu" $rpu int $default_dts
 			add_prop "$sub_node" "isp_id" $isp_id int $default_dts
+			add_splitter_stitcher_properties $drv_handle $sub_node $default_dts $rpu
 			set llpath_tile_num [expr {int([get_ip_property $drv_handle CONFIG.C_LLPATH${isp}_TILE])}]
 			if { $llpath_tile_num < 3 && $llpath_tile_num >=0 && $llpath_tile_num == ${tile} } {
 				add_prop "$sub_node" "xlnx,llpath${isp}-tile${llpath_tile_num}-enabled" "" noformating $default_dts
