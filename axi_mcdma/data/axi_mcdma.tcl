@@ -267,6 +267,8 @@
                          set c [hsi::get_cells -of_objects $p]
                          if {[llength $c]} {
                                  lappend start $c
+                         } else {
+                                 puts "Warning: The $p is not connected to any IP within the Block Design. Is this intentional?"
                          }
                  }
          }
