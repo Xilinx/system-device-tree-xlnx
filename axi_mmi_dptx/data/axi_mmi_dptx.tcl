@@ -45,7 +45,9 @@
         }
 
         set mst_mode [hsi get_property CONFIG.C_MST_MODE_EN [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
-        add_prop $node "xlnx,mst-mode-en" $mst_mode int $dts_file
+        if {![string match -nocase $mst_mode "0"]} {
+            add_prop $node "xlnx,mst-mode-en" boolean $dts_file
+        }
 
         set edp_en [hsi get_property CONFIG.C_EDP_EN [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
         add_prop $node "xlnx,edp-en" $edp_en int $dts_file
