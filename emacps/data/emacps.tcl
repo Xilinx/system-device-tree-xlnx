@@ -223,7 +223,7 @@ proc emacps_generate {drv_handle} {
             }
         } else {
             set config_prop [expr {$is_versal_2ve_2vm_platform ? "CONFIG.PS11_CONFIG" : "CONFIG.PS_PMC_CONFIG"}]
-            set sys_clk [expr {$is_versal_2ve_2vm_platform ? "versal2_clk" : "versal_clk"}]
+            set sys_clk [expr {$is_versal_2ve_2vm_platform ? "scmi_clk" : "versal_clk"}]
         }
         set ps_pmc_params [hsi get_property $config_prop [hsi get_cells -hier $ps_wizard_periph]]
         if {$tsu_enable == ""} {
@@ -390,6 +390,15 @@ proc emacps_set_tsu_ext_clk {platform node {clk "versal_clk"}} {
         "&mmi_10gbe" ">, <&%s>, <&%s>, <&mmi_tsu_ext_clk"
     }
 
+    # For Versal Gen2 (2ve/2vm) SCMI configurations the clocks are provided by
+    # the SCMI clock protocol (scmi_clk), which expects SCMI clock domain ids
+    # (the remapped enum) rather than raw versal2 clock indices. The TSU clock
+    # is served by scmi_clk (GEM_TSU) to match the SCMI clock list.
+    array set versal2_scmi_clocks {
+        "&gem0" "52>, <&%s 54>, <&%s 24>, <&%s 23>, <&tsu_ext_clk"
+        "&gem1" "52>, <&%s 55>, <&%s 26>, <&%s 25>, <&tsu_ext_clk"
+    }
+
     set clocks ""
     set platform_lower [string tolower $platform]
     set node_lower [string tolower $node]
@@ -397,7 +406,11 @@ proc emacps_set_tsu_ext_clk {platform node {clk "versal_clk"}} {
     if {$platform_lower == "zynqmp" && [info exists zynqmp_clocks($node_lower)]} {
         set clocks [format "${clk} $zynqmp_clocks($node_lower)" $clk $clk $clk]
     } elseif {$platform_lower == "versal" && [info exists versal_clocks($node_lower)]} {
-        set clocks [format "${clk} $versal_clocks($node_lower)" $clk $clk $clk]
+        if {$clk == "scmi_clk"} {
+            set clocks [format "${clk} $versal2_scmi_clocks($node_lower)" $clk $clk $clk]
+        } else {
+            set clocks [format "${clk} $versal_clocks($node_lower)" $clk $clk $clk]
+        }
     }
 
     return $clocks
