@@ -81,7 +81,7 @@
         add_prop "${node}" "xlnx,mem-rows" $memrows noformating "pl.dtsi"
 
         if {$hw_gen=="AIE2PS"} {
-                set reset_ref "versal2_reset 0xc10405e"
+                set reset_ref "scmi_reset 0xc10405e"
         } else {
                 set reset_ref "versal_reset 0xc10405e"
         }
