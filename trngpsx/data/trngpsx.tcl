@@ -15,8 +15,8 @@
 proc trngpsx_generate {drv_handle} {
 	global is_versal_2ve_2vm_platform
 	set node [get_node $drv_handle]
-	set part_num [hsi get_property DEVICE [hsi::current_hw_design]]
-	if {$part_num == "xc2vp3202"} {
+	set ip_name [get_ip_property $drv_handle IP_NAME]
+	if {$ip_name == "pmc_trng"} {
 		add_prop $node compatible "xlnx,pmc-trng-11.0" string "pcw.dtsi" 1
 	}
 	set pki_trng_baseaddress "0x20400051000"
