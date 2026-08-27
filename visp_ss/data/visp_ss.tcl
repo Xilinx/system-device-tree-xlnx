@@ -172,8 +172,9 @@ proc visp_ss_generate {drv_handle} {
 			set isp_id [expr {$tile * 2 + $isp}]
 			# Read io_type early so we can skip ISPs with no valid mode (0 = not configured).
 			# This prevents generating a dummy "xlnx,visp-disabled" node for unused ISPs.
+			# 4 = LIMxO (Live Input, Mixed Output) - input side behaves like LILO.
 			set io_type [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_IO_TYPE]
-			if {$io_type != 1 && $io_type != 2 && $io_type != 3} {
+			if {$io_type != 1 && $io_type != 2 && $io_type != 3 && $io_type != 4} {
 				continue
 			}
 			set sub_node_label "visp_ss_${tile}${isp_id}"
@@ -201,6 +202,8 @@ proc visp_ss_generate {drv_handle} {
 				set io_mode_name "limo"
 			} elseif {$io_type == 3} {
 				set io_mode_name "mimo"
+			} elseif {$io_type == 4} {
+				set io_mode_name "limxo"
 			} else {
 				set io_mode_name "Unknown"
 			}
@@ -271,6 +274,8 @@ proc visp_ss_generate {drv_handle} {
 				set compatible_name "xlnx,visp-ss-limo-1.0"
 			} elseif {$io_type == 3} {
 				set compatible_name "xlnx,visp-ss-mimo-1.0"
+			} elseif {$io_type == 4} {
+				set compatible_name "xlnx,visp-ss-limxo-1.0"
 			} else {
 				set compatible_name "xlnx,visp-disabled"
 				add_prop "$sub_node" "status" "disabled" string $default_dts
@@ -431,6 +436,80 @@ proc handle_io_mode_1 {drv_handle tile isp isp_id default_dts sub_node sub_node_
 	add_oba_properties_sp $drv_handle $sub_node $default_dts $isp $isp $tile
 }
 
+# IO_MODE==4 (LIMxO): Live Input, Mixed Output.
+# Input side is identical to LILO (single live input, non-MCM only).
+# Output side: exactly one of MP/SP is configured live (routed to a
+# memory-mapped downstream IP exactly like LILO, via visp_ss_outip_endpoints /
+# its vcap_<label> node), and the other is configured memory-out - its port
+# node is created with no OF-graph endpoint, and a visp_video_<isp_id> node
+# binds to it purely by phandle (visp,source-subdev/visp,source-pad) so that
+# xilinx-vipp's live-path pipeline walk (rooted at the vcap_<label> node)
+# never traverses into the memory-out link and can't abort on it. DRC at the
+# IP level guarantees MP and SP are never both live or both memory at once.
+proc handle_io_mode_4 {drv_handle tile isp isp_id default_dts sub_node sub_node_label bus_name} {
+	set ports_node [create_node -l "ports${tile}${isp_id}" -n "ports" -p $sub_node -d $default_dts]
+	add_prop "$ports_node" "#address-cells" 1 int $default_dts
+	add_prop "$ports_node" "#size-cells" 0 int $default_dts
+	set port_addr_counter1 1
+	set port_addr_counter 0
+	set pin_name ""
+	if {$isp == 0} {
+		set pin_name "TILE${tile}_ISP_MIPI_VIDIN0"
+		set isp_iba 0
+	} elseif {$isp == 1} {
+		set pin_name "TILE${tile}_ISP_MIPI_VIDIN4"
+		set isp_iba 4
+	} else {
+		return
+	}
+	set visp_inip [find_valid_visp_inip $drv_handle $pin_name]
+	visp_ss_inip_endpoints $drv_handle $ports_node $default_dts "${sub_node_label}${port_addr_counter}" $port_addr_counter $visp_inip
+	incr port_addr_counter 5
+
+	# Unlike MP_BPP/SP_BPP, ENABLE_MP_MEM/ENABLE_SP_MEM are NOT OBA-indexed -
+	# confirmed directly against HSI CONFIG properties on this IP.
+	set prefix "CONFIG.C_TILE${tile}_ISP${isp}_"
+	set mp_mem_val [get_ip_property $drv_handle "${prefix}ENABLE_MP_MEM"]
+	set sp_mem_val [get_ip_property $drv_handle "${prefix}ENABLE_SP_MEM"]
+	set mp_is_mem [expr {([string match -nocase "true" $mp_mem_val] || $mp_mem_val eq "1") ? 1 : 0}]
+	set sp_is_mem [expr {([string match -nocase "true" $sp_mem_val] || $sp_mem_val eq "1") ? 1 : 0}]
+
+	if {$mp_is_mem == $sp_is_mem} {
+		dtg_warning "$sub_node_label: LIMxO expects exactly one of MP/SP to be memory-out (ENABLE_MP_MEM=$mp_is_mem ENABLE_SP_MEM=$sp_is_mem) - check DRC coverage"
+	}
+
+	# index0=MP, index1=SP; 1=live-out (FBWR via xilinx-vipp), 0=memory-out (visp_video)
+	add_prop "$sub_node" "xlnx,path_out_type" [list [expr {$mp_is_mem ? 0 : 1}] [expr {$sp_is_mem ? 0 : 1}]] hexinttuple $default_dts
+
+	foreach out_type {PO SO} is_mem [list $mp_is_mem $sp_is_mem] {
+		if {$is_mem} {
+			# Memory-out: port node only, no endpoint - bound to visp_video_<isp_id>
+			# purely by phandle so the live-path vcap pipeline walk never reaches it.
+			set type [expr {$port_addr_counter1 == 1 ? "po" : "so"}]
+			set mem_port [create_node -l "visp_port${port_addr_counter1}_${type}_${isp_id}" -n "port@${port_addr_counter1}" -p $ports_node -d $default_dts]
+			add_prop "$mem_port" "reg" $port_addr_counter1 int $default_dts
+			add_prop "$mem_port" "direction" output string $default_dts
+
+			set vcp_node [create_node -l visp_video_${isp_id} -n "visp_video_${isp_id}" -p $bus_name -d $default_dts]
+			add_prop "$vcp_node" "compatible" "xlnx,visp-video" string $default_dts
+			add_prop "$vcp_node" "id" $isp_id int $default_dts
+			add_prop "$vcp_node" "visp,source-subdev" $sub_node_label reference $default_dts
+			add_prop "$vcp_node" "visp,source-pad" $port_addr_counter1 int $default_dts
+		} else {
+			set intf "TILE${tile}_ISP${isp}_VIDOUT_${out_type}"
+			set outip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $intf]
+			if {[string length $outip] > 0} {
+				visp_ss_outip_endpoints $drv_handle $default_dts $sub_node_label $outip $port_addr_counter1 $ports_node $isp_id
+			}
+		}
+		incr port_addr_counter1
+	}
+
+	add_iba_properties $drv_handle $sub_node $default_dts $isp $isp_iba $tile
+	add_oba_properties_mp $drv_handle $sub_node $default_dts $isp $isp $tile
+	add_oba_properties_sp $drv_handle $sub_node $default_dts $isp $isp $tile
+}
+
 #conditions
 proc isp_handle_condition {drv_handle tile isp io_mode live_stream isp_id default_dts sub_node sub_node_label bus_name} {
 	if {$isp == 0 || $isp == 1} {
@@ -438,6 +517,11 @@ proc isp_handle_condition {drv_handle tile isp io_mode live_stream isp_id defaul
 			handle_io_mode_1 $drv_handle $tile $isp $isp_id $default_dts $sub_node $sub_node_label $bus_name
 		} elseif {$io_mode == 2} {
 			handle_io_mode_2 $drv_handle $tile $isp $isp_id $default_dts $sub_node $sub_node_label $live_stream $bus_name $io_mode
+		} elseif {$io_mode == 4} {
+			# LIMxO (Live Input, Mixed Output): input side identical to LILO;
+			# output side mixes one live + one memory-out path (see
+			# handle_io_mode_4 for details).
+			handle_io_mode_4 $drv_handle $tile $isp $isp_id $default_dts $sub_node $sub_node_label $bus_name
 		} else {
 		}
 	}
@@ -1142,7 +1226,7 @@ proc generate_mbox_nodes {rpu_info_list default_dts bus_name} {
         lassign $rpu_info rpu_id io_type
 
         # Determine compatible string based on io_type
-        if { $io_type == 1 || $io_type == 2 || $io_type == 3} {
+        if { $io_type == 1 || $io_type == 2 || $io_type == 3 || $io_type == 4} {
             set compat_str "xlnx,isp-mbox"
         } else {
             puts "Warning: Invalid io_type '$io_type' for RPU $rpu_id. Stale mbox will be created."
@@ -1287,7 +1371,7 @@ proc rpu_info_mbox_create { drv_handle default_dts bus_name} {
                }
                for {set isp 0} {$isp < 2} {incr isp} {
                        set io_type [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_IO_TYPE]
-                       if {$io_type != 1 && $io_type != 2 && $io_type != 3} {
+                       if {$io_type != 1 && $io_type != 2 && $io_type != 3 && $io_type != 4} {
                                continue
                        }
                        set rpu [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_RPU]
