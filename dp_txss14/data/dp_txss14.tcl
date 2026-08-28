@@ -167,13 +167,27 @@ proc dp_txss14_generate {drv_handle} {
 	overwrite_clknames $clknames $drv_handle
 	set phy_names ""
 	set phys ""
-	# Scope VTC lookup to this TXSS hierarchy; take first VTC sub-core
+	# Scope VTC lookup to this TXSS hierarchy and emit one offset per VTC
+	# sub-core, so MST designs get an xlnx,vtc-offset entry for every stream's
+	# VTC (e.g. <0x8000 0x9000 0xA000 0xB000>) instead of only the first.
 	set vtcip [set_ip_handles_for_ss_subcores v_tc $drv_handle]
         if {[llength $vtcip]} {
-                set vtc_first [lindex $vtcip 0]
-                set baseaddr [hsi get_property CONFIG.C_BASEADDR [hsi::get_cells -hier $vtc_first]]
-                if {[llength $baseaddr]} {
-                        add_prop "${node}" "xlnx,vtc-offset" $baseaddr int $dtsi_file
+                set vtc_offsets ""
+                foreach vtc_inst $vtcip {
+                        set baseaddr [hsi get_property CONFIG.C_BASEADDR [hsi::get_cells -hier $vtc_inst]]
+                        if {[llength $baseaddr]} {
+                                lappend vtc_offsets $baseaddr
+                        }
+                }
+                if {[llength $vtc_offsets]} {
+                        # Sort ascending so offsets line up with VTC/stream index order
+                        set vtc_offsets [lsort -integer $vtc_offsets]
+                        set vtc_offset_list ""
+                        foreach off $vtc_offsets {
+                                append vtc_offset_list [format "0x%08X" $off] " "
+                        }
+                        set vtc_offset_list [string trimright $vtc_offset_list " "]
+                        add_prop "${node}" "xlnx,vtc-offset" $vtc_offset_list hexlist $dtsi_file
                 }
         }
 	set links {m_axis_lnk_tx_lane0 m_axis_lnk_tx_lane1 m_axis_lnk_tx_lane2 m_axis_lnk_tx_lane3}
@@ -238,77 +252,111 @@ proc dp_txss14_generate {drv_handle} {
 	set ports_node [create_node -n "ports" -l dptx_ports$drv_handle -p $node -d $dtsi_file]
 	add_prop "$ports_node" "#address-cells" 1 int $dtsi_file 1
 	add_prop "$ports_node" "#size-cells" 0 int $dtsi_file 1
-	set port0_node [create_node -n "port" -l dptx_port$drv_handle -u 0 -p $ports_node -d $dtsi_file]
-	add_prop "$port0_node" "reg" 0 int $dtsi_file 1
-	set dptxip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video_stream1"]
-	if {![llength $dptxip]} {
-		dtg_warning "$drv_handle pin s_axis_video_stream1 is not connected...check your design"
+	# Generate one graph port and one drm-pl-disp-drv CRTC per DP TX video
+	# stream. MST designs expose NUM_STREAMS s_axis_video_streamN pins, each
+	# driven by its own v_frmbuf_rd, so every stream gets an independent
+	# display pipeline. SST designs have a single stream (index 0).
+	if {![string is integer -strict $num_streams] || $num_streams < 1} {
+		set num_streams 1
 	}
-	set inip ""
-#	set axis_sw_nm ""
-	foreach inip $dptxip {
-		set intfpins [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $inip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
-		if {[llength $inip]} {
-			set master_intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $dptxip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
-			set ip_mem_handles [hsi::get_mem_ranges $inip]
-			if {[llength $ip_mem_handles]} {
-				set base [string tolower [hsi::get_property BASE_VALUE $ip_mem_handles]]
-				if {[string match -nocase [hsi::get_property IP_NAME $inip] "v_frmbuf_rd"]} {
-					gen_frmbuf_rd_node $inip $drv_handle $port0_node $dtsi_file
-				} else {
-					set dp_tx_node [create_node -n "endpoint" -l dptx_out$drv_handle -p $port0_node -d $dtsi_file]
-					gen_endpoint $drv_handle "dptx_out$drv_handle"
+	# Count DP TX subsystem instances in this design. For a single-instance
+	# design the pl-disp graph labels are emitted in the exact reference form
+	# (stream-indexed, no drv_handle suffix). When more than one DP TX instance
+	# is present, gen_frmbuf_rd_node qualifies those labels with drv_handle so
+	# they stay globally unique across instances.
+	set num_tx 1
+	if {![catch {set txss_ipname [hsi::get_property IP_NAME [hsi::get_cells -hier $drv_handle]]}]} {
+		set txss_cells [hsi::get_cells -hier -filter "IP_NAME==$txss_ipname"]
+		if {[llength $txss_cells]} {
+			set num_tx [llength $txss_cells]
+		}
+	}
+	for {set stream 1} {$stream <= $num_streams} {incr stream} {
+		set port_index [expr {$stream - 1}]
+		set dptxip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video_stream$stream"]
+		if {![llength $dptxip]} {
+			dtg_warning "$drv_handle pin s_axis_video_stream$stream is not connected...check your design"
+			continue
+		}
+		set port0_node [create_node -n "port" -l dptx_port$port_index$drv_handle -u $port_index -p $ports_node -d $dtsi_file]
+		add_prop "$port0_node" "reg" $port_index int $dtsi_file 1
+		set inip ""
+		foreach inip $dptxip {
+			set intfpins [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $inip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
+			if {[llength $inip]} {
+				set master_intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $dptxip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
+				set ip_mem_handles [hsi::get_mem_ranges $inip]
+				if {[llength $ip_mem_handles]} {
+					set base [string tolower [hsi::get_property BASE_VALUE $ip_mem_handles]]
 					if {[string match -nocase [hsi::get_property IP_NAME $inip] "v_frmbuf_rd"]} {
-						gen_frmbuf_rd_node $inip $drv_handle $port0_node $dtsi_file
+						gen_frmbuf_rd_node $inip $drv_handle $port0_node $port_index $num_tx $dtsi_file
 					} else {
+						set dp_tx_node [create_node -n "endpoint" -l dptx_out$port_index$drv_handle -p $port0_node -d $dtsi_file]
+						gen_endpoint $drv_handle "dptx_out$port_index$drv_handle"
 						add_prop "$dp_tx_node" "remote-endpoint" $inip reference $dtsi_file
 						gen_remoteendpoint $drv_handle $inip$drv_handle
 					}
-				}
-			} else {
-				set connectip [get_connect_ip $inip $intfpins $dtsi_file]
-				if {[llength $connectip]} {
-					set dp_tx_node [create_node -n "endpoint" -l dptx_out$drv_handle -p $port0_node -d $dtsi_file]
-					gen_endpoint $drv_handle "dptx_out$drv_handle"
-					if {[string match -nocase [hsi::get_property IP_NAME $inip] "v_mix"]} {
-						add_prop "$dp_tx_node" "remote-endpoint" "mixer_crtc$connectip" reference $dtsi_file
-						gen_remoteendpoint $drv_handle "mixer_crtc$connectip"
-					} else {
-						add_prop "$dp_tx_node" "remote-endpoint" $connectip reference $dtsi_file
-						gen_remoteendpoint $drv_handle $connectip$drv_handle
+				} else {
+					set connectip [get_connect_ip $inip $intfpins $dtsi_file]
+					if {[llength $connectip]} {
+						set dp_tx_node [create_node -n "endpoint" -l dptx_out$port_index$drv_handle -p $port0_node -d $dtsi_file]
+						gen_endpoint $drv_handle "dptx_out$port_index$drv_handle"
+						if {[string match -nocase [hsi::get_property IP_NAME $inip] "v_mix"]} {
+							add_prop "$dp_tx_node" "remote-endpoint" "mixer_crtc$connectip" reference $dtsi_file
+							gen_remoteendpoint $drv_handle "mixer_crtc$connectip"
+						} else {
+							add_prop "$dp_tx_node" "remote-endpoint" $connectip reference $dtsi_file
+							gen_remoteendpoint $drv_handle $connectip$drv_handle
+						}
+						if {[string match -nocase [hsi::get_property IP_NAME $connectip] "axi_vdma"] || [string match -nocase [hsi::get_property IP_NAME $connectip] "v_frmbuf_rd"]} {
+							gen_frmbuf_rd_node $inip $drv_handle $port0_node $port_index $num_tx $dtsi_file
+						}
 					}
-					if {[string match -nocase [hsi::get_property IP_NAME $connectip] "axi_vdma"] || [string match -nocase [hsi::get_property IP_NAME $connectip] "v_frmbuf_rd"]} {
-						gen_frmbuf_rd_node $inip $drv_handle $port0_node $dtsi_file					}
 				}
 			}
 		}
 	}
 }
 
-proc gen_frmbuf_rd_node {ip drv_handle port0_node dtsi_file} {
-	set frmbuf_rd_node [create_node -n "endpoint" -l dptx_out$drv_handle -p $port0_node -d $dtsi_file]
-	add_prop "$frmbuf_rd_node" "remote-endpoint" $ip$drv_handle reference $dtsi_file 1
-	global env
-	set path $env(CUSTOM_SDT_REPO)
-	set common_file "$path/device_tree/data/config.yaml"
-	set bus_node "amba_pl: amba_pl"
-	# Derive instance suffix from hierarchy name (e.g. dp_tx_hier_0_... -> 0)
-	if {[regexp {hier_(\d+)} $drv_handle -> hier_idx]} {
-		set inst_suffix $hier_idx
-	} else {
-		set inst_suffix 0
+proc gen_frmbuf_rd_node {ip drv_handle port0_node port_index num_tx dtsi_file} {
+	# Design-global running index for the drm-pl-disp-drv node name, so every
+	# CRTC node is unique across all streams AND all DP TX instances
+	# (reproduces drm-pl-disp-drv-0..N in both the single-instance MST and the
+	# multi-instance references). It is intentionally NOT reset per instance.
+	global dptx_pldisp_index
+	if {![info exists dptx_pldisp_index]} {
+		set dptx_pldisp_index 0
 	}
-        set pl_disp [create_node -n "drm-pl-disp-drv-$inst_suffix" -l "v_pl_disp$drv_handle" -p $bus_node -d $dtsi_file]
-        add_prop $pl_disp "compatible" "xlnx,pl-disp" string $dtsi_file 1
+	set disp_index $dptx_pldisp_index
+	# Keep single-instance output identical to the reference (stream-indexed,
+	# no drv_handle suffix). For multi-instance designs qualify the pl-disp
+	# graph labels with drv_handle to keep them globally unique.
+	if {$num_tx > 1} {
+		set pl_disp_out_label "pl_disp_out$port_index$drv_handle"
+		set pl_disp_port_label "pl_disp_port$port_index$drv_handle"
+	} else {
+		set pl_disp_out_label "pl_disp_out$port_index"
+		set pl_disp_port_label "pl_disp_port$port_index"
+	}
+	# DP TX graph endpoint for this stream: link the port to its pl-disp CRTC.
+	set frmbuf_rd_node [create_node -n "endpoint" -l dptx_out$port_index$drv_handle -p $port0_node -d $dtsi_file]
+	add_prop "$frmbuf_rd_node" "remote-endpoint" $pl_disp_out_label reference $dtsi_file 1
+	set bus_node "amba_pl: amba_pl"
+	# One drm-pl-disp-drv CRTC per DP TX video stream. In MST each stream has
+	# its own v_frmbuf_rd and its own display pipeline; SST has a single
+	# stream (index 0).
+	set pl_disp [create_node -n "drm-pl-disp-drv-$disp_index" -l "v_pl_disp$port_index$drv_handle" -p $bus_node -d $dtsi_file]
+	add_prop $pl_disp "compatible" "xlnx,pl-disp" string $dtsi_file 1
+	add_prop $pl_disp "#address-cells" 1 int $dtsi_file 1
+	add_prop $pl_disp "xlnx,vformat" "YUYV" string $dtsi_file 1
 	add_prop $pl_disp "dmas" "$ip 0" reference $dtsi_file 1
-        add_prop $pl_disp "dma-names" "dma0" string $dtsi_file 1
-        add_prop $pl_disp "xlnx,vformat" "YUYV" string $dtsi_file 1
-        add_prop $pl_disp "#address-cells" 1 int $dtsi_file 1
-        add_prop $pl_disp "#size-cells" 0 int $dtsi_file 1
-	set pl_port_node [create_node -n "port" -l "pl_disp_port$inst_suffix" -u 0 -p $pl_disp -d $dtsi_file]
+	add_prop $pl_disp "#size-cells" 0 int $dtsi_file 1
+	add_prop $pl_disp "dma-names" "dma0" string $dtsi_file 1
+	set pl_port_node [create_node -n "port" -l "$pl_disp_port_label" -u 0 -p $pl_disp -d $dtsi_file]
 	add_prop "$pl_port_node" "reg" 0 int $dtsi_file 1
-        set pl_disp_crtc_node [create_node -n "endpoint" -l $ip$drv_handle -p $pl_port_node -d $dtsi_file]
-        add_prop "$pl_disp_crtc_node" "remote-endpoint" dptx_out$drv_handle reference $dtsi_file 1
+	set pl_disp_crtc_node [create_node -n "endpoint" -l $pl_disp_out_label -p $pl_port_node -d $dtsi_file]
+	add_prop "$pl_disp_crtc_node" "remote-endpoint" dptx_out$port_index$drv_handle reference $dtsi_file 1
+	incr dptx_pldisp_index
 }
 
 proc dp_tx_add_hier_instances {drv_handle} {
