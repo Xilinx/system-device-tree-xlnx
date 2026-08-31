@@ -1,5 +1,5 @@
 #
-# (C) Copyright 2025 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2025-2026 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -38,10 +38,9 @@ proc cpm_pcie_generate {drv_handle} {
 	        add_prop $node compatible "xlnx,versal-cpm5-host1" stringlist "pcw.dtsi" 1
 	        set ranges "0x02000000 0x0 0xe8000000 0x0 0xe8000000 0x0 0x8000000>,<0x43000000 0xa0 0x00000000 0xa0 0x00000000 0x0 0x80000000"
 	        add_prop $node "ranges" $ranges hexlist "pcw.dtsi" 1
-	        set reg "0x07 0x00000000 0x00 0x10000000>,<0x00 0xfcdd0000 0x00 0x1000>,<0x00 0xfcea0000 0x00 0x10000>,<0x00 0xfcdc0000 0x00 0x10000"
+		set reg "0x07 0x00000000 0x00 0x10000000>,<0x00 0xfcdd0000 0x00 0x1000>,<0x00 0xfcea0000 0x00 0x10000"
 	        add_prop $node "reg" $reg hexlist "pcw.dtsi" 1
-	        set reg_names "cfg cpm_slcr cpm_csr cpm_crx"
-	        add_prop $node reg-names $reg_names stringlist "pcw.dtsi" 1
+	        add_prop $node "resets" "versal_reset VERSAL_RST_PCIE_CORE1" reference "pcw.dtsi" 1
 
 	}
 
