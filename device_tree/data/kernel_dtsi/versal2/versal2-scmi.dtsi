@@ -174,7 +174,7 @@
 		compatible = "fixed-clock";
 		#clock-cells = <0>;
 		clock-frequency = <33333333>;
-		clock-output-names = "ref_clk";
+		clock-output-names = "board_ref_clk";
 	};
 
 	rtc_clk: rtc-clk {
@@ -251,34 +251,42 @@
 
 &cortexa78_0 {
 	clocks = <&scmi_clk SCMI_CLK_VERSAL2_ACPU_0>;
+	/delete-property/ operating-points-v2;
 };
 
 &cortexa78_1 {
 	clocks = <&scmi_clk SCMI_CLK_VERSAL2_ACPU_0>;
+	/delete-property/ operating-points-v2;
 };
 
 &cortexa78_2 {
 	clocks = <&scmi_clk SCMI_CLK_VERSAL2_ACPU_1>;
+	/delete-property/ operating-points-v2;
 };
 
 &cortexa78_3 {
 	clocks = <&scmi_clk SCMI_CLK_VERSAL2_ACPU_1>;
+	/delete-property/ operating-points-v2;
 };
 
 &cortexa78_4 {
 	clocks = <&scmi_clk SCMI_CLK_VERSAL2_ACPU_2>;
+	/delete-property/ operating-points-v2;
 };
 
 &cortexa78_5 {
 	clocks = <&scmi_clk SCMI_CLK_VERSAL2_ACPU_2>;
+	/delete-property/ operating-points-v2;
 };
 
 &cortexa78_6 {
 	clocks = <&scmi_clk SCMI_CLK_VERSAL2_ACPU_3>;
+	/delete-property/ operating-points-v2;
 };
 
 &cortexa78_7 {
 	clocks = <&scmi_clk SCMI_CLK_VERSAL2_ACPU_3>;
+	/delete-property/ operating-points-v2;
 };
 
 &can0 {
