@@ -131,7 +131,9 @@ proc preprocess_generate {drv_handle} {
 			# generating remote-endpoint  only when it is connected to v_proc_ss ip
 			add_prop "$preprocess_port_node_endpoint" "remote-endpoint" "tpg_out$inip" reference $dts_file
 		} else  {
-			add_prop "$preprocess_port_node_endpoint" "remote-endpoint" preprocess_in$drv_handle reference $dts_file
+			gen_endpoint $drv_handle "$drv_handle$inip"
+			add_prop "$preprocess_port_node_endpoint" "remote-endpoint" $inip$drv_handle reference $dts_file
+			gen_remoteendpoint $drv_handle "$inip$drv_handle"
 		}
 	}
 	# find scanoutip which is connected to m_axis_video
@@ -176,7 +178,7 @@ proc preprocess_generate {drv_handle} {
 			} else {
 				set connectip [get_connect_ip $outip $master_intf $dts_file]
 				if {[llength $connectip]} {
-					set port1_node_endpoint [create_node -n "endpoint" -l preprocess_out$drv_handle -p $port1_node -d $dts_file]
+					set port1_node_endpoint [create_node -n "endpoint" -l $drv_handle$outip -p $port1_node -d $dts_file]
 					gen_endpoint $drv_handle "$drv_handle$outip"
 					add_prop "$port1_node_endpoint" "remote-endpoint" $connectip$drv_handle reference $dts_file
 					gen_remoteendpoint $drv_handle "$connectip$drv_handle"
