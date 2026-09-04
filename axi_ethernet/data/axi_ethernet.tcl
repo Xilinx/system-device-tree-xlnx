@@ -19,6 +19,34 @@
 #
     set rxethmem 0
 
+    proc axi_ethernet_xxv_core_variant {core_str} {
+            if {[string first "MAC+PCS/PMA" $core_str] != -1} {
+                    set core_variant 0
+            } elseif {[string first "MAC " $core_str] != -1} {
+                    set core_variant 1
+            } elseif {[string first "PCS/PMA" $core_str] != -1} {
+                    set core_variant 2
+            } else {
+                    dtg_warning "XXV subsystem configuration not identified from CONFIG.C_CORE value \"$core_str\""
+                    return -1
+            }
+
+            return $core_variant
+    }
+
+    proc axi_ethernet_xxv_add_link_mode {target_node dts_file core_variant} {
+        set AXIENET_MAC_ONLY 1
+
+        if {$core_variant == $AXIENET_MAC_ONLY} {
+            set speed 10000
+            set fl_node [create_node -n "fixed-link" -p $target_node -d $dts_file]
+            add_prop $fl_node "speed" $speed int $dts_file
+            add_prop $fl_node "full-duplex" "" boolean $dts_file
+        } else {
+            add_prop $target_node "managed" "in-band-status" string $dts_file
+        }
+    }
+
     proc axi_ethernet_generate {drv_handle} {
         global env
         global dtsi_fname
@@ -335,9 +363,12 @@
             pldt append $node compatible "\ \, \"xlnx,ten-gig-eth-mac\""
         }
         if {$ip_name == "xxv_ethernet"} {
-            add_prop $node "managed" "in-band-status" string $dts_file
+            set core_str [hsi get_property CONFIG.C_CORE $eth_ip]
+            set core_variant [axi_ethernet_xxv_core_variant $core_str]
             set phytype [string tolower [hsi get_property CONFIG.BASE_R_KR $eth_ip]]
             set linerate [hsi get_property CONFIG.LINE_RATE $eth_ip]
+            add_prop $node "xlnx,core-variant" $core_variant int $dts_file
+            axi_ethernet_xxv_add_link_mode $node $dts_file $core_variant
             add_prop $node phy-mode "${linerate}g$phytype" string $dts_file
             if {$core == 0} {
                 pldt set $node compatible "\"xlnx,xxv-ethernet-1.0\""
@@ -347,7 +378,8 @@
                     set compatible [string trimright $compatible "\""]
                     set compatible [string trimleft $compatible "\""]
                     add_prop $eth_node "compatible" $compatible string "pl.dtsi"
-                add_prop $eth_node "managed" "in-band-status" string $dts_file
+                add_prop $eth_node "xlnx,core-variant" $core_variant int "pl.dtsi"
+                axi_ethernet_xxv_add_link_mode $eth_node "pl.dtsi" $core_variant
                 add_prop $eth_node "phy-mode" "${linerate}g$phytype" string "pl.dtsi"
             }
         }
