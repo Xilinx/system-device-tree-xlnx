@@ -635,3 +635,163 @@
 	clock-names = "pixel_clk";
 	clocks = <&scmi_clk SCMI_CLK_VERSAL2_DC_PIXEL>;
 };
+&r52_0a_atcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_A_0A>;
+};
+
+&r52_0a_btcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_A_0B>;
+};
+
+&r52_0a_ctcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_A_0C>;
+};
+
+&r52_1a_atcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_A_1A>;
+};
+
+&r52_1a_btcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_A_1B>;
+};
+
+&r52_1a_ctcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_A_1C>;
+};
+
+&r52_0b_atcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_B_0A>;
+};
+
+&r52_0b_btcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_B_0B>;
+};
+
+&r52_0b_ctcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_B_0C>;
+};
+
+&r52_1b_atcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_B_1A>;
+};
+
+&r52_1b_btcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_B_1B>;
+};
+
+&r52_1b_ctcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_B_1C>;
+};
+
+&r52_0c_atcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_C_0A>;
+};
+
+&r52_0c_btcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_C_0B>;
+};
+
+&r52_0c_ctcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_C_0C>;
+};
+
+&r52_1c_atcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_C_1A>;
+};
+
+&r52_1c_btcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_C_1B>;
+};
+
+&r52_1c_ctcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_C_1C>;
+};
+
+&r52_0d_atcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_D_0A>;
+};
+
+&r52_0d_btcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_D_0B>;
+};
+
+&r52_0d_ctcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_D_0C>;
+};
+
+&r52_1d_atcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_D_1A>;
+};
+
+&r52_1d_btcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_D_1B>;
+};
+
+&r52_1d_ctcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_D_1C>;
+};
+
+&r52_0e_atcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_E_0A>;
+};
+
+&r52_0e_btcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_E_0B>;
+};
+
+&r52_0e_ctcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_E_0C>;
+};
+
+&r52_1e_atcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_E_1A>;
+};
+
+&r52_1e_btcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_E_1B>;
+};
+
+&r52_1e_ctcm_global {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_TCM_E_1C>;
+};
+
+&cortexr52_0 {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_RPU_A_0>;
+};
+
+&cortexr52_1 {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_RPU_A_1>;
+};
+
+&cortexr52_2 {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_RPU_B_0>;
+};
+
+&cortexr52_3 {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_RPU_B_1>;
+};
+
+&cortexr52_4 {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_RPU_C_0>;
+};
+
+&cortexr52_5 {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_RPU_C_1>;
+};
+
+&cortexr52_6 {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_RPU_D_0>;
+};
+
+&cortexr52_7 {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_RPU_D_1>;
+};
+
+
+&cortexr52_8 {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_RPU_E_0>;
+};
+
+&cortexr52_9 {
+	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_RPU_E_1>;
+};
