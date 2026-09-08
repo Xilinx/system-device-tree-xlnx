@@ -75,6 +75,153 @@
             add_prop "${decoder_node}" "reg" $decoder_reg hexlist $dts_file
             add_prop "${decoder_node}" "interrupts" $intr_val intlist $dts_file
             add_prop "${decoder_node}" "interrupt-parent" $intr_parent reference $dts_file
+            # When a PL DDR (vcu_ddr4_controller) is present in the design, create a
+            # reserved-memory carveout for it and point the decoder to it via a
+            # memory-region property. If no PL DDR is present, skip creating both.
+            set plddr_ips [hsi::get_cells -hier -filter {IP_NAME == "vcu_ddr4_controller"}]
+            if {[llength $plddr_ips]} {
+                # Select the PL DDR controller actually reachable from this VCU
+                # instance (via its master address map) instead of blindly taking the
+                # first one. Fall back to the first controller (with a warning) only
+                # when connectivity cannot be determined.
+                set plddr_ip ""
+                set vcu_plddr_matches {}
+                if {![catch {set vcu_segs [hsi::get_mem_ranges -of_objects $vcu_ip]} msg]} {
+                    foreach seg $vcu_segs {
+                        set seg_inst [hsi get_property INSTANCE $seg]
+                        if {[lsearch -exact $plddr_ips $seg_inst] >= 0 &&
+                            [lsearch -exact $vcu_plddr_matches $seg_inst] < 0} {
+                            lappend vcu_plddr_matches $seg_inst
+                        }
+                    }
+                }
+                if {[llength $vcu_plddr_matches] >= 1} {
+                    set plddr_ip [lindex $vcu_plddr_matches 0]
+                    if {[llength $vcu_plddr_matches] > 1} {
+                        dtg_warning "axi_vcu: $drv_handle can reach multiple vcu_ddr4_controller instances ($vcu_plddr_matches); using $plddr_ip for the decoder carveout"
+                    }
+                }
+                if {[string_is_empty $plddr_ip]} {
+                    if {[llength $plddr_ips] > 1} {
+                        dtg_warning "axi_vcu: unable to determine which vcu_ddr4_controller is connected to $drv_handle; defaulting to [lindex $plddr_ips 0]"
+                    }
+                    set plddr_ip [lindex $plddr_ips 0]
+                }
+
+                # Determine the PL DDR base/high address range mapped to a processor.
+                # The bank must be matched by INSTANCE (its memory-range NAME differs
+                # from the cell name, so a positional/name filter would never match).
+                set plddr_base ""
+                set plddr_high ""
+                foreach procc [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}] {
+                    foreach bank [hsi::get_mem_ranges -of_objects $procc -filter "INSTANCE==$plddr_ip"] {
+                        set b [hsi get_property BASE_VALUE $bank]
+                        set h [hsi get_property HIGH_VALUE $bank]
+                        if {![string_is_empty $b] && ![string_is_empty $h]} {
+                            set plddr_base $b
+                            set plddr_high $h
+                            break
+                        }
+                    }
+                    if {![string_is_empty $plddr_base]} {
+                        break
+                    }
+                }
+                # Fallback: if the bank is not mapped to a processor, use the IP
+                # base/high addresses. Both ends of the range are required so the
+                # carveout size can be validated against the actual PL DDR size.
+                if {[string_is_empty $plddr_base]} {
+                    set plddr_base [get_baseaddr $plddr_ip]
+                    set plddr_high [get_highaddr $plddr_ip]
+                }
+
+                # Only proceed when the complete PL DDR range is known. Without both
+                # ends we cannot bound the carveout, so skip generation rather than
+                # emit a potentially out-of-range reservation or a dangling reference.
+                if {[string_is_empty $plddr_base] || [string_is_empty $plddr_high]} {
+                    dtg_warning "axi_vcu: could not determine the PL DDR address range for $plddr_ip; skipping reserved-memory carveout and memory-region for $drv_handle"
+                } else {
+                    # reserved-memory always lives under the system-top root
+                    set resv_dts "system-top.dts"
+                    # Normalise to lowercase, 0x-prefixed hex so expr treats the
+                    # values as hexadecimal (a bare value would be read as decimal).
+                    set plddr_base [string tolower $plddr_base]
+                    set plddr_high [string tolower $plddr_high]
+                    if {![string match "0x*" $plddr_base]} {
+                        set plddr_base "0x$plddr_base"
+                    }
+                    if {![string match "0x*" $plddr_high]} {
+                        set plddr_high "0x$plddr_high"
+                    }
+                    set addr_hi [format 0x%x [expr {$plddr_base >> 32}]]
+                    set addr_lo [format 0x%x [expr {$plddr_base & 0xffffffff}]]
+                    # Default VCU decoder DMA pool size (from the validated reference
+                    # design). It is capped below to the actual PL DDR bank size so we
+                    # never reserve a region that extends beyond the available DDR.
+                    set pref_size 0x6a400000
+                    set avail [expr {$plddr_high - $plddr_base + 1}]
+                    if {$avail <= 0} {
+                        dtg_warning "axi_vcu: invalid PL DDR range for $plddr_ip (high <= base); skipping reserved-memory carveout"
+                        set size 0
+                    } elseif {$pref_size > $avail} {
+                        dtg_warning "axi_vcu: preferred VCU decoder carveout ([format 0x%x $pref_size]) exceeds PL DDR size ([format 0x%x $avail]); clamping to PL DDR size"
+                        set size $avail
+                    } else {
+                        set size $pref_size
+                    }
+                    if {$size > 0} {
+                        set size_hi [format 0x%x [expr {$size >> 32}]]
+                        set size_lo [format 0x%x [expr {$size & 0xffffffff}]]
+                        regsub {^0x} $plddr_base "" unit_addr
+
+                        # Idempotent creation driven entirely by the current tree (no
+                        # persistent global state, which would go stale across tree
+                        # regeneration or a second hardware design in the same Tcl
+                        # process). Reuse the reserved-memory container if present.
+                        set resv_node ""
+                        foreach child [systemdt children root] {
+                            if {[string match -nocase $child "reserved-memory"]} {
+                                set resv_node $child
+                                break
+                            }
+                        }
+                        if {[string_is_empty $resv_node]} {
+                            set resv_node [create_node -n "reserved-memory" -d $resv_dts]
+                            add_prop "$resv_node" "#address-cells" 2 int $resv_dts
+                            add_prop "$resv_node" "#size-cells" 2 int $resv_dts
+                            add_prop "$resv_node" "ranges" "" boolean $resv_dts
+                        }
+
+                        # Dedupe carveouts directly from the tree by matching the PL
+                        # DDR base (unit address). Reuse the existing label if the
+                        # region already exists; otherwise mint a unique label. The
+                        # first VCU carveout keeps the well-known "plmem_vcu_dec".
+                        set plmem_label ""
+                        set vcu_carveout_count 0
+                        foreach child [systemdt children $resv_node] {
+                            if {[regexp {vcu_dma_mem_region@} $child]} {
+                                incr vcu_carveout_count
+                                if {[string match "*@$unit_addr" $child]} {
+                                    regexp {^(\S+):} $child -> plmem_label
+                                }
+                            }
+                        }
+                        if {[string_is_empty $plmem_label]} {
+                            if {$vcu_carveout_count == 0} {
+                                set plmem_label "plmem_vcu_dec"
+                            } else {
+                                set plmem_label "plmem_vcu_dec_${vcu_carveout_count}"
+                            }
+                            set plmem_node [create_node -l $plmem_label -n "vcu_dma_mem_region" -u $unit_addr -p $resv_node -d $resv_dts]
+                            add_prop "$plmem_node" "label" $plmem_label string $resv_dts
+                            add_prop "$plmem_node" "compatible" "shared-dma-pool" string $resv_dts
+                            add_prop "$plmem_node" "no-map" "" boolean $resv_dts
+                            add_prop "$plmem_node" "reg" [list $addr_hi $addr_lo $size_hi $size_lo] hexlist $resv_dts
+                        }
+                        add_prop "${decoder_node}" "memory-region" $plmem_label reference $dts_file
+                    }
+                }
+            }
         }
         set clknames "pll_ref aclk vcu_core_enc vcu_mcu_enc vcu_core_dec vcu_mcu_dec"
         overwrite_clknames $clknames $drv_handle
