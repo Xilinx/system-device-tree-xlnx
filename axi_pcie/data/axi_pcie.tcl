@@ -187,8 +187,10 @@
                                 set intr_names "misc msi0 msi1"
                                 add_prop $node "interrupt-names" $intr_names stringlist "pl.dtsi" 1
                         }
-                        add_prop $node "xlnx,num-of-bars" 0x2 hexint "pl.dtsi" 1
-                        add_prop $node "xlnx,csr-slcr" 0xa0000000 hexint "pl.dtsi" 1
+			 set num_bars [get_ip_property $drv_handle CONFIG.axibar_num]
+			 add_prop $node "xlnx,num-of-bars" $num_bars hexint "pl.dtsi" 1
+			 set csr_baseaddr [get_ip_property $drv_handle CONFIG.baseaddr]
+			 add_prop $node "xlnx,csr-slcr" $csr_baseaddr hexint "pl.dtsi" 1
                 }
                 add_prop $node device_type "pci" string "pl.dtsi"
                 set proctype [get_hw_family]
