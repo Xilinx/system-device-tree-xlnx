@@ -415,6 +415,13 @@
 	cpus_r52_0: cpus-r52@0 {
 		#address-cells = <1>;
 		#size-cells = <0>;
+		cpu-map {
+			cluster0 {
+				core0 {
+					cpu = <&cortexr52_0>;
+				};
+			};
+		};
 		cortexr52_0: cpu@0 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
@@ -425,90 +432,153 @@
 	cpus_r52_1: cpus-r52@1 {
 		#address-cells = <1>;
 		#size-cells = <0>;
-		cortexr52_1: cpu@1 {
+		cpu-map {
+			cluster0 {
+				core0 {
+					cpu = <&cortexr52_1>;
+				};
+			};
+		};
+		cortexr52_1: cpu@0 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
-			reg = <0x1>;
+			reg = <0x0>;
 		};
 	};
 
 	cpus_r52_2: cpus-r52@2 {
 		#address-cells = <1>;
 		#size-cells = <0>;
-		cortexr52_2: cpu@2 {
+		cpu-map {
+			cluster0 {
+				core0 {
+					cpu = <&cortexr52_2>;
+				};
+			};
+		};
+		cortexr52_2: cpu@0 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
-			reg = <0x2>;
+			reg = <0x0>;
 		};
 	};
 
 	cpus_r52_3: cpus-r52@3 {
 		#address-cells = <1>;
 		#size-cells = <0>;
-		cortexr52_3: cpu@3 {
+		cpu-map {
+			cluster0 {
+				core0 {
+					cpu = <&cortexr52_3>;
+				};
+			};
+		};
+		cortexr52_3: cpu@0 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
-			reg = <0x3>;
+			reg = <0x0>;
 		};
 	};
 
 	cpus_r52_4: cpus-r52@4 {
 		#address-cells = <1>;
 		#size-cells = <0>;
-		cortexr52_4: cpu@4 {
+		cpu-map {
+			cluster0 {
+				core0 {
+					cpu = <&cortexr52_4>;
+				};
+			};
+		};
+		cortexr52_4: cpu@0 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
-			reg = <0x4>;
+			reg = <0x0>;
 		};
 	};
 
 	cpus_r52_5: cpus-r52@5 {
 		#address-cells = <1>;
 		#size-cells = <0>;
-		cortexr52_5: cpu@5 {
+		cpu-map {
+			cluster0 {
+				core0 {
+					cpu = <&cortexr52_5>;
+				};
+			};
+		};
+		cortexr52_5: cpu@0 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
-			reg = <0x5>;
+			reg = <0x0>;
 		};
 	};
 
 	cpus_r52_6: cpus-r52@6 {
 		#address-cells = <1>;
 		#size-cells = <0>;
-		cortexr52_6: cpu@6 {
+		cpu-map {
+			cluster0 {
+				core0 {
+					cpu = <&cortexr52_6>;
+				};
+			};
+		};
+		cortexr52_6: cpu@0 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
-			reg = <0x6>;
+			reg = <0x0>;
 		};
 	};
 
 	cpus_r52_7: cpus-r52@7 {
 		#address-cells = <1>;
 		#size-cells = <0>;
-		cortexr52_7: cpu@7 {
+		cpu-map {
+			cluster0 {
+				core0 {
+					cpu = <&cortexr52_7>;
+				};
+			};
+		};
+		cortexr52_7: cpu@0 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
-			reg = <0x7>;
+			reg = <0x0>;
 		};
 	};
 
 	cpus_r52_8: cpus-r52@8 {
 		#address-cells = <1>;
 		#size-cells = <0>;
-		cortexr52_8: cpu@8 {
+		cpu-map {
+			cluster0 {
+				core0 {
+					cpu = <&cortexr52_8>;
+				};
+			};
+		};
+		cortexr52_8: cpu@0 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
-			reg = <0x8>;
+			reg = <0x0>;
 		};
 	};
 
 	cpus_r52_9: cpus-r52@9 {
 		#address-cells = <1>;
 		#size-cells = <0>;
-		cortexr52_9: cpu@9 {
+		cpu-map {
+			cluster0 {
+				core0 {
+					cpu = <&cortexr52_9>;
+				};
+			};
+		};
+		cortexr52_9: cpu@0 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
-			reg = <0x9>;
+			reg = <0x0>;
 		};
 	};
 
