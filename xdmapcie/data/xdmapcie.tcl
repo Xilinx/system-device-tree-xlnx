@@ -1,5 +1,5 @@
 #
-# (C) Copyright 2026 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2023-2026 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -118,8 +118,10 @@ proc xdmapcie_generate {drv_handle} {
 
 	if {[string match -nocase $val "Root_Port_of_PCI_Express_Root_Complex"]} {
 		add_prop $node "xlnx,device_port_type" "Root_Port_of_PCI_Express_Root_Complex" stringlist "pl.dtsi" 1
-		add_prop $node "xlnx,csr-slcr" 0x90000000 hexlist "pl.dtsi" 1
-		add_prop $node "xlnx,num-of-bars" 0x2 hexint "pl.dtsi" 1
+		set num_bars [get_ip_property $drv_handle CONFIG.axibar_num]
+		set csr_baseaddr [get_ip_property $drv_handle CONFIG.baseaddr]
+		add_prop $node "xlnx,csr-slcr" $csr_baseaddr hexint "pl.dtsi" 1
+		add_prop $node "xlnx,num-of-bars" $num_bars hexint "pl.dtsi" 1
 		add_prop $node "xlnx,include-baroffset-reg" 0x1 hexint "pl.dtsi" 1
 		add_prop $node "xlnx,port-type" 1 hexint "pl.dtsi" 1
 		add_prop $node "#address-cells" 3 int "pl.dtsi"
