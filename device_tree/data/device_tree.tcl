@@ -388,7 +388,13 @@ proc print_usage args {
                               `<this repo>/device_tree/data/kernel_dtsi/BOARD/zephyr`.
             -debug            Enable DTG++ debug
             -trace            Enable DTG++ traces
-            -zocl             Create zocl node in device tree. Possible options: enable/disable. Default option: disable
+            -zocl             Create zocl node in device tree. Options: enable, disable, or dictionary string with keys:
+                              - legacy: true|false (default: true for enable mode)
+                              - domain-yaml: path to domain YAML file (extracts memory regions from APU_Linux)
+                                Memory regions must have compatible="shared-dma-pool" or compatible="xlnx,zocl-alloc"
+                              - vpp_hier_name: PL kernel hierarchy prefix (default: "VitisRegion")
+                              Example: -zocl "legacy false domain-yaml /path/to/domain.yaml"
+                              Default option: disable
             -list_boards      List all the board specific files available in SDT
 	}
         return $help_str
@@ -548,10 +554,17 @@ proc set_dt_param args {
                                 -repo {set env(CUSTOM_SDT_REPO) [Pop args 1]}
                                 -zocl {
 					set zocl [Pop args 1]
-					if {!($zocl in {"enable" "disable"})} {
-						error "Invalid option: $zocl. Valid options: enable/disable. Default option: disable"
+					# Accept "enable", "disable", or dictionary string
+					if {$zocl in {"enable" "disable"}} {
+						# Legacy mode: just enable/disable
+						set env(zocl) $zocl
+						# Clear any stale zocl_params from previous runs
+						unset -nocomplain env(zocl_params)
+					} else {
+						# Dictionary mode: parse key-value pairs
+						set env(zocl) "enable"
+						set env(zocl_params) $zocl
 					}
-					set env(zocl) $zocl
 				}
                                 -user_dts - \-include_dts {
 					# FIXME: Below line should not be needed. It is added to support
@@ -1958,7 +1971,22 @@ Generates system device tree based on args given in:
 	if {[string match -nocase $env(zocl) "enable"]} {
 		if {$proctype in {"zynq" "zynqmp" "versal"}} {
 			source [file join $path "zocl" "data" "zocl.tcl"]
-			gen_zocl_node $proctype
+			# Pass zocl_params if it exists (dictionary mode)
+			if {[info exists env(zocl_params)]} {
+				set zocl_params $env(zocl_params)
+				# Append dfx-mode if this is a DFX design
+				if {[info exists env(rm_xsa)] && $env(rm_xsa) ne ""} {
+					# DFX design: append dfx-mode based on is_rm_design
+					if {[info exists is_rm_design] && $is_rm_design == 1} {
+						append zocl_params " dfx-mode rm"
+					} else {
+						append zocl_params " dfx-mode static"
+					}
+				}
+				gen_zocl_node $proctype $zocl_params
+			} else {
+				gen_zocl_node $proctype
+			}
 		}
 	}
     	if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"]} {

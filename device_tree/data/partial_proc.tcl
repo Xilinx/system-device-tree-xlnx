@@ -464,6 +464,26 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 			}
 		}
 	}
+
+	# Generate ZOCL fpga_accelerator node for RM (if zocl is enabled)
+	if {[string match -nocase $env(zocl) "enable"]} {
+		if {$proctype in {"zynq" "zynqmp" "versal"}} {
+			source [file join $path "zocl" "data" "zocl.tcl"]
+			# For RM context, force legacy=false and set dfx-mode=rm
+			if {[info exists env(zocl_params)]} {
+				set zocl_params_with_mode $env(zocl_params)
+			} else {
+				set zocl_params_with_mode ""
+			}
+			if {$zocl_params_with_mode ne ""} {
+				append zocl_params_with_mode " legacy false dfx-mode rm"
+			} else {
+				set zocl_params_with_mode "legacy false dfx-mode rm"
+			}
+			gen_zocl_node $proctype $zocl_params_with_mode
+		}
+	}
+
 	hsi::close_hw_design [hsi::current_hw_design]
 	delete_tree pldt root
 	move_match_node_to_top pldt root "misc_clk_*"
