@@ -377,7 +377,6 @@
 	reg = <0x00 0xfcdd0000 0x00 0x1000>,
 	      <0x07 0x00000000 0x00 0x10000000>,
               <0x00 0xfcea0000 0x00 0x10000>;
-	reg-names = "cfg", "cpm_slcr", "cpm_csr", "cpm_crx";
 	resets = <&versal_reset VERSAL_RST_PCIE_CORE1>;
 	pcie@0,0 {
 		device_type = "pci";
