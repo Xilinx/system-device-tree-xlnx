@@ -31,6 +31,15 @@ proc mipi_csi2_tx_ss_generate {drv_handle} {
 	set tx_pixel_mode [hsi get_property CONFIG.C_CSI_PIXEL_MODE [hsi::get_cells -hier $drv_handle]]
         add_prop "${node}" "xlnx,csi2-tx-pixel-mode" $tx_pixel_mode int $dts_file 1
 
+	# Number of Virtual Channels (v3.0 IP: C_NUM_VC = 4/8/16). Older IPs
+	# (e.g. subsystem 2.2) do not expose this parameter, so default to 4
+	# to preserve the existing behaviour.
+	set tx_num_vc [hsi get_property CONFIG.C_NUM_VC [hsi::get_cells -hier $drv_handle]]
+	if {[string_is_empty $tx_num_vc]} {
+		set tx_num_vc 4
+	}
+        add_prop "${node}" "xlnx,csi2-tx-num-vc" $tx_num_vc int $dts_file 1
+
 	set tx_line_bufr_depth [hsi get_property CONFIG.C_CSI_LINE_BUFR_DEPTH [hsi::get_cells -hier $drv_handle]]
         add_prop "${node}" "xlnx,csi2-tx-line-bufr-depth" $tx_line_bufr_depth int $dts_file 1
 
@@ -85,10 +94,10 @@ proc csitx2_add_hier_instances {drv_handle} {
 	set ip_subcores [dict create]
 	dict set ip_subcores "mipi_csi2_tx_ctrl" "csi2tx"
 	dict set ip_subcores "mipi_dphy" "dphy"
-#	dict set ip_subcores "hdcp22_rx" "hdcp22"
+	dict set ip_subcores "mipi_tx_phy" "txphy"
 	foreach ip [dict keys $ip_subcores] {
 
-		if { $ip eq "mipi_dphy"} {
+		if { $ip eq "mipi_dphy" || $ip eq "mipi_tx_phy"} {
 			if {[string match -nocase "false" $dphy_en_reg_if]} {
 				continue
 			}
