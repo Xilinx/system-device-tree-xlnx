@@ -415,6 +415,7 @@
             add_prop $node "xlnx,usxgmii-rate" 1000 int "pl.dtsi"
         }
         set ips [hsi::get_cells -hier $drv_handle]
+        set target_handle ""
         foreach ip [get_drivers 1] {
             if {[string compare -nocase $ip $connected_ip] == 0} {
                 set target_handle $ip
@@ -440,8 +441,15 @@
 			add_prop $eth_node "xlnx,num-queues" $numqueues noformating $dts_file
 			add_prop $eth_node "xlnx,channel-ids" $id intlist $dts_file
 		}
-                set ipnode [get_node $target_handle]
-                set values [pldt getall $ipnode]
+                set ipnode ""
+                set values ""
+                if {$target_handle eq ""} {
+                    dtg_warning "Connected IP $connected_ip not found in driver list for \
+                        $drv_handle; skipping DMA interrupt cross-node properties."
+                } else {
+                    set ipnode [get_node $target_handle]
+                    set values [pldt getall $ipnode]
+                }
                 set intr_parent ""
                 if {[regexp "interrupt*" $values match]} {
                     set intr_val [pldt get $ipnode interrupts]
@@ -560,6 +568,13 @@
                     set eth_clkname_len [llength $eth_clk_names]
                     set i 0
                     set dclk ""
+                    set init_cores [expr {$num_cores > 4 ? $num_cores : 4}]
+                    for {set c 0} {$c < $init_cores} {incr c} {
+                        set core_clk_$c   ""
+                        set axi_aclk_$c   ""
+                        set index_$c      ""
+                        set axi_index_$c  ""
+                    }
                     while {$i < $eth_clkname_len} {
                         set clkname [lindex $eth_clk_names $i]
                         for {set corenum 0} {$corenum < $num_cores} {incr corenum} {
@@ -580,9 +595,16 @@
                 }
                 set eth_clk_len [expr {[llength [split $eth_clks ","]]}]
                 set clk_list [split $eth_clks ","]
-                set ipnode [get_node $target_handle]
+                set ipnode ""
                 set skip_dma_clocks 0
-                if {[catch {set clk_names [pldt get $ipnode clock-names]} msg]} {
+                if {$target_handle eq ""} {
+                    dtg_warning "Connected IP $connected_ip not found in driver list for \
+                        $drv_handle; skipping DMA clock property merging."
+                    set skip_dma_clocks 1
+                } else {
+                    set ipnode [get_node $target_handle]
+                }
+                if {!$skip_dma_clocks && [catch {set clk_names [pldt get $ipnode clock-names]} msg]} {
                     set skip_dma_clocks 1
                 }
                 if {!$skip_dma_clocks && [catch {set clks [pldt get $ipnode clocks]} msg]} {
@@ -609,7 +631,12 @@
                 append clk  "$eth_clks>," " $clks"
                 set clks [string trimright $clks ">"]
                 set null ""
-                if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g"))  && $core== 0} {
+                set clks_found_0 [expr {$axi_index_0 ne "" && $index_0 ne ""}]
+                if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g")) && $core == 0 && !$clks_found_0} {
+                    dtg_warning "Expected clock names rx_core_clk_0 / s_axi_aclk_0 not found for core 0 of \
+                        $drv_handle; skipping clock property generation for this core."
+                }
+                if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g"))  && $core== 0 && $clks_found_0} {
                             if {[llength $dclk]} {
                                 append clknames "$core_clk_0 " "$dclk " "$axi_aclk_0"
                             } else {
@@ -636,8 +663,14 @@
                             add_prop "${nodep}" "clock-names" $clk_names0 stringlist "pl.dtsi" 1
                             set clknames1 ""
                         }
+                        set clks_found_1 [expr {$axi_index_1 ne "" && $index_1 ne ""}]
                         if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g"))
-                             && $core == 1 && [llength $eth_node]} {
+                             && $core == 1 && [llength $eth_node] && !$clks_found_1} {
+                            dtg_warning "Expected clock names rx_core_clk_1 / s_axi_aclk_1 not found for core 1 of \
+                                $drv_handle; skipping clock property generation for this core."
+                        }
+                        if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g"))
+                             && $core == 1 && [llength $eth_node] && $clks_found_1} {
                             if {[llength $dclk]} {
                                 append clknames1 "$core_clk_1 " "$dclk " "$axi_aclk_1"
                             } else {
@@ -664,8 +697,14 @@
                             set clk_names1 ""
                             set clkvals1 ""
                         }
+                        set clks_found_2 [expr {$axi_index_2 ne "" && $index_2 ne ""}]
                         if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g"))
-                             && $core == 2 && [llength $eth_node]} {
+                             && $core == 2 && [llength $eth_node] && !$clks_found_2} {
+                            dtg_warning "Expected clock names rx_core_clk_2 / s_axi_aclk_2 not found for core 2 of \
+                                $drv_handle; skipping clock property generation for this core."
+                        }
+                        if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g"))
+                             && $core == 2 && [llength $eth_node] && $clks_found_2} {
                             if {[llength $dclk]} {
                                 append clknames2 "$core_clk_2 " "$dclk " "$axi_aclk_2"
                             } else {
@@ -693,8 +732,14 @@
                             set clk_names2 ""
                             set clkvals2 ""
                         }
+                        set clks_found_3 [expr {$axi_index_3 ne "" && $index_3 ne ""}]
                         if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g")) &&
-                            $core == 3 && [llength $eth_node]} {
+                            $core == 3 && [llength $eth_node] && !$clks_found_3} {
+                            dtg_warning "Expected clock names rx_core_clk_3 / s_axi_aclk_3 not found for core 3 of \
+                                $drv_handle; skipping clock property generation for this core."
+                        }
+                        if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g")) &&
+                            $core == 3 && [llength $eth_node] && $clks_found_3} {
                             if {[llength $dclk]} {
                                 append clknames3 "$core_clk_3 " "$dclk " "$axi_aclk_3"
                             } else {
