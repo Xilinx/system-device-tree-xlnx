@@ -46,13 +46,13 @@ proc ipipsu_generate {drv_handle} {
 	}
 
 	# Generate all the available IPI child nodes and return the target ipi count
-	set target_count [generate_ipi_child_nodes $ipi_list $node $drv_handle $src_buffer_base $src_buffer_index $dts_file $proctype]
+	set target_count [generate_ipi_child_nodes $ipi_list $node $drv_handle $src_buffer_base $src_buffer_index $dts_file $proctype $cpu]
 	add_prop $node "xlnx,ipi-target-count" $target_count int $dts_file
 
 }
 
 # Generate IPI child nodes
-proc generate_ipi_child_nodes {ipi_list node drv_handle src_buffer_base src_buffer_index dts_file proctype} {
+proc generate_ipi_child_nodes {ipi_list node drv_handle src_buffer_base src_buffer_index dts_file proctype cpu} {
 	# Constants for buffer calculations
 	set default_buffer_index 0xffff
 	set response_offset 0x20
@@ -60,10 +60,14 @@ proc generate_ipi_child_nodes {ipi_list node drv_handle src_buffer_base src_buff
 
 	set src_name [extract_ipi_number [hsi get_property NAME $drv_handle]]
 	set idx 0
+	set ipi5_present 0
 	set child_node_label_list [list]
 	foreach ipi_slave $ipi_list {
 		# Generate child node label
 		set dest_name [extract_ipi_number [hsi get_property NAME $ipi_slave]]
+		if {$dest_name eq "ipi_5"} {
+			set ipi5_present 1
+		}
 		set child_node_label "${src_name}_to_${dest_name}"
 		# For some of the Versal Premium devices, there is a duplication of PS IP cell objects.
 		# One set of names starts with pmcps_0_<ip_name> and other with ps_wizard_0_pmcps_0_<ip_name>.
@@ -117,6 +121,17 @@ proc generate_ipi_child_nodes {ipi_list node drv_handle src_buffer_base src_buff
 		add_prop $slv_node "#mbox-cells" 1 int $dts_file
 		generate_compatible $slv_node $proctype $dts_file
 
+		incr idx
+	}
+
+	# PMC needs a target entry for IPI5 even when the design does not instantiate it,
+	# as in JTAG mode XSDB requires IPI5 to communicate with PLM. 0x80 and 7 are the
+	# Versal IPI5 bitmask and buffer index. Only the PMC channel that owns a message
+	# buffer is eligible, the no-buffer one cannot carry the XSDB payload.
+	if {$cpu eq "PMC" && !$ipi5_present && ![string match -nocase $src_buffer_index "NIL"]} {
+		set xsdb_node [string trim [pcwdt insert $node end "${src_name}_to_xsdb: child"] "{}"]
+		add_prop $xsdb_node "xlnx,ipi-bitmask" 0x80 hexint $dts_file
+		add_prop $xsdb_node "xlnx,ipi-buf-index" 7 int $dts_file
 		incr idx
 	}
 	return $idx
