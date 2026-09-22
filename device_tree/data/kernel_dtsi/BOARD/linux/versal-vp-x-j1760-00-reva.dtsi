@@ -1,0 +1,34 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * dts file for Xilinx Versal VP-X-J1760-00 revA
+ *
+ * (C) Copyright 2026, Advanced Micro Devices, Inc.
+ *
+ * Michal Simek <michal.simek@amd.com>
+ */
+
+/ {
+	compatible = "xlnx,versal-vp-x-j1760-00-revA",
+		     "xlnx,versal-vp-x-j1760-00", "xlnx,versal";
+	model = "Xilinx Versal VP-X-J1760-00 Processor Char Board revA";
+
+	/*
+	 * DDR5 SODIMM
+	 */
+	chosen {
+		bootargs = "console=ttyAMA0 earlycon=pl011,mmio32,0xFF000000,115200n8";
+		stdout-path = "serial0:115200";
+	};
+
+};
+
+/*
+ * Versal XC2VP3202 has only one usb controller but x-prc-07 card is
+ * referencing usb1 so export new labels for the DT overlay to apply cleanly.
+ */
+&amba {
+	usb1: usb@ff9d0000 {
+		dwc3_1: usb@fe200000 {
+		};
+	};
+};
