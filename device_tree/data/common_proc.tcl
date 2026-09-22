@@ -535,6 +535,9 @@ proc get_node args {
 	}
 	if {[string_is_empty $dev_type] || [string_is_empty $addr]} {
 		return ""
+	} else {
+		# FIXME: Localized fix to replace "_" in the node names with "-"
+		set dev_type [string map {"_" "-" } $dev_type]
 	}
 	if {[is_ps_ip $handle]} {
 		if {[catch {set tmp [dict get $ps_mapping $addr label]} msg]} {
@@ -543,6 +546,7 @@ proc get_node args {
 			set value [split $tmp ": "]
 			set node_label [lindex $value 0]
 			set node_name [lindex $value 2]
+			set node_name [string map {"_" "-" } $node_name]
 			set node [create_node -n $node_name -l $node_label -u $addr -p $busname -d $dts_file]
 		}
 	} else {
@@ -783,15 +787,16 @@ proc create_node args {
 		axi_noc dp_videoaxi4s_bridge axi4svideo_bridge axi_vip \
 		xpm_cdc_gen bufgmux axi_apb_bridge gig_ethernet_pcs_pma \
 		dfe_rfsoc_adc_quadndual_io dfe_vec_fifo"
-	set temp [lsearch $ignore_list $node_name]
-	if {$temp >= 0  && [string match -nocase $node_unit_addr ""]} {
+
+	if {[lsearch $ignore_list [string map {"-" "_" } $node_name]] >= 0 \
+		&& [string match -nocase $node_unit_addr ""]} {
 		set val_lab [string match -nocase $node_label ""]
 		set val_name [string match -nocase $node_name ""]
 		if {$val_lab != 1 && $val_name != 1} {
 			set node_unit_addr [get_label_addr $node_name $node_label]
 		}
 	}
-	if {[string match -nocase $node_name "lmb_bram_if_cntlr"]} {
+	if {[string match -nocase $node_name "lmb-bram-if-cntlr"]} {
 		set val_lab [string match -nocase $node_label ""]
 		set val_name [string match -nocase $node_name ""]
 		set node_unit_addr [get_label_addr $node_name $node_label]
@@ -805,9 +810,10 @@ proc create_node args {
 		set interconnect [systemdt insert root end chosen]
 		return $interconnect
 	}
-	if {[string match -nocase $node_name "displayport"] || [string match -nocase $node_name "v_tc"]} {
+	if {([string match -nocase $node_name "displayport"] || [string match -nocase $node_name "v-tc"]) \
+		&& [string match -nocase $node_unit_addr ""]} {
 		set addr_val [get_label_addr $node_name $node_label]
-		set node_name "${node_name}_${addr_val}"
+		set node_name "${node_name}-${addr_val}"
 	}
 	if {[string match -nocase $node_name "reserved-memory"]} {
 		set interconnect [systemdt insert root end reserved-memory]
@@ -4893,6 +4899,8 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
                         set dev_type $ip
                     }
 				}
+				# dt syntax suggests to have "-" in the node name instead of "_".
+				set dev_type [string map {"_" "-" } $dev_type]
 				# Device tree node labels must be unique for each node_name.
 				# If the current node_name already exists in node_name_dict,
 				# update dev_type to the IP's NAME property to avoid duplication.
@@ -4900,12 +4908,12 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 				if { [dict exists $node_name_dict $node_str] } {
 					set read_handle [dict get $node_name_dict $node_str]
 					if {$read_handle != $drv_handle} {
-						set dev_type [get_ip_property $drv_handle NAME]
+						set dev_type [string map {"_" "-" } [get_ip_property $drv_handle NAME]]
 						set node_str "${dev_type}@${unit_addr}"
 					}
 				}
-				set t [get_ip_property $drv_handle IP_NAME]
-				set rt_node [create_node -n ${dev_type} -l ${label} -u ${unit_addr} -d ${default_dts} -p $bus_node]
+				set node_name $dev_type
+				set rt_node [create_node -n ${node_name} -l ${label} -u ${unit_addr} -d ${default_dts} -p $bus_node]
 				dict set node_name_dict $node_str $drv_handle
 			}
 		}

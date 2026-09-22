@@ -199,7 +199,7 @@
                         set plmem_label ""
                         set vcu_carveout_count 0
                         foreach child [systemdt children $resv_node] {
-                            if {[regexp {vcu_dma_mem_region@} $child]} {
+                            if {[regexp {vcu-dma-mem-region@} $child]} {
                                 incr vcu_carveout_count
                                 if {[string match "*@$unit_addr" $child]} {
                                     regexp {^(\S+):} $child -> plmem_label
@@ -212,7 +212,7 @@
                             } else {
                                 set plmem_label "plmem_vcu_dec_${vcu_carveout_count}"
                             }
-                            set plmem_node [create_node -l $plmem_label -n "vcu_dma_mem_region" -u $unit_addr -p $resv_node -d $resv_dts]
+                            set plmem_node [create_node -l $plmem_label -n "vcu-dma-mem-region" -u $unit_addr -p $resv_node -d $resv_dts]
                             add_prop "$plmem_node" "label" $plmem_label string $resv_dts
                             add_prop "$plmem_node" "compatible" "shared-dma-pool" string $resv_dts
                             add_prop "$plmem_node" "no-map" "" boolean $resv_dts
