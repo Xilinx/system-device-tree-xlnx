@@ -47,7 +47,6 @@
 			enable-method = "psci";
 			reg = <0>;
 			operating-points-v2 = <&cpu_opp_table>;
-			cpu-idle-states = <&CPU_RETENTION_0>;
 			d-cache-size = <0x10000>; /* 64kB */
 			d-cache-line-size = <64>;
 			/* 4 ways set associativity */
@@ -77,7 +76,6 @@
 			enable-method = "psci";
 			reg = <0x100>;
 			operating-points-v2 = <&cpu_opp_table>;
-			cpu-idle-states = <&CPU_RETENTION_0>;
 			d-cache-size = <0x10000>; /* 64kB */
 			d-cache-line-size = <64>;
 			/* 4 ways set associativity */
@@ -107,7 +105,6 @@
 			enable-method = "psci";
 			reg = <0x200>;
 			operating-points-v2 = <&cpu_opp_table>;
-			cpu-idle-states = <&CPU_RETENTION_0>;
 			d-cache-size = <0x10000>; /* 64kB */
 			d-cache-line-size = <64>;
 			/* 4 ways set associativity */
@@ -137,7 +134,6 @@
 			enable-method = "psci";
 			reg = <0x300>;
 			operating-points-v2 = <&cpu_opp_table>;
-			cpu-idle-states = <&CPU_RETENTION_0>;
 			d-cache-size = <0x10000>; /* 64kB */
 			d-cache-line-size = <64>;
 			/* 4 ways set associativity */
@@ -171,19 +167,6 @@
 			/* cache_size / (line_size/associativity) */
 			cache-sets = <2048>;
 			cache-unified;
-		};
-
-		idle-states {
-			entry-method = "psci";
-
-			CPU_RETENTION_0: cpu-retention-0 {
-				compatible = "arm,idle-state";
-				arm,psci-suspend-param = <0>;
-				local-timer-stop;
-				entry-latency-us = <300>;
-				exit-latency-us = <600>;
-				min-residency-us = <10000>;
-			};
 		};
 	};
 
