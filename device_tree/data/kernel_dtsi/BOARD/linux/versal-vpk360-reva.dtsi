@@ -127,7 +127,7 @@
 	};
 };
 
-&i2c2 { /* PMC_MIO44/45 - PCIe RP */
+&i2c1 { /* PMC_MIO44/45 - PCIe RP */
 
 	tcal6408_pcie: gpio@20 { /* u622 */
 		compatible = "ti,tcal6408";
