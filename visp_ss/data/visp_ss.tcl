@@ -155,6 +155,114 @@ proc visp_ss_generate {drv_handle} {
 	}
 
 	rpu_info_mbox_create  $drv_handle $default_dts $bus_name
+
+	# Pre-pass: group LIMO ISPs that resolve to the same ultimate upstream
+	# source (MIPI, or a broadcaster/switch that is itself fed by a common
+	# MIPI) so they can share a single visp_video node below. Must run before
+	# any node creation, and as a single upfront pass over ALL tiles/isps, so
+	# that transitive ("diamond") sharing - e.g. isp C sharing separately with
+	# both isp A and isp B - correctly links A and B into one group too,
+	# rather than only being discovered after A's and B's nodes already exist.
+	set visp_video_dsu [dict create]
+	set visp_video_upstream_owner [dict create]
+	for {set ptile 0} {$ptile < 3} {incr ptile} {
+		if {![get_ip_property $drv_handle "CONFIG.C_TILE${ptile}_ENABLE"]} {
+			continue
+		}
+		set pconfig_only [get_ip_property $drv_handle "CONFIG.C_CONFIG_ONLY"]
+		if {[string match -nocase $pconfig_only "true"] || $pconfig_only == 1} {
+			continue
+		}
+		for {set pisp 0} {$pisp < 2} {incr pisp} {
+			set pisp_id [expr {$ptile * 2 + $pisp}]
+			set pio_type [get_ip_property $drv_handle CONFIG.C_TILE${ptile}_ISP${pisp}_IO_TYPE]
+			if {$pio_type != 2} {
+				continue
+			}
+			set plive_stream [get_ip_property $drv_handle CONFIG.C_TILE${ptile}_ISP${pisp}_LIVE_INPUTS]
+			foreach vidin [get_isp_input_vidins $pisp $plive_stream] {
+				set p_first_hop [find_valid_visp_inip $drv_handle "TILE${ptile}_ISP_MIPI_VIDIN${vidin}"]
+				if {![llength $p_first_hop]} {
+					continue
+				}
+				set p_source [resolve_ultimate_visp_source [lindex $p_first_hop 0]]
+				if {![llength $p_source]} {
+					continue
+				}
+				dsu_find visp_video_dsu $pisp_id
+				if {[dict exists $visp_video_upstream_owner $p_source]} {
+					dsu_union visp_video_dsu $pisp_id [dict get $visp_video_upstream_owner $p_source]
+				} else {
+					dict set visp_video_upstream_owner $p_source $pisp_id
+				}
+			}
+		}
+	}
+	global visp_video_leader
+	set visp_video_leader [dict create]
+	dict for {leaf_isp_id unused_val} $visp_video_dsu {
+		dict set visp_video_leader $leaf_isp_id [dsu_find visp_video_dsu $leaf_isp_id]
+	}
+	global visp_video_node_by_leader
+	set visp_video_node_by_leader [dict create]
+
+	# Same grouping, scoped to LILO (io_type==1) and LIMxO (io_type==4) -
+	# LIMxO's live input side is identical to LILO's (single fixed pin per
+	# isp, no live_stream variability), and its live *output* port (whichever
+	# of MP/SP isn't memory-out) goes through the same vcap_<label> node
+	# convention via visp_ss_lilo_link_frmbufs, so a LILO/LIMxO pair sharing
+	# an upstream broadcaster must be grouped and merged exactly like two
+	# LILO ISPs - no diff between the two modes for merge-node purposes.
+	# This is a separate pass rather than reusing get_isp_input_vidins since
+	# both modes use a single fixed pin, not live_stream variability. Kept
+	# in its own dsu/leader/node maps so this group and LIMO's never mix
+	# (they use different downstream node conventions: vcap_<label> vs
+	# visp_video_<id>).
+	set visp_lilo_dsu [dict create]
+	set visp_lilo_upstream_owner [dict create]
+	for {set ptile 0} {$ptile < 3} {incr ptile} {
+		if {![get_ip_property $drv_handle "CONFIG.C_TILE${ptile}_ENABLE"]} {
+			continue
+		}
+		set pconfig_only [get_ip_property $drv_handle "CONFIG.C_CONFIG_ONLY"]
+		if {[string match -nocase $pconfig_only "true"] || $pconfig_only == 1} {
+			continue
+		}
+		for {set pisp 0} {$pisp < 2} {incr pisp} {
+			set pisp_id [expr {$ptile * 2 + $pisp}]
+			set pio_type [get_ip_property $drv_handle CONFIG.C_TILE${ptile}_ISP${pisp}_IO_TYPE]
+			if {$pio_type != 1 && $pio_type != 4} {
+				continue
+			}
+			if {$pisp == 0} {
+				set p_pin_name "TILE${ptile}_ISP_MIPI_VIDIN0"
+			} else {
+				set p_pin_name "TILE${ptile}_ISP_MIPI_VIDIN4"
+			}
+			set p_first_hop [find_valid_visp_inip $drv_handle $p_pin_name]
+			if {![llength $p_first_hop]} {
+				continue
+			}
+			set p_source [resolve_ultimate_visp_source [lindex $p_first_hop 0]]
+			if {![llength $p_source]} {
+				continue
+			}
+			dsu_find visp_lilo_dsu $pisp_id
+			if {[dict exists $visp_lilo_upstream_owner $p_source]} {
+				dsu_union visp_lilo_dsu $pisp_id [dict get $visp_lilo_upstream_owner $p_source]
+			} else {
+				dict set visp_lilo_upstream_owner $p_source $pisp_id
+			}
+		}
+	}
+	global visp_lilo_leader
+	set visp_lilo_leader [dict create]
+	dict for {leaf_isp_id unused_val} $visp_lilo_dsu {
+		dict set visp_lilo_leader $leaf_isp_id [dsu_find visp_lilo_dsu $leaf_isp_id]
+	}
+	global visp_lilo_vcap_by_leader
+	set visp_lilo_vcap_by_leader [dict create]
+
 	set reg_mapping {}
 	for {set tile 0} {$tile < 3} {incr tile} {
 		set tile_enabled [get_ip_property $drv_handle "CONFIG.C_TILE${tile}_ENABLE"]
@@ -328,13 +436,30 @@ proc handle_io_mode_2 {drv_handle tile isp isp_id default_dts sub_node sub_node_
 	add_prop "$ports_node" "#address-cells" 1 int $default_dts
 	add_prop "$ports_node" "#size-cells" 0 int $default_dts
 
-	set vcp_node [create_vcp_node $sub_node $default_dts $isp_id $bus_name]
-	set vcap_ports_node [create_node -l "vcap_ports${tile}${isp_id}" -n "ports" -p $vcp_node -d $default_dts]
-	add_prop "$vcap_ports_node" "#address-cells" 1 int $default_dts
-	add_prop "$vcap_ports_node" "#size-cells" 0 int $default_dts
+	# Look up the merge group computed by the pre-pass in visp_ss_generate.
+	# The leader (lowest isp_id in the group) is always processed first by
+	# the tile/isp loop there, so its visp_video node is guaranteed to
+	# already exist by the time a follower ISP reaches this point.
+	global visp_video_leader
+	global visp_video_node_by_leader
+	set leader_isp_id $isp_id
+	if {[info exists visp_video_leader] && [dict exists $visp_video_leader $isp_id]} {
+		set leader_isp_id [dict get $visp_video_leader $isp_id]
+	}
 
-	set reg_counter 0
-	set vcap_reg_counter 1
+	if {[info exists visp_video_node_by_leader] && [dict exists $visp_video_node_by_leader $leader_isp_id]} {
+		set shared_info [dict get $visp_video_node_by_leader $leader_isp_id]
+		set vcp_node        [lindex $shared_info 0]
+		set vcap_ports_node [lindex $shared_info 1]
+		set reg_counter     [lindex $shared_info 2]
+	} else {
+		set vcp_node [create_vcp_node $sub_node $default_dts $isp_id $bus_name]
+		set vcap_ports_node [create_node -l "vcap_ports${tile}${isp_id}" -n "ports" -p $vcp_node -d $default_dts]
+		add_prop "$vcap_ports_node" "#address-cells" 1 int $default_dts
+		add_prop "$vcap_ports_node" "#size-cells" 0 int $default_dts
+		set reg_counter 0
+	}
+
 	set port_addr_counter 0
 	set skip_default_port_creation 0  ;# Added flag
 
@@ -401,6 +526,10 @@ proc handle_io_mode_2 {drv_handle tile isp isp_id default_dts sub_node sub_node_
 			}
 		}
 	}
+
+	# Persist the node handles and updated reg_counter under this group's
+	# leader so a later follower ISP in the same group reuses this node.
+	dict set visp_video_node_by_leader $leader_isp_id [list $vcp_node $vcap_ports_node $reg_counter]
 }
 # IO_MODE==1 (LILO)
 proc handle_io_mode_1 {drv_handle tile isp isp_id default_dts sub_node sub_node_label bus_name} {
@@ -430,6 +559,10 @@ proc handle_io_mode_1 {drv_handle tile isp isp_id default_dts sub_node sub_node_
 			incr port_addr_counter1
 		}
 	}
+	# Link any frame buffer writer(s) feeding from this ISP's output(s) into
+	# the shared vcap node for its LILO merge group (creates the group's vcap
+	# node on the leader's first call, reuses/extends it for followers).
+	visp_ss_lilo_link_frmbufs $drv_handle $default_dts $sub_node_label $isp_id
 	add_iba_properties $drv_handle $sub_node $default_dts $isp $isp_iba $tile
 	# Add OBA properties
 	add_oba_properties_mp $drv_handle $sub_node $default_dts $isp $isp $tile
@@ -504,6 +637,15 @@ proc handle_io_mode_4 {drv_handle tile isp isp_id default_dts sub_node sub_node_
 		}
 		incr port_addr_counter1
 	}
+
+	# Link this ISP's live-out frame buffer writer into the shared vcap node
+	# for its LILO/LIMxO merge group - same call, same grouping as LILO (see
+	# handle_io_mode_1), so a LIMxO ISP sharing an upstream broadcaster with
+	# a LILO (or another LIMxO) ISP gets merged identically. The memory-out
+	# port above was never given an OF-graph endpoint and get_all_connected_
+	# frmbuf_wr_for_isp() excludes it, so only the live port's frmbuf_wr is
+	# ever linked here.
+	visp_ss_lilo_link_frmbufs $drv_handle $default_dts $sub_node_label $isp_id
 
 	add_iba_properties $drv_handle $sub_node $default_dts $isp $isp_iba $tile
 	add_oba_properties_mp $drv_handle $sub_node $default_dts $isp $isp $tile
@@ -832,7 +974,12 @@ proc visp_ss_outip_endpoints {drv_handle default_dts sub_node_label outip port_a
 		puts "Error: Failed to get IP_NAME for outip: $outip"
 		return
 	}
-	set valid_mmip_list "v_frmbuf_wr mipi_dsi_tx_subsystem"
+	# Extend the list with any memory-mapped downstream IP that visp_ss can stream to.
+	# v_frmbuf_wr and mipi_dsi_tx_subsystem use the visp_out<N><sub> label convention.
+	# preprocess_accel uses the preprocess_in<ip> label convention (matches preprocess.tcl
+	# gen_endpoint registration). outip is resolved from AXI hardware connections so no
+	# TCL execution-order dependency exists — no deferral needed for the output side.
+	set valid_mmip_list "v_frmbuf_wr mipi_dsi_tx_subsystem preprocess_accel"
 	if {[lsearch  -nocase $valid_mmip_list $outipname] >= 0} {
 		foreach ip $outip {
 			if {[llength $ip]} {
@@ -844,26 +991,50 @@ proc visp_ss_outip_endpoints {drv_handle default_dts sub_node_label outip port_a
 					set port0 [create_node -l "visp_port${port_addr_counter1}_${type}_${isp_id}" -n "port@${port_addr_counter1}" -p $ports_node -d $default_dts]
 					add_prop "$port0" "reg" $port_addr_counter1 int $default_dts
 					add_prop "$port0" "direction" output string $default_dts
-					set vispnode [create_node -n "endpoint" -l visp_out${port_addr_counter1}${sub_node_label} -p $port0 -d $default_dts]
-					gen_endpoint $drv_handle "visp_out${port_addr_counter1}${sub_node_label}"
-					add_prop "$vispnode" "remote-endpoint" $ip$sub_node_label reference $default_dts
-					gen_remoteendpoint $drv_handle "$ip$sub_node_label"
-					if {[string match -nocase [hsi get_property IP_NAME $ip] "v_frmbuf_wr"]} {
-						visp_ss_gen_frmbuf_wr_node $ip $drv_handle $default_dts $sub_node_label $port_addr_counter1 $type $isp_id
+					# Derive endpoint label from the downstream IP's naming convention.
+					# v_frmbuf_wr / mipi_dsi_tx_subsystem: visp_out<N><visp_handle>
+					# All other memory-mapped downstream IPs (e.g. preprocess_accel):
+					#   preprocess_in<outip_path> — matches gen_endpoint registration in
+					#   the downstream IP's own TCL (e.g. preprocess.tcl).
+					if {[string match -nocase [hsi get_property IP_NAME $ip] "v_frmbuf_wr"] || \
+					    [string match -nocase [hsi get_property IP_NAME $ip] "mipi_dsi_tx_subsystem"]} {
+						# frmbuf_wr/mipi_dsi: vcap node uses sub_node_label as the visp_ss part
+						set ep_label "visp_out${port_addr_counter1}${sub_node_label}"
+						set remo_ep "${ip}${sub_node_label}"
+					} else {
+						# Other downstream IPs (e.g. preprocess_accel): their port@0 endpoint
+						# label is $drv_handle$inip where inip = visp_ss HSI handle ($drv_handle).
+						# Use $drv_handle (full HSI instance path) not $sub_node_label (DTS name).
+						set ep_label "preprocess_in${ip}"
+						set remo_ep "${ip}${drv_handle}"
 					}
+					set vispnode [create_node -n "endpoint" -l $ep_label -p $port0 -d $default_dts]
+					gen_endpoint $drv_handle $ep_label
+					add_prop "$vispnode" "remote-endpoint" $remo_ep reference $default_dts
+					gen_remoteendpoint $drv_handle $remo_ep
+					# vcap/frmbuf linking for this ISP is handled once, after
+					# this loop completes, by visp_ss_lilo_link_frmbufs (see
+					# handle_io_mode_1) - not per-outip here, so that all of an
+					# ISP's frmbuf writers can be grouped under a single vcap
+					# node shared with any other ISP in the same LILO group.
 				} else {
 					if {[string match -nocase [hsi get_property IP_NAME $ip] "system_ila"]} {
 						continue
 					}
 					set connectip [get_connect_ip $ip $master_intf $default_dts]
 					if {[llength $connectip]} {
-						set vispnode [create_node -n "endpoint" -l visp_out$port_addr_counter1$sub_node_label -p $port0 -d $default_dts]
-						gen_endpoint $drv_handle "visp_out$sub_node_label"
+						if {[string match -nocase [hsi get_property IP_NAME $connectip] "v_frmbuf_wr"] || \
+						    [string match -nocase [hsi get_property IP_NAME $connectip] "mipi_dsi_tx_subsystem"]} {
+							set ep_label "visp_out${port_addr_counter1}${sub_node_label}"
+						} else {
+							set ep_label "preprocess_in${connectip}"
+						}
+						set vispnode [create_node -n "endpoint" -l $ep_label -p $port0 -d $default_dts]
+						gen_endpoint $drv_handle $ep_label
 						add_prop "$vispnode" "remote-endpoint" $connectip$drv_handle reference $default_dts
 						gen_remoteendpoint $drv_handle "$connectip$drv_handle"
-						if {[string match -nocase [hsi get_property IP_NAME $connectip] "v_frmbuf_wr"]} {
-							visp_ss_gen_frmbuf_wr_node $connectip $drv_handle $default_dts $sub_node_label $port_addr_counter1 $type $isp_id
-						}
+						# See comment above - vcap/frmbuf linking happens once,
+						# after this loop, via visp_ss_lilo_link_frmbufs.
 					}
 				}
 			} else {
@@ -874,85 +1045,140 @@ proc visp_ss_outip_endpoints {drv_handle default_dts sub_node_label outip port_a
 
 }
 
-proc visp_ss_gen_frmbuf_wr_node {outip drv_handle dts_file sub_node_label port_addr_counter1 type isp_id} {
-	set bus_node [detect_bus_name $drv_handle]
-	set vcap [create_node -n "vcap_$sub_node_label" -l vcap_$sub_node_label -p $bus_node -d $dts_file]
-	add_prop $vcap "compatible" "xlnx,video" string $dts_file
-	add_prop $vcap "xlnx,atomic_streamon" 1 int $dts_file
-	# Build DMA list for multiple frame buffer writers
-	set dma_list ""
-	# Get all connected frame buffer writers for this ISP
-	set all_outips [get_all_connected_frmbuf_wr_for_isp $drv_handle $isp_id]
-	set num_outips [llength $all_outips]
-	set vcap_ports_node [create_node -n "ports" -l vcap_ports$sub_node_label -p $vcap -d $dts_file]
-	add_prop "$vcap_ports_node" "#address-cells" 1 int $dts_file
-	add_prop "$vcap_ports_node" "#size-cells" 0 int $dts_file
-
-	if {$num_outips == 2} {
-		# Two outips (PO and SO) case
-		set dma_list ""
-		set dma_names_list {}
-		for {set i 0} {$i < 2} {incr i} {
-			set current_outip [lindex $all_outips $i]
-			if {$i == 0} {
-				set dma_list "<&$current_outip 0>"
-			} else {
-				append dma_list " , <&$current_outip 1>"
-			}
-			lappend dma_names_list "port$i"
-		}
-		add_prop $vcap "dmas" $dma_list noformating $dts_file
-		add_prop $vcap "dma-names" $dma_names_list stringlist $dts_file
-
-		# Create two input ports for vcap
-		for {set i 0} {$i < 2} {incr i} {
-			set outip_index [expr {$i == 0 ? 1 : 0}]
-			set current_outip [lindex $all_outips $outip_index]
-			set reg_value [expr {$i == 0 ? 1 : 0}]
-			set vcap_port_node [create_node -n "port@$i" -l vcap_port${sub_node_label}_$i -p $vcap_ports_node -d $dts_file]
-			add_prop "$vcap_port_node" "reg" $reg_value int $dts_file
-			add_prop "$vcap_port_node" "direction" input string $dts_file
-			set vcap_in_node [create_node -n "endpoint" -l ${current_outip}${sub_node_label} -p $vcap_port_node -d $dts_file]
-			gen_endpoint $drv_handle "${current_outip}${sub_node_label}"
-			add_prop "$vcap_in_node" "remote-endpoint" visp_out[expr {$outip_index+1}]$sub_node_label reference $dts_file
-			gen_remoteendpoint $drv_handle "visp_out[expr {$outip_index+1}]$sub_node_label"
-		}
-	} elseif {$num_outips == 1} {
-		# Single outip case
-		set current_outip [lindex $all_outips 0]
-		add_prop $vcap "dmas" "<&$current_outip 0>" noformating $dts_file
-		add_prop $vcap "dma-names" "port0" string $dts_file
-
-		set vcap_port_node [create_node -n "port@0" -l vcap_port$sub_node_label -p $vcap_ports_node -d $dts_file]
-		add_prop "$vcap_port_node" "reg" 0 int $dts_file
-		add_prop "$vcap_port_node" "direction" input string $dts_file
-		set vcap_in_node [create_node -n "endpoint" -l ${current_outip}${sub_node_label} -p $vcap_port_node -d $dts_file]
-		gen_endpoint $drv_handle "${current_outip}${sub_node_label}"
-		add_prop "$vcap_in_node" "remote-endpoint" visp_out${port_addr_counter1}$sub_node_label reference $dts_file
-		gen_remoteendpoint $drv_handle "visp_out$sub_node_label"
-	} else {
-		# No outip connected, fallback (do nothing or log)
-		puts "No outip connected for ISP $isp_id"
-	}
-}
-# Helper function to get all connected frame buffer writers for an ISP
+# Returns {outip port_num} pairs for every frame buffer writer connected to
+# this ISP's VIDOUT_PO/VIDOUT_SO. port_num must match the visp_out<N><label>
+# endpoint label that was actually created for that connection by whichever
+# handle_io_mode_* function ran for this ISP - but LILO and LIMxO number
+# their ports differently, so this function mirrors each mode's own scheme
+# rather than using one counter rule for both:
+#
+#  - LILO (handle_io_mode_1): port_addr_counter1 only advances when
+#    get_connected_stream_ip finds a connection (see its PO/SO loop), so we
+#    match that here: connectivity-conditional counting.
+#
+#  - LIMxO (handle_io_mode_4): port_addr_counter1 advances ONCE PER PO/SO
+#    UNCONDITIONALLY (its mem-out branch creates port@N without ever calling
+#    get_connected_stream_ip, and its increment sits outside both branches),
+#    i.e. purely positional: PO is always port 1, SO is always port 2. Using
+#    connectivity-conditional counting here instead would desync from that
+#    the moment a mem-out pin's connection isn't picked up by
+#    get_connected_stream_ip the same way a live pin's is - producing a
+#    port_num that doesn't match the endpoint handle_io_mode_4 actually
+#    created (a dangling remote-endpoint phandle, caught by dtc). So for
+#    LIMxO we count positionally too, and separately exclude the memory-out
+#    slot (ENABLE_MP_MEM/ENABLE_SP_MEM) from the returned list - it's bound
+#    to visp_video by phandle instead of vcap, and must not become an extra
+#    vcap DMA channel alongside the live one.
 proc get_all_connected_frmbuf_wr_for_isp {drv_handle isp_id} {
 	set frmbuf_list {}
-	# Calculate tile and isp from isp_id
 	set tile [expr $isp_id / 2]
 	set isp [expr $isp_id % 2]
-	# For each ISP, check both PO and SO outputs
-	foreach out_type {PO SO} {
+
+	set mp_is_mem 0
+	set sp_is_mem 0
+	set io_type [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_IO_TYPE]
+	set is_limxo [expr {$io_type == 4}]
+	if {$is_limxo} {
+		set prefix "CONFIG.C_TILE${tile}_ISP${isp}_"
+		set mp_mem_val [get_ip_property $drv_handle "${prefix}ENABLE_MP_MEM"]
+		set sp_mem_val [get_ip_property $drv_handle "${prefix}ENABLE_SP_MEM"]
+		set mp_is_mem [expr {([string match -nocase "true" $mp_mem_val] || $mp_mem_val eq "1") ? 1 : 0}]
+		set sp_is_mem [expr {([string match -nocase "true" $sp_mem_val] || $sp_mem_val eq "1") ? 1 : 0}]
+	}
+
+	set port_addr_counter1 1
+	foreach out_type {PO SO} is_mem [list $mp_is_mem $sp_is_mem] {
 		set intf "TILE${tile}_ISP${isp}_VIDOUT_${out_type}"
 		set outip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $intf]
-		if {[llength $outip] > 0} {
-			set outipname [hsi get_property IP_NAME $outip]
-			if {[string match -nocase $outipname "v_frmbuf_wr"]} {
-				lappend frmbuf_list $outip
+		if {$is_limxo} {
+			if {!$is_mem && [llength $outip] > 0} {
+				set outipname [hsi get_property IP_NAME $outip]
+				if {[string match -nocase $outipname "v_frmbuf_wr"]} {
+					lappend frmbuf_list [list $outip $port_addr_counter1]
+				}
+			}
+			incr port_addr_counter1
+		} else {
+			if {[llength $outip] > 0} {
+				set outipname [hsi get_property IP_NAME $outip]
+				if {[string match -nocase $outipname "v_frmbuf_wr"]} {
+					lappend frmbuf_list [list $outip $port_addr_counter1]
+				}
+				incr port_addr_counter1
 			}
 		}
 	}
 	return $frmbuf_list
+}
+
+# Links this ISP's frame buffer writer(s) as additional DMA channels on the
+# shared vcap node for its LILO merge group. Creates the group's vcap node on
+# the leader's first call (named after the leader's own sub_node_label);
+# followers reuse and extend it, with port/reg numbering continuing across
+# the whole group so a follower's channels never collide with the leader's.
+proc visp_ss_lilo_link_frmbufs {drv_handle default_dts sub_node_label isp_id} {
+	global visp_lilo_leader
+	global visp_lilo_vcap_by_leader
+
+	set frmbufs [get_all_connected_frmbuf_wr_for_isp $drv_handle $isp_id]
+	if {![llength $frmbufs]} {
+		return
+	}
+
+	set leader_isp_id $isp_id
+	if {[info exists visp_lilo_leader] && [dict exists $visp_lilo_leader $isp_id]} {
+		set leader_isp_id [dict get $visp_lilo_leader $isp_id]
+	}
+
+	if {[info exists visp_lilo_vcap_by_leader] && [dict exists $visp_lilo_vcap_by_leader $leader_isp_id]} {
+		set group_info      [dict get $visp_lilo_vcap_by_leader $leader_isp_id]
+		set vcap            [lindex $group_info 0]
+		set vcap_ports_node [lindex $group_info 1]
+		set reg_counter     [lindex $group_info 2]
+		set dma_list        [lindex $group_info 3]
+		set dma_names_list  [lindex $group_info 4]
+	} else {
+		set bus_node [detect_bus_name $drv_handle]
+		set vcap [create_node -n "vcap_$sub_node_label" -l vcap_$sub_node_label -p $bus_node -d $default_dts]
+		add_prop $vcap "compatible" "xlnx,video" string $default_dts
+		add_prop $vcap "xlnx,atomic_streamon" 1 int $default_dts
+		set vcap_ports_node [create_node -n "ports" -l vcap_ports$sub_node_label -p $vcap -d $default_dts]
+		add_prop "$vcap_ports_node" "#address-cells" 1 int $default_dts
+		add_prop "$vcap_ports_node" "#size-cells" 0 int $default_dts
+		set reg_counter 0
+		set dma_list ""
+		set dma_names_list {}
+	}
+
+	foreach entry $frmbufs {
+		set outip     [lindex $entry 0]
+		set port_num  [lindex $entry 1]
+
+		if {$dma_list eq ""} {
+			set dma_list "<&$outip 0>"
+		} else {
+			append dma_list " , <&$outip 0>"
+		}
+		lappend dma_names_list "port${reg_counter}"
+
+		set vcap_port_node [create_node -n "port@${reg_counter}" -l vcap_port${sub_node_label}_${reg_counter} -p $vcap_ports_node -d $default_dts]
+		add_prop "$vcap_port_node" "reg" $reg_counter int $default_dts
+		add_prop "$vcap_port_node" "direction" input string $default_dts
+		set vcap_in_node [create_node -n "endpoint" -l ${outip}${sub_node_label} -p $vcap_port_node -d $default_dts]
+		gen_endpoint $drv_handle "${outip}${sub_node_label}"
+		add_prop "$vcap_in_node" "remote-endpoint" visp_out${port_num}${sub_node_label} reference $default_dts
+		gen_remoteendpoint $drv_handle "visp_out${port_num}${sub_node_label}"
+
+		incr reg_counter
+	}
+
+	# noformating/stringlist add_prop only appends on repeat calls with an
+	# unchanged value; force a full overwrite each time so accumulated group
+	# DMA channels replace (not duplicate) the previous partial list.
+	add_prop $vcap "dmas" $dma_list noformating $default_dts 1
+	add_prop $vcap "dma-names" $dma_names_list stringlist $default_dts 1
+
+	dict set visp_lilo_vcap_by_leader $leader_isp_id [list $vcap $vcap_ports_node $reg_counter $dma_list $dma_names_list]
 }
 
 proc find_valid_visp_inip {drv_handle visp_ip_name} {
@@ -989,6 +1215,90 @@ proc find_valid_visp_inip {drv_handle visp_ip_name} {
 
 
 	return ""
+}
+
+# Starting from an ISP's already-resolved first-hop upstream IP (broadcaster,
+# switch, or mipi, as found by find_valid_visp_inip), continue traversing
+# backward to the ultimate MIPI CSI2 RX source, so that two ISPs are only
+# grouped when they truly share the same physical sensor - not merely the
+# same intermediate switch/broadcaster instance (which could otherwise be
+# routing two different MIPI sources to two different ISPs). axis_switch is
+# treated the same as axis_broadcaster here (traverse through its primary
+# input) matching how axis_switch_update_endpoints/get_axis_switch_in_connect_ip
+# already treat it elsewhere in this framework - as a single-primary-input
+# fan-out in this video-pipeline context, not a general multi-input crossbar.
+proc resolve_ultimate_visp_source {first_hop_ip {hop_count 0}} {
+	if {![llength $first_hop_ip] || $hop_count > 20} {
+		return $first_hop_ip
+	}
+	set ip_name [hsi::get_property IP_NAME $first_hop_ip]
+
+	if {[string match -nocase $ip_name "axis_broadcaster"] || [string match -nocase $ip_name "axis_switch"]} {
+		set slave_intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $first_hop_ip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
+		if {[llength $slave_intf]} {
+			set upstream [get_connected_stream_ip [hsi::get_cells -hier $first_hop_ip] [lindex $slave_intf 0]]
+			if {[llength $upstream]} {
+				return [resolve_ultimate_visp_source [lindex $upstream 0] [expr {$hop_count + 1}]]
+			}
+		}
+	}
+
+	return $first_hop_ip
+}
+
+# Returns the ordered list of physical VIDIN pin indices this ISP uses.
+# ISP0 fills from VIDIN0 upward; ISP1 fills from VIDIN4 downward (both cores
+# share one pool of 5 VIDIN pins per tile). Mirrors the special-case/fallback
+# split already used by the port-creation loop in handle_io_mode_2.
+proc get_isp_input_vidins {isp live_stream} {
+	set vidins {}
+	if {$isp == 1 && $live_stream <= 2} {
+		if {$live_stream == 1} {
+			set vidins {4}
+		} elseif {$live_stream == 2} {
+			set vidins {4 3}
+		}
+	} else {
+		for {set i 0} {$i < $live_stream} {incr i} {
+			lappend vidins [expr {$i % 4}]
+		}
+	}
+	return $vidins
+}
+
+# Minimal union-find (disjoint-set) used to group LIMO ISPs that share an
+# upstream source, including transitively (e.g. isp C sharing with both isp A
+# and isp B links A and B into the same group even though A and B share
+# nothing directly).
+proc dsu_find {dsu_var x} {
+	upvar 1 $dsu_var dsu
+	if {![dict exists $dsu $x]} {
+		dict set dsu $x $x
+	}
+	set p [dict get $dsu $x]
+	if {$p != $x} {
+		set p [dsu_find dsu $p]
+		dict set dsu $x $p
+	}
+	return $p
+}
+
+proc dsu_union {dsu_var a b} {
+	upvar 1 $dsu_var dsu
+	set ra [dsu_find dsu $a]
+	set rb [dsu_find dsu $b]
+	if {$ra == $rb} {
+		return
+	}
+	# Smaller root always wins, so the group's leader ends up being the
+	# lowest isp_id across the whole component - and since visp_ss_generate's
+	# tile/isp loop always processes isp_ids in increasing order, the leader
+	# is guaranteed to be generated before any of its followers.
+	if {$ra < $rb} {
+		dict set dsu $rb $ra
+	} else {
+		dict set dsu $ra $rb
+	}
 }
 
 proc generate_reserved_memory {rpu_ids default_dts bus_name} {
