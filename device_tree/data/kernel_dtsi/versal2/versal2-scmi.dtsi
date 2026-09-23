@@ -192,12 +192,6 @@
 		clock-mult = <1>;
 	};
 
-	clk50: clk50 {
-		compatible = "fixed-clock";
-		#clock-cells = <0>;
-		clock-frequency = <50000000>;
-	};
-
 	clk150: clk150 {
 		compatible = "fixed-clock";
 		#clock-cells = <0>;
@@ -401,7 +395,7 @@
 };
 
 &mmi_dcdma {
-	clocks = <&clk50>;
+	clocks = <&scmi_clk SCMI_CLK_VERSAL2_PS_AXI_DMA>;
 };
 
 &adma0 {
@@ -598,7 +592,7 @@
 };
 
 &mmi_dc {
-	clocks = <&scmi_clk SCMI_CLK_VERSAL2_DC_PIXEL>;
+	clocks = <&scmi_clk SCMI_CLK_VERSAL2_MMIPLL>, <&scmi_clk SCMI_CLK_VERSAL2_DC_PIXEL>, <&scmi_clk SCMI_CLK_VERSAL2_MMI_AUX1_REF>;
 	resets = <&scmi_reset SCMI_RST_VERSAL2_DC>;
 };
 
