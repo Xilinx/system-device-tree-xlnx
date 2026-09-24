@@ -2232,7 +2232,21 @@ proc proc_mapping {} {
 				if {[string match -nocase $exception_dts "pl.dtsi"]} {
 					set exception_bus "amba_pl: amba_pl"
 				}
-				set node [create_node -n ${periph} -l ${periph} -u $base_addr -d ${exception_dts} -p ${exception_bus}]
+				# An external master interface port is named by the user in the
+				# block design and can clash with a static PS node label ,
+				# making DTC abort with a duplicate_label error. If the name
+				# matches a static PS label, namespace the label as "ext_<name>".
+				set node_label ${periph}
+				set ps_mapping [gen_ps_mapping]
+				foreach ps_addr [dict keys $ps_mapping] {
+					if {[string equal -nocase [dict get $ps_mapping $ps_addr label] $periph]} {
+						set node_label "ext_${periph}"
+						break
+					}
+				}
+				set node [create_node -n ${periph} -l ${node_label} -u $base_addr -d ${exception_dts} -p ${exception_bus}]
+				global node_dict cur_hw_design
+				dict set node_dict $cur_hw_design $periph $node
 				gen_reg_property $periph "skip_ps_check"
 				add_prop $node "compatible" "${periph}" string ${exception_dts}
 				add_prop $node "xlnx,ip-name" "${periph}" string ${exception_dts}
