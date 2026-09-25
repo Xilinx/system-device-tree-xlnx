@@ -791,10 +791,12 @@ proc gen_axis_switch {ip} {
                       }
                }
 	       puts "connectip:$connectip intf:$intf"
-	       if {[llength $connectip]} {
-		       incr count
-	       }
+               if {![llength $connectip]} {
+			puts "WARNING: No connected stream IP found: ip=$ip intf=$intf"
+			continue
+		}
 
+		incr count
 		set connectnextip_ip_name [get_ip_property $connectip IP_NAME]
 		set valid_mmip_list "v_tpg v_demosaic v_gamma_lut v_proc_ss v_frmbuf_wr v_mix v_multi_scaler v_scenechange v_hdmi_tx_ss v_hdmi_txss1 v_uhdsdi_audio v_smpte_uhdsdi_tx_ss audio_formatter visp_ss i2s_receiver i2s_transmitter mipi_dsi_tx_subsystem ISPPipeline_accel"
 		if {[lsearch  -nocase $valid_mmip_list $connectnextip_ip_name] >= 0} {
