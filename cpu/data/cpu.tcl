@@ -194,8 +194,8 @@
 			{$use_bitman_s > 0} zbs
 			{$use_mmu > 3 && $use_sstc > 0} sstc
 			{$use_mmu > 3 && $pmp_entries > 0 && $pmp_enhancements > 0} smepmp
-			{$trap_enhancement == 2 || $trap_enhancement == 3} smrnmi
-			{$trap_enhancement == 1 || $trap_enhancement == 3} smdbltrp
+			{($trap_enhancement == 2 || $trap_enhancement == 3) && $use_mmu < 2} smrnmi
+			{($trap_enhancement == 1 || $trap_enhancement == 3) && $use_mmu < 2} smdbltrp
 			{$use_counters > 0} zicntr
 			{$debug_event_counters > 0 || $debug_latency_counters > 0} zihpm
 		}
