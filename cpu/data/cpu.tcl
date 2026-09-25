@@ -174,9 +174,9 @@
 
 		if {$use_fpu >= 1} {
 			lappend ext "f"
-			if {$is_64_bit_mb} {
-				lappend ext "d"
-			}
+		}
+		if {$use_fpu >= 2} {
+			lappend ext "d"
 		}
 
 		if {$use_compression > 0} { lappend ext "c" }
