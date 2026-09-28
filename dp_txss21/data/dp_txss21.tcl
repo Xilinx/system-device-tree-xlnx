@@ -285,6 +285,24 @@ proc dp_tx_21_add_hier_instances {drv_handle} {
 		}
 	}
 
+	# The link clocking wizard is clkx5_wiz on Versal Gen 2 designs and clk_wiz
+	# on the earlier ones, so try both names and keep the first match. It is
+	# handled outside ip_subcores because both names map to the single
+	# clkWiz-present / clkWiz-connected pair that dp21txss.yaml declares.
+	set clkwiz_handle ""
+	foreach clkwiz_ip {clkx5_wiz clk_wiz} {
+		set clkwiz_handle [set_ip_handles_for_ss_subcores $clkwiz_ip $drv_handle]
+		if {![string_is_empty $clkwiz_handle]} {
+			break
+		}
+	}
+	if {[string_is_empty $clkwiz_handle]} {
+		add_prop "$node" "clkWiz-present" 0 int $dts_file
+	} else {
+		add_prop "$node" "clkWiz-present" 1 int $dts_file
+		add_prop "$node" "clkWiz-connected" $clkwiz_handle reference $dts_file
+	}
+
 	set timers [set_ip_handles_for_ss_subcores axi_timer $drv_handle]
 	#hsi::get_cells -hier -filter {IP_NAME==axi_timer}
 	#processor_hier_0_axi_timer_0 dp_rx_hier_0_v_dp_rxss1_0_timer dp_tx_hier_0_v_dp_txss1_0_timer
