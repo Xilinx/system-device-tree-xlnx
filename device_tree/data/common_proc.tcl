@@ -101,6 +101,8 @@ if {[catch {set tmp [::struct::tree systemdt]} msg]} {
 }
 if {[catch {set tmp [::struct::tree clkdt]} msg]} {
 }
+if {[catch {set tmp [::struct::tree aiedt]} msg]} {
+}
 
 #namespace export get_drivers
 #namespace export gen_root_node
@@ -179,6 +181,8 @@ proc destroy_tree {} {
 	psdt destroy
 	pcwdt destroy
 	systemdt destroy
+	if {[catch {aiedt destroy} msg]} {
+	}
 }
 
 proc is_zynqmp_platform {proctype} {
@@ -831,6 +835,9 @@ proc create_node args {
 	} elseif {[string match -nocase $dts_file "versal-clk.dtsi"]} {
 		set treeobj "clkdt"
 		set root "psroot"
+	} elseif {[string match -nocase $dts_file "aie_aperture.dtsi"]} {
+		set treeobj "aiedt"
+		set root "aieroot"
 	} else {
 		set treeobj "systemdt"
 		set root "systemroot"
@@ -1024,6 +1031,8 @@ proc add_prop args {
 		set treeobj "pldt"
 	} elseif {[string match -nocase $dts_file "versal.dtsi"] || [string match -nocase $dts_file "zynqmp.dtsi"]} {
 		set treeobj "psdt"
+	} elseif {[string match -nocase $dts_file "aie_aperture.dtsi"]} {
+		set treeobj "aiedt"
 	} else {
 		set treeobj "systemdt"
 	}
@@ -1833,6 +1842,23 @@ proc remove_prefix_from_addr {addr} {
 	return $addr
 }
 
+# AI engine is treated as a PL IP by get_ip_type, so its address comes
+# from the first memory range or the same fallback properties as other PL IPs.
+# Keep this lookup independent of generation caches for preflight selection.
+proc get_ai_engine_baseaddr {cell} {
+	set ranges [hsi::get_mem_ranges $cell]
+	if {[llength $ranges]} {
+		return [string tolower [hsi get_property BASE_VALUE [lindex $ranges 0]]]
+	}
+	set properties [hsi list_property $cell]
+	foreach property {CONFIG.C_BASEADDR CONFIG.C_S_AXI_BASEADDR CONFIG.C_S_AXI_CTRL_BASEADDR CONFIG.AXI_CTRL_BASEADDR} {
+		if {[lsearch -nocase $properties $property] >= 0} {
+			return [string tolower [hsi get_property $property $cell]]
+		}
+	}
+	return ""
+}
+
 proc get_baseaddr {slave_ip {no_prefix ""} {proc_handle ""}} {
 	global baseaddr_dict
 	global cur_hw_design
@@ -1847,7 +1873,9 @@ proc get_baseaddr {slave_ip {no_prefix ""} {proc_handle ""}} {
 	set slave_cell [cells_hier $slave_ip]
 	# only returns the first addr
 	set ip_name [get_ip_property $slave_ip IP_NAME]
-	if {[string match -nocase $slave_ip "psu_sata"]} {
+	if {$ip_name eq "ai_engine" && [string_is_empty $proc_handle]} {
+		set addr [get_ai_engine_baseaddr $slave_cell]
+	} elseif {[string match -nocase $slave_ip "psu_sata"]} {
 		set addr [string tolower [get_ip_property $slave_ip CONFIG.C_S_AXI_BASEADDR]]
 	} elseif {$ip_name in {"psx_i3c" "i3c"}} {
 		set addr1 [string tolower [get_ip_property $slave_ip CONFIG.C_S_AXI_BASEADDR]]

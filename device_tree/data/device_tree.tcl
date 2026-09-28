@@ -482,6 +482,24 @@ proc list_board_files {{pattern ""}} {
     return $results
 }
 
+# Parse only unsigned decimal or explicit hexadecimal integers. Accumulate with
+# Tcl bignums: wide()/scan can truncate before a caller checks its bounds.
+proc parse_dt_integer {value description} {
+	if {![regexp {^(?:[0-9]+|0[xX][0-9a-fA-F]+)$} $value]} {
+		error "ERROR: Invalid $description '$value' (expected decimal or hexadecimal integer)."
+	}
+	set radix 10
+	if {[string match -nocase 0x* $value]} {
+		set radix 16
+		set value [string range $value 2 end]
+	}
+	set number 0
+	foreach digit [split [string tolower $value] ""] {
+		set number [expr {$number * $radix + [string first $digit 0123456789abcdef]}]
+	}
+	return $number
+}
+
 proc set_dt_param args {
 	global env
 	if {[llength $args] == 0 || ![string match -* [lindex $args 0]]} {
@@ -1735,6 +1753,12 @@ Generates system device tree based on args given in:
 	}
 
 	source [file join $path "device_tree" "data" "common_proc.tcl"]
+	if {[catch {aiedt destroy} msg]} {
+	}
+	::struct::tree aiedt
+	set ::aie_aperture_targets [dict create]
+	unset -nocomplain ::aie_device_label
+	set ::aie_inventory [dict create]
 	source [file join $path "device_tree" "data" "common_props.tcl"]
 	source [file join $path "device_tree" "data" "video_utils.tcl"]
 	source [file join $path "device_tree" "data" "xillib_common.tcl"]
@@ -1744,6 +1768,12 @@ Generates system device tree based on args given in:
 	source [file join $path "device_tree" "data" "partial_proc.tcl"]
 	rdi::source [file join $path "device_tree" "data" "parts_spec.tcl"]
 	source [file join $path "device_tree" "data" "pmc_dt.tcl"]
+
+	source [file join $path "ai_engine" "data" "ai_engine.tcl"]
+	set aie_rm_xsas {}
+	if {$rm_xsa_exist} { set aie_rm_xsas $rm_xsa }
+	ai_engine_preflight $xsa $aie_rm_xsas $dir
+	set ::aie_generation_context [file normalize $xsa]
 
 	set common_file "$path/device_tree/data/config.yaml"
 	set dir [get_user_config $common_file -dir]
@@ -1811,6 +1841,10 @@ Generates system device tree based on args given in:
 			lappend ::rp_excluded_cells {*}$rp_cells
 		}
 	}
+
+	set aie_static_rp ""
+	if {!$rm_xsa_exist} { set aie_static_rp [ai_engine_get_rp_inst] }
+	set peri_list [ai_engine_filter_peripherals $peri_list 0 $rm_xsa_exist $aie_static_rp]
 
 	set proclist [get_valid_proc_list]
 	set processor_ip_list [list]
@@ -2037,6 +2071,7 @@ Generates system device tree based on args given in:
 		move_match_node_to_top pldt root "fpga_PR*"
 		write_dt pldt root "$dir/pl.dtsi"
 		write_dt pcwdt root "$dir/pcw.dtsi"
+		write_aie_aperture_overlays $dir
 		if {$rm_xsa_exist != 0} {
 			foreach partial_xsa $rm_xsa {
 				pldt destroy
@@ -2054,12 +2089,23 @@ Generates system device tree based on args given in:
 		delete_tree pldt root
 		write_dt systemdt root "$dir/system-top.dts"
 		write_dt pldt root "$dir/pl.dtsi"
+		write_aie_aperture_overlays $dir
 		global set osmap
 		if {[info exists osmap]} {
 			unset osmap
 		}
 	}
 	destroy_tree
+}
+
+proc write_aie_aperture_overlays {dir} {
+	foreach grp [aiedt children root] {
+		if {![string match "aie_ap_grp_*" $grp]} {
+			continue
+		}
+		set col [string range $grp [string length "aie_ap_grp_"] end]
+		write_rm_dt aiedt $grp "$dir/aie_aperture_${col}.dtsi"
+	}
 }
 
 proc move_match_node_to_top {tree parent match} {

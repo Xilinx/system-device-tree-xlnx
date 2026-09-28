@@ -31,13 +31,16 @@ proc write_rm_dt args {
 
 	set common_file "$path/device_tree/data/config.yaml"
 	set fd [open $file w]
-	if {[string match -nocase $dt "pldt"]} {
+	if {[string match -nocase $dt "pldt"] || [string match -nocase $dt "aiedt"]} {
 		puts $fd "\/dts-v1\/;\n\/plugin\/;"
 	}
 
 	set partial_fileName [file tail $file]
 	set partial_fileName [file rootname $partial_fileName]
 	set partial_fileName "${partial_fileName}_"
+	if {[string match -nocase $dt "aiedt"]} {
+		set partial_fileName ""
+	}
 	foreach children $mainroot {
 		set childs [$dt children $children]
 		set proplist [$dt getall $children]
@@ -45,7 +48,12 @@ proc write_rm_dt args {
 			set children "amba"
 			set proplist ""
 		}
-		puts $fd "&$children {"
+		set emit_target $children
+		if {[info exists ::aie_aperture_targets] && \
+				[dict exists $::aie_aperture_targets $children]} {
+			set emit_target [dict get $::aie_aperture_targets $children]
+		}
+		puts $fd "&$emit_target {"
 		if {[string match -nocase $proplist ""]} {
 		} else {
 			set lenact [llength $proplist]
@@ -84,7 +92,19 @@ proc write_rm_dt args {
 			}
 		}
 		foreach child $childs {
-			puts $fd "\t$partial_fileName$child {"
+			# The AIE device node is referenced by a separate aperture overlay, so
+			# its label must not depend on the partial file name.
+			set emit_label $partial_fileName
+			set emit_child $child
+			if {![catch {set comp [$dt get $child compatible]}] && \
+					[string match "*xlnx,ai-engine*" $comp]} {
+				set emit_label ""
+				set cell_label [string trim [lindex [split $child ":"] 0]]
+				if {[info exists ::aie_device_label] && $cell_label ne $::aie_device_label} {
+					set emit_child "$::aie_device_label: $child"
+				}
+			}
+			puts $fd "\t$emit_label$emit_child {"
 			set nestchilds [$dt children $child]
 			set proplist [$dt getall $child]
 			if {[string match -nocase $proplist ""]} {
@@ -317,6 +337,8 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 	set pl_ps_irq1 0
 	set pl_ps_irq0 0
 	set is_rm_design 1
+	set ::rp_excluded_cells {}
+	set ::aie_generation_context [file normalize $rm_xsa]
 	set path $env(CUSTOM_SDT_REPO)
 	if {[catch {set path $env(CUSTOM_SDT_REPO)} msg]} {
 		set path "."
@@ -326,6 +348,11 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 	if { $::sdtgen::namespacelist == "" } {
 		init_proclist
 	}
+
+	if {[catch {aiedt destroy} msg]} {
+	}
+	::struct::tree aiedt
+	set ::aie_aperture_targets [dict create]
 
 	file copy -force $static_xsa $dir
 	set static_xsa_name [file tail $static_xsa]
@@ -382,7 +409,7 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 	dict set ps_mapping_list $cur_hw_design {}
 	set list_offiles {}
 
-	set peri_list [hsi::get_cells -hier]
+	set peri_list [ai_engine_filter_peripherals [hsi::get_cells -hier] 1 1 $rp_cell]
 	set peri_list [move_match_elements_to_top $peri_list "axi_intc"]
 	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
        # set_hw_family $proclist
@@ -412,7 +439,7 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 		if {[llength $rp_info] != 0} {
 			set rp_inst [lindex $rp_info 0]
 			# Skip devices that belong to a different RP
-			if {![string match -nocase $rp_inst $rp_cell]} {
+			if {![string equal -nocase $rp_inst $rp_cell]} {
 				continue
 			}
 			if {$skip == 0} {
@@ -488,4 +515,8 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 	delete_tree pldt root
 	move_match_node_to_top pldt root "misc_clk_*"
 	write_rm_dt pldt root "$rm_ws_abs_path/$partial_file"
+	if {[llength [aiedt children root]] != 0} {
+		set aperture_file "[file rootname $partial_file]_aie_aperture.dtsi"
+		write_rm_dt aiedt root "$rm_ws_abs_path/$aperture_file"
+	}
 }
