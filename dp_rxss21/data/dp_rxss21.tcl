@@ -308,7 +308,6 @@ proc dp_rx_21_add_hier_instances {drv_handle} {
 
 	set ip_subcores [dict create]
 	dict set ip_subcores "axi_iic" "iic"
-	dict set ip_subcores "clk_wiz" "clkWiz"
 	dict set ip_subcores "dprx" "dp21"
 	dict set ip_subcores "hdcp" "hdcp14"
 	dict set ip_subcores "hdcp22_rx_dp" "hdcp22"
@@ -322,6 +321,24 @@ proc dp_rx_21_add_hier_instances {drv_handle} {
 		} else {
 			add_prop "$node" "${ip_prefix}-present" 0 int $dts_file
 		}
+	}
+
+	# The decode-clock clocking wizard is clkx5_wiz on Versal Gen 2 designs and
+	# clk_wiz on the earlier ones, so try both names and keep the first match.
+	# It is handled outside ip_subcores because both names map to the single
+	# clkWiz-present / clkWiz-connected pair that dp21rxss.yaml declares.
+	set clkwiz_handle ""
+	foreach clkwiz_ip {clkx5_wiz clk_wiz} {
+		set clkwiz_handle [set_ip_handles_for_ss_subcores $clkwiz_ip $drv_handle]
+		if {![string_is_empty $clkwiz_handle]} {
+			break
+		}
+	}
+	if {[string_is_empty $clkwiz_handle]} {
+		add_prop "$node" "clkWiz-present" 0 int $dts_file
+	} else {
+		add_prop "$node" "clkWiz-present" 1 int $dts_file
+		add_prop "$node" "clkWiz-connected" $clkwiz_handle reference $dts_file
 	}
 
 	set timers [set_ip_handles_for_ss_subcores axi_timer $drv_handle]
