@@ -395,6 +395,9 @@ proc print_usage args {
                               - vpp_hier_name: PL kernel hierarchy prefix (default: "VitisRegion")
                               Example: -zocl "legacy false domain-yaml /path/to/domain.yaml"
                               Default option: disable
+            -aie_params       AIE aperture parameters for device tree generation
+                              (e.g. "node-id 0x18800000" or per-partition
+                              "node-id:0 0x18800000 node-id:4 0x18800001")
             -list_boards      List all the board specific files available in SDT
 	}
         return $help_str
@@ -500,6 +503,47 @@ proc parse_dt_integer {value description} {
 	return $number
 }
 
+proc validate_aie_params {params_string} {
+	if {[catch {set count [llength $params_string]}] || $count % 2 != 0} {
+		error "ERROR: -aie_params requires a Tcl list of key/value pairs."
+	}
+	set params_dict [dict create]
+	foreach {key value} $params_string {
+		if {$key ne "node-id"} {
+			if {![regexp {^node-id:([0-9]+)$} $key -> column]} {
+				error "ERROR: Invalid -aie_params key '$key' (valid: node-id, node-id:<column>)."
+			}
+			set key "node-id:[parse_dt_integer $column {-aie_params column}]"
+		}
+		if {[dict exists $params_dict $key]} {
+			error "ERROR: Duplicate -aie_params key '$key'."
+		}
+		set num [parse_dt_integer $value "-aie_params value for key '$key'"]
+		if {$num > 0xffffffff} {
+			error "ERROR: Invalid -aie_params value '$value' for key '$key' (must fit in 32 bits)."
+		}
+		dict set params_dict $key [format 0x%x $num]
+	}
+	return $params_dict
+}
+
+# The inventory contains only apertures that the static/RM passes will emit.
+proc validate_aie_params_columns {} {
+	global env
+	set columns {}
+	dict for {context cells} $::aie_inventory {
+		dict for {cell metadata} $cells {
+			lappend columns [dict get $metadata start]
+		}
+	}
+	foreach key [dict keys $env(aie_params)] {
+		if {[regexp {^node-id:([0-9]+)$} $key -> column] &&
+		    [lsearch -exact $columns $column] < 0} {
+			error "ERROR: -aie_params key '$key' did not match any ai_engine aperture in this design. Check the start column(s)."
+		}
+	}
+}
+
 proc set_dt_param args {
 	global env
 	if {[llength $args] == 0 || ![string match -* [lindex $args 0]]} {
@@ -583,6 +627,10 @@ proc set_dt_param args {
 						set env(zocl) "enable"
 						set env(zocl_params) $zocl
 					}
+				}
+                                -aie_params {
+					set aie_params [Pop args 1]
+					set env(aie_params) [validate_aie_params $aie_params]
 				}
                                 -user_dts - \-include_dts {
 					# FIXME: Below line should not be needed. It is added to support
@@ -710,6 +758,10 @@ proc get_dt_param args {
 	} -zocl {
 		if {[catch {set val $env(zocl)} msg ]} {
 			set val "disable"
+		}
+	} -aie_params {
+		if {[catch {set val $env(aie_params)} msg ]} {
+			set val [dict create]
 		}
 	} -user_dts {
 		if {[catch {set val $env(user_dts)} msg ]} {}
@@ -1738,6 +1790,11 @@ Generates system device tree based on args given in:
 	if {[catch {set zocl $env(zocl)} msg]} {
 		set env(zocl) "disable"
 	}
+	if {![info exists env(aie_params)]} {
+		set env(aie_params) {}
+	}
+	# Validate the original list before dict operations can discard duplicates.
+	set env(aie_params) [validate_aie_params $env(aie_params)]
 	if {[catch {set xsa $env(xsa)} msg]} {
 		error "ERROR: No xsa provided, please set the xsa with -xsa option"
 		return
@@ -1773,6 +1830,7 @@ Generates system device tree based on args given in:
 	set aie_rm_xsas {}
 	if {$rm_xsa_exist} { set aie_rm_xsas $rm_xsa }
 	ai_engine_preflight $xsa $aie_rm_xsas $dir
+	validate_aie_params_columns
 	set ::aie_generation_context [file normalize $xsa]
 
 	set common_file "$path/device_tree/data/config.yaml"

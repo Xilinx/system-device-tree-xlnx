@@ -40,6 +40,10 @@ Optional Arguments:
     -trace            enable SDTGen traces (enable/disable, default: disable)
     -zocl             add zocl nodes for extended interrupts usecase
                       (enable/disable, default: disable)
+    -aie_params       AIE aperture parameters (e.g. "node-id 0x18800000" or
+                      per-partition "node-id:0 0x18800000 node-id:4 0x18800001")
+                      Values accept decimal (leading zeros remain decimal) or 0x hex,
+                      from 0 through 0xffffffff. Column keys must match an emitted aperture.
     -rm_xsa           pass partial hw design files for dfx use cases
                       (can take multiple .xsa files as input)
     -domain           generate PMC domain specific device tree

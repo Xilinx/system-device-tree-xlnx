@@ -209,6 +209,14 @@
         return $owned
     }
 
+    proc ai_engine_get_param {key default} {
+        global env
+        if {[dict exists $env(aie_params) $key]} {
+                return [dict get $env(aie_params) $key]
+        }
+        return $default
+    }
+
     # Remove all cache aliases to the wrapper, and suppress later address maps.
     proc ai_engine_drop_node {cell node} {
         global node_dict cur_hw_design
@@ -342,6 +350,8 @@
 
         add_prop "${aperture_node}" "xlnx,columns" "$start_column $aperture_num_cols" intlist $aperture_dts
 
+        set aperture_nodeid [ai_engine_get_param "node-id:$start_column" \
+                [ai_engine_get_param "node-id" $aperture_nodeid]]
         add_prop "${aperture_node}" "xlnx,node-id" "${aperture_nodeid}" hexlist $aperture_dts
 
         # The ai_engine wrapper of a non-zero start column instance lives only
