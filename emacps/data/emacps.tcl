@@ -214,8 +214,8 @@ proc emacps_generate {drv_handle} {
     } elseif {![string_is_empty $ps_wizard_periph]} {
         if {[string match -nocase $ip_name "mmi_10gbe"]} {
             set config_prop "CONFIG.MMI_CONFIG"
-            # Use fixed 150 MHz clock for MMI 10GbE as required by hardware specification
-            set sys_clk "clk150"
+            # SCMI supplies the bus clocks; the TX clock remains fixed at 150 MHz.
+            set sys_clk "scmi_clk"
             # Check for GEM_EXT_TSU_EN in CONFIG.MMI_CONFIG property
             set mmi_10gbe_params [hsi get_property $config_prop [hsi get_cells -hier $ps_wizard_periph]]
             if {[dict exists $mmi_10gbe_params "GEM_EXT_TSU_EN"]} {
@@ -392,11 +392,12 @@ proc emacps_set_tsu_ext_clk {platform node {clk "versal_clk"}} {
 
     # For Versal Gen2 (2ve/2vm) SCMI configurations the clocks are provided by
     # the SCMI clock protocol (scmi_clk), which expects SCMI clock domain ids
-    # (the remapped enum) rather than raw versal2 clock indices. The TSU clock
-    # is served by scmi_clk (GEM_TSU) to match the SCMI clock list.
+    # (the remapped enum) rather than raw versal2 clock indices. Replace only
+    # the TSU clock with the external clock and preserve the other sources.
     array set versal2_scmi_clocks {
         "&gem0" "52>, <&%s 54>, <&%s 24>, <&%s 23>, <&tsu_ext_clk"
         "&gem1" "52>, <&%s 55>, <&%s 26>, <&%s 25>, <&tsu_ext_clk"
+        "&mmi_10gbe" "52>, <&%s 108>, <&clk150>, <&mmi_tsu_ext_clk"
     }
 
     set clocks ""
