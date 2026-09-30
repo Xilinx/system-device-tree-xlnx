@@ -13,6 +13,36 @@
 # GNU General Public License for more details.
 #
 
+    # Resolve the board short name. Prefers $::env(sdt_board_dts) when the user
+    # passed -board_dts on the command line; otherwise derives it from the HSI
+    # BOARD property, dropping the vendor prefix (e.g. "xilinx.com:zcu106:part0:1.0"
+    # becomes "zcu106"). Returns a lowercase string.
+    proc axi_vcu_get_board_dts {} {
+        set board_dts ""
+        set board_hsi ""
+        if {[info exists ::env(sdt_board_dts)]} {
+            set board_dts $::env(sdt_board_dts)
+        }
+        set hw_design [hsi::current_hw_design]
+        if {[llength $hw_design]} {
+            set board_hsi [hsi get_property BOARD $hw_design]
+        }
+        if {![llength $board_dts] && [llength $board_hsi]} {
+            set board_parts [split $board_hsi ":"]
+            if {[llength $board_parts] > 1} {
+                set board_dts [lindex $board_parts 1]
+            } else {
+                set board_dts $board_hsi
+            }
+        }
+        return [string tolower $board_dts]
+    }
+
+    # Return 1 only when the active design targets a ZCU106 board.
+    proc axi_vcu_is_zcu106_board {} {
+        return [string match "*zcu106*" [axi_vcu_get_board_dts]]
+    }
+
     proc axi_vcu_generate {drv_handle} {
         # Generate properties required for vcu node
         set node [get_node $drv_handle]
@@ -78,8 +108,11 @@
             # When a PL DDR (vcu_ddr4_controller) is present in the design, create a
             # reserved-memory carveout for it and point the decoder to it via a
             # memory-region property. If no PL DDR is present, skip creating both.
+            # This PL DDR carveout is only applicable to the ZCU106 board; skip it
+            # for every other board (e.g. ZCU104) to avoid reserving a region the
+            # design does not expect.
             set plddr_ips [hsi::get_cells -hier -filter {IP_NAME == "vcu_ddr4_controller"}]
-            if {[llength $plddr_ips]} {
+            if {[llength $plddr_ips] && [axi_vcu_is_zcu106_board]} {
                 # Select the PL DDR controller actually reachable from this VCU
                 # instance (via its master address map) instead of blindly taking the
                 # first one. Fall back to the first controller (with a warning) only
