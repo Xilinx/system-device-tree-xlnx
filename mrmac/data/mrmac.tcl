@@ -318,12 +318,7 @@
             set port_base [format 0x%llx [expr $base_addr + ($port_index * 0x1000)]]
             set port_base_hex [format %llx $port_base]
             set port_highaddr_hex [format 0x%llx [expr $port_base + 0xFFF]]
-            add_prop "$current_port_node" "compatible" "$compatible" stringlist $dts_file 1
-            if {[string match -nocase $slave_intf "s_axi"] && ($port_index == 0)} {
-                    mrmac_generate_reg_property $current_port_node $port_base $port_highaddr_hex
-            } else {
-                    mrmac_generate_reg_property $current_port_node $port_base $port_highaddr_hex
-            }
+            mrmac_generate_reg_property $current_port_node $port_base $port_highaddr_hex
 
             set gt_mode [hsi get_property CONFIG.GT_MODE_C0 [hsi::get_cells -hier $drv_handle]]
             set gt_mode [split $gt_mode " "]
@@ -342,12 +337,13 @@
                 set gt_new_pin [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $mrmac_ip] "rxdata_out_0"]]
             }
 
+            set mode ""
             if {[llength $gt_old_pin]} {
 		 set mode "old"
             } elseif {[llength $gt_new_pin]} {
 		 set mode "new"
             } else {
-                 dtg_warning "No GPIO Path detected...please check the design..."
+                 dtg_warning "Neither gt wizard(new) nor gt quad(old) is connected"
             }
 
 	    mrmac_generate_gt_gpios $drv_handle $current_port_node $port_index $mode $num_channels $dts_file
@@ -359,6 +355,10 @@
             set clkvals []
 
             # Clean and append s_axi_aclk
+            if {$s_axi_aclk_index0 eq ""} {
+                dtg_warning "No streaming clock is present"
+                return
+            }
             set s_axi_val [lindex $clk_list $s_axi_aclk_index0]
             regsub -all "," $s_axi_val "" s_axi_val
             lappend clkvals $s_axi_val
@@ -473,18 +473,26 @@
             set eoe_ips [hsi::get_cells -hier -filter {IP_NAME == ethernet_offload}]
             if {[llength $eoe_ips]} {
                 foreach eoe_ip $eoe_ips {
+                        set digit ""
                         regexp {^.*_.*_.*_.*_.*_(\d+)_.*$} $eoe_ip match digit
+                        set match_found 0
                         for {set i 0} {$i < $len} {incr i} {
                              set mcdma_node [lindex $mcdma_ips $i]
                              set eth_dma [hsi get_property CONFIG.C_ETHERNET_DMA $mcdma_node]
                              if {[string compare -nocase $digit $i] == 0} {
+                                 set match_found 1
                                  if {[string compare -nocase $eth_dma 1] == 0} {
 	                             set mrmac_node [lindex $mrmac_list $i]
                                      axi_eoe_generate $eoe_ip $mrmac_node  $dts_file
                                  } else {
-                                     error "ERROR: Ethernet Offload is not Supported"
+                                     dtg_warning "WARNING: Ethernet Offload is not Supported for $eoe_ip"
                                  }
+
+                                 break
                              }
+                        }
+                        if {!$match_found} {
+                           dtg_warning "WARNING: No matching MCDMA channel found for $eoe_ip"
                         }
                 }
             }
@@ -1011,10 +1019,12 @@
     }
 
     proc mrmac_generate_intr_info {drv_handle node fifo_ip} {
+        set target_handle ""
         set ips [hsi::get_cells -hier $drv_handle]
         foreach ip [get_drivers 1] {
                 if {[string compare -nocase $ip $fifo_ip] == 0} {
                         set target_handle $ip
+                        break
                 }
         }
         set ipnode [get_node $target_handle]
