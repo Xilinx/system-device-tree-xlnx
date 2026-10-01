@@ -23,6 +23,7 @@
 	reserved-memory {
 		#address-cells = <2>;
 		#size-cells = <2>;
+		ranges;
 
 		scmi_buffer: memory@20000000 {
 			no-map;
