@@ -646,10 +646,6 @@
 	clocks = <&scmi_clk SCMI_CLK_VERSAL2_MMI_DRD_REF_CLK>;
 };
 
-&mmi_dcdma {
-	clocks = <&scmi_clk SCMI_CLK_VERSAL2_MMIPLL>, <&scmi_clk SCMI_CLK_VERSAL2_DC_PIXEL>, <&scmi_clk SCMI_CLK_VERSAL2_MMI_AUX1_REF>;
-};
-
 &wwdt0 {
 	clocks = <&scmi_clk SCMI_CLK_VERSAL2_FPD_WWDT0>;
 	power-domains = <&scmi_devpd SCMI_PD_VERSAL2_DEV_FPD_SWDT_0>;
