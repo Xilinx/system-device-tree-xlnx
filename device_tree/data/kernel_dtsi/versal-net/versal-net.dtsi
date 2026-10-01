@@ -874,6 +874,7 @@
 
 			its: gic-its@e2040000 {
 				compatible = "arm,gic-v3-its";
+				status = "disabled";
 				msi-controller;
 				msi-cells = <1>;
 				reg = <0 0xe2040000 0 0x20000>;
