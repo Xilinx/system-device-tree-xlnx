@@ -138,6 +138,7 @@
 			CONFIG.C_USE_COUNTERS
 			CONFIG.C_USE_MMU
 			CONFIG.C_USE_SSTC
+			CONFIG.C_USE_SVPBMT
 			CONFIG.C_PMP_ENTRIES
 			CONFIG.C_PMP_ENHANCEMENTS
 			CONFIG.C_DEBUG_EVENT_COUNTERS
@@ -196,6 +197,7 @@
 			{$use_mmu > 3 && $pmp_entries > 0 && $pmp_enhancements > 0} smepmp
 			{($trap_enhancement == 2 || $trap_enhancement == 3) && $use_mmu < 2} smrnmi
 			{($trap_enhancement == 1 || $trap_enhancement == 3) && $use_mmu < 2} smdbltrp
+			{$use_mmu == 3 && $is_64_bit_mb && $use_svpbmt > 0} svpbmt
 			{$use_counters > 0} zicntr
 			{$debug_event_counters > 0 || $debug_latency_counters > 0} zihpm
 		}
