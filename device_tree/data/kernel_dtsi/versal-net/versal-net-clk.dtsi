@@ -149,6 +149,10 @@
 	clocks = <&clk100>;
 };
 
+&i2c2 {
+	clocks = <&clk100>;
+};
+
 &i3c0 {
 	clocks = <&clk100>;
 };
