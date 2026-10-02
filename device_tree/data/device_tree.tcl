@@ -1740,6 +1740,7 @@ proc generate_sdt args {
 	global is_64_bit_mb
 	global baseaddr_dict
 	global highaddr_dict
+	global subcore_abs_addr_dict
 	global get_cell
 	global ps_mapping_list
 	global processor_ip_list
@@ -1878,6 +1879,7 @@ Generates system device tree based on args given in:
 	dict set intr_id_dict $cur_hw_design {}
 	dict set baseaddr_dict $cur_hw_design {}
 	dict set highaddr_dict $cur_hw_design {}
+	dict set subcore_abs_addr_dict $cur_hw_design {}
 	dict set get_cell $cur_hw_design {}
 	dict set ps_mapping_list $cur_hw_design {}
 
@@ -2255,6 +2257,8 @@ proc proc_mapping {} {
 	global 64_bit_processor_list
 	global pmc_ip_names
 	global plm_supported_ips
+	global subcore_abs_addr_dict
+	global cur_hw_design
 	set hier_mapped_drv_list [list]
 	set proctype [get_hw_family]
 	set default_dts "system-top.dts"
@@ -2397,6 +2401,11 @@ proc proc_mapping {} {
 			set size_64 "0"
 			set base [get_baseaddr $periph "" $val]
 			set high [get_highaddr $periph "" $val]
+			if {[dict exists $subcore_abs_addr_dict $cur_hw_design $periph]} {
+				set abs_override [dict get $subcore_abs_addr_dict $cur_hw_design $periph]
+				set base [lindex $abs_override 0]
+				set high [lindex $abs_override 1]
+			}
 			set mem_size [format 0x%x [expr {${high} - ${base} + 1}]]
 			if {([regexp -nocase {0x([0-9a-f]{9})} "$base" match] || \
 				[regexp -nocase {0x([0-9a-f]{9})} "$mem_size" match]) && \

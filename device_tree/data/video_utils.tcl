@@ -1044,6 +1044,8 @@ proc update_axis_switch_endpoints {inip port_node drv_handle} {
 # This procedure handles the repetitive code for calculating subcore absolute addresses
 # and updating the reg property in device tree nodes
 proc update_subcore_absolute_addr {drv_handle ip_handle dtsi_file} {
+	global subcore_abs_addr_dict
+	global cur_hw_design
 	set family [get_hw_family]
 	if {$family in {"microblaze" "zynq"}} {
 		set bit_format 32
@@ -1059,6 +1061,7 @@ proc update_subcore_absolute_addr {drv_handle ip_handle dtsi_file} {
 	set subcore_abs_high [format 0x%lx [expr $subsys_base+$subcore_base_high]]
 	set subcore_reg_val [gen_reg_property_format $subcore_abs_base $subcore_abs_high $bit_format]
 	add_prop $connected_node reg "$subcore_reg_val" hexlist $dtsi_file 1
+	dict set subcore_abs_addr_dict $cur_hw_design $ip_handle [list $subcore_abs_base $subcore_abs_high]
 }
 
 proc set_ip_handles_for_ss_subcores {ip_name drv_handle} {
