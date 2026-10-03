@@ -61,6 +61,87 @@ proc dp_sdt_is_vek385_board {board_dts} {
 	return 0
 }
 
+# Locate the v_frmbuf_rd that feeds a native-video DP TX display pipeline.
+# Native DP TX designs have no s_axis_video_streamN AXI-Stream pins, so the
+# normal graph walk in dp_txss14_generate finds nothing. Enumerate v_frmbuf_rd
+# cells and, when more than one exists, follow each one's master AXI-Stream
+# forward (through v_tc / converters, up to a bounded hop count) to pick the
+# pipeline that reaches this DP TX instance. Returns the cell name, or "".
+proc dp_tx_find_native_frmbuf {drv_handle} {
+	set frmbuf_cells [hsi::get_cells -hier -filter "IP_NAME==v_frmbuf_rd"]
+	if {![llength $frmbuf_cells]} {
+		return ""
+	}
+	if {[llength $frmbuf_cells] == 1} {
+		return [lindex $frmbuf_cells 0]
+	}
+	foreach fb $frmbuf_cells {
+		set cur $fb
+		for {set hop 0} {$hop < 20} {incr hop} {
+			set master_intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $cur] -filter {TYPE==MASTER || TYPE==INITIATOR}]
+			if {![llength $master_intf]} {
+				break
+			}
+			set nextip ""
+			foreach mi $master_intf {
+				set nextip [get_connected_stream_ip [hsi::get_cells -hier $cur] $mi]
+				if {[llength $nextip]} {
+					break
+				}
+			}
+			if {![llength $nextip]} {
+				break
+			}
+			if {[string match -nocase $nextip $drv_handle]} {
+				return $fb
+			}
+			set cur $nextip
+		}
+	}
+	return [lindex $frmbuf_cells 0]
+}
+
+# Locate the standalone v_tc (Video Timing Controller) that drives a native-
+# video DP TX pipeline. In an AXI4-Stream design the VTC is internal to the DP
+# TX subsystem (vtcN-present) and the DP driver programs it; in a native design
+# the VTC is an external IP that the xlnx_pl_disp CRTC must drive via an
+# "xlnx,bridge" phandle. Returns the v_tc cell name, or "" when none/unclear.
+proc dp_tx_find_native_vtc {drv_handle} {
+	set vtc_cells [hsi::get_cells -hier -filter "IP_NAME==v_tc"]
+	if {![llength $vtc_cells]} {
+		return ""
+	}
+	if {[llength $vtc_cells] == 1} {
+		return [lindex $vtc_cells 0]
+	}
+	# Multiple VTCs (e.g. multi-instance designs): pick the one whose master
+	# AXI-Stream path reaches this DP TX instance; fall back to the first.
+	foreach vtc $vtc_cells {
+		set cur $vtc
+		for {set hop 0} {$hop < 20} {incr hop} {
+			set master_intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $cur] -filter {TYPE==MASTER || TYPE==INITIATOR}]
+			if {![llength $master_intf]} {
+				break
+			}
+			set nextip ""
+			foreach mi $master_intf {
+				set nextip [get_connected_stream_ip [hsi::get_cells -hier $cur] $mi]
+				if {[llength $nextip]} {
+					break
+				}
+			}
+			if {![llength $nextip]} {
+				break
+			}
+			if {[string match -nocase $nextip $drv_handle]} {
+				return $vtc
+			}
+			set cur $nextip
+		}
+	}
+	return [lindex $vtc_cells 0]
+}
+
 proc dp_txss14_generate {drv_handle} {
 	set node [get_node $drv_handle]
         if {$node == 0} {
@@ -271,6 +352,11 @@ proc dp_txss14_generate {drv_handle} {
 			set num_tx [llength $txss_cells]
 		}
 	}
+	# Track whether the AXI4-Stream walk below actually produced any graph
+	# port. Native-video DP TX designs (VIDEO_INTERFACE=Native) have no
+	# s_axis_video_streamN AXI-Stream pins, so this stays 0 and triggers the
+	# native-video fallback after the loop.
+	set graph_generated 0
 	for {set stream 1} {$stream <= $num_streams} {incr stream} {
 		set port_index [expr {$stream - 1}]
 		set dptxip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video_stream$stream"]
@@ -280,6 +366,7 @@ proc dp_txss14_generate {drv_handle} {
 		}
 		set port0_node [create_node -n "port" -l dptx_port$port_index$drv_handle -u $port_index -p $ports_node -d $dtsi_file]
 		add_prop "$port0_node" "reg" $port_index int $dtsi_file 1
+		set graph_generated 1
 		set inip ""
 		foreach inip $dptxip {
 			set intfpins [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $inip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
@@ -316,9 +403,32 @@ proc dp_txss14_generate {drv_handle} {
 			}
 		}
 	}
+	# Native-video fallback: when the AXI4-Stream graph walk above produced no
+	# port/endpoint (e.g. a VIDEO_INTERFACE=Native DP TX design that has no
+	# s_axis_video_streamN pins), the display source is a v_frmbuf_rd wired
+	# through the native video path (frmbuf_rd -> v_tc -> native vid_in). Emit
+	# the pl-disp CRTC for that frame buffer so DRM still gets a display
+	# pipeline. AXI4-Stream designs are unaffected because graph_generated is 1.
+	if {!$graph_generated} {
+		set native_frmbuf [dp_tx_find_native_frmbuf $drv_handle]
+		if {[llength $native_frmbuf]} {
+			set port_index 0
+			set port0_node [create_node -n "port" -l dptx_port$port_index$drv_handle -u $port_index -p $ports_node -d $dtsi_file]
+			add_prop "$port0_node" "reg" $port_index int $dtsi_file 1
+			# Native pipelines have an EXTERNAL VTC that the pl-disp CRTC must
+			# drive; pass it so gen_frmbuf_rd_node emits the xlnx,bridge phandle.
+			set native_vtc [dp_tx_find_native_vtc $drv_handle]
+			if {![llength $native_vtc]} {
+				dtg_warning "$drv_handle native-video design has no external v_tc; drm-pl-disp-drv will lack xlnx,bridge (no timing generator)"
+			}
+			gen_frmbuf_rd_node $native_frmbuf $drv_handle $port0_node $port_index $num_tx $dtsi_file $native_vtc
+		} else {
+			dtg_warning "$drv_handle no v_frmbuf_rd found for native-video display pipeline; drm-pl-disp-drv not generated"
+		}
+	}
 }
 
-proc gen_frmbuf_rd_node {ip drv_handle port0_node port_index num_tx dtsi_file} {
+proc gen_frmbuf_rd_node {ip drv_handle port0_node port_index num_tx dtsi_file {vtc_bridge ""}} {
 	# Design-global running index for the drm-pl-disp-drv node name, so every
 	# CRTC node is unique across all streams AND all DP TX instances
 	# (reproduces drm-pl-disp-drv-0..N in both the single-instance MST and the
@@ -352,6 +462,12 @@ proc gen_frmbuf_rd_node {ip drv_handle port0_node port_index num_tx dtsi_file} {
 	add_prop $pl_disp "dmas" "$ip 0" reference $dtsi_file 1
 	add_prop $pl_disp "#size-cells" 0 int $dtsi_file 1
 	add_prop $pl_disp "dma-names" "dma0" string $dtsi_file 1
+	# Native-video pipelines: reference the external VTC so xlnx_pl_disp drives
+	# the timing generator (of_parse_phandle(node,"xlnx,bridge")). Omitted for
+	# AXI4-Stream designs where the VTC is internal to the DP TX subsystem.
+	if {[llength $vtc_bridge]} {
+		add_prop $pl_disp "xlnx,bridge" "$vtc_bridge" reference $dtsi_file 1
+	}
 	set pl_port_node [create_node -n "port" -l "$pl_disp_port_label" -u 0 -p $pl_disp -d $dtsi_file]
 	add_prop "$pl_port_node" "reg" 0 int $dtsi_file 1
 	set pl_disp_crtc_node [create_node -n "endpoint" -l $pl_disp_out_label -p $pl_port_node -d $dtsi_file]
