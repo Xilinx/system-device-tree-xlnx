@@ -1456,6 +1456,7 @@ proc get_drivers args {
 	dict set driverlist psv_pmc_sysmon driver sysmonpsv
 	dict set driverlist pmc_sysmon driver sysmonpsv
 	dict set driverlist mrmac driver mrmac
+	dict set driverlist psv_cpm6 driver cpm_pcie
 	set val [lindex $args 0]
 	if {[string match -nocase $val "1"]} {
 		set drivers ""

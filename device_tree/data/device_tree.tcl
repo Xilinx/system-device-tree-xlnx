@@ -281,6 +281,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "ps7_xadc" "xadcps"
 	dict set ::sdtgen::namespacelist "qdma" "xdmapcie"
 	dict set ::sdtgen::namespacelist "psv_cpm" "cpm_pcie"
+	dict set ::sdtgen::namespacelist "psv_cpm6" "cpm_pcie"
 
 	dict set ::sdtgen::namespacelist "psu_qspi_linear" "linear_spi"
 	dict set ::sdtgen::namespacelist "ps7_qspi_linear" "linear_spi"
