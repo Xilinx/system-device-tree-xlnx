@@ -329,7 +329,7 @@ proc dp_rxss14_generate {drv_handle} {
 					gen_remoteendpoint $drv_handle $ip$drv_handle
 				}
 			} else {
-				set connectip [get_connect_ip $ip $intfpins $dtsi_file]
+				set connectip [get_connect_ip $ip $intfpins $dts_file]
 				if {[llength $connectip]} {
 					set sdi_rx_node [create_node -n "endpoint" -l $endpoint_label -p $port_node -d $dts_file]
 					gen_endpoint $drv_handle $endpoint_label
