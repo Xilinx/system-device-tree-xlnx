@@ -28,5 +28,17 @@ proc dptx21_core_generate {drv_handle} {
 		If this is incorrect, the peripheral $drv_handle will be non-functional"
 	}
         add_prop "${node}" "xlnx,axi-aclk-freq-mhz" $freq hexint $dts_file 1
+	# ENABLE_DSC is the string true here and an integer on the receive core, so
+	# the value is tested as a boolean rather than compared against 1. Emit the
+	# property only when the design builds DSC in, which leaves the macro
+	# undefined everywhere else and drops the driver's DSC code at compile time.
+	# The property has to be unset rather than left alone, because the generic
+	# parameter dump would otherwise emit it as <0> and define the macro.
+	set enable_dsc [get_ip_property $drv_handle CONFIG.ENABLE_DSC]
+	if {[string is boolean -strict $enable_dsc] && $enable_dsc} {
+		add_prop "${node}" "xlnx,enable-dsc" 1 int $dts_file 1
+	} else {
+		pldt unset $node "xlnx,enable-dsc"
+	}
 
 }
