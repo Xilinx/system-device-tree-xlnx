@@ -57,6 +57,19 @@ proc dp_txss21_generate {drv_handle} {
         }
         set include_fec_ports [hsi get_property CONFIG.INCLUDE_FEC_PORTS [hsi::get_cells -hier $drv_handle]]
         add_prop "${node}" "xlnx,include-fec-ports" $include_fec_ports int $dts_file
+	# The transmitter carries its DSC encoder inside the subsystem, so
+	# ENABLE_DSC is the only indication the software has that the datapath can
+	# compress. Emit the property only when the design builds DSC in, which
+	# leaves the macro undefined everywhere else and drops the driver's DSC code
+	# at compile time. The property has to be unset rather than left alone,
+	# because the generic parameter dump would otherwise emit it as <0> and
+	# define the macro.
+	set enable_dsc [get_ip_property $drv_handle CONFIG.ENABLE_DSC]
+	if {[string is boolean -strict $enable_dsc] && $enable_dsc} {
+		add_prop "${node}" "xlnx,enable-dsc" 1 int $dts_file 1
+	} else {
+		pldt unset $node "xlnx,enable-dsc"
+	}
         set lane_count [hsi get_property CONFIG.LANE_COUNT [hsi::get_cells -hier $drv_handle]]
         add_prop "${node}" "xlnx,lane-count" $lane_count int $dts_file
         set lane_count [hsi get_property CONFIG.LANE_COUNT [hsi::get_cells -hier $drv_handle]]
