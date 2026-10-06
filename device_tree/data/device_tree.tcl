@@ -2347,7 +2347,8 @@ proc proc_mapping {} {
 				set node_label ${periph}
 				set ps_mapping [gen_ps_mapping]
 				foreach ps_addr [dict keys $ps_mapping] {
-					if {[string equal -nocase [dict get $ps_mapping $ps_addr label] $periph]} {
+					set ps_label [string trim [lindex [split [dict get $ps_mapping $ps_addr label] ":"] 0]]
+					if {[string match -nocase $ps_label $periph]} {
 						set node_label "ext_${periph}"
 						break
 					}
