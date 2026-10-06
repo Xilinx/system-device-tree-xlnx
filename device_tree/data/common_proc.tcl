@@ -800,12 +800,7 @@ proc create_node args {
 			set node_unit_addr [get_label_addr $node_name $node_label]
 		}
 	}
-	if {[string match -nocase $node_name "lmb-bram-if-cntlr"]} {
-		set val_lab [string match -nocase $node_label ""]
-		set val_name [string match -nocase $node_name ""]
-		set node_unit_addr [get_label_addr $node_name $node_label]
-		
-	}
+
 	if {[string match -nocase $node_name "aliases"]} {
 		set interconnect [systemdt insert root end aliases]
 		return $interconnect
@@ -1981,7 +1976,18 @@ proc get_baseaddr {slave_ip {no_prefix ""} {proc_handle ""}} {
 			if {$handle_count >= [llength $ip_mem_handle]} {
 				return ""
 			}
+
 			set addr [string tolower [hsi get_property BASE_VALUE [lindex $ip_mem_handle $handle_count]]]
+
+			if {$ip_name in {"axi_bram_ctrl" "lmb_bram_if_cntlr"}} {
+				set ctrl_mem_handle [hsi::get_mem_ranges $slave_ip -filter BASE_NAME==C_S_AXI_CTRL_BASEADDR]
+				set memory_mem_handle [hsi::get_mem_ranges $slave_ip -filter BASE_NAME==C_BASEADDR]
+				if {![string_is_empty $ctrl_mem_handle]} {
+					set addr [string tolower [hsi get_property BASE_VALUE [lindex $ctrl_mem_handle 0]]]
+				} elseif {![string_is_empty $memory_mem_handle]} {
+					set addr [string tolower [hsi get_property BASE_VALUE [lindex $memory_mem_handle 0]]]
+				}
+			}
 		}
 	}
 	dict set baseaddr_dict $cur_hw_design $slave_ip $addr
