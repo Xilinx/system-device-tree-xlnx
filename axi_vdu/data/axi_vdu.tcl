@@ -16,14 +16,17 @@ proc gen_reset_gpio {drv_handle node} {
     set ip [cells_hier $drv_handle]
     set default_dts [set_drv_def_dts $drv_handle]
     set pins [get_source_pins [hsi get_pins -of_objects $ip "vdu_resetn"]]
+    set reset_done 0
     foreach pin $pins {
+	if {$reset_done} { break }
 	set sink_periph [::hsi::get_cells -of_objects $pin]
 		if {[llength $sink_periph]} {
 			set sink_ip [get_ip_property $sink_periph IP_NAME]
 		    if {[string match -nocase $sink_ip "axi_gpio"]} {
 			    add_prop $node "reset-gpios" "$sink_periph 0 1" reference $default_dts
+			    set reset_done 1
 			}
-			if {$sink_ip in {"xlslice" "ilslice"}} {
+			if {!$reset_done && $sink_ip in {"xlslice" "ilslice"}} {
 				set gpio [hsi get_property CONFIG.DIN_FROM $sink_periph]
 				set pins [get_pins -of_objects [get_nets -of_objects [get_pins -of_objects $sink_periph "Din"]]]
 				foreach pin $pins {
@@ -33,16 +36,20 @@ proc gen_reset_gpio {drv_handle node} {
 						if { $ip in { "versal_cips" "ps_wizard" }} {
 							# As in versal there is only bank0 for MIOs
 							set gpio [expr $gpio + 26]
-							add_prop $node "reset-gpios" "gpio0 $gpio 0" reference $default_dts
+							# vdu_resetn is active-low: GPIO_ACTIVE_LOW (flag=1)
+							add_prop $node "reset-gpios" "gpio0 $gpio 1" reference $default_dts
+							set reset_done 1
 							break
 						}
 						if {[string match -nocase $ip "zynq_ultra_ps_e"]} {
 							set gpio [expr $gpio + 78]
 							add_prop $node "reset-gpios" "gpio $gpio 0" reference $default_dts
+							set reset_done 1
 							break
 						}
 						if {[string match -nocase $ip "axi_gpio"]} {
 							add_prop $node "reset-gpios" "$periph $gpio 0 1" reference $default_dts
+							set reset_done 1
 						}
 					} else {
 						dtg_warning "periph for the pin:$pin is NULL $periph...check the design"
@@ -51,6 +58,54 @@ proc gen_reset_gpio {drv_handle node} {
 			}
 		} else {
 			dtg_warning "peripheral for the pin:$pin is NULL $sink_periph...check the design"
+		}
+	}
+
+	# Handle vdu_resetn driven directly by Versal CIPS PS GPIO without an xSlice.
+	# Only executed when the existing AXI GPIO / xSlice paths above did not resolve
+	# reset-gpios.  Only the vdu_resetn net is walked so unrelated CIPS connections
+	# on other VDU pins cannot fabricate a spurious reset-gpios specifier.
+	# PMC GPIO and higher EMIO banks are outside this CR; they warn and omit the
+	# property rather than mapping incorrectly to gpio0.
+	if {!$reset_done} {
+		set vpin [hsi get_pins -of_objects [hsi get_cells $ip] "vdu_resetn"]
+		foreach vn [hsi get_nets -of_objects $vpin] {
+			if {$reset_done} { break }
+			foreach sp [hsi get_pins -of_objects $vn -filter {DIRECTION==O}] {
+				if {$reset_done} { break }
+				set sp_cell [hsi get_cells -of_objects $sp]
+				if {![llength $sp_cell]} { continue }
+				if {[hsi get_property IP_NAME $sp_cell] ni {"versal_cips" "ps_wizard"}} { continue }
+				set pname [hsi get_property NAME $sp]
+				# Accept PS GPIO outputs: LPD_GPIO* and emio_gpio* port names.
+				# PMC GPIO and any other CIPS output are outside this CR scope.
+				if {![string match -nocase "LPD_GPIO*" $pname] && \
+						![string match -nocase "emio_gpio*" $pname]} {
+					dtg_warning "axi_vdu: vdu_resetn driven by versal_cips pin \
+						'$pname'; only PS GPIO is in scope; \
+						skipping reset-gpios"
+					continue
+				}
+				# Extract GPIO bit index from the pin name subscript [N] first,
+				# then from the port LEFT attribute for scalar ports (e.g. a PS GPIO scalar port).
+				# A missing or non-integer index warns and omits; GPIO 26 is never
+				# assumed by default.
+				if {[regexp {\[(\d+)\]} $pname -> bit_idx]} {
+					# e.g. emio_gpio_o[5] -> bit_idx = 5
+				} elseif {![catch {hsi get_property LEFT $sp} bit_idx] && \
+						$bit_idx ne "" && [string is integer -strict $bit_idx]} {
+					# e.g. PS GPIO scalar port with LEFT=0 -> bit_idx = 0
+				} else {
+					dtg_warning "axi_vdu: cannot determine GPIO bit index from \
+						versal_cips pin '$pname'; skipping reset-gpios"
+					continue
+				}
+				# PS EMIO: controller gpio0, offset 26 (26 PS MIO before EMIO in Linux)
+				# vdu_resetn is active-low: GPIO_ACTIVE_LOW flag = 1
+				add_prop $node "reset-gpios" "gpio0 [expr {$bit_idx + 26}] 1" \
+					reference $default_dts
+				set reset_done 1
+			}
 		}
 	}
 }
