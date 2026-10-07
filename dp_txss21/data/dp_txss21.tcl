@@ -298,12 +298,13 @@ proc dp_tx_21_add_hier_instances {drv_handle} {
 		}
 	}
 
-	# The link clocking wizard is clkx5_wiz on Versal Gen 2 designs and clk_wiz
-	# on the earlier ones, so try both names and keep the first match. It is
-	# handled outside ip_subcores because both names map to the single
-	# clkWiz-present / clkWiz-connected pair that dp21txss.yaml declares.
+	# The link clocking wizard is clkx5_wiz on Versal Gen 2 designs, clk_wizard
+	# on Versal designs such as VCK190 and clk_wiz on the earlier ones, so try
+	# each name and keep the first match. It is handled outside ip_subcores
+	# because every name maps to the single clkWiz-present / clkWiz-connected
+	# pair that dp21txss.yaml declares.
 	set clkwiz_handle ""
-	foreach clkwiz_ip {clkx5_wiz clk_wiz} {
+	foreach clkwiz_ip {clkx5_wiz clk_wizard clk_wiz} {
 		set clkwiz_handle [set_ip_handles_for_ss_subcores $clkwiz_ip $drv_handle]
 		if {![string_is_empty $clkwiz_handle]} {
 			break
