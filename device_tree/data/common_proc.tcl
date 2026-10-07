@@ -1923,6 +1923,22 @@ proc get_baseaddr {slave_ip {no_prefix ""} {proc_handle ""}} {
 				set addr [string tolower $cpm_unit_addr]
 			}
 		}
+    } elseif {[string match -nocase $ip_name "psx_cpm"]} {
+        set addr "0"
+        set ctrl_type ""
+
+        set cpm5n_cell [hsi::get_cells -hier -filter IP_NAME==cpm5n]
+        if {[llength $cpm5n_cell]} {
+            foreach i {0 1 2 3} {
+                set ctrl_type [get_ip_property $cpm5n_cell CONFIG.CPM_PCIE${i}_PORT_TYPE]
+                if {[string match -nocase $ctrl_type "Root_Port_of_PCI_Express_Root_Complex"]} {
+                    # FIXME: Hardcoded CPM5N PCIe SLCR base address as HSI does not currently
+                    # expose it via psx_wizard_0/psx_wizard_0_psxl_0_psx_cpm subcell.
+                    set addr 0xe4a10000
+                    break
+                }
+            }
+        }
 	} else {
 		set ip_mem_handle [hsi::get_mem_ranges $slave_ip]
 		if {![string_is_empty $proc_handle]} {
@@ -2486,6 +2502,7 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping eb390000 label ipi_pmc_nobuf
 				dict set def_ps_mapping e2000000 label gic_a78
 				dict set def_ps_mapping eb9a0000 label gic_r52
+				dict set def_ps_mapping e4a10000 label "cpm5nc: pci"
 				dict set def_ps_mapping ebd00000 label adma0
 				dict set def_ps_mapping ebd10000 label adma1
 				dict set def_ps_mapping ebd20000 label adma2
@@ -2574,7 +2591,6 @@ proc gen_ps_mapping {} {
 			dict set def_ps_mapping ff120000 label "watchdog1: watchdog"
 			dict set def_ps_mapping fca10000 label "cpm_pciea: pci"
 			dict set def_ps_mapping fcdd0000 label "cpm5_pcie: pci"
-			dict set def_ps_mapping e4a10000 label "cpm5nc: pci"
 			dict set def_ps_mapping ff060000 label "can0: can"
 			dict set def_ps_mapping ff070000 label "can1: can"
 			dict set def_ps_mapping ff330000 label "ipi0: mailbox"
