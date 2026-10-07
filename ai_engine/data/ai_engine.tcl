@@ -210,9 +210,9 @@
     }
 
     proc ai_engine_get_param {key default} {
-        global env
-        if {[dict exists $env(aie_params) $key]} {
-                return [dict get $env(aie_params) $key]
+        set aie_params [get_dt_param -aie_params]
+        if {[dict exists $aie_params $key]} {
+                return [dict get $aie_params $key]
         }
         return $default
     }

@@ -529,14 +529,13 @@ proc validate_aie_params {params_string} {
 
 # The inventory contains only apertures that the static/RM passes will emit.
 proc validate_aie_params_columns {} {
-	global env
 	set columns {}
 	dict for {context cells} $::aie_inventory {
 		dict for {cell metadata} $cells {
 			lappend columns [dict get $metadata start]
 		}
 	}
-	foreach key [dict keys $env(aie_params)] {
+	foreach key [dict keys [get_dt_param -aie_params]] {
 		if {[regexp {^node-id:([0-9]+)$} $key -> column] &&
 		    [lsearch -exact $columns $column] < 0} {
 			error "ERROR: -aie_params key '$key' did not match any ai_engine aperture in this design. Check the start column(s)."
@@ -1791,11 +1790,12 @@ Generates system device tree based on args given in:
 	if {[catch {set zocl $env(zocl)} msg]} {
 		set env(zocl) "disable"
 	}
-	if {![info exists env(aie_params)]} {
-		set env(aie_params) {}
+	set aie_params {}
+	if {[info exists env(aie_params)]} {
+		set aie_params $env(aie_params)
 	}
 	# Validate the original list before dict operations can discard duplicates.
-	set env(aie_params) [validate_aie_params $env(aie_params)]
+	set env(aie_params) [validate_aie_params $aie_params]
 	if {[catch {set xsa $env(xsa)} msg]} {
 		error "ERROR: No xsa provided, please set the xsa with -xsa option"
 		return
