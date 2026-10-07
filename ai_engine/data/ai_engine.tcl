@@ -537,11 +537,20 @@
         return $inventory
     }
 
-    # mktemp creates a fresh directory atomically with mode 0700. Extract below
-    # the output directory, but remove the workspace on success and failure.
+    # Create the unique extraction workspace inside the output directory.
+    # Extract RM XSAs under these worspace directories. Remove the workspace
+    # on success and failure.
     proc ai_engine_create_workspace {output_dir} {
         file mkdir $output_dir
-        return [exec mktemp -d -- [file join $output_dir .sdt-aie-XXXXXXXXXX]]
+        for {set attempt 0} {$attempt < 20} {incr attempt} {
+                set random [expr {int(rand() * 1000000000)}]
+                set workspace [file join $output_dir ".sdt-aie-$random"]
+                if {![file exists $workspace]} {
+                        file mkdir $workspace
+                        return $workspace
+                }
+        }
+        error "ERROR: Unable to create a temporary AI engine workspace in '$output_dir'."
     }
 
     proc ai_engine_preflight {static_xsa rm_xsas output_dir} {
