@@ -30,7 +30,7 @@
         set shim_rows_start 0
         set shim_rows_num 1
         set ::aie_array_cols_start 0
-        set ::aie_array_cols_num 50
+        set ::aie_array_cols_num [ai_engine_get_array_num_cols $drv_handle]
 
         # override the above default values if AIE primitives are available in
         # xsa
@@ -44,7 +44,6 @@
                         set aie_rows [hsi get_property AIETILEROWS [hsi::get_hw_primitives aie]]
                         set mem_rows [hsi get_property MEMTILEROW [hsi::get_hw_primitives aie]]
                         set shim_rows [hsi get_property SHIMROW [hsi::get_hw_primitives aie]]
-                        set ::aie_array_cols_num [hsi get_property AIEARRAYCOLUMNS [hsi::get_hw_primitives aie]]
 
                         set aie_rows_start [lindex [split $aie_rows ":"] 0]
                         set aie_rows_num [lindex [split $aie_rows ":"] 1]
@@ -129,14 +128,29 @@
     }
 
     # Number of columns of the whole AI engine array, i.e. device wide.
+    # Older first-generation AIE exports can contain a primitive without the
+    # AIEARRAYCOLUMNS property. Keep the legacy default for those exports.
     proc ai_engine_get_array_num_cols {drv_handle} {
-        set array_num_cols 50
-        set CommandExists [ namespace which hsi::get_hw_primitives]
-        if {$CommandExists != ""} {
-                set aie_prop [hsi::get_hw_primitives aie]
-                if {$aie_prop != ""} {
-                        set array_num_cols [hsi get_property AIEARRAYCOLUMNS [hsi::get_hw_primitives aie]]
+        if {[namespace which hsi::get_hw_primitives] eq ""} {
+                return 50
+        }
+        set aie_prop [hsi::get_hw_primitives aie]
+        if {$aie_prop eq ""} {
+                return 50
+        }
+        if {[catch {set array_num_cols [hsi get_property AIEARRAYCOLUMNS $aie_prop]}] ||
+                [string trim $array_num_cols] eq ""} {
+                set hw_gen ""
+                catch {set hw_gen [hsi get_property HWGEN $aie_prop]}
+                if {$hw_gen ne "AIE"} {
+                        error "ERROR: $drv_handle has no AIE array size for hardware generation '$hw_gen'."
                 }
+                dtg_warning "$drv_handle: AIE array size is unavailable; using the legacy AIE default of 50 columns."
+                return 50
+        }
+        set array_num_cols [parse_dt_integer [string trim $array_num_cols] "$drv_handle AIE array size"]
+        if {$array_num_cols == 0} {
+                error "ERROR: $drv_handle AIE array size must be positive."
         }
         return $array_num_cols
     }
