@@ -19,7 +19,11 @@
                 return
         }
         set dts_file [set_drv_def_dts $drv_handle]
-        pldt append $node compatible "\ \, \"xlnx,bridge-v-tc-6.1\""
+        if {[vtc_connected_to_tpg $drv_handle]} {
+                pldt append $node compatible "\ \, \"xlnx,v-tc-6.1\""
+        } else {
+                pldt append $node compatible "\ \, \"xlnx,bridge-v-tc-6.1\""
+        }
         set generate_en [hsi get_property CONFIG.C_GENERATE_EN [hsi::get_cells -hier $drv_handle]]
         if {$generate_en == 1} {
                 add_prop "${node}" "xlnx,generator" boolean $dts_file
@@ -39,4 +43,26 @@
 	add_prop "${node}" "xlnx,pixels-per-clock" $ppc hexint $dts_file 1
     }
 
+    # Reverse of the lookup in tpg.tcl: follow active_video_out to
+    # v_vid_in_axi4s, then its video_out stream to a v_tpg.
+    proc vtc_connected_to_tpg {drv_handle} {
+        set vtc [hsi::get_cells -hier $drv_handle]
+        set av_pin [hsi::get_pins -of_objects $vtc "active_video_out"]
+        set av_net [hsi::get_nets -of_objects $av_pin]
+        set pins [hsi::get_pins -of_objects $av_net]
+        foreach pin $pins {
+                set sink_periph [hsi::get_cells -of_objects $pin]
+                if {![llength $sink_periph]} {
+                        continue
+                }
+                if {![string match -nocase [hsi get_property IP_NAME $sink_periph] "v_vid_in_axi4s"]} {
+                        continue
+                }
+                set tpg [get_connected_stream_ip $sink_periph "video_out"]
+                if {[llength $tpg] && [string match -nocase [hsi get_property IP_NAME $tpg] "v_tpg"]} {
+                        return 1
+                }
+        }
+        return 0
+    }
 
