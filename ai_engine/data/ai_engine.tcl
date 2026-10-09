@@ -442,6 +442,7 @@
                 dict set records $name [dict create \
                         start [ai_engine_column_property $cell START_COLUMN] \
                         width [ai_engine_column_property $cell NUM_COLUMN] \
+                        partitioned [ai_engine_column_property $cell PARTITION_ENABLED] \
                         array [parse_dt_integer [ai_engine_get_array_num_cols $cell] "AIE array size"]]
         }
         return $records
@@ -459,8 +460,11 @@
                 set group [list rp [string tolower $rp]]
                 if {$rp eq ""} { set group [list static $context] }
                 dict lappend groups $group $context
-                if {$rp ne "" && [dict size $cells]} { set split 1 }
                 dict for {cell record} $cells {
+                        # An RM can own one unpartitioned, full-array AIE IP.
+                        # RP ownership alone does not require a separate aperture.
+                        set partitioned [dict get $record partitioned]
+                        if {$partitioned ne "" && $partitioned != 0} { set split 1 }
                         set start [dict get $record start]
                         if {$start ne "" && $start != 0} { set split 1 }
                 }
