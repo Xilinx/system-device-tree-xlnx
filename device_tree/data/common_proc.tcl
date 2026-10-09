@@ -1042,13 +1042,13 @@ proc add_prop args {
 		if {[string match -nocase $prop "status"] || $overwrite == 1} {
 			set keyval [$treeobj set $node $prop $val]
 		} else {
-			if {[string match -nocase $type "hexlist"]} {
-				set val ", $val"
-			}
 			if {[string match -nocase $already_key $val]} {
 			} elseif {[string match -nocase $type "noformating"]} {
 				set keyval $val
 			} else {
+				if {$type in {"hexlist" "string" "stringlist"}} {
+					set val ", $val"
+				}
 				set keyval [$treeobj append $node $prop " $val"]
 			}
 		}
