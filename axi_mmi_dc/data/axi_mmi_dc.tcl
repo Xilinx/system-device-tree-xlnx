@@ -295,8 +295,16 @@
             set $result_idx_var $idx
         }
 
-        if {$index < 0 && ($live_video0_connected || $live_video1_connected || $video_s0_connected || $video_s1_connected)} {
+        # Live video (live_video0/live_video1) is driven by the functional 2x
+        # clock (pl_mmi_dc_2x_clk), whereas the bypass stream inputs
+        # (video_s0/video_s1) are driven by the bypass 1x clock
+        # (pl_mmi_dc_1x_clk). Only require the clock that matches the connected
+        # video path.
+        if {$index < 0 && ($live_video0_connected || $live_video1_connected)} {
             error "pl_mmi_dc_2x_clk has no source pin connected which is required in case of live video"
+        }
+        if {$bypass_index < 0 && ($video_s0_connected || $video_s1_connected)} {
+            error "pl_mmi_dc_1x_clk has no source pin connected which is required in case of bypass stream video"
         }
 
         # Build clock-names and clocks dynamically based on connected PL clocks
