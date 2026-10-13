@@ -19,6 +19,7 @@
 #
 
 global def_string zynq_soc_dt_tree bus_clk_list pl_ps_irq1 pl_ps_irq0 pstree include_list count intrpin_width
+global overlay_header_includes
 global or_id
 global or_cnt
 global mainlist
@@ -101,6 +102,10 @@ if {[catch {set tmp [::struct::tree systemdt]} msg]} {
 }
 if {[catch {set tmp [::struct::tree clkdt]} msg]} {
 }
+if {[llength [info commands overlaydt]]} {
+	overlaydt destroy
+}
+set tmp [::struct::tree overlaydt]
 if {[catch {set tmp [::struct::tree aiedt]} msg]} {
 }
 
@@ -112,6 +117,7 @@ namespace export systemdt
 namespace export pldt
 namespace export pcwdt
 namespace export clkdt
+namespace export overlaydt
 namespace export *
 #global def_string zynq_soc_dt_tree bus_clk_list pl_ps_irq1 pl_ps_irq0 pstree include_list count
 set count 0
@@ -126,6 +132,7 @@ set or_id 0
 set or_cnt 0
 set tree {}
 set include_list ""
+set overlay_header_includes {}
 set pstree 0
 
 global node_dict
@@ -177,10 +184,13 @@ proc cells_hier {name} {
 }
 
 proc destroy_tree {} {
+	global overlay_header_includes
 	pldt destroy
 	psdt destroy
 	pcwdt destroy
 	systemdt destroy
+	overlaydt destroy
+	set overlay_header_includes {}
 	if {[catch {aiedt destroy} msg]} {
 	}
 }
@@ -830,6 +840,11 @@ proc create_node args {
 	} elseif {[string match -nocase $dts_file "versal-clk.dtsi"]} {
 		set treeobj "clkdt"
 		set root "psroot"
+	} elseif {[string match -nocase [file extension $dts_file] ".dtso"]} {
+		if {![string match -nocase [file tail $dts_file] "pl_overlay.dtso"]} {
+			error "Only \"pl_overlay.dtso\" file name is supported for overlays. Rename \"[file tail $dts_file]\" to \"pl_overlay.dtso\""
+		}
+		set treeobj "overlaydt"
 	} elseif {[string match -nocase $dts_file "aie_aperture.dtsi"]} {
 		set treeobj "aiedt"
 		set root "aieroot"
@@ -977,10 +992,14 @@ proc create_node args {
 	set drvnode [string trimleft $drvnode "\{"]
 	set drvnode [string trimright $drvnode "\}"]
 
-	if {![string_is_empty $node_label]} {
-		dict set node_dict $cur_hw_design $node_label $drvnode
-	} elseif {![string_is_empty $drv_handle]} {
-		dict set node_dict $cur_hw_design $drv_handle $drvnode
+	# An overlay node's label/handle could otherwise overwrite the entry for the matching static
+	# node and cause later get_node calls to return the overlay node.
+	if {![string match -nocase $treeobj "overlaydt"]} {
+		if {![string_is_empty $node_label]} {
+			dict set node_dict $cur_hw_design $node_label $drvnode
+		} elseif {![string_is_empty $drv_handle]} {
+			dict set node_dict $cur_hw_design $drv_handle $drvnode
+		}
 	}
 
         return $drvnode
@@ -1026,6 +1045,11 @@ proc add_prop args {
 		set treeobj "pldt"
 	} elseif {[string match -nocase $dts_file "versal.dtsi"] || [string match -nocase $dts_file "zynqmp.dtsi"]} {
 		set treeobj "psdt"
+	} elseif {[string match -nocase [file extension $dts_file] ".dtso"]} {
+		if {![string match -nocase [file tail $dts_file] "pl_overlay.dtso"]} {
+			error "Only \"pl_overlay.dtso\" file name is supported for overlays. Rename \"[file tail $dts_file]\" to \"pl_overlay.dtso\""
+		}
+		set treeobj "overlaydt"
 	} elseif {[string match -nocase $dts_file "aie_aperture.dtsi"]} {
 		set treeobj "aiedt"
 	} else {
@@ -1102,11 +1126,53 @@ proc write_dt_node {fd dt node indent} {
 	}
 }
 
+# Overlay header include helper.
+proc write_overlay_header_includes {include_files {fd ""}} {
+	global overlay_header_includes
+	foreach raw $include_files {
+		regsub {^#include[ \t]*} $raw "" raw
+		# Strip any surrounding delimiters to obtain the bare header path.
+		set path [string trim [string trim $raw] "\"<>"]
+		if {[string_is_empty $path] || ![string match {*.h} $path]} {
+			continue
+		}
+		if {[lsearch -exact $overlay_header_includes $path] < 0} {
+			lappend overlay_header_includes $path
+		}
+	}
+	if {[string_is_empty $fd]} {
+		return 0
+	}
+	foreach path $overlay_header_includes {
+		puts $fd "#include \"$path\""
+	}
+	return [llength $overlay_header_includes]
+}
+
 proc write_dt args {
 	set dt [lindex $args 0]
 	set rootn [lindex $args 1]
 	set file [lindex $args 2]
 	global env
+	if {[string match -nocase $dt "overlaydt"]} {
+		# Reject root-level properties: with the "/ { ... };" wrapper suppressed,
+		# only top-level "&label { ... };" references are valid overlay syntax.
+		catch {set overlay_props [$dt getall $rootn]}
+		foreach overlayprop $overlay_props {
+			if {$overlayprop ne ""} {
+				error "ERROR: Root property is not supported in overlay file. Only top-level '&label;' references are allowed."
+			}
+		}
+		if {[catch {set overlay_childs [$dt children $rootn]} msg] || [string_is_empty $overlay_childs]} {
+			file delete -force $file
+			return
+		}
+		foreach overlay_child $overlay_childs {
+			if {![string match "&*" $overlay_child]} {
+				error "ERROR: Invalid top-level overlay node \"$overlay_child\" in pl_overlay.dtso. Only '&label;' references are supported."
+			}
+		}
+	}
 	# Windows treats an empty env variable as not defined
 	if {[catch {set board_dtsi_file $env(sdt_board_dts)} msg]} {
 		set board_dtsi_file ""
@@ -1123,7 +1189,15 @@ proc write_dt args {
 			puts $fd "#include \"$val\""
 		}
 	}
-	set dtcheck [string match -nocase $dt "pcwdt"]
+	if {[string match -nocase $dt "overlaydt"]} {
+		puts $fd "\/dts-v1\/\;"
+		puts $fd "\/plugin\/\;"
+		set emitted_count [write_overlay_header_includes {} $fd]
+		if {$emitted_count == 0} {
+			puts "INFO: pl_overlay.dtso detected. Ensure required overlay headers are added using write_overlay_header_includes."
+		}
+	}
+	set dtcheck [expr {[string match -nocase $dt "pcwdt"] || [string match -nocase $dt "overlaydt"]}]
 	if {$dtcheck != 1} {
 		puts $fd "/ \{"
 	}

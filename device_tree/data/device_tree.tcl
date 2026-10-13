@@ -653,6 +653,9 @@ proc set_dt_param args {
 						if {![regexp -nocase {\.(dtsi|dtso)$} $dts]} {
 							error "ERROR: \"$dts\" file is not a dtsi/dtso file. Can't be used as a user dts include file."
 						}
+						if {[string match -nocase [file tail $dts] "pl_overlay.dtso"]} {
+							error "ERROR: \"pl_overlay.dtso\" is a reserved overlay filename and cannot be supplied via -user_dts. Please rename \"$dts\" to a different name."
+						}
 						if {![file exists $dts]} {
 							if {![file exists $kernel_dtsi]} {
 								error "ERROR: \"$kernel_dtsi\" folder is not found. Could not validate $dts against the known board includes."
@@ -2131,6 +2134,7 @@ Generates system device tree based on args given in:
 		move_match_node_to_top pldt root "fpga_PR*"
 		write_dt pldt root "$dir/pl.dtsi"
 		write_dt pcwdt root "$dir/pcw.dtsi"
+		write_dt overlaydt root "$dir/pl_overlay.dtso"
 		write_aie_aperture_overlays $dir
 		if {$rm_xsa_exist != 0} {
 			foreach partial_xsa $rm_xsa {
@@ -2149,6 +2153,7 @@ Generates system device tree based on args given in:
 		delete_tree pldt root
 		write_dt systemdt root "$dir/system-top.dts"
 		write_dt pldt root "$dir/pl.dtsi"
+		write_dt overlaydt root "$dir/pl_overlay.dtso"
 		write_aie_aperture_overlays $dir
 		global set osmap
 		if {[info exists osmap]} {
