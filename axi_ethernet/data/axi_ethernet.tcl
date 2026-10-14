@@ -853,9 +853,17 @@
 
     proc axi_ethernet_deault_parameters {ip_handle {dont_generate ""}} {
         set par_handles [get_ip_conf_prop_list $ip_handle "CONFIG.*"]
+        set has_c_gt_settings [expr {
+            [lsearch -exact -nocase $par_handles "CONFIG.C_GT_SETTINGS"] >= 0
+        }]
         set valid_prop_names {}
         foreach par $par_handles {
                 regsub -all {CONFIG.} $par {} tmp_par
+                # Prefer the generated C_ parameter when both aliases exist.
+                if {$has_c_gt_settings &&
+                    [string equal -nocase $tmp_par "GT_SETTINGS"]} {
+                        continue
+                }
                 # Ignore some parameters that are always handled specially
                 switch -glob $tmp_par {
                         $dont_generate - \

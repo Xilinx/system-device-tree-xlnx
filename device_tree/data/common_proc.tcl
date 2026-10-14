@@ -1666,7 +1666,10 @@ proc add_cross_property args {
 		if {$conf_prop == "CONFIG.processor_mode"} {
 			set value "true"
 		}
-		if {$ipname == "axi_ethernet"} {
+		# GT settings can contain a generated string such as "internal".
+		# Preserve it because is_property_set maps every non-"true" value to 0.
+		if {$ipname == "axi_ethernet" &&
+		    ![string equal -nocase $dest_prop "xlnx,gt-settings"]} {
 			set value [is_property_set $value]
 		}
 		if {[llength $value]} {
