@@ -43,6 +43,16 @@ proc axi_bram_memory_label {drv_handle is_ilmb_partner} {
 	return $memory_label
 }
 
+proc axi_bram_lmb_base_for_processor {ip_mem_handles} {
+	foreach bank $ip_mem_handles {
+		if {![string equal -nocase [hsi get_property BASE_NAME $bank] "C_BASEADDR"]} {
+			continue
+		}
+		return [remove_prefix_from_addr [string tolower [hsi get_property BASE_VALUE $bank]]]
+	}
+	return ""
+}
+
 proc axi_bram_map_ecc_controller {node procc proc_ip_name drv_handle ecc_base ecc_high bit_format} {
 	set ecc_memmap [axi_bram_format_memmap $ecc_base $ecc_high $bit_format]
 	add_prop $node "xlnx,mem-ctrl-base-address" $ecc_base int "pl.dtsi"
@@ -75,6 +85,41 @@ proc axi_bram_generate {drv_handle} {
 	set drv_ip [get_ip_property $drv_handle IP_NAME]
 	set is_lmb [string match -nocase $drv_ip "lmb_bram_if_cntlr"]
 	set is_ilmb_partner [expr {$is_lmb && [regexp -nocase {ilmb_bram_if_cntlr$} $drv_handle]}]
+	set shared_memory_label ""
+	# Names are not always ilmb/dlmb. Same LMB base on a processor is one BRAM.
+	if {$is_lmb && !$is_ilmb_partner} {
+		set mb_proclist [hsi::get_cells -hier -filter {IP_NAME==microblaze || IP_NAME==microblaze_riscv}]
+		foreach procc $mb_proclist {
+			set proc_memmap [hsi::get_mem_ranges -of_objects $procc]
+			set ip_mem_handles [lsearch -all -inline -exact $proc_memmap $drv_handle]
+			if {[string_is_empty $ip_mem_handles]} {
+				continue
+			}
+			set baseaddr [axi_bram_lmb_base_for_processor $ip_mem_handles]
+			if {[string_is_empty $baseaddr]} {
+				continue
+			}
+			foreach periph $proc_memmap {
+				set periph_handle [cells_hier $periph]
+				if {[string_is_empty $periph_handle] || ![string match -nocase [get_ip_property $periph_handle IP_NAME] "lmb_bram_if_cntlr"]} {
+					continue
+				}
+				set periph_mem_handles [lsearch -all -inline -exact $proc_memmap $periph_handle]
+				set bram_base_addr [axi_bram_lmb_base_for_processor $periph_mem_handles]
+				if {[string_is_empty $bram_base_addr]} {
+					continue
+				}
+				if {[string match -nocase $bram_base_addr $baseaddr] && [systemdt exists "${periph_handle}_memory: memory@${bram_base_addr}"]} {
+					set is_ilmb_partner 1
+					set shared_memory_label "${periph_handle}_memory"
+					break
+				}
+			}
+			if {$is_ilmb_partner} {
+				break
+			}
+		}
+	}
 
 	set lmb_base 0
 	set lmb_high 0
@@ -156,6 +201,9 @@ proc axi_bram_generate {drv_handle} {
 					$ecc_base $ecc_high $bit_format
 			} elseif {![axi_bram_is_ecc_bank $base_name]} {
 				set memory_label [axi_bram_memory_label $drv_handle $is_ilmb_partner]
+				if {![string_is_empty $shared_memory_label]} {
+					set memory_label $shared_memory_label
+				}
 				if {$create_memory_node} {
 					axi_bram_proc_mapping $procc $proc_ip_name $memmap_format $memory_label
 					if {[lsearch -exact $overall_reg $reg] == -1} {
