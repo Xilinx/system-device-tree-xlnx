@@ -1219,11 +1219,11 @@ proc gen_board_info {} {
 
 	if {[llength $ddr5_handle] > 0} {
 	   foreach ddr5_cell $ddr5_handle {
-		   set ddr_type [get_ip_property $ddr5_cell CONFIG.DDRMC5_DEVICE_TYPE]
-		   if {![string_is_empty $ddr_type]} {
+		   set ddr_type [hsi::get_property CONFIG.DDRMC5_DEVICE_TYPE $ddr5_cell]
+		   if {$ddr_type eq "RDIMMs" || $ddr_type eq "UDIMMs"} {
 			   add_prop "root" "xlnx,ddrmc5-device-type" $ddr_type string $default_dts
 			   break
-		   }
+                   }
 	   }
 	}
 
