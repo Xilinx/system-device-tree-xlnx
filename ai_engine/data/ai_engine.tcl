@@ -96,6 +96,12 @@
         add_prop "${ai_clk_node}" "#clock-cells" 0 int "pl.dtsi"
         add_prop "${ai_clk_node}" "clock-frequency" $clk_freq int "pl.dtsi"
         set clocks "aie_core_ref_clk_0"
+        # RM serialization prefixes the clock label with the partial filename.
+        global is_rm_design
+        if {[info exists is_rm_design] && $is_rm_design} {
+                set partial_name [file rootname [file tail [get_partial_file]]]
+                set clocks "${partial_name}_aie_core_ref_clk_0"
+        }
         set_drv_prop_if_empty $drv_handle clocks "$clocks" $node reference
         set_drv_prop_if_empty $drv_handle "clock-names" "aclk0" $node string
 
