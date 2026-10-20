@@ -12,12 +12,21 @@
 # GNU General Public License for more details.
 #
 
+proc get_seg_by_slave {drv_handle slave_id} {
+    set segs [hsi::get_mem_ranges $drv_handle -filter "SLAVE_INTERFACE==\"$slave_id\""]
+    if {[llength $segs] == 0} {
+        puts "No mem_range found for $drv_handle with SLAVE_INTERFACE==$slave_id"
+    }
+    #duplicates (one per master path) are identical, so take the first
+    return [lindex $segs 0]
+}
+
 proc set_reg_qdma {drv_handle} {
         set node [get_node $drv_handle]
 
-        set ip_mem_handle [lindex [hsi::get_mem_ranges $drv_handle] 0]
-        set cfg_baseaddr [string tolower [hsi get_property BASE_VALUE $ip_mem_handle]]
-        set cfg_highaddr [string tolower [hsi get_property HIGH_VALUE $ip_mem_handle]]
+        set ecam_seg  [get_seg_by_slave $drv_handle "S_AXI_LITE"]
+        set cfg_baseaddr [string tolower [hsi get_property BASE_VALUE $ecam_seg]]
+        set cfg_highaddr [string tolower [hsi get_property HIGH_VALUE $ecam_seg]]
         set cfg_size [format 0x%X [expr {$cfg_highaddr - $cfg_baseaddr + 1}]]
         set cfg [get_64_bit_reg $cfg_baseaddr $cfg_size]
 
