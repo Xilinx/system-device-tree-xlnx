@@ -170,6 +170,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "v_gamma_lut" "gamma_lut"
 	dict set ::sdtgen::namespacelist "i2s_receiver" "i2s_receiver"
 	dict set ::sdtgen::namespacelist "i2s_transmitter" "i2s_transmitter"
+	dict set ::sdtgen::namespacelist "psdpdc_av_pat_gen" "psdpdc_av_pat_gen"
 	dict set ::sdtgen::namespacelist "ps7_i2c" "iicps"
 	dict set ::sdtgen::namespacelist "psu_i2c" "iicps"
 	dict set ::sdtgen::namespacelist "psv_i2c" "iicps"
