@@ -69,9 +69,9 @@
             if {"0x$encoder_baseaddr" > 0xFFFFFFFF} {
                 set high_addr [format %08x [expr (("0x$encoder_baseaddr") >> 32) & 0xFFFFFFFF]]
                 set low_addr [format %08x [expr ("0x$encoder_baseaddr") & 0xFFFFFFFF]]
-                set encoder_reg "0x$high_addr 0x$low_addr 0x0 0x80000 0x0 0x8000000 0x0 0x8000000"
+                set encoder_reg "0x$high_addr 0x$low_addr 0x0 0x40000 0x0 0x8000000 0x0 0x8000000"
             } else {
-                set encoder_reg "0x0 0x$encoder_baseaddr 0x0 0x80000 0x0 0x8000000 0x0 0x8000000"
+                set encoder_reg "0x0 0x$encoder_baseaddr 0x0 0x40000 0x0 0x8000000 0x0 0x8000000"
             }
             add_prop "${encoder_node}" "reg" $encoder_reg hexlist $dts_file
 	        if {[string match -nocase $nsu_path "FALSE"]} {
@@ -100,9 +100,9 @@
             if {"0x$decoder_baseaddr" > 0xFFFFFFFF} {
                 set high_addr [format %08x [expr (("0x$decoder_baseaddr") >> 32) & 0xFFFFFFFF]]
                 set low_addr [format %08x [expr ("0x$decoder_baseaddr") & 0xFFFFFFFF]]
-                set decoder_reg "0x$high_addr 0x$low_addr 0x0 0x80000 0x0 0x00000000 0x0 0x8000000"
+                set decoder_reg "0x$high_addr 0x$low_addr 0x0 0x40000 0x0 0x00000000 0x0 0x8000000"
             } else {
-                set decoder_reg "0x0 0x$decoder_baseaddr 0x0 0x80000 0x0 0x00000000 0x0 0x08000000"
+                set decoder_reg "0x0 0x$decoder_baseaddr 0x0 0x40000 0x0 0x00000000 0x0 0x08000000"
             }
             add_prop "${decoder_node}" "reg" $decoder_reg hexlist $dts_file
 	        if {[string match -nocase $nsu_path "FALSE"]} {
