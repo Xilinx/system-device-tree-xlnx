@@ -126,6 +126,7 @@ The generated system device tree contains following files.
   * pl.dtsi: Contains Programmable Logic(soft IPs) information.
   * system-top.dts: System information about memory, CPU clusters, aliases etc.
   * pcw.dtsi: Information about the configuration of the processing system from the AMD Vivado&trade;  Design Suite peripheral configuration wizard. 
+  * `pl_overlay.dtso`: Hardware configuration overrides emitted as a device tree overlay. Generated only when overlay content is present.
 
 ## Binary files
 Apart from the `.dtsi` files and `system-top.dts`, the SDTGen output directory also contains some files that are needed to configure the hardware. These files are available within XSA and are extracted and placed into the output directory.
@@ -144,6 +145,43 @@ For different platforms, extracted files are:
      	- ELFs like plm, psm
      	- CDOs like lpd, fpd, pmc_data etc.
      	- bif file that can re-construct the PDI using above artifacts
+
+## Segmented-flow overlay support (`pl_overlay.dtso`)
+
+SDTGen emits Programmable Logic (PL) IP configuration in `pl.dtsi` and
+Processing System (PS) IP configuration in `pcw.dtsi`. In the segmented flow,
+the PS device tree is used as the base, while PL configuration is handled as a
+separate overlay segment.
+
+Some PS devices, such as `mmi_dc`, depend on PL resources. These dependencies
+can include clocks supplied by PL IPs or port and endpoint connections to PL
+devices such as pattern generators. Keeping these cross-segment dependencies
+out of the base includes preserves the separation between the PS base and the
+PL segment:
+
+  * `pcw.dtsi` is part of the base device tree and should not depend on
+    resources introduced by a later PL segment.
+  * `pl.dtsi` is architecturally kept limited to the PL segment and does not
+    carry PS-node overrides. This file becomes the source of the PL overlay
+    in the segmented flow.
+
+SDTGen therefore emits the cross-segment properties and connections in
+`pl_overlay.dtso`. The overlay references existing PS and PL nodes by label and
+adds or updates the required properties, ports, endpoints, and phandle
+connections.
+
+In the standard Lopper segmented flow, `xlnx_overlay_pl_dt` discovers
+`pl_overlay.dtso` alongside the system device tree and incorporates its fragments into
+the PL overlay generated with `pl.dtsi`; `pl_overlay.dtso` is not applied as a second runtime overlay.
+The resulting PL overlay is applied after the PS base has been loaded, allowing references to PS
+nodes in the base and PL nodes in the same overlay to be resolved.
+
+* `pl_overlay.dtso` uses standard plugin-overlay syntax, beginning with `/dts-v1/;` and
+  `/plugin/;`, unlike `pl.dtsi` and `pcw.dtsi`, which are plain fragments meant
+  to be `#include`d into the system device tree.
+* The overlay file name is fixed to `pl_overlay.dtso` in SDTGen. This name is reserved and
+  cannot be passed through `-user_dts`.
+* If no overlay content is produced, the `pl_overlay.dtso` file is not written.
 
 # Tutorial
 
