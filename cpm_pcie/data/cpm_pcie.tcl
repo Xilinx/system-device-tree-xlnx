@@ -12,6 +12,60 @@
 # GNU General Public License for more details.
 #
 
+# CPM6 root-port child node with its reset GPIO PMC_MIO40/41
+proc cpm6_rp_gpio_child_node {parent_node reset_gpio cntrl_num} {
+	if {($cntrl_num == 1)} {
+		set child [create_node -n "pcie" -u "0,1" -p $parent_node -d "pcw.dtsi"]
+	} else {
+		set child [create_node -n "pcie" -u "0,0" -p $parent_node -d "pcw.dtsi"]
+	}
+	add_prop $child "device_type" "pci" string "pcw.dtsi" 1
+	add_prop $child "reg" "0x0 0x0 0x0 0x0 0x0" hexlist "pcw.dtsi" 1
+	add_prop $child "#address-cells" 3 int "pcw.dtsi" 1
+	add_prop $child "#size-cells" 2 int "pcw.dtsi" 1
+	if {$reset_gpio ne ""} {
+		add_prop $child "reset-gpios" $reset_gpio reference "pcw.dtsi" 1
+	}
+	add_prop $child "ranges" boolean "pcw.dtsi"
+	return $child
+}
+
+# Configure CPM6 root-port controller
+proc cpm6_pcie_rp_controller {drv_handle} {
+
+	set cntrl_type -1
+	set cntrl_num -1
+
+	set node [get_node $drv_handle]
+	foreach cntrl {0 1} {
+		if {$node eq ""} {
+			return
+		}
+		set cntrl_num [get_ip_property $drv_handle CONFIG.C_CTRL${cntrl}_EN]
+		set cntrl_type [get_ip_property $drv_handle CONFIG.C_CTRL${cntrl}_PORT_TYPE]
+		if {$cntrl_num != 1 || ![string equal -nocase $cntrl_type "pcie_rp"]} {
+			continue
+		} else {
+			if {($cntrl == 1)} {
+				set csr_slcr "0xfc400000"
+				add_prop $node "xlnx,csr-slcr" $csr_slcr hexlist "pcw.dtsi" 1
+				add_prop $node compatible "amd,versal2-cpm6-host1" stringlist "pcw.dtsi" 1
+				set ranges "0x2000000 0x00 0xe8000000 0x00 0xe8000000 0x00 0x8000000>,<0x43000000 0xa0 0x00 0xa0 0x00 0x20 0x00"
+				add_prop $node "ranges" $ranges hexlist "pcw.dtsi" 1
+				set reg  "0x07 0x100000 0x00 0xff00000>,<0x00 0xfcdd0000 0x00 0x1000>,<0x07 0x00 0x00 0x100000>,<0x00 0xfc680000 0x00 0x4000>,<0x00 0xfc940000 0x00 0x1000"
+				add_prop $node "reg" $reg hexlist "pcw.dtsi" 1
+				set reset_gpio "gpio1 41 1"
+			} else {
+				set reset_gpio "gpio1 40 1"
+				set csr_slcr "0xfc000000"
+				add_prop $node "xlnx,csr-slcr" $csr_slcr hexlist "pcw.dtsi" 1
+			}
+			cpm6_rp_gpio_child_node $node $reset_gpio $cntrl
+			break
+		}
+	}
+}
+
 proc parse_cpm6_config {config_str} {
 	set result [dict create]
 	set tokens [split $config_str " "]
@@ -198,6 +252,15 @@ proc cpm6_extract_ep_info {drv_handle d} {
 }
 
 proc cpm_pcie_generate {drv_handle} {
+	#CPM6 RP configuration
+	foreach drv [hsi::get_cells -hier -filter IP_NAME==psv_cpm6] {
+		add_prop root "/delete-node/ &cpm5_pcie;" boolean "pcw.dtsi"
+		if {[string match "*cpm6_0_psv_cpm6*" $drv]} {
+			cpm6_pcie_rp_controller $drv
+			break
+		}
+	}
+
 	foreach cell [hsi::get_cells -hier -filter {IP_NAME==ps_wizard}] {
 		set avail [hsi list_property $cell]
 		if {[lsearch -nocase $avail "CONFIG.CPM6_CONFIG_INTERNAL"] >= 0} {
