@@ -76,16 +76,16 @@ proc psdpdc_av_pat_gen_emit_mmi_dc_overlay {port_idx in_label out_label} {
 	# here through a &avpg_out_N fixup fragment, so the base never references a
 	# label it does not define (which dtc rejects). All &<label> targets resolve
 	# as overlay fixups on apply, while the dc_live_in label is defined here.
-	set ovl "pl_overlay.dtso"
+	set pl_overlaydt "pl_overlay.dtso"
 
-	set mmi_frag [create_node -n "&mmi_dc" -p root -d $ovl]
-	set ports_node [create_node -n "ports" -p $mmi_frag -d $ovl]
-	set port_node [create_node -n "port" -u $port_idx -p $ports_node -d $ovl]
-	set ep_node [create_node -n "endpoint" -l $in_label -p $port_node -d $ovl]
-	add_prop $ep_node "remote-endpoint" $out_label reference $ovl
+	set mmi_frag [create_node -n "&mmi_dc" -p root -d $pl_overlaydt]
+	set ports_node [create_node -n "ports" -p $mmi_frag -d $pl_overlaydt]
+	set port_node [create_node -n "port" -u $port_idx -p $ports_node -d $pl_overlaydt]
+	set ep_node [create_node -n "endpoint" -l $in_label -p $port_node -d $pl_overlaydt]
+	add_prop $ep_node "remote-endpoint" $out_label reference $pl_overlaydt
 
-	set fixup_node [create_node -n "&$out_label" -p root -d $ovl]
-	add_prop $fixup_node "remote-endpoint" $in_label reference $ovl
+	set fixup_node [create_node -n "&$out_label" -p root -d $pl_overlaydt]
+	add_prop $fixup_node "remote-endpoint" $in_label reference $pl_overlaydt
 }
 
 proc psdpdc_av_pat_gen_get_tpg_en_gpio {avpg_ip} {
