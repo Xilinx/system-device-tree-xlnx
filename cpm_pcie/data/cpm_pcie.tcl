@@ -12,8 +12,280 @@
 # GNU General Public License for more details.
 #
 
+# CPM6 root-port child node with its reset GPIO PMC_MIO40/41
+proc cpm6_rp_gpio_child_node {parent_node reset_gpio cntrl_num} {
+	if {($cntrl_num == 1)} {
+		set child [create_node -n "pcie" -u "0,1" -p $parent_node -d "pcw.dtsi"]
+	} else {
+		set child [create_node -n "pcie" -u "0,0" -p $parent_node -d "pcw.dtsi"]
+	}
+	add_prop $child "device_type" "pci" string "pcw.dtsi" 1
+	add_prop $child "reg" "0x0 0x0 0x0 0x0 0x0" hexlist "pcw.dtsi" 1
+	add_prop $child "#address-cells" 3 int "pcw.dtsi" 1
+	add_prop $child "#size-cells" 2 int "pcw.dtsi" 1
+	if {$reset_gpio ne ""} {
+		add_prop $child "reset-gpios" $reset_gpio reference "pcw.dtsi" 1
+	}
+	add_prop $child "ranges" boolean "pcw.dtsi"
+	return $child
+}
+
+# Configure CPM6 root-port controller
+proc cpm6_pcie_rp_controller {drv_handle} {
+
+	set cntrl_type -1
+	set cntrl_num -1
+
+	set node [get_node $drv_handle]
+	foreach cntrl {0 1} {
+		if {$node eq ""} {
+			return
+		}
+		set cntrl_num [get_ip_property $drv_handle CONFIG.C_CTRL${cntrl}_EN]
+		set cntrl_type [get_ip_property $drv_handle CONFIG.C_CTRL${cntrl}_PORT_TYPE]
+		if {$cntrl_num != 1 || ![string equal -nocase $cntrl_type "pcie_rp"]} {
+			continue
+		} else {
+			if {($cntrl == 1)} {
+				set csr_slcr "0xfc400000"
+				add_prop $node "xlnx,csr-slcr" $csr_slcr hexlist "pcw.dtsi" 1
+				add_prop $node compatible "amd,versal2-cpm6-host1" stringlist "pcw.dtsi" 1
+				set ranges "0x2000000 0x00 0xe8000000 0x00 0xe8000000 0x00 0x8000000>,<0x43000000 0xa0 0x00 0xa0 0x00 0x20 0x00"
+				add_prop $node "ranges" $ranges hexlist "pcw.dtsi" 1
+				set reg  "0x07 0x100000 0x00 0xff00000>,<0x00 0xfcdd0000 0x00 0x1000>,<0x07 0x00 0x00 0x100000>,<0x00 0xfc680000 0x00 0x4000>,<0x00 0xfc940000 0x00 0x1000"
+				add_prop $node "reg" $reg hexlist "pcw.dtsi" 1
+				set reset_gpio "gpio1 41 1"
+			} else {
+				set reset_gpio "gpio1 40 1"
+				set csr_slcr "0xfc000000"
+				add_prop $node "xlnx,csr-slcr" $csr_slcr hexlist "pcw.dtsi" 1
+			}
+			cpm6_rp_gpio_child_node $node $reset_gpio $cntrl
+			break
+		}
+	}
+}
+
+proc parse_cpm6_config {config_str} {
+	set result [dict create]
+	set tokens [split $config_str " "]
+	set len [llength $tokens]
+	for {set i 0} {$i < [expr {$len - 1}]} {incr i 2} {
+		dict set result [lindex $tokens $i] [lindex $tokens [expr {$i + 1}]]
+	}
+	return $result
+}
+
+proc cpm6_get {d key {default ""}} {
+	if {[dict exists $d $key]} { return [dict get $d $key] }
+	return $default
+}
+
+proc cpm6_fw_type_for_ctrl {protocol ide_cap_en link_ide_stream selective_ide_stream} {
+	if {$protocol eq "" || [string match -nocase "Disabled" $protocol]} {
+		return "Disabled"
+	}
+	if {[string match -nocase "*CXL*" $protocol]} {
+		return "CXL"
+	}
+	# IDE stream bits are subordinate to IDE_CAP_EN in the CPM6 HSI model.
+	# A design must have IDE capability enabled before it is classified as SEC.
+	if {$ide_cap_en eq "1"} {
+		return "SEC"
+	}
+	return "EMC"
+}
+
+proc cpm6_find_valid_parent {drv_handle} {
+	set candidates [list]
+	if {$drv_handle ne ""} {
+		lappend candidates $drv_handle
+	}
+	foreach c [hsi::get_cells -hier -filter {IP_NAME==psv_cpm6}] {
+		lappend candidates $c
+	}
+	foreach c [hsi::get_cells -hier -filter {IP_NAME==psv_cpm}] {
+		lappend candidates $c
+	}
+
+	# Resolve every candidate to a real DT node first.
+	# pspmc* names are never the active CPM6 endpoint node.
+	set resolved [list]
+	foreach c $candidates {
+		if {$c eq ""} {
+			continue
+		}
+		if {[regexp "pspmc.*" "$c" match]} {
+			continue
+		}
+		catch {set tmp [get_node $c]}
+		if {$tmp eq "" || $tmp eq "0" || $tmp == 0} {
+			continue
+		}
+		lappend resolved $c
+	}
+
+	if {[llength $resolved] == 0} {
+		return ""
+	}
+
+	# Option A: when multiple CPM6 blocks exist, prefer the dedicated CPM6
+	# subsystem instance (cpm6_<n>_psv_cpm6) and skip the pmcps placeholder.
+	foreach c $resolved {
+		if {[regexp {cpm6_[0-9]+_psv_cpm6} "$c" match]} {
+			return $c
+		}
+	}
+
+	# The CPM6 endpoint node (psv_cpm6) always wins over the legacy psv_cpm_0
+	# alias. The SDT framework also invokes generation for the psv_cpm cell;
+	# routing both to psv_cpm6 lets the child-path dedup drop the duplicate.
+	foreach c $resolved {
+		if {[regexp {psv_cpm6$} "$c" match]} {
+			return $c
+		}
+	}
+
+	# Fallback: no psv_cpm6 present, use the first resolving candidate.
+	return [lindex $resolved 0]
+}
+
+proc cpm6_extract_ep_info {drv_handle d} {
+	set f "pcw.dtsi"
+	global cpm6_created_child_paths
+	if {![info exists cpm6_created_child_paths]} {
+		set cpm6_created_child_paths [dict create]
+	}
+
+	set node ""
+	set selected_parent [cpm6_find_valid_parent $drv_handle]
+	if {$selected_parent ne ""} {
+		catch {set node [get_node $selected_parent]}
+	}
+	if {$node eq "" || $node eq "0" || $node == 0} {
+		return
+	}
+
+	add_prop $node "#address-cells" 1 int $f
+	add_prop $node "#size-cells" 0 int $f
+
+	set active_ep -1
+	set active_ep_count 0
+	set active_ep_mask 0
+	foreach i {0 1} {
+		set p "CPM6_CTRL${i}"
+		set en    [cpm6_get $d "${p}_EN" "0"]
+		set mode  [cpm6_get $d "${p}_MODE" ""]
+		set ptype [cpm6_get $d "${p}_PORT_TYPE" ""]
+		set proto [cpm6_get $d "${p}_PROTOCOL" "Disabled"]
+		set ide_cap_en [cpm6_get $d "${p}_IDE_CAP_EN" "0"]
+		set link_ide_stream [cpm6_get $d "${p}_LINK_IDE_STREAM_EN" "0"]
+		set selective_ide_stream [cpm6_get $d "${p}_SELECTIVE_IDE_STREAM_EN" "0"]
+		set fwtype [cpm6_fw_type_for_ctrl $proto $ide_cap_en $link_ide_stream $selective_ide_stream]
+		set lw    [cpm6_get $d "${p}_LINK_WIDTH" ""]
+		set lr    [cpm6_get $d "${p}_LANE_RATE" ""]
+		# PERST is stored as a MIO name (e.g. PMC_MIO_38 / PS_MIO_19); keep the trailing pin number only
+		set perst_raw [cpm6_get $d "${p}_PERST" ""]
+		set perst ""
+		if {[regexp {([0-9]+)$} $perst_raw -> perst_num]} { set perst $perst_num }
+
+		if {$en eq "1"} {
+			set child_name "controller@${i}"
+			set child_path "${node}/${child_name}"
+			set exists ""
+			catch {set exists [get_node $child_path]} err
+			if {[dict exists $cpm6_created_child_paths $child_path] || ($exists ne "" && $exists ne "0" && $exists != 0)} {
+				continue
+			}
+			dict set cpm6_created_child_paths $child_path 1
+
+			set ctrl_node [create_node -n $child_name -l "${drv_handle}_ctrl${i}" -p $node -d $f]
+			# Standard DT properties
+			add_prop $ctrl_node "compatible" "xlnx,cpm6-controller" string $f
+			add_prop $ctrl_node "reg" $i int $f
+			# Controller identity
+			add_prop $ctrl_node "xlnx,ctrl-id" $i int $f
+			add_prop $ctrl_node "xlnx,en" $en int $f
+			if {$perst ne ""} {
+				add_prop $ctrl_node "xlnx,perst" $perst int $f
+			}
+			# Mode / type
+			add_prop $ctrl_node "xlnx,mode" $mode string $f
+			add_prop $ctrl_node "xlnx,port-type" $ptype string $f
+			add_prop $ctrl_node "xlnx,protocol" $proto string $f
+			add_prop $ctrl_node "xlnx,fw-type" $fwtype string $f
+			# IDE capabilities
+			add_prop $ctrl_node "xlnx,ide-cap-en" $ide_cap_en int $f
+			add_prop $ctrl_node "xlnx,link-ide-stream" $link_ide_stream int $f
+			add_prop $ctrl_node "xlnx,selective-ide-stream" $selective_ide_stream int $f
+			if {[string match -nocase "*CXL*" $proto]} {
+				add_prop $ctrl_node "xlnx,cxl-hdm-decoder-enable" [cpm6_get $d "CPM6_CXL${i}_HDM_DECODER_EN" "0"] int $f
+				add_prop $ctrl_node "xlnx,cxl-num-hdm-decoders" [cpm6_get $d "CPM6_CXL${i}_NUM_HDM_DECODERS" "0"] int $f
+				add_prop $ctrl_node "xlnx,cxl-range1-size" [cpm6_get $d "CPM6_CXL${i}_RANGE1_SIZE" "0"] string $f
+				foreach regloc {1 2 3} {
+					set bir [cpm6_get $d "CPM6_CXL${i}_REGLOC${regloc}_BIR" ""]
+					set offset [cpm6_get $d "CPM6_CXL${i}_REGLOC${regloc}_OFFSET" ""]
+					set regtype [cpm6_get $d "CPM6_CXL${i}_REGLOC${regloc}_REG_TYPE" ""]
+					if {$bir ne ""} {
+						add_prop $ctrl_node "xlnx,cxl-regloc${regloc}-bir" $bir string $f
+					}
+					if {$offset ne ""} {
+						add_prop $ctrl_node "xlnx,cxl-regloc${regloc}-offset" $offset string $f
+					}
+					if {$regtype ne "" && ![string match -nocase "None" $regtype]} {
+						add_prop $ctrl_node "xlnx,cxl-regloc${regloc}-type" $regtype string $f
+					}
+				}
+			}
+		}
+
+		if {$en eq "1" && ([string match -nocase "*EP*" $ptype] || [string match -nocase "*CXL*" $ptype])} {
+			incr active_ep_count
+			set active_ep_mask [expr {$active_ep_mask | (1 << $i)}]
+			set active_ep $i
+		}
+	}
+
+	if {$active_ep == -1} {
+		return
+	}
+}
+
 proc cpm_pcie_generate {drv_handle} {
-	if {![regexp "pspmc.*" "$drv_handle" match]} {
+	#CPM6 RP configuration
+	foreach drv [hsi::get_cells -hier -filter IP_NAME==psv_cpm6] {
+		add_prop root "/delete-node/ &cpm5_pcie;" boolean "pcw.dtsi"
+		if {[string match "*cpm6_0_psv_cpm6*" $drv]} {
+			cpm6_pcie_rp_controller $drv
+			break
+		}
+	}
+
+	foreach cell [hsi::get_cells -hier -filter {IP_NAME==ps_wizard}] {
+		set avail [hsi list_property $cell]
+		if {[lsearch -nocase $avail "CONFIG.CPM6_CONFIG_INTERNAL"] >= 0} {
+			set cfg [hsi get_property CONFIG.CPM6_CONFIG_INTERNAL $cell]
+			if {$cfg ne ""} {
+				set d [parse_cpm6_config $cfg]
+				set has_ep 0
+				foreach ctrl {0 1} {
+					set ctrl_prefix "CPM6_CTRL${ctrl}"
+					set ctrl_en [cpm6_get $d "${ctrl_prefix}_EN" "0"]
+					set ctrl_port_type [cpm6_get $d "${ctrl_prefix}_PORT_TYPE" ""]
+					if {$ctrl_en eq "1" && ([string match -nocase "*EP*" $ctrl_port_type] || [string match -nocase "*CXL*" $ctrl_port_type])} {
+						set has_ep 1
+						break
+					}
+				}
+				if {$has_ep} {
+					cpm6_extract_ep_info $drv_handle $d
+					return
+				}
+			}
+		}
+	}
+
+	if {$drv_handle eq ""} {
 		return
 	}
 
@@ -32,16 +304,14 @@ proc cpm_pcie_generate {drv_handle} {
 	if {($rev_num == 1) && ($port_type_1 == 1)} {
 		set node [get_node $drv_handle]
 		if {$node == 0} {
-	            return
-	        }
-	        add_prop $node "xlnx,csr-slcr" 0xfcea0000 hexlist "pcw.dtsi" 1
-	        add_prop $node compatible "xlnx,versal-cpm5-host1" stringlist "pcw.dtsi" 1
-	        set ranges "0x02000000 0x0 0xe8000000 0x0 0xe8000000 0x0 0x8000000>,<0x43000000 0xa0 0x00000000 0xa0 0x00000000 0x0 0x80000000"
-	        add_prop $node "ranges" $ranges hexlist "pcw.dtsi" 1
+			return
+		}
+		add_prop $node "xlnx,csr-slcr" 0xfcea0000 hexlist "pcw.dtsi" 1
+		add_prop $node compatible "xlnx,versal-cpm5-host1" stringlist "pcw.dtsi" 1
+		set ranges "0x02000000 0x0 0xe8000000 0x0 0xe8000000 0x0 0x8000000>,<0x43000000 0xa0 0x00000000 0xa0 0x00000000 0x0 0x80000000"
+		add_prop $node "ranges" $ranges hexlist "pcw.dtsi" 1
 		set reg "0x07 0x00000000 0x00 0x10000000>,<0x00 0xfcdd0000 0x00 0x1000>,<0x00 0xfcea0000 0x00 0x10000"
-	        add_prop $node "reg" $reg hexlist "pcw.dtsi" 1
-	        add_prop $node "resets" "versal_reset VERSAL_RST_PCIE_CORE1" reference "pcw.dtsi" 1
-
+		add_prop $node "reg" $reg hexlist "pcw.dtsi" 1
+		add_prop $node "resets" "versal_reset VERSAL_RST_PCIE_CORE1" reference "pcw.dtsi" 1
 	}
-
 }

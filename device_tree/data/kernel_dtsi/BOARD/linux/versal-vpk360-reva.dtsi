@@ -9,7 +9,7 @@
 
 #include "include/dt-bindings/net/ti-dp83867.h"
 #include "include/dt-bindings/gpio/gpio.h"
-#include "versal-xc2vp3602.dtsi"
+/* cpm6_pcie comes from versal2vp.dtsi and cpm5_pcie is deleted by the SDT */
 
 / {
 	model = "Xilinx Versal vpk360 Eval board revA";
@@ -113,19 +113,6 @@
 &i2cX { /* PMC_MIO38/39 - PCIe */
 };
 #endif
-
-/* PCIE GPIO PMC_MIO40/41 */
-
-&cpm6_pcie {
-	pcie@0,0 {
-		device_type = "pci";
-		reg = <0x0 0x0 0x0 0x0 0x0>;
-		reset-gpios = <&gpio1 40 GPIO_ACTIVE_LOW>;
-		#address-cells = <3>;
-		#size-cells = <2>;
-		ranges;
-	};
-};
 
 &i2c1 { /* PMC_MIO44/45 - PCIe RP */
 
