@@ -14,21 +14,21 @@
 
     # Add an mmi_dc property to the base pcw.dtsi node and, in the same call,
     # mirror it into the pl_overlay.dtso overlay fragment (tracked via the
-    # global axi_mmi_dc_ovl_node). This keeps the overlay carrying the complete
+    # global mmi_dc_overlay_node). This keeps the overlay carrying the complete
     # mmi_dc configuration so a segmented overlay can be applied onto a base DT
     # from a different design. The signature matches add_prop: either
     #   <node> <prop> <val> <type> <dts_file>   (valued property), or
     #   <node> <prop> <type> <dts_file>         (boolean property).
     proc add_prop_mmi_dc {args} {
-        global axi_mmi_dc_ovl_node
+        global mmi_dc_overlay_node
         add_prop {*}$args
-        if {[info exists axi_mmi_dc_ovl_node] && $axi_mmi_dc_ovl_node ne ""} {
+        if {[info exists mmi_dc_overlay_node] && $mmi_dc_overlay_node ne ""} {
             set prop [lindex $args 1]
             set rest [lrange $args 2 end]
             if {[llength $rest] >= 3} {
-                add_prop $axi_mmi_dc_ovl_node $prop [lindex $rest 0] [lindex $rest 1] "pl_overlay.dtso"
+                add_prop $mmi_dc_overlay_node $prop [lindex $rest 0] [lindex $rest 1] "pl_overlay.dtso"
             } else {
-                add_prop $axi_mmi_dc_ovl_node $prop [lindex $rest 0] "pl_overlay.dtso"
+                add_prop $mmi_dc_overlay_node $prop [lindex $rest 0] "pl_overlay.dtso"
             }
         }
     }
@@ -46,8 +46,8 @@
         # into this fragment via add_prop_mmi_dc so the overlay fully describes
         # the mmi_dc config. The same fragment is shared with the av_pat_gen
         # generator, which adds the ports/endpoints.
-        global axi_mmi_dc_ovl_node
-        set axi_mmi_dc_ovl_node [create_node -n "&mmi_dc" -p root -d "pl_overlay.dtso"]
+        global mmi_dc_overlay_node
+        set mmi_dc_overlay_node [create_node -n "&mmi_dc" -p root -d "pl_overlay.dtso"]
 
         set operating_mode [hsi get_property CONFIG.C_DPDC_OPERATING_MODE [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
         add_prop_mmi_dc $node "xlnx,dc-operating-mode" $operating_mode string $dts_file
