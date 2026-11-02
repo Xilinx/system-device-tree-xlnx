@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
  *  Copyright (C) 2020 Xilinx-2022 Xilinx, Inc.
- * (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+ * (C) Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
  */
 
 #ifndef _DT_BINDINGS_VERSAL_RESETS_H
@@ -102,5 +102,7 @@
 #define VERSAL_RST_XRAM				(0xc30c05dU)
 #define VERSAL_RST_AIE_ARRAY			(0xc10405eU)
 #define VERSAL_RST_AIE_SHIM			(0xc10405fU)
+#define VERSAL_RST_XAPE0			(0xc410115U)
+#define VERSAL_RST_XAPE1			(0xc410116U)
 
 #endif
