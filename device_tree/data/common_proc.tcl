@@ -1980,6 +1980,24 @@ proc get_baseaddr {slave_ip {no_prefix ""} {proc_handle ""}} {
 		if {[llength $cpm_unit_addr]} {
 			set addr [string tolower $cpm_unit_addr]
 		}
+	} elseif {[string match -nocase $ip_name "psv_cpm6"]} {
+		set addr "0"
+		set cntrl_en -1
+		set cntrl_type -1
+		foreach drv [hsi::get_cells -hier -filter IP_NAME==psv_cpm6] {
+			if {[string match "*cpm6_0_psv_cpm6*" $drv]} {
+				foreach cntrl {0 1} {
+					set cntrl_en [get_ip_property $drv "CONFIG.C_CTRL${cntrl}_EN"]
+					set cntrl_type [get_ip_property $drv "CONFIG.C_CTRL${cntrl}_PORT_TYPE"]
+					if {$cntrl_en == 1 && [string equal -nocase $cntrl_type "pcie_rp"]} {
+						# FIXME: Hardcoded CPM6 PCIe SLCR base address as HSI does not currently
+						# expose it via ps_wizard_0_pmcps_0_psv_cpm6 subcell.
+						set addr 0xfcdd0000
+						break
+					}
+				}
+			}
+		}
 	} elseif {[string match -nocase $ip_name "mmi_pcie0_slcr"]} {
 		set cpm_unit_addr ""
 		set addr "0"
@@ -2667,7 +2685,11 @@ proc gen_ps_mapping {} {
 			dict set def_ps_mapping fd4d0000 label "watchdog: watchdog"
 			dict set def_ps_mapping ff120000 label "watchdog1: watchdog"
 			dict set def_ps_mapping fca10000 label "cpm_pciea: pci"
-			dict set def_ps_mapping fcdd0000 label "cpm5_pcie: pci"
+			if {$is_versal_2vp_platform} {
+				dict set def_ps_mapping fcdd0000 label "cpm6_pcie: pci"
+			} else {
+				dict set def_ps_mapping fcdd0000 label "cpm5_pcie: pci"
+			}
 			dict set def_ps_mapping ff060000 label "can0: can"
 			dict set def_ps_mapping ff070000 label "can1: can"
 			dict set def_ps_mapping ff330000 label "ipi0: mailbox"
